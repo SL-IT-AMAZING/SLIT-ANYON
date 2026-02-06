@@ -7,6 +7,7 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { TemplateCard } from "@/components/TemplateCard";
 import { CreateAppDialog } from "@/components/CreateAppDialog";
 import { NeonConnector } from "@/components/NeonConnector";
+import { SupabaseHubConnector } from "@/components/SupabaseHubConnector";
 
 const HubPage: React.FC = () => {
   const router = useRouter();
@@ -116,6 +117,7 @@ function BackendSection() {
 
       <div className="grid grid-cols-1 gap-6">
         <NeonConnector />
+        <SupabaseHubConnector />
       </div>
     </div>
   );

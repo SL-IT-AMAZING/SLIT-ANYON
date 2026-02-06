@@ -1,644 +1,206 @@
-import { isDyadProEnabled, type LargeLanguageModel } from "@/lib/schemas";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
-import { useLocalModels } from "@/hooks/useLocalModels";
-import { useLocalLMSModels } from "@/hooks/useLMStudioModels";
+import { useState, useMemo } from "react";
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLanguageModelsByProviders } from "@/hooks/useLanguageModelsByProviders";
-
-import { ipc, LocalModel } from "@/ipc/types";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useSettings } from "@/hooks/useSettings";
-import { PriceBadge } from "@/components/PriceBadge";
-import { TURBO_MODELS } from "@/ipc/shared/language_model_constants";
-import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { useTrialModelRestriction } from "@/hooks/useTrialModelRestriction";
+import { cn } from "@/lib/utils";
+import type { LanguageModel } from "@/ipc/types";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
+function formatContextWindow(tokens: number | undefined): string {
+  if (!tokens) return "";
+  if (tokens >= 1_000_000) {
+    return `${(tokens / 1_000_000).toFixed(tokens % 1_000_000 === 0 ? 0 : 1)}M`;
+  }
+  if (tokens >= 1_000) {
+    return `${(tokens / 1_000).toFixed(tokens % 1_000 === 0 ? 0 : 1)}K`;
+  }
+  return tokens.toString();
+}
 
 export function ModelPicker() {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const { settings, updateSettings } = useSettings();
   const queryClient = useQueryClient();
-  const { isTrial } = useTrialModelRestriction();
-  const onModelSelect = (model: LargeLanguageModel) => {
-    updateSettings({ selectedModel: model });
-    // Invalidate token count when model changes since different models have different context windows
-    // (technically they have different tokenizers, but we don't keep track of that).
-    queryClient.invalidateQueries({ queryKey: queryKeys.tokenCount.all });
-  };
 
-  const [open, setOpen] = useState(false);
-
-  // Cloud models from providers
-  const { data: modelsByProviders, isLoading: modelsByProvidersLoading } =
+  const { data: modelsByProviders, isLoading: modelsLoading } =
     useLanguageModelsByProviders();
-
   const { data: providers, isLoading: providersLoading } =
     useLanguageModelProviders();
 
-  const loading = modelsByProvidersLoading || providersLoading;
-  // Ollama Models Hook
-  const {
-    models: ollamaModels,
-    loading: ollamaLoading,
-    error: ollamaError,
-    loadModels: loadOllamaModels,
-  } = useLocalModels();
+  const isLoading = modelsLoading || providersLoading;
 
-  // LM Studio Models Hook
-  const {
-    models: lmStudioModels,
-    loading: lmStudioLoading,
-    error: lmStudioError,
-    loadModels: loadLMStudioModels,
-  } = useLocalLMSModels();
-
-  // Load models when the dropdown opens
-  useEffect(() => {
-    if (open) {
-      loadOllamaModels();
-      loadLMStudioModels();
-    }
-  }, [open, loadOllamaModels, loadLMStudioModels]);
-
-  // Get display name for the selected model
-  const getModelDisplayName = () => {
-    if (selectedModel.provider === "ollama") {
-      return (
-        ollamaModels.find(
-          (model: LocalModel) => model.modelName === selectedModel.name,
-        )?.displayName || selectedModel.name
-      );
-    }
-    if (selectedModel.provider === "lmstudio") {
-      return (
-        lmStudioModels.find(
-          (model: LocalModel) => model.modelName === selectedModel.name,
-        )?.displayName || selectedModel.name // Fallback to path if not found
-      );
-    }
-
-    // For cloud models, look up in the modelsByProviders data
-    if (modelsByProviders && modelsByProviders[selectedModel.provider]) {
-      const customFoundModel = modelsByProviders[selectedModel.provider].find(
-        (model) =>
-          model.type === "custom" && model.id === selectedModel.customModelId,
-      );
-      if (customFoundModel) {
-        return customFoundModel.displayName;
+  const providerNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (providers) {
+      for (const provider of providers) {
+        map[provider.id] = provider.name;
       }
-      const foundModel = modelsByProviders[selectedModel.provider].find(
-        (model) => model.apiName === selectedModel.name,
-      );
-      if (foundModel) {
-        return foundModel.displayName;
+    }
+    return map;
+  }, [providers]);
+
+  const filteredModelsByProvider = useMemo(() => {
+    if (!modelsByProviders) return {};
+
+    const searchLower = search.toLowerCase().trim();
+    const result: Record<string, LanguageModel[]> = {};
+
+    for (const [providerId, models] of Object.entries(modelsByProviders)) {
+      const providerName = providerNameMap[providerId] || providerId;
+      const providerMatches = providerName.toLowerCase().includes(searchLower);
+
+      const filteredModels = models.filter((model) => {
+        if (!searchLower) return true;
+        if (providerMatches) return true;
+        return (
+          model.displayName.toLowerCase().includes(searchLower) ||
+          model.apiName.toLowerCase().includes(searchLower)
+        );
+      });
+
+      if (filteredModels.length > 0) {
+        result[providerId] = filteredModels;
       }
     }
 
-    // Fallback if not found
-    return selectedModel.name;
+    return result;
+  }, [modelsByProviders, providerNameMap, search]);
+
+  const hasModels = Object.keys(filteredModelsByProvider).length > 0;
+  const hasAnyModels =
+    modelsByProviders && Object.keys(modelsByProviders).length > 0;
+
+  const selectedModel = settings?.selectedModel;
+
+  const currentModelDisplayName = useMemo(() => {
+    if (!selectedModel || !modelsByProviders) return "Select model";
+
+    const providerModels = modelsByProviders[selectedModel.provider];
+    if (!providerModels) return selectedModel.name;
+
+    const model = providerModels.find((m) => m.apiName === selectedModel.name);
+    return model?.displayName ?? selectedModel.name;
+  }, [selectedModel, modelsByProviders]);
+
+  const handleModelSelect = (model: LanguageModel, providerId: string) => {
+    updateSettings({
+      selectedModel: {
+        name: model.apiName,
+        provider: providerId,
+      },
+    });
+    queryClient.invalidateQueries({ queryKey: queryKeys.tokenCount.all });
+    setOpen(false);
+    setSearch("");
   };
-
-  // Get auto provider models (if any)
-  const autoModels =
-    !loading && modelsByProviders && modelsByProviders["auto"]
-      ? modelsByProviders["auto"].filter((model) => {
-          if (
-            settings &&
-            !isDyadProEnabled(settings) &&
-            ["turbo", "value"].includes(model.apiName)
-          ) {
-            return false;
-          }
-          if (
-            settings &&
-            isDyadProEnabled(settings) &&
-            model.apiName === "free"
-          ) {
-            return false;
-          }
-          return true;
-        })
-      : [];
-
-  // Determine availability of local models
-  const hasOllamaModels =
-    !ollamaLoading && !ollamaError && ollamaModels.length > 0;
-  const hasLMStudioModels =
-    !lmStudioLoading && !lmStudioError && lmStudioModels.length > 0;
 
   if (!settings) {
     return null;
   }
-  const selectedModel = settings?.selectedModel;
-  const modelDisplayName = getModelDisplayName();
-  // Split providers into primary and secondary groups (excluding auto)
-  const providerEntries =
-    !loading && modelsByProviders
-      ? Object.entries(modelsByProviders).filter(
-          ([providerId]) => providerId !== "auto",
-        )
-      : [];
-  const primaryProviders = providerEntries.filter(([providerId, models]) => {
-    if (models.length === 0) return false;
-    const provider = providers?.find((p) => p.id === providerId);
-    return !(provider && provider.secondary);
-  });
-  if (settings && isDyadProEnabled(settings)) {
-    primaryProviders.unshift(["auto", TURBO_MODELS]);
-  }
-  const secondaryProviders = providerEntries.filter(([providerId, models]) => {
-    if (models.length === 0) return false;
-    const provider = providers?.find((p) => p.id === providerId);
-    return !!(provider && provider.secondary);
-  });
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 max-w-[130px] px-1.5 text-xs-sm gap-2"
-        data-testid="model-picker"
-        title={modelDisplayName}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 max-w-[160px] justify-between gap-1 px-2 text-xs"
+            data-testid="model-picker"
+            title={currentModelDisplayName}
+          />
+        }
       >
-        <span className="truncate">
-          {modelDisplayName === "Auto" && (
-            <>
-              <span className="text-xs text-muted-foreground">Model:</span>{" "}
-            </>
-          )}
-          {modelDisplayName}
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" align="start">
-        <DropdownMenuLabel>Cloud Models</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-
-        {/* Trial user upgrade banner */}
-        {isTrial && (
-          <>
-            <div className="px-2 py-3 bg-gradient-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/50 dark:to-sky-950/50">
-              <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-2">
-                Upgrade from Dyad Pro trial to unlock more models.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="cursor-pointer w-full bg-indigo-600 hover:bg-indigo-700 text-white hover:text-white border-indigo-600"
-                onClick={() => {
-                  ipc.system.openExternalUrl(
-                    "https://academy.dyad.sh/subscription",
-                  );
-                  setOpen(false);
-                }}
-              >
-                Upgrade to Dyad Pro
-              </Button>
-            </div>
-            <DropdownMenuSeparator />
-            {/* Trial users only see the auto model */}
-            <DropdownMenuItem
-              className="bg-secondary"
-              onClick={() => {
-                onModelSelect({ name: "auto", provider: "auto" });
-                setOpen(false);
-              }}
-            >
-              <div className="flex justify-between items-start w-full">
-                <span>Auto</span>
-                <span className="text-[11px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                  Trial
-                </span>
+        <span className="truncate">{currentModelDisplayName}</span>
+        <ChevronsUpDownIcon className="size-3 shrink-0 opacity-50" />
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search models..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList className="max-h-80">
+            {isLoading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Loading models...
               </div>
-            </DropdownMenuItem>
-          </>
-        )}
-
-        {/* Cloud models - only show for non-trial users */}
-        {!isTrial &&
-          (loading ? (
-            <div className="text-xs text-center py-2 text-muted-foreground">
-              Loading models...
-            </div>
-          ) : !modelsByProviders ||
-            Object.keys(modelsByProviders).length === 0 ? (
-            <div className="text-xs text-center py-2 text-muted-foreground">
-              No cloud models available
-            </div>
-          ) : (
-            /* Cloud models loaded */
-            <>
-              {/* Auto models at top level if any */}
-              {autoModels.length > 0 && (
-                <>
-                  {autoModels.map((model) => (
-                    <DropdownMenuItem
-                      key={`auto-${model.apiName}`}
-                      title={model.description}
-                      className={
-                        selectedModel.provider === "auto" &&
-                        selectedModel.name === model.apiName
-                          ? "bg-secondary"
-                          : ""
-                      }
-                      onClick={() => {
-                        onModelSelect({
-                          name: model.apiName,
-                          provider: "auto",
-                        });
-                        setOpen(false);
-                      }}
-                    >
-                      <div className="flex justify-between items-start w-full">
-                        <span className="flex flex-col items-start">
-                          <span>{model.displayName}</span>
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {model.tag && (
-                            <span
-                              className={cn(
-                                "text-[11px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium",
-                                model.tagColor,
-                              )}
-                            >
-                              {model.tag}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                  {Object.keys(modelsByProviders).length > 1 && (
-                    <DropdownMenuSeparator />
-                  )}
-                </>
-              )}
-
-              {/* Primary providers as submenus */}
-              {primaryProviders.map(([providerId, models]) => {
-                models = models.filter((model) => {
-                  // Don't show free models if Dyad Pro is enabled because
-                  // we will use the paid models (in Dyad Pro backend) which
-                  // don't have the free limitations.
-                  if (
-                    isDyadProEnabled(settings) &&
-                    model.apiName.endsWith(":free")
-                  ) {
-                    return false;
-                  }
-                  return true;
-                });
-                const provider = providers?.find((p) => p.id === providerId);
-                const providerDisplayName =
-                  provider?.id === "auto"
-                    ? "Dyad Turbo"
-                    : (provider?.name ?? providerId);
-                return (
-                  <DropdownMenuSub key={providerId}>
-                    <DropdownMenuSubTrigger className="w-full font-normal">
-                      <div className="flex flex-col items-start w-full">
-                        <div className="flex items-center gap-2">
-                          <span>{providerDisplayName}</span>
-                          {provider?.type === "cloud" &&
-                            !provider?.secondary &&
-                            isDyadProEnabled(settings) && (
-                              <span className="text-[10px] bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 bg-[length:200%_100%] animate-[shimmer_5s_ease-in-out_infinite] text-white px-1.5 py-0.5 rounded-full font-medium">
-                                Pro
-                              </span>
-                            )}
-                          {provider?.type === "custom" && (
-                            <span className="text-[10px] bg-amber-500/20 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
-                              Custom
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {models.length} models
-                        </span>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-56 max-h-100 overflow-y-auto">
-                      <DropdownMenuLabel>
-                        {providerDisplayName + " Models"}
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {models.map((model) => (
-                        <DropdownMenuItem
-                          key={`${providerId}-${model.apiName}`}
-                          title={model.description}
-                          className={
-                            selectedModel.provider === providerId &&
-                            selectedModel.name === model.apiName
-                              ? "bg-secondary"
-                              : ""
-                          }
-                          onClick={() => {
-                            const customModelId =
-                              model.type === "custom" ? model.id : undefined;
-                            onModelSelect({
-                              name: model.apiName,
-                              provider: providerId,
-                              customModelId,
-                            });
-                            setOpen(false);
-                          }}
-                        >
-                          <div className="flex justify-between items-start w-full">
-                            <span>{model.displayName}</span>
-                            <PriceBadge dollarSigns={model.dollarSigns} />
-                            {model.tag && (
-                              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                                {model.tag}
-                              </span>
-                            )}
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                );
-              })}
-
-              {/* Secondary providers grouped under Other AI providers */}
-              {secondaryProviders.length > 0 && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="w-full font-normal">
-                    <div className="flex flex-col items-start">
-                      <span>Other AI providers</span>
-                      <span className="text-xs text-muted-foreground">
-                        {secondaryProviders.length} providers
-                      </span>
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-56">
-                    <DropdownMenuLabel>Other AI providers</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {secondaryProviders.map(([providerId, models]) => {
-                      const provider = providers?.find(
-                        (p) => p.id === providerId,
-                      );
-                      return (
-                        <DropdownMenuSub key={providerId}>
-                          <DropdownMenuSubTrigger className="w-full font-normal">
-                            <div className="flex flex-col items-start w-full">
-                              <div className="flex items-center gap-2">
-                                <span>{provider?.name ?? providerId}</span>
-                                {provider?.type === "custom" && (
-                                  <span className="text-[10px] bg-amber-500/20 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
-                                    Custom
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {models.length} models
-                              </span>
-                            </div>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent className="w-56">
-                            <DropdownMenuLabel>
-                              {(provider?.name ?? providerId) + " Models"}
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {models.map((model) => (
-                              <DropdownMenuItem
-                                key={`${providerId}-${model.apiName}`}
-                                title={model.description}
-                                className={
-                                  selectedModel.provider === providerId &&
-                                  selectedModel.name === model.apiName
-                                    ? "bg-secondary"
-                                    : ""
-                                }
-                                onClick={() => {
-                                  const customModelId =
-                                    model.type === "custom"
-                                      ? model.id
-                                      : undefined;
-                                  onModelSelect({
-                                    name: model.apiName,
-                                    provider: providerId,
-                                    customModelId,
-                                  });
-                                  setOpen(false);
-                                }}
-                              >
-                                <div className="flex justify-between items-start w-full">
-                                  <span>{model.displayName}</span>
-                                  {model.tag && (
-                                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                                      {model.tag}
-                                    </span>
-                                  )}
-                                </div>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                      );
-                    })}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              )}
-            </>
-          ))}
-
-        {/* Local Models - only show for non-trial users */}
-        {!isTrial && (
-          <>
-            <DropdownMenuSeparator />
-            {/* Local Models Parent SubMenu */}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="w-full font-normal">
-                <div className="flex flex-col items-start">
-                  <span>Local models</span>
+            ) : !hasAnyModels ? (
+              <CommandEmpty>
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <span className="text-muted-foreground">
+                    No models available
+                  </span>
                   <span className="text-xs text-muted-foreground">
-                    LM Studio, Ollama
+                    Connect a provider in Settings
                   </span>
                 </div>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                {/* Ollama Models SubMenu */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger
-                    disabled={ollamaLoading && !hasOllamaModels} // Disable if loading and no models yet
-                    className="w-full font-normal"
+              </CommandEmpty>
+            ) : !hasModels ? (
+              <CommandEmpty>No models found</CommandEmpty>
+            ) : (
+              Object.entries(filteredModelsByProvider).map(
+                ([providerId, models]) => (
+                  <CommandGroup
+                    key={providerId}
+                    heading={providerNameMap[providerId] || providerId}
                   >
-                    <div className="flex flex-col items-start">
-                      <span>Ollama</span>
-                      {ollamaLoading ? (
-                        <span className="text-xs text-muted-foreground">
-                          Loading...
-                        </span>
-                      ) : ollamaError ? (
-                        <span className="text-xs text-red-500">
-                          Error loading
-                        </span>
-                      ) : !hasOllamaModels ? (
-                        <span className="text-xs text-muted-foreground">
-                          None available
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {ollamaModels.length} models
-                        </span>
-                      )}
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-56 max-h-100 overflow-y-auto">
-                    <DropdownMenuLabel>Ollama Models</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    {models.map((model) => {
+                      const isSelected =
+                        selectedModel?.provider === providerId &&
+                        selectedModel?.name === model.apiName;
 
-                    {ollamaLoading && ollamaModels.length === 0 ? ( // Show loading only if no models are loaded yet
-                      <div className="text-xs text-center py-2 text-muted-foreground">
-                        Loading models...
-                      </div>
-                    ) : ollamaError ? (
-                      <div className="px-2 py-1.5 text-sm text-red-600">
-                        <div className="flex flex-col">
-                          <span>Error loading models</span>
-                          <span className="text-xs text-muted-foreground">
-                            Is Ollama running?
-                          </span>
-                        </div>
-                      </div>
-                    ) : !hasOllamaModels ? (
-                      <div className="px-2 py-1.5 text-sm">
-                        <div className="flex flex-col">
-                          <span>No local models found</span>
-                          <span className="text-xs text-muted-foreground">
-                            Ensure Ollama is running and models are pulled.
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      ollamaModels.map((model: LocalModel) => (
-                        <DropdownMenuItem
-                          key={`ollama-${model.modelName}`}
-                          className={
-                            selectedModel.provider === "ollama" &&
-                            selectedModel.name === model.modelName
-                              ? "bg-secondary"
-                              : ""
-                          }
-                          onClick={() => {
-                            onModelSelect({
-                              name: model.modelName,
-                              provider: "ollama",
-                            });
-                            setOpen(false);
-                          }}
+                      return (
+                        <CommandItem
+                          key={`${providerId}-${model.apiName}`}
+                          value={`${providerId}-${model.apiName}`}
+                          onSelect={() => handleModelSelect(model, providerId)}
+                          className="flex items-center justify-between gap-2"
                         >
-                          <div className="flex flex-col">
-                            <span>{model.displayName}</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                              {model.modelName}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckIcon
+                              className={cn(
+                                "size-4 shrink-0",
+                                isSelected ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <span className="truncate">
+                              {model.displayName}
                             </span>
                           </div>
-                        </DropdownMenuItem>
-                      ))
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                {/* LM Studio Models SubMenu */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger
-                    disabled={lmStudioLoading && !hasLMStudioModels} // Disable if loading and no models yet
-                    className="w-full font-normal"
-                  >
-                    <div className="flex flex-col items-start">
-                      <span>LM Studio</span>
-                      {lmStudioLoading ? (
-                        <span className="text-xs text-muted-foreground">
-                          Loading...
-                        </span>
-                      ) : lmStudioError ? (
-                        <span className="text-xs text-red-500">
-                          Error loading
-                        </span>
-                      ) : !hasLMStudioModels ? (
-                        <span className="text-xs text-muted-foreground">
-                          None available
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {lmStudioModels.length} models
-                        </span>
-                      )}
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-56 max-h-100 overflow-y-auto">
-                    <DropdownMenuLabel>LM Studio Models</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    {lmStudioLoading && lmStudioModels.length === 0 ? ( // Show loading only if no models are loaded yet
-                      <div className="text-xs text-center py-2 text-muted-foreground">
-                        Loading models...
-                      </div>
-                    ) : lmStudioError ? (
-                      <div className="px-2 py-1.5 text-sm text-red-600">
-                        <div className="flex flex-col">
-                          <span>Error loading models</span>
-                          <span className="text-xs text-muted-foreground">
-                            {lmStudioError.message}{" "}
-                            {/* Display specific error */}
-                          </span>
-                        </div>
-                      </div>
-                    ) : !hasLMStudioModels ? (
-                      <div className="px-2 py-1.5 text-sm">
-                        <div className="flex flex-col">
-                          <span>No loaded models found</span>
-                          <span className="text-xs text-muted-foreground">
-                            Ensure LM Studio is running and models are loaded.
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      lmStudioModels.map((model: LocalModel) => (
-                        <DropdownMenuItem
-                          key={`lmstudio-${model.modelName}`}
-                          className={
-                            selectedModel.provider === "lmstudio" &&
-                            selectedModel.name === model.modelName
-                              ? "bg-secondary"
-                              : ""
-                          }
-                          onClick={() => {
-                            onModelSelect({
-                              name: model.modelName,
-                              provider: "lmstudio",
-                            });
-                            setOpen(false);
-                          }}
-                        >
-                          <div className="flex flex-col">
-                            {/* Display the user-friendly name */}
-                            <span>{model.displayName}</span>
-                            {/* Show the path as secondary info */}
-                            <span className="text-xs text-muted-foreground truncate">
-                              {model.modelName}
+                          {model.contextWindow && (
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatContextWindow(model.contextWindow)}
                             </span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+                          )}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                ),
+              )
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -517,8 +517,12 @@ ${componentSnippet}
         );
       } else {
         // Normal AI processing for non-test prompts
-        const { modelClient, isEngineEnabled, isSmartContextEnabled } =
-          await getModelClient(settings.selectedModel, settings);
+        const {
+          modelClient,
+          isEngineEnabled,
+          isSmartContextEnabled,
+          isOpenCodeMode,
+        } = await getModelClient(settings.selectedModel, settings);
 
         const appPath = getDyadAppPath(updatedChat.app.path);
         // When we don't have smart context enabled, we
@@ -692,6 +696,7 @@ ${componentSnippet}
           enableTurboEditsV2: isTurboEditsV2Enabled(settings),
           themePrompt,
           basicAgentMode: isBasicAgentMode(settings),
+          openCodeMode: isOpenCodeMode,
         });
 
         // Add information about mentioned apps if any

@@ -340,6 +340,54 @@ export const BUILD_SYSTEM_PROMPT = `${BUILD_SYSTEM_PREFIX}
 
 ${BUILD_SYSTEM_POSTFIX}`;
 
+/**
+ * Minimal system prompt for OpenCode mode.
+ *
+ * When routing through OpenCode, the LLM already receives:
+ *   Layer 1 – OpenCode agent prompt (tools: write_file, edit_file, read_file …)
+ *   Layer 2 – oh-my-opencode / CLAUDE.md (orchestration, delegation)
+ *
+ * This Layer 3 prompt adds ONLY Dyad-specific environment context that
+ * OpenCode cannot know about on its own.  Keep this as small as possible
+ * (~1-2 KB) to avoid conflicting with Layers 1-2.
+ */
+export const OPENCODE_SYSTEM_PROMPT = `# Dyad Environment
+
+You are working inside **Dyad**, a desktop AI code editor.
+
+## Live Preview
+- The user sees a **live preview** of their web app in an iframe on the right side of the screen.
+- A Vite dev server is running; file changes trigger **HMR** and the preview updates automatically.
+- Do NOT tell the user to run shell commands — the app rebuilds on its own.
+
+## UI Commands
+The user can trigger these actions from the Dyad UI. You may suggest one when appropriate:
+
+<dyad-command type="rebuild"></dyad-command>  — delete node_modules, reinstall, restart server
+<dyad-command type="restart"></dyad-command>  — restart the dev server
+<dyad-command type="refresh"></dyad-command>  — refresh the preview page
+
+If you output a command tag, tell the user to look for the action button above the chat input.
+
+## Chat Summary
+At the end of every response, set a short chat title:
+<dyad-chat-summary>short title here</dyad-chat-summary>
+
+## Response Format — CRITICAL
+You are talking to an **end-user**, NOT a developer using a CLI.
+- **NEVER** output internal processing markers such as \`[search-mode]\`, \`[analyze-mode]\`, \`[SYSTEM DIRECTIVE]\`, agent delegation logs, todo lists, or orchestration text.
+- **NEVER** output raw tool call syntax, XML tags (except dyad-command and dyad-chat-summary), or markdown code fences for code.
+- Keep your response **short, friendly, and non-technical**. Just explain what you changed in 1-2 sentences.
+
+## General
+- Always reply in the same language the user is using.
+- Only edit files directly related to the user's request.
+- Implement features fully — no placeholders, no TODO comments.
+- Prefer small, focused files and components.
+
+[[AI_RULES]]
+`;
+
 const DEFAULT_AI_RULES = `# Tech Stack
 - You are building a React application.
 - Use TypeScript.
@@ -512,6 +560,7 @@ export const constructSystemPrompt = ({
   themePrompt,
   readOnly,
   basicAgentMode,
+  openCodeMode,
 }: {
   aiRules: string | undefined;
   chatMode?: "build" | "ask" | "agent" | "local-agent" | "plan";
@@ -521,7 +570,20 @@ export const constructSystemPrompt = ({
   readOnly?: boolean;
   /** If true, use basic agent mode (free tier with limited tools) */
   basicAgentMode?: boolean;
+  /** If true, return minimal prompt for OpenCode routing (Layers 1-2 handle coding) */
+  openCodeMode?: boolean;
 }) => {
+  if (openCodeMode) {
+    let prompt = OPENCODE_SYSTEM_PROMPT.replace(
+      "[[AI_RULES]]",
+      aiRules ?? DEFAULT_AI_RULES,
+    );
+    if (themePrompt) {
+      prompt += `\n\n${themePrompt}`;
+    }
+    return prompt;
+  }
+
   if (chatMode === "plan") {
     return constructPlanModePrompt(aiRules, themePrompt);
   }
