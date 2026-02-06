@@ -142,6 +142,27 @@ export function readSettings(): UserSettings {
         encryptionType,
       };
     }
+    const vercel = combinedSettings.vercel;
+    if (vercel) {
+      if (vercel.refreshToken) {
+        const encryptionType = vercel.refreshToken.encryptionType;
+        if (encryptionType) {
+          vercel.refreshToken = {
+            value: decrypt(vercel.refreshToken),
+            encryptionType,
+          };
+        }
+      }
+      if (vercel.accessToken) {
+        const encryptionType = vercel.accessToken.encryptionType;
+        if (encryptionType) {
+          vercel.accessToken = {
+            value: decrypt(vercel.accessToken),
+            encryptionType,
+          };
+        }
+      }
+    }
     for (const provider in combinedSettings.providerSettings) {
       if (combinedSettings.providerSettings[provider].apiKey) {
         const encryptionType =
@@ -226,6 +247,18 @@ export function writeSettings(settings: Partial<UserSettings>): void {
       if (newSettings.neon.refreshToken) {
         newSettings.neon.refreshToken = encrypt(
           newSettings.neon.refreshToken.value,
+        );
+      }
+    }
+    if (newSettings.vercel) {
+      if (newSettings.vercel.accessToken) {
+        newSettings.vercel.accessToken = encrypt(
+          newSettings.vercel.accessToken.value,
+        );
+      }
+      if (newSettings.vercel.refreshToken) {
+        newSettings.vercel.refreshToken = encrypt(
+          newSettings.vercel.refreshToken.value,
         );
       }
     }

@@ -6,6 +6,7 @@ import {
   getLanguageModels,
   getLanguageModelsByProviders,
 } from "../shared/language_model_helpers";
+import { getOpenCodeAgents } from "../utils/opencode_api";
 import { IpcMainInvokeEvent } from "electron";
 
 const logger = log.scope("language_model_handlers");
@@ -43,4 +44,8 @@ export function registerLanguageModelHandlers() {
       return getLanguageModelsByProviders();
     },
   );
+
+  handle("get-opencode-agents", async () => {
+    return getOpenCodeAgents();
+  });
 }

@@ -15,6 +15,9 @@ import {
 import {} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDeepLink } from "@/contexts/DeepLinkContext";
+import { toast } from "sonner";
+import { oauthEndpoints } from "@/lib/oauthConfig";
 
 interface VercelConnectorProps {
   appId: number | null;
@@ -219,11 +222,14 @@ function UnconnectedVercelConnector({
   refreshSettings,
   refreshApp,
 }: UnconnectedVercelConnectorProps) {
+  const { lastDeepLink, clearLastDeepLink } = useDeepLink();
+
   // --- Manual Token Entry State ---
   const [accessToken, setAccessToken] = useState("");
   const [isSavingToken, setIsSavingToken] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenSuccess, setTokenSuccess] = useState(false);
+  const [showManualToken, setShowManualToken] = useState(false);
 
   // --- Project Setup State ---
   const [projectSetupMode, setProjectSetupMode] = useState<
@@ -253,12 +259,26 @@ function UnconnectedVercelConnector({
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const hasVercelToken =
+    !!settings?.vercel?.accessToken || !!settings?.vercelAccessToken;
+
+  useEffect(() => {
+    const handleDeepLink = async () => {
+      if (lastDeepLink?.type === "vercel-oauth-return") {
+        await refreshSettings();
+        toast.success("Successfully connected to Vercel!");
+        clearLastDeepLink();
+      }
+    };
+    handleDeepLink();
+  }, [lastDeepLink?.timestamp]);
+
   // Load available projects when Vercel is connected
   useEffect(() => {
-    if (settings?.vercelAccessToken && projectSetupMode === "existing") {
+    if (hasVercelToken && projectSetupMode === "existing") {
       loadAvailableProjects();
     }
-  }, [settings?.vercelAccessToken, projectSetupMode]);
+  }, [hasVercelToken, projectSetupMode]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -370,114 +390,99 @@ function UnconnectedVercelConnector({
     }
   };
 
-  if (!settings?.vercelAccessToken) {
+  if (!hasVercelToken) {
     return (
       <div className="mt-1 w-full" data-testid="vercel-unconnected-project">
-        <div className="w-ful">
+        <div className="w-full">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-medium">Connect to Vercel</h3>
           </div>
 
           <div className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-              <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                To connect your app to Vercel, you'll need to create an access
-                token:
-              </p>
-              <ol className="list-decimal list-inside text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <li>If you don't have a Vercel account, sign up first</li>
-                <li>Go to Vercel settings to create a token</li>
-                <li>Copy the token and paste it below</li>
-              </ol>
+            <Button
+              onClick={async () => {
+                await ipc.system.openExternalUrl(
+                  oauthEndpoints.vercel.login,
+                );
+              }}
+              variant="outline"
+              className="w-full h-10"
+              data-testid="connect-vercel-button"
+            >
+              Connect to Vercel with OAuth
+            </Button>
 
-              <div className="flex gap-2 mt-3">
-                <Button
-                  onClick={() => {
-                    ipc.system.openExternalUrl("https://vercel.com/signup");
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Sign Up for Vercel
-                </Button>
-                <Button
-                  onClick={() => {
-                    ipc.system.openExternalUrl(
-                      "https://vercel.com/account/settings/tokens",
-                    );
-                  }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Open Vercel Settings
-                </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">
+                  or
+                </span>
               </div>
             </div>
 
-            <form onSubmit={handleSaveAccessToken} className="space-y-3">
-              <div>
-                <Label className="block text-sm font-medium mb-1">
-                  Vercel Access Token
-                </Label>
-                <Input
-                  type="password"
-                  placeholder="Enter your Vercel access token"
-                  value={accessToken}
-                  onChange={(e) => setAccessToken(e.target.value)}
-                  disabled={isSavingToken}
-                  className="w-full"
-                />
-              </div>
+            {showManualToken ? (
+              <>
+                <form onSubmit={handleSaveAccessToken} className="space-y-3">
+                  <div>
+                    <Label className="block text-sm font-medium mb-1">
+                      Vercel Access Token
+                    </Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter your Vercel access token"
+                      value={accessToken}
+                      onChange={(e) => setAccessToken(e.target.value)}
+                      disabled={isSavingToken}
+                      className="w-full"
+                    />
+                  </div>
 
-              <Button
-                type="submit"
-                disabled={!accessToken.trim() || isSavingToken}
-                className="w-full"
-              >
-                {isSavingToken ? (
-                  <>
-                    <svg
-                      className="animate-spin h-4 w-4 mr-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      disabled={!accessToken.trim() || isSavingToken}
+                      className="flex-1"
                     >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Saving Token...
-                  </>
-                ) : (
-                  "Save Access Token"
+                      {isSavingToken ? "Saving Token..." : "Save Access Token"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowManualToken(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+
+                {tokenError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                    <p className="text-sm text-red-800 dark:text-red-200">
+                      {tokenError}
+                    </p>
+                  </div>
                 )}
+
+                {tokenSuccess && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
+                    <p className="text-sm text-green-800 dark:text-green-200">
+                      Successfully connected to Vercel! You can now set up your
+                      project below.
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full text-sm text-gray-500"
+                onClick={() => setShowManualToken(true)}
+              >
+                Use manual access token instead
               </Button>
-            </form>
-
-            {tokenError && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  {tokenError}
-                </p>
-              </div>
-            )}
-
-            {tokenSuccess && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
-                <p className="text-sm text-green-800 dark:text-green-200">
-                  Successfully connected to Vercel! You can now set up your
-                  project below.
-                </p>
-              </div>
             )}
           </div>
         </div>

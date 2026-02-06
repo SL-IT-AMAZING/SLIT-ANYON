@@ -524,6 +524,152 @@ ${componentSnippet}
           isOpenCodeMode,
         } = await getModelClient(settings.selectedModel, settings);
 
+        // OpenCode mode: skip all Dyad-specific processing (codebase extraction,
+        // history assembly, system prompt construction, post-response file processing).
+        // OpenCode handles everything internally via its own tools and sessions.
+        if (isOpenCodeMode) {
+          const aiRules = await readAiRules(
+            getDyadAppPath(updatedChat.app.path),
+          );
+          const openCodeSystemPrompt = constructSystemPrompt({
+            aiRules,
+            chatMode:
+              settings.selectedChatMode === "agent"
+                ? "build"
+                : settings.selectedChatMode,
+            enableTurboEditsV2: false,
+            themePrompt: "",
+            basicAgentMode: false,
+            openCodeMode: true,
+          });
+
+          // Send only the current user prompt — no codebase, no history.
+          // OpenCode manages its own session history and reads files via tools.
+          const openCodeMessages: ModelMessage[] = [
+            { role: "user", content: userPrompt },
+          ];
+
+          let lastDbSaveAt = 0;
+          const openCodeProcessChunkUpdate = async ({
+            fullResponse,
+          }: {
+            fullResponse: string;
+          }) => {
+            partialResponses.set(req.chatId, fullResponse);
+            const now = Date.now();
+            if (now - lastDbSaveAt >= 150) {
+              await db
+                .update(messages)
+                .set({ content: fullResponse })
+                .where(eq(messages.id, placeholderAssistantMessage.id));
+              lastDbSaveAt = now;
+            }
+
+            const currentMessages = [...updatedChat.messages];
+            if (
+              currentMessages.length > 0 &&
+              currentMessages[currentMessages.length - 1].role === "assistant"
+            ) {
+              currentMessages[currentMessages.length - 1].content =
+                fullResponse;
+            }
+
+            safeSend(event.sender, "chat:response:chunk", {
+              chatId: req.chatId,
+              messages: currentMessages,
+            });
+            return fullResponse;
+          };
+
+          try {
+            const streamResult = streamText({
+              maxOutputTokens: await getMaxTokens(settings.selectedModel),
+              temperature: await getTemperature(settings.selectedModel),
+              maxRetries: 2,
+              model: modelClient.model,
+              system: openCodeSystemPrompt,
+              messages: openCodeMessages,
+              abortSignal: abortController.signal,
+              onFinish: (response) => {
+                const totalTokens = response.usage?.totalTokens;
+                if (typeof totalTokens === "number") {
+                  void db
+                    .update(messages)
+                    .set({ maxTokensUsed: totalTokens })
+                    .where(eq(messages.id, placeholderAssistantMessage.id))
+                    .catch((error) => {
+                      logger.error(
+                        "Failed to save total tokens for assistant message",
+                        error,
+                      );
+                    });
+                }
+              },
+              onError: (error: any) => {
+                const errorMessage = (error as any)?.error?.message;
+                const message = errorMessage || JSON.stringify(error);
+                logger.error(`OpenCode stream error: ${message}`);
+                event.sender.send("chat:response:error", {
+                  chatId: req.chatId,
+                  error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
+                });
+                activeStreams.delete(req.chatId);
+              },
+            });
+
+            const result = await processStreamChunks({
+              fullStream: streamResult.fullStream,
+              fullResponse,
+              abortController,
+              chatId: req.chatId,
+              processResponseChunkUpdate: openCodeProcessChunkUpdate,
+            });
+            fullResponse = result.fullResponse;
+          } catch (streamError) {
+            if (abortController.signal.aborted) {
+              const partialResponse = partialResponses.get(req.chatId);
+              if (partialResponse) {
+                await db
+                  .update(messages)
+                  .set({
+                    content: `${partialResponse}\n\n[Response cancelled by user]`,
+                  })
+                  .where(eq(messages.id, placeholderAssistantMessage.id));
+                partialResponses.delete(req.chatId);
+              }
+              return req.chatId;
+            }
+            throw streamError;
+          }
+
+          // Save response and send completion — skip processFullResponseActions
+          // since OpenCode writes files directly to the filesystem.
+          if (!abortController.signal.aborted && fullResponse) {
+            const chatTitle = fullResponse.match(
+              /<dyad-chat-summary>(.*?)<\/dyad-chat-summary>/,
+            );
+            if (chatTitle) {
+              await db
+                .update(chats)
+                .set({ title: chatTitle[1] })
+                .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+            }
+
+            await db
+              .update(messages)
+              .set({ content: fullResponse })
+              .where(eq(messages.id, placeholderAssistantMessage.id));
+
+            safeSend(event.sender, "chat:response:end", {
+              chatId: req.chatId,
+              updatedFiles: false,
+              chatSummary: chatTitle?.[1],
+            } satisfies ChatResponseEnd);
+          }
+
+          return req.chatId;
+        }
+
         const appPath = getDyadAppPath(updatedChat.app.path);
         // When we don't have smart context enabled, we
         // only include the selected components' files for codebase context.

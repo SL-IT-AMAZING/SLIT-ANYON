@@ -45,6 +45,7 @@ export interface OpenCodeProviderSettings {
   hostname?: string;
   port?: number;
   password?: string;
+  agentName?: string;
 }
 
 export interface OpenCodeProvider {
@@ -228,12 +229,14 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           modelID: this.modelId,
         },
       }),
+      ...(this.settings.agentName && { agent: this.settings.agentName }),
     };
 
     logger.debug(`Starting SSE stream for session ${session.id}...`);
 
     const textId = `opencode-text-${Date.now()}`;
     let messageId: string | null = null;
+    let assistantMessageId: string | null = null;
     let textStarted = false;
     let inputTokens = 0;
     let outputTokens = 0;
@@ -323,26 +326,25 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                     `Part updated: type=${part.type}, hasDelta=${!!delta}, hasText=${!!part.text}`,
                   );
 
-                  if (messageId === null) {
-                    messageId = part.messageID;
-                  } else if (part.messageID !== messageId) {
-                    continue;
-                  }
-
                   if (part.type === "text") {
+                    if (!delta) continue;
+
+                    if (messageId === null) {
+                      messageId = part.messageID;
+                    } else if (part.messageID !== messageId) {
+                      continue;
+                    }
+
                     if (!textStarted) {
                       controller.enqueue({ type: "text-start", id: textId });
                       textStarted = true;
                     }
 
-                    const textDelta = delta || part.text || "";
-                    if (textDelta) {
-                      controller.enqueue({
-                        type: "text-delta",
-                        id: textId,
-                        delta: textDelta,
-                      });
-                    }
+                    controller.enqueue({
+                      type: "text-delta",
+                      id: textId,
+                      delta,
+                    });
                   }
                 } else if (
                   event.type === "message.updated" &&
@@ -350,25 +352,29 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                 ) {
                   const info = event.properties.info;
 
-                  if (info.role === "assistant" && info.id === messageId) {
-                    finished = true;
+                  if (info.role === "assistant") {
+                    if (assistantMessageId === null) {
+                      assistantMessageId = info.id;
+                    } else if (info.id === assistantMessageId) {
+                      finished = true;
 
-                    if (textStarted) {
-                      controller.enqueue({ type: "text-end", id: textId });
+                      if (textStarted) {
+                        controller.enqueue({ type: "text-end", id: textId });
+                      }
+
+                      controller.enqueue({
+                        type: "finish",
+                        finishReason: "stop",
+                        usage: {
+                          inputTokens,
+                          outputTokens,
+                          totalTokens: inputTokens + outputTokens,
+                        },
+                      });
+
+                      controller.close();
+                      break;
                     }
-
-                    controller.enqueue({
-                      type: "finish",
-                      finishReason: "stop",
-                      usage: {
-                        inputTokens,
-                        outputTokens,
-                        totalTokens: inputTokens + outputTokens,
-                      },
-                    });
-
-                    controller.close();
-                    break;
                   }
                 } else if (event.type === "session.error") {
                   const error = event.properties.error;

@@ -12,7 +12,7 @@ const logger = log.scope("getModelClient");
 
 export async function getModelClient(
   model: LargeLanguageModel,
-  _settings: UserSettings,
+  settings: UserSettings,
 ): Promise<{
   modelClient: ModelClient;
   isEngineEnabled?: boolean;
@@ -21,7 +21,9 @@ export async function getModelClient(
 }> {
   logger.info(`Using OpenCode for model: ${model.provider}/${model.name}`);
 
-  const provider = createOpenCodeProvider();
+  const provider = createOpenCodeProvider({
+    agentName: settings.selectedAgent,
+  });
   return {
     modelClient: {
       model: provider(model.name, model.provider),
