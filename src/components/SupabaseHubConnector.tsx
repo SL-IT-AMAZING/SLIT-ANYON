@@ -86,9 +86,7 @@ export function SupabaseHubConnector() {
         </p>
         <img
           onClick={async () => {
-            await ipc.system.openExternalUrl(
-              oauthEndpoints.supabase.login,
-            );
+            await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
           }}
           src={isDarkMode ? connectSupabaseDark : connectSupabaseLight}
           alt="Connect to Supabase"

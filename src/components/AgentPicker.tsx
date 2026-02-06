@@ -85,7 +85,7 @@ export function AgentPicker() {
                       "ml-auto h-4 w-4 shrink-0",
                       selectedAgent?.name === agent.name
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>

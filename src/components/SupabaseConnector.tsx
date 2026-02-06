@@ -142,9 +142,7 @@ export function SupabaseConnector({ appId }: { appId: number }) {
         fakeProjectId: "fake-project-id",
       });
     } else {
-      await ipc.system.openExternalUrl(
-        oauthEndpoints.supabase.login,
-      );
+      await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
     }
   };
 

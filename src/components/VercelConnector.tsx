@@ -401,9 +401,7 @@ function UnconnectedVercelConnector({
           <div className="space-y-4">
             <Button
               onClick={async () => {
-                await ipc.system.openExternalUrl(
-                  oauthEndpoints.vercel.login,
-                );
+                await ipc.system.openExternalUrl(oauthEndpoints.vercel.login);
               }}
               variant="outline"
               className="w-full h-10"

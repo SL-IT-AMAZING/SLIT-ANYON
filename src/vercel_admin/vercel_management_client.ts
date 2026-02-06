@@ -91,7 +91,5 @@ export async function getVercelAccessToken(): Promise<string> {
     return legacyToken;
   }
 
-  throw new Error(
-    "Vercel access token not found. Please authenticate first.",
-  );
+  throw new Error("Vercel access token not found. Please authenticate first.");
 }

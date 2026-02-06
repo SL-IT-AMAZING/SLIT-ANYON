@@ -19,7 +19,11 @@ export function generatePKCE(): {
 export async function exchangeCodeForToken(
   tokenUrl: string,
   params: Record<string, string>,
-): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
+): Promise<{
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}> {
   const response = await fetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -38,7 +42,11 @@ export async function exchangeCodeForToken(
 export async function refreshAccessToken(
   tokenUrl: string,
   params: Record<string, string>,
-): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
+): Promise<{
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}> {
   const response = await fetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

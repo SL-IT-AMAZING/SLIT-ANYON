@@ -122,16 +122,13 @@ export async function refreshSupabaseToken(): Promise<void> {
 
   try {
     // Make request to Supabase refresh endpoint
-    const response = await fetch(
-      oauthEndpoints.supabase.refresh,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
+    const response = await fetch(oauthEndpoints.supabase.refresh, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ refreshToken }),
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -251,16 +248,13 @@ async function refreshSupabaseTokenForOrganization(
   }
 
   try {
-    const response = await fetch(
-      oauthEndpoints.supabase.refresh,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
+    const response = await fetch(oauthEndpoints.supabase.refresh, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ refreshToken }),
+    });
 
     if (!response.ok) {
       throw new Error(

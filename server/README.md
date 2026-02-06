@@ -29,15 +29,15 @@ VERCEL_CLIENT_SECRET=
 
 ### 환경 변수 설명
 
-| 변수명 | 설명 |
-|--------|------|
-| `OAUTH_SERVER_URL` | 배포된 OAuth 서버의 URL (로컬 개발 시 `http://localhost:3000`) |
-| `NEON_CLIENT_ID` | Neon OAuth 앱의 클라이언트 ID |
-| `NEON_CLIENT_SECRET` | Neon OAuth 앱의 클라이언트 시크릿 |
-| `SUPABASE_CLIENT_ID` | Supabase OAuth 앱의 클라이언트 ID |
-| `SUPABASE_CLIENT_SECRET` | Supabase OAuth 앱의 클라이언트 시크릿 |
-| `VERCEL_CLIENT_ID` | Vercel OAuth 앱의 클라이언트 ID |
-| `VERCEL_CLIENT_SECRET` | Vercel OAuth 앱의 클라이언트 시크릿 |
+| 변수명                   | 설명                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| `OAUTH_SERVER_URL`       | 배포된 OAuth 서버의 URL (로컬 개발 시 `http://localhost:3000`) |
+| `NEON_CLIENT_ID`         | Neon OAuth 앱의 클라이언트 ID                                  |
+| `NEON_CLIENT_SECRET`     | Neon OAuth 앱의 클라이언트 시크릿                              |
+| `SUPABASE_CLIENT_ID`     | Supabase OAuth 앱의 클라이언트 ID                              |
+| `SUPABASE_CLIENT_SECRET` | Supabase OAuth 앱의 클라이언트 시크릿                          |
+| `VERCEL_CLIENT_ID`       | Vercel OAuth 앱의 클라이언트 ID                                |
+| `VERCEL_CLIENT_SECRET`   | Vercel OAuth 앱의 클라이언트 시크릿                            |
 
 ## OAuth App 등록 가이드
 
@@ -106,17 +106,17 @@ OAUTH_SERVER_URL=http://localhost:3000
 
 ## API 엔드포인트
 
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | `/api/oauth/neon/login` | Neon OAuth 인증 시작 (302 리다이렉트) |
-| GET | `/api/oauth/neon/callback` | Neon OAuth 콜백 → `dyad://neon-oauth-return` |
-| POST | `/api/oauth/neon/refresh` | Neon 액세스 토큰 갱신 (body: `{refreshToken}`) |
-| GET | `/api/oauth/supabase/login` | Supabase OAuth 인증 시작 (302 리다이렉트) |
-| GET | `/api/oauth/supabase/callback` | Supabase OAuth 콜백 → `dyad://supabase-oauth-return` |
-| POST | `/api/oauth/supabase/refresh` | Supabase 액세스 토큰 갱신 (body: `{refreshToken}`) |
-| GET | `/api/oauth/vercel/login` | Vercel OAuth 인증 시작 (PKCE 사용) |
-| GET | `/api/oauth/vercel/callback` | Vercel OAuth 콜백 → `dyad://vercel-oauth-return` |
-| POST | `/api/oauth/vercel/refresh` | Vercel 액세스 토큰 갱신 (body: `{refreshToken}`) |
+| Method | Path                           | 설명                                                 |
+| ------ | ------------------------------ | ---------------------------------------------------- |
+| GET    | `/api/oauth/neon/login`        | Neon OAuth 인증 시작 (302 리다이렉트)                |
+| GET    | `/api/oauth/neon/callback`     | Neon OAuth 콜백 → `dyad://neon-oauth-return`         |
+| POST   | `/api/oauth/neon/refresh`      | Neon 액세스 토큰 갱신 (body: `{refreshToken}`)       |
+| GET    | `/api/oauth/supabase/login`    | Supabase OAuth 인증 시작 (302 리다이렉트)            |
+| GET    | `/api/oauth/supabase/callback` | Supabase OAuth 콜백 → `dyad://supabase-oauth-return` |
+| POST   | `/api/oauth/supabase/refresh`  | Supabase 액세스 토큰 갱신 (body: `{refreshToken}`)   |
+| GET    | `/api/oauth/vercel/login`      | Vercel OAuth 인증 시작 (PKCE 사용)                   |
+| GET    | `/api/oauth/vercel/callback`   | Vercel OAuth 콜백 → `dyad://vercel-oauth-return`     |
+| POST   | `/api/oauth/vercel/refresh`    | Vercel 액세스 토큰 갱신 (body: `{refreshToken}`)     |
 
 ### Refresh 엔드포인트 사용 예시
 
@@ -127,6 +127,7 @@ curl -X POST https://oauth.yourcompany.com/api/oauth/neon/refresh \
 ```
 
 **응답 형식**:
+
 ```json
 {
   "accessToken": "new_access_token",
@@ -172,7 +173,7 @@ curl -X POST https://oauth.yourcompany.com/api/oauth/neon/refresh \
 ### 플로우
 
 1. **Login 엔드포인트**: 사용자를 OAuth 제공자로 리다이렉트
-2. **Callback 엔드포인트**: 
+2. **Callback 엔드포인트**:
    - OAuth 제공자로부터 인증 코드 수신
    - 액세스 토큰과 리프레시 토큰 교환
    - `dyad://` 딥링크로 토큰 데이터와 함께 리다이렉트
@@ -199,7 +200,7 @@ OAuth 서버 배포 후, Dyad Electron 앱의 설정을 업데이트해야 합�
 2. `OAUTH_SERVER_URL` 상수를 배포된 서버 URL로 변경:
 
 ```typescript
-export const OAUTH_SERVER_URL = 'https://oauth.yourcompany.com';
+export const OAUTH_SERVER_URL = "https://oauth.yourcompany.com";
 ```
 
 3. Electron 앱 재빌드
@@ -211,6 +212,7 @@ export const OAUTH_SERVER_URL = 'https://oauth.yourcompany.com';
 ### Redirect URI 불일치 오류
 
 OAuth 제공자에서 "redirect_uri_mismatch" 오류가 발생하면:
+
 - 환경 변수의 `OAUTH_SERVER_URL`이 정확한지 확인
 - OAuth 앱 설정의 Redirect URI가 정확히 일치하는지 확인 (끝에 슬래시 유무 포함)
 

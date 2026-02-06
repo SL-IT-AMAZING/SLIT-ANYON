@@ -134,7 +134,9 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     return session;
   }
 
-  private extractSystemPrompt(options: LanguageModelV2CallOptions): string | undefined {
+  private extractSystemPrompt(
+    options: LanguageModelV2CallOptions,
+  ): string | undefined {
     const { prompt } = options;
     const systemParts: string[] = [];
 
