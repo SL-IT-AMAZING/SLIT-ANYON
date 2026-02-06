@@ -13,6 +13,7 @@ const logger = log.scope("getModelClient");
 export async function getModelClient(
   model: LargeLanguageModel,
   settings: UserSettings,
+  options?: { chatId?: number },
 ): Promise<{
   modelClient: ModelClient;
   isEngineEnabled?: boolean;
@@ -21,8 +22,13 @@ export async function getModelClient(
 }> {
   logger.info(`Using OpenCode for model: ${model.provider}/${model.name}`);
 
+  const conversationId = options?.chatId
+    ? `dyad-chat-${options.chatId}`
+    : undefined;
+
   const provider = createOpenCodeProvider({
     agentName: settings.selectedAgent,
+    conversationId,
   });
   return {
     modelClient: {

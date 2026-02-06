@@ -522,7 +522,9 @@ ${componentSnippet}
           isEngineEnabled,
           isSmartContextEnabled,
           isOpenCodeMode,
-        } = await getModelClient(settings.selectedModel, settings);
+        } = await getModelClient(settings.selectedModel, settings, {
+          chatId: req.chatId,
+        });
 
         // OpenCode mode: skip all Dyad-specific processing (codebase extraction,
         // history assembly, system prompt construction, post-response file processing).

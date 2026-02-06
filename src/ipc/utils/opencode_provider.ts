@@ -29,10 +29,18 @@ interface OpenCodeEvent {
   properties: {
     part?: OpenCodePart;
     delta?: string;
+    sessionID?: string;
     info?: {
       id: string;
       role: string;
       sessionID: string;
+      tokens?: {
+        input: number;
+        output: number;
+      };
+    };
+    status?: {
+      type: string;
     };
     error?: {
       name: string;
@@ -46,6 +54,7 @@ export interface OpenCodeProviderSettings {
   port?: number;
   password?: string;
   agentName?: string;
+  conversationId?: string;
 }
 
 export interface OpenCodeProvider {
@@ -216,7 +225,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     request?: { body?: unknown };
     response?: { headers?: Record<string, string> };
   }> {
-    const conversationId = `dyad-${Date.now()}`;
+    const conversationId = this.settings.conversationId ?? `dyad-${Date.now()}`;
     const session = await this.getOrCreateSession(conversationId);
     const userMessage = this.extractUserMessage(options);
     const systemPrompt = this.extractSystemPrompt(options);
@@ -238,7 +247,6 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
     const textId = `opencode-text-${Date.now()}`;
     let messageId: string | null = null;
-    let assistantMessageId: string | null = null;
     let textStarted = false;
     let inputTokens = 0;
     let outputTokens = 0;
@@ -324,6 +332,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   const part = event.properties.part;
                   const delta = event.properties.delta;
 
+                  if (part.sessionID !== session.id) continue;
+
                   logger.debug(
                     `Part updated: type=${part.type}, hasDelta=${!!delta}, hasText=${!!part.text}`,
                   );
@@ -349,37 +359,50 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                     });
                   }
                 } else if (
+                  event.type === "session.status" &&
+                  event.properties.sessionID === session.id &&
+                  event.properties.status?.type === "idle"
+                ) {
+                  finished = true;
+
+                  if (textStarted) {
+                    controller.enqueue({ type: "text-end", id: textId });
+                  }
+
+                  controller.enqueue({
+                    type: "finish",
+                    finishReason: "stop",
+                    usage: {
+                      inputTokens,
+                      outputTokens,
+                      totalTokens: inputTokens + outputTokens,
+                    },
+                  });
+
+                  controller.close();
+                  break;
+                } else if (
                   event.type === "message.updated" &&
                   event.properties.info
                 ) {
                   const info = event.properties.info;
 
-                  if (info.role === "assistant") {
-                    if (assistantMessageId === null) {
-                      assistantMessageId = info.id;
-                    } else if (info.id === assistantMessageId) {
-                      finished = true;
-
-                      if (textStarted) {
-                        controller.enqueue({ type: "text-end", id: textId });
-                      }
-
-                      controller.enqueue({
-                        type: "finish",
-                        finishReason: "stop",
-                        usage: {
-                          inputTokens,
-                          outputTokens,
-                          totalTokens: inputTokens + outputTokens,
-                        },
-                      });
-
-                      controller.close();
-                      break;
+                  if (
+                    info.role === "assistant" &&
+                    info.sessionID === session.id
+                  ) {
+                    if (info.tokens) {
+                      inputTokens = info.tokens.input ?? 0;
+                      outputTokens = info.tokens.output ?? 0;
                     }
                   }
                 } else if (event.type === "session.error") {
                   const error = event.properties.error;
+                  if (
+                    event.properties.sessionID &&
+                    event.properties.sessionID !== session.id
+                  )
+                    continue;
                   logger.error("Session error:", error);
                   controller.error(
                     new Error(error?.message || "Unknown session error"),

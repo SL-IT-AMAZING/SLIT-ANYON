@@ -29,8 +29,12 @@ export function AgentPicker() {
   });
 
   const selectedAgent = useMemo(() => {
-    const agentName = settings?.selectedAgent ?? "sisyphus";
-    return agents.find((a) => a.name === agentName);
+    const agentName = settings?.selectedAgent;
+    if (agentName) {
+      const match = agents.find((a) => a.name === agentName);
+      if (match) return match;
+    }
+    return agents[0];
   }, [agents, settings?.selectedAgent]);
 
   const handleSelect = (agent: (typeof agents)[number]) => {
@@ -50,7 +54,7 @@ export function AgentPicker() {
           />
         }
       >
-        <span className="truncate">{selectedAgent?.name ?? "sisyphus"}</span>
+        <span className="truncate">{selectedAgent?.name ?? "Agent"}</span>
         <ChevronsUpDownIcon className="h-3 w-3 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-0" align="start">
