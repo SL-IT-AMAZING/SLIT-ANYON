@@ -29,9 +29,9 @@ export function AgentPicker() {
   });
 
   const selectedAgent = useMemo(() => {
-    const agentName = settings.selectedAgent ?? "sisyphus";
+    const agentName = settings?.selectedAgent ?? "sisyphus";
     return agents.find((a) => a.name === agentName);
-  }, [agents, settings.selectedAgent]);
+  }, [agents, settings?.selectedAgent]);
 
   const handleSelect = (agent: (typeof agents)[number]) => {
     updateSettings({ selectedAgent: agent.name });
