@@ -7,6 +7,9 @@ const ReactCompilerConfig = {};
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __SENTRY_DSN__: JSON.stringify(process.env.SENTRY_DSN || ""),
+  },
   plugins: [
     react({
       babel: {

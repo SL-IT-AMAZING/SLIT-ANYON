@@ -2,6 +2,7 @@ import { windowsSign } from "./windowsSign";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerAppImage } from "./makers/MakerAppImage";
@@ -9,6 +10,7 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
+import fs from "node:fs";
 
 console.log("AZURE_CODE_SIGNING_DLIB", process.env.AZURE_CODE_SIGNING_DLIB);
 
@@ -90,7 +92,14 @@ const config: ForgeConfig = {
         },
     asar: true,
     ignore,
-    extraResource: ["node_modules/dugite/git", "node_modules/@vscode"],
+    extraResource: [
+      "node_modules/dugite/git",
+      "node_modules/@vscode",
+      ...(fs.existsSync("vendor/opencode") ? ["vendor/opencode"] : []),
+      ...(fs.existsSync("vendor/oh-my-opencode")
+        ? ["vendor/oh-my-opencode"]
+        : []),
+    ],
     // ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
   rebuildConfig: {
@@ -113,6 +122,10 @@ const config: ForgeConfig = {
             setupIcon: "./assets/icon/logo.ico",
           },
     ),
+    new MakerDMG({
+      icon: "./assets/icon/logo.icns",
+      format: "ULFO",
+    }),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({
       options: {

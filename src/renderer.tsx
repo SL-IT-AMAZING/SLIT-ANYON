@@ -1,9 +1,14 @@
+import { initSentryRenderer } from "./lib/sentry-renderer";
+
+initSentryRenderer();
+
 import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { router } from "./router";
 import { RouterProvider } from "@tanstack/react-router";
 import { PostHogProvider } from "posthog-js/react";
 import posthog from "posthog-js";
+import { version } from "../package.json";
 import { getTelemetryUserId, isTelemetryOptedIn } from "./hooks/useSettings";
 import {
   QueryCache,
@@ -92,8 +97,16 @@ const posthogClient = posthog.init(
       return event;
     },
     persistence: "localStorage",
+    bootstrap: {
+      distinctID: getTelemetryUserId() ?? undefined,
+    },
   },
 );
+
+posthog.register({
+  app_version: version,
+  platform: navigator.platform,
+});
 
 function App() {
   useEffect(() => {

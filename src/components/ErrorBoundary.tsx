@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LightbulbIcon } from "lucide-react";
 import { ErrorComponentProps } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
+import * as Sentry from "@sentry/electron/renderer";
 import { ipc } from "@/ipc/types";
 
 export function ErrorBoundary({ error }: ErrorComponentProps) {
@@ -12,6 +13,7 @@ export function ErrorBoundary({ error }: ErrorComponentProps) {
   useEffect(() => {
     console.error("An error occurred in the route:", error);
     posthog.captureException(error);
+    Sentry.captureException(error);
   }, [error]);
 
   const handleReportBug = async () => {
