@@ -116,3 +116,8 @@ __pycache__/
 
 # Storybook
 storybook-static/
+
+# Temp/debug
+.temp/
+capture/
+verify_opencode_ui.mjs
