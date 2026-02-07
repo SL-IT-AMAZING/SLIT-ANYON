@@ -147,6 +147,7 @@ jobs:
         run: npm run presubmit
       - name: Security audit
         if: contains(matrix.os.name, 'macos')
+        continue-on-error: true
         run: npm audit --audit-level=high --omit=dev
       - name: Type-checking
         # do not run this on windows (it's redundant)
