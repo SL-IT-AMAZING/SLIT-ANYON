@@ -27,10 +27,10 @@ jobs:
     # https://github.com/anthropics/claude-code-action/blob/main/examples/pr-review-filtered-authors.yml
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.pull_request.user.login == 'wwwillchen' ||
-      github.event.pull_request.user.login == 'wwwillchen-bot' ||
-      github.event.pull_request.user.login == 'azizmejri1' ||
-      github.event.pull_request.user.login == 'princeaden1'
+      github.event.pull_request.user.login == 'cosmosjeon' ||
+      github.event.pull_request.user.login == 'JSap0914' ||
+      github.event.pull_request.user.login == 'ownuun' ||
+      github.event.pull_request.user.login == 'slitamazing'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,7 +68,7 @@ jobs:
 
           # See: https://github.com/anthropics/claude-code-action/blob/v1/docs/security.md
           github_token: ${{ secrets.GITHUB_TOKEN }} # bypass OIDC
-          allowed_non_write_users: "princeaden1" # remember, we already filter above.
+          allowed_non_write_users: "cosmosjeon,JSap0914,ownuun,slitamazing"
 
           # Disable progress tracking (try to save tokens)
           track_progress: false

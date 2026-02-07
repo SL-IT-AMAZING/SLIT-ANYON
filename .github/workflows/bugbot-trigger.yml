@@ -17,10 +17,10 @@ jobs:
     # For workflow_dispatch, we check skip tags below since the caller may not have validated them.
     if: |
       github.event_name == 'workflow_dispatch' ||
-      ((github.event.pull_request.user.login == 'wwwillchen' ||
-      github.event.pull_request.user.login == 'wwwillchen-bot' ||
-      github.event.pull_request.user.login == 'azizmejri1' ||
-      github.event.pull_request.user.login == 'princeaden1') &&
+      ((github.event.pull_request.user.login == 'cosmosjeon' ||
+      github.event.pull_request.user.login == 'JSap0914' ||
+      github.event.pull_request.user.login == 'ownuun' ||
+      github.event.pull_request.user.login == 'slitamazing') &&
       !contains(github.event.pull_request.body, '#skip-bugbot') &&
       !contains(github.event.pull_request.body, '#skip-bb'))
     runs-on: ubuntu-latest
@@ -56,7 +56,6 @@ jobs:
         if: steps.check-skip.outputs.skip != 'true'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5
         with:
-          # Use a PAT from wwwillchen to post on their behalf
-          token: ${{ secrets.WWWILLCHEN_PR_RW_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number || inputs.pr_number }}
           body: "@BugBot run"
