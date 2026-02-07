@@ -20,6 +20,7 @@ function convertApiTemplate(apiTemplate: ApiTemplate): Template {
     imageUrl: apiTemplate.imageUrl,
     githubUrl: `https://github.com/${apiTemplate.githubOrg}/${apiTemplate.githubRepo}`,
     isOfficial: false,
+    category: "apps",
   };
 }
 

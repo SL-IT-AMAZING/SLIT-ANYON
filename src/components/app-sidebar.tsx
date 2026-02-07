@@ -5,6 +5,7 @@ import {
   HelpCircle,
   Store,
   BookOpen,
+  Plug,
 } from "lucide-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useSidebar } from "@/components/ui/sidebar"; // import useSidebar hook
@@ -53,9 +54,14 @@ const items = [
     icon: BookOpen,
   },
   {
-    title: "Hub",
+    title: "Market",
     to: "/hub",
     icon: Store,
+  },
+  {
+    title: "Connect",
+    to: "/connect",
+    icon: Plug,
   },
 ];
 

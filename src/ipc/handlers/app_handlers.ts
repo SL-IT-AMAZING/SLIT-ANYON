@@ -123,8 +123,20 @@ function buildSnippetFromMatch({
   };
 }
 
-function getDefaultCommand(appId: number): string {
+function getDefaultCommand(appId: number, appPath: string): string {
   const port = getAppPort(appId);
+
+  // Detect package manager from lock files
+  if (fs.existsSync(path.join(appPath, "yarn.lock"))) {
+    return `(yarn --version || corepack enable yarn) && yarn install && yarn dev --port ${port}`;
+  }
+  if (
+    fs.existsSync(path.join(appPath, "bun.lock")) ||
+    fs.existsSync(path.join(appPath, "bun.lockb"))
+  ) {
+    return `bun install && bun run dev --port ${port}`;
+  }
+  // Default: try pnpm first, then npm
   return `(pnpm install && pnpm run dev --port ${port}) || (npm install --legacy-peer-deps && npm run dev -- --port ${port})`;
 }
 async function copyDir(
@@ -214,7 +226,7 @@ async function executeAppLocalNode({
   installCommand?: string | null;
   startCommand?: string | null;
 }): Promise<void> {
-  const command = getCommand({ appId, installCommand, startCommand });
+  const command = getCommand({ appId, appPath, installCommand, startCommand });
   const spawnedProcess = spawn(command, [], {
     cwd: appPath,
     shell: true,
@@ -383,6 +395,13 @@ function listenToProcess({
       `App ${appId} (PID: ${spawnedProcess.pid}) process closed with code ${code}, signal ${signal}.`,
     );
     removeAppIfCurrentProcess(appId, spawnedProcess);
+    if (code !== null && code !== 0) {
+      safeSend(event.sender, "app:output", {
+        type: "stderr",
+        message: `[dyad-server-exit] App server exited with code ${code}`,
+        appId,
+      });
+    }
   });
 
   // Handle errors during process lifecycle (e.g., command not found)
@@ -522,7 +541,7 @@ RUN npm install -g pnpm
       `dyad-app-${appId}`,
       "sh",
       "-c",
-      getCommand({ appId, installCommand, startCommand }),
+      getCommand({ appId, appPath, installCommand, startCommand }),
     ],
     {
       stdio: "pipe",
@@ -1976,17 +1995,19 @@ export function registerAppHandlers() {
 
 function getCommand({
   appId,
+  appPath,
   installCommand,
   startCommand,
 }: {
   appId: number;
+  appPath: string;
   installCommand?: string | null;
   startCommand?: string | null;
 }) {
   const hasCustomCommands = !!installCommand?.trim() && !!startCommand?.trim();
   return hasCustomCommands
     ? `${installCommand!.trim()} && ${startCommand!.trim()}`
-    : getDefaultCommand(appId);
+    : getDefaultCommand(appId, appPath);
 }
 
 async function cleanUpPort(port: number) {
