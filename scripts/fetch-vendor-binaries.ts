@@ -11,14 +11,23 @@
  *   OMOC_VERSION     - Override Oh-My-OpenCode version (default: latest)
  */
 
-import { execSync } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, rmSync } from "node:fs";
+import {
+  copyFileSync,
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { chmod, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
+import tar from "tar";
+import extractZip from "extract-zip";
 
 // ---------------------------------------------------------------------------
 // Platform / arch mapping
@@ -102,6 +111,33 @@ function cleanupOnError(...paths: string[]): void {
   }
 }
 
+/** Recursively find all files under `dir`, optionally filtering by name pattern. */
+function findFiles(dir: string, filter?: (name: string) => boolean): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...findFiles(fullPath, filter));
+    } else if (!filter || filter(entry.name)) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+/** List directory contents with sizes (replaces `ls -la`). */
+function listDir(dir: string): string {
+  if (!existsSync(dir)) return `(directory does not exist: ${dir})`;
+  return readdirSync(dir)
+    .map((name) => {
+      const fullPath = join(dir, name);
+      const stat = statSync(fullPath);
+      const kind = stat.isDirectory() ? "dir " : "file";
+      return `  ${kind}  ${stat.size.toString().padStart(10)}  ${name}`;
+    })
+    .join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // OpenCode download
 // ---------------------------------------------------------------------------
@@ -132,11 +168,9 @@ async function fetchOpenCode(): Promise<string> {
 
     console.log(`  ↳ Extracting...`);
     if (ext === "zip") {
-      execSync(`unzip -o -j "${archivePath}" -d "${tmpDir}"`, {
-        stdio: "pipe",
-      });
+      await extractZip(archivePath, { dir: tmpDir });
     } else {
-      execSync(`tar xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "pipe" });
+      await tar.extract({ file: archivePath, cwd: tmpDir });
     }
 
     const binaryName = `opencode${exeExt}`;
@@ -154,19 +188,17 @@ async function fetchOpenCode(): Promise<string> {
     }
 
     if (!srcBin) {
-      const contents = execSync(`ls -la "${tmpDir}"`, {
-        encoding: "utf-8",
-      }).trim();
-      const found = execSync(`find "${tmpDir}" -name "opencode*" -type f`, {
-        encoding: "utf-8",
-      }).trim();
+      const contents = listDir(tmpDir);
+      const found = findFiles(tmpDir, (n) => n.startsWith("opencode")).join(
+        "\n",
+      );
       throw new Error(
         `Could not find ${binaryName} in extracted archive.\nTemp dir contents:\n${contents}\nOpencode files found:\n${found || "none"}`,
       );
     }
 
     const destBin = join(outDir, binaryName);
-    execSync(`cp "${srcBin}" "${destBin}"`, { stdio: "pipe" });
+    copyFileSync(srcBin, destBin);
 
     if (!isWindows) {
       await chmod(destBin, 0o755);
@@ -213,22 +245,20 @@ async function fetchOmoc(): Promise<string> {
     await downloadToFile(tarballUrl, tarballPath);
 
     console.log(`  ↳ Extracting...`);
-    execSync(`tar xzf "${tarballPath}" -C "${tmpDir}"`, { stdio: "pipe" });
+    await tar.extract({ file: tarballPath, cwd: tmpDir });
 
     const binaryName = `oh-my-opencode${exeExt}`;
     const srcBin = join(tmpDir, "package", "bin", binaryName);
 
     if (!existsSync(srcBin)) {
-      const contents = execSync(`find "${tmpDir}" -type f`, {
-        encoding: "utf-8",
-      }).trim();
+      const contents = findFiles(tmpDir).join("\n");
       throw new Error(
         `Could not find ${binaryName} at expected path: ${srcBin}\nExtracted files:\n${contents}`,
       );
     }
 
     const destBin = join(outDir, binaryName);
-    execSync(`cp "${srcBin}" "${destBin}"`, { stdio: "pipe" });
+    copyFileSync(srcBin, destBin);
 
     if (!isWindows) {
       await chmod(destBin, 0o755);

@@ -156,6 +156,10 @@ jobs:
         # do not run this on windows (it's redundant)
         if: contains(matrix.os.name, 'macos')
         run: npm run test
+      - name: Fetch vendor binaries (OpenCode + OMOC)
+        run: npm run fetch-vendor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
