@@ -13,7 +13,7 @@ const logger = log.scope("getModelClient");
 export async function getModelClient(
   model: LargeLanguageModel,
   settings: UserSettings,
-  options?: { chatId?: number },
+  options?: { chatId?: number; appPath?: string },
 ): Promise<{
   modelClient: ModelClient;
   isEngineEnabled?: boolean;
@@ -29,6 +29,7 @@ export async function getModelClient(
   const provider = createOpenCodeProvider({
     agentName: settings.selectedAgent,
     conversationId,
+    appPath: options?.appPath,
   });
   return {
     modelClient: {

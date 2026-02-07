@@ -97,7 +97,12 @@ import {
   unmarkMessageAsUsingFreeAgentQuota,
 } from "./free_agent_quota_handlers";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
-import { getCurrentCommitHash } from "../utils/git_utils";
+import {
+  getCurrentCommitHash,
+  gitAddAll,
+  gitCommit,
+  getGitUncommittedFiles,
+} from "../utils/git_utils";
 import {
   processChatMessagesWithVersionedFiles as getVersionedFiles,
   VersionedFiles,
@@ -524,6 +529,7 @@ ${componentSnippet}
           isOpenCodeMode,
         } = await getModelClient(settings.selectedModel, settings, {
           chatId: req.chatId,
+          appPath: getDyadAppPath(updatedChat.app.path),
         });
 
         // OpenCode mode: skip all Dyad-specific processing (codebase extraction,
@@ -644,9 +650,7 @@ ${componentSnippet}
             throw streamError;
           }
 
-          // Save response and send completion — skip processFullResponseActions
-          // since OpenCode writes files directly to the filesystem.
-          if (!abortController.signal.aborted && fullResponse) {
+           if (!abortController.signal.aborted && fullResponse) {
             const chatTitle = fullResponse.match(
               /<dyad-chat-summary>(.*?)<\/dyad-chat-summary>/,
             );
@@ -661,6 +665,31 @@ ${componentSnippet}
               .update(messages)
               .set({ content: fullResponse })
               .where(eq(messages.id, placeholderAssistantMessage.id));
+
+            let _hasFileChanges = false;
+            const appPath = getDyadAppPath(updatedChat.app.path);
+            try {
+              const uncommittedFiles = await getGitUncommittedFiles({
+                path: appPath,
+              });
+              if (uncommittedFiles.length > 0) {
+                await gitAddAll({ path: appPath });
+                const commitHash = await gitCommit({
+                  path: appPath,
+                  message: `[dyad/opencode] ${chatTitle?.[1] ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                });
+                await db
+                  .update(messages)
+                  .set({ commitHash })
+                  .where(eq(messages.id, placeholderAssistantMessage.id));
+                _hasFileChanges = true;
+                logger.log(
+                  `OpenCode git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                );
+              }
+            } catch (gitError) {
+              logger.error("OpenCode git commit failed:", gitError);
+            }
 
             safeSend(event.sender, "chat:response:end", {
               chatId: req.chatId,

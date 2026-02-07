@@ -1,4 +1,4 @@
-import { spawn, execSync, type ChildProcess } from "child_process";
+import { spawn, execSync, type ChildProcess } from "node:child_process";
 import log from "electron-log";
 
 const logger = log.scope("opencode-server");
@@ -17,6 +17,7 @@ interface StartOptions {
   password?: string;
   timeout?: number;
   opencodePath?: string;
+  cwd?: string;
 }
 
 class OpenCodeServerManager {
@@ -27,9 +28,11 @@ class OpenCodeServerManager {
   private password: string | null = null;
   private port: number | null = null;
   private hostname: string | null = null;
+  private _cwd: string | null = null;
   private _starting = false;
   private _startPromise: Promise<ServerInfo> | null = null;
   private _externalServer = false;
+  private _lastStderr = "";
 
   private constructor() {}
 
@@ -52,7 +55,7 @@ class OpenCodeServerManager {
     }
 
     this._starting = true;
-    this._startPromise = this._doStart(options);
+    this._startPromise = this._startWithRetry(options);
 
     try {
       return await this._startPromise;
@@ -62,11 +65,56 @@ class OpenCodeServerManager {
     }
   }
 
+  private async _startWithRetry(
+    options: StartOptions,
+    maxRetries = 2,
+  ): Promise<ServerInfo> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await this._doStart(options);
+      } catch (err) {
+        const isLastAttempt = attempt === maxRetries;
+        if (isLastAttempt) {
+          logger.error(
+            `Server start failed after ${maxRetries} attempts: ${err}`,
+          );
+          throw err;
+        }
+
+        logger.warn(
+          `Server start attempt ${attempt}/${maxRetries} failed: ${err}`,
+        );
+        logger.info("Cleaning up before retry...");
+
+        if (this.process) {
+          try {
+            this.process.kill("SIGKILL");
+          } catch {
+            void 0;
+          }
+          this.process = null;
+        }
+        this.url = null;
+        this._externalServer = false;
+
+        const port =
+          options.port ||
+          Number.parseInt(process.env.OPENCODE_PORT || "4096", 10);
+        await this._killExistingServer(port);
+        await this.sleep(2000);
+
+        logger.info(`Retrying server start (attempt ${attempt + 1})...`);
+      }
+    }
+
+    throw new Error("Server start failed: unexpected code path");
+  }
+
   private async _doStart(options: StartOptions): Promise<ServerInfo> {
     const hostname =
       options.hostname || process.env.OPENCODE_HOSTNAME || "127.0.0.1";
     const port =
-      options.port || parseInt(process.env.OPENCODE_PORT || "4096", 10);
+      options.port || Number.parseInt(process.env.OPENCODE_PORT || "4096", 10);
     const password =
       options.password ||
       process.env.OPENCODE_PASSWORD ||
@@ -90,20 +138,22 @@ class OpenCodeServerManager {
         this.process = null;
         this._externalServer = true;
         return this.getServerInfo()!;
-      } else {
-        logger.warn(
-          `Server on port ${port} has different password, killing and restarting...`,
-        );
-        await this._killExistingServer(port);
-        logger.info("Waiting for port to be released...");
-        await this.sleep(2000);
-        logger.info("Done waiting, proceeding to start server...");
       }
+
+      logger.warn(
+        `Server on port ${port} has different password, killing and restarting...`,
+      );
+      await this._killExistingServer(port);
+      logger.info("Waiting for port to be released...");
+      await this.sleep(2000);
+      logger.info("Done waiting, proceeding to start server...");
     }
 
     logger.info(`Starting OpenCode server on ${hostname}:${port}...`);
 
     const args = ["serve", `--hostname=${hostname}`, `--port=${port}`];
+
+    this._cwd = options.cwd || null;
 
     this.process = spawn(opencodePath, args, {
       env: {
@@ -112,6 +162,7 @@ class OpenCodeServerManager {
         OPENCODE_SERVER_PASSWORD: password,
       },
       stdio: ["ignore", "pipe", "pipe"],
+      ...(options.cwd && { cwd: options.cwd }),
     });
 
     this.process.on("error", (err: NodeJS.ErrnoException) => {
@@ -131,15 +182,19 @@ class OpenCodeServerManager {
       }
     });
 
+    this._lastStderr = "";
     this.process.stderr?.on("data", (data: Buffer) => {
       const line = data.toString().trim();
       if (line) {
         logger.warn(`[stderr] ${line}`);
+        this._lastStderr = line;
       }
     });
 
     this.process.on("exit", (code, signal) => {
-      logger.info(`OpenCode server exited: code=${code}, signal=${signal}`);
+      logger.info(
+        `OpenCode server exited: code=${code}, signal=${signal}, stderr=${this._lastStderr}`,
+      );
       this.process = null;
       this.url = null;
     });
@@ -174,7 +229,12 @@ class OpenCodeServerManager {
       }
 
       if (!this.isRunning() && !this._externalServer) {
-        throw new Error("OpenCode server process terminated unexpectedly");
+        const detail = this._lastStderr
+          ? `: ${this._lastStderr}`
+          : "";
+        throw new Error(
+          `OpenCode server process terminated unexpectedly${detail}`,
+        );
       }
 
       await this.sleep(pollInterval);
@@ -265,7 +325,7 @@ class OpenCodeServerManager {
         const pids = result.split("\n");
         for (const pid of pids) {
           try {
-            process.kill(parseInt(pid, 10), "SIGKILL");
+            process.kill(Number.parseInt(pid, 10), "SIGKILL");
             logger.info(`Killed process ${pid} on port ${port}`);
           } catch (killErr) {
             logger.warn(`Failed to kill process ${pid}: ${killErr}`);
@@ -307,6 +367,29 @@ class OpenCodeServerManager {
   }
 
   async ensureRunning(options: StartOptions = {}): Promise<ServerInfo> {
+    const needsCwdChange =
+      options.cwd && (!this._cwd || options.cwd !== this._cwd);
+    if (needsCwdChange) {
+      if (this._externalServer && this.url) {
+        logger.info(
+          `CWD change needed: ${this._cwd ?? "(none)"} → ${options.cwd}, killing external server...`,
+        );
+        const port = this.port ?? 4096;
+        await this._killExistingServer(port);
+        this._externalServer = false;
+        this.process = null;
+        this.url = null;
+        this.password = null;
+        this._cwd = null;
+        await this.sleep(1000);
+      } else if (this.isRunning()) {
+        logger.info(
+          `CWD change needed: ${this._cwd ?? "(none)"} → ${options.cwd}, restarting server...`,
+        );
+        await this.stop();
+      }
+    }
+
     if (this.isRunning()) {
       return this.getServerInfo()!;
     }

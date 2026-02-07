@@ -36,6 +36,7 @@ import { DyadSupabaseProjectInfo } from "./DyadSupabaseProjectInfo";
 import { DyadStatus } from "./DyadStatus";
 import { DyadWritePlan } from "./DyadWritePlan";
 import { DyadExitPlan } from "./DyadExitPlan";
+import { OpenCodeTool } from "./OpenCodeTool";
 import { mapActionToButton } from "./ChatInput";
 import { SuggestedAction } from "@/lib/schemas";
 import { FixAllErrorsButton } from "./FixAllErrorsButton";
@@ -71,7 +72,7 @@ const DYAD_CUSTOM_TAGS = [
   "dyad-supabase-table-schema",
   "dyad-supabase-project-info",
   "dyad-status",
-  // Plan mode tags
+  "opencode-tool",
   "dyad-write-plan",
   "dyad-exit-plan",
 ];
@@ -135,7 +136,28 @@ export const DyadMarkdownParser: React.FC<DyadMarkdownParserProps> = ({
   const isStreaming = useAtomValue(isStreamingByIdAtom).get(chatId!) ?? false;
   // Extract content pieces (markdown and custom tags)
   const contentPieces = useMemo(() => {
-    return parseCustomTags(content);
+    const pieces = parseCustomTags(content);
+    // Deduplicate opencode-tool tags: keep only the LAST occurrence per toolid
+    const lastToolIndex = new Map<string, number>();
+    pieces.forEach((piece, index) => {
+      if (
+        piece.type === "custom-tag" &&
+        piece.tagInfo.tag === "opencode-tool" &&
+        piece.tagInfo.attributes.toolid
+      ) {
+        lastToolIndex.set(piece.tagInfo.attributes.toolid, index);
+      }
+    });
+    return pieces.filter((piece, index) => {
+      if (
+        piece.type === "custom-tag" &&
+        piece.tagInfo.tag === "opencode-tool" &&
+        piece.tagInfo.attributes.toolid
+      ) {
+        return lastToolIndex.get(piece.tagInfo.attributes.toolid) === index;
+      }
+      return true;
+    });
   }, [content]);
 
   // Extract error messages and track positions
@@ -739,6 +761,17 @@ function renderCustomTag(
             },
           }}
         />
+      );
+
+    case "opencode-tool":
+      return (
+        <OpenCodeTool
+          name={attributes.name || ""}
+          status={attributes.status || "running"}
+          title={attributes.title || attributes.name || ""}
+        >
+          {content}
+        </OpenCodeTool>
       );
 
     default:

@@ -16,12 +16,29 @@ interface OpenCodeSession {
   id: string;
 }
 
+interface OpenCodeToolState {
+  status: "pending" | "running" | "completed" | "error";
+  input: Record<string, unknown>;
+  output?: string;
+  title?: string;
+  error?: string;
+  metadata?: Record<string, unknown>;
+  time?: {
+    start: number;
+    end?: number;
+  };
+}
+
 interface OpenCodePart {
   id: string;
   type: string;
   sessionID: string;
   messageID: string;
   text?: string;
+  callID?: string;
+  tool?: string;
+  state?: OpenCodeToolState;
+  metadata?: Record<string, unknown>;
 }
 
 interface OpenCodeEvent {
@@ -49,12 +66,21 @@ interface OpenCodeEvent {
   };
 }
 
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export interface OpenCodeProviderSettings {
   hostname?: string;
   port?: number;
   password?: string;
   agentName?: string;
   conversationId?: string;
+  appPath?: string;
 }
 
 export interface OpenCodeProvider {
@@ -79,6 +105,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
       hostname: this.settings.hostname,
       port: this.settings.port,
       password: this.settings.password,
+      cwd: this.settings.appPath,
     });
   }
 
@@ -246,10 +273,38 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     logger.debug(`Starting SSE stream for session ${session.id}...`);
 
     const textId = `opencode-text-${Date.now()}`;
-    let messageId: string | null = null;
     let textStarted = false;
     let inputTokens = 0;
     let outputTokens = 0;
+
+    const emittedToolStates = new Map<string, string>();
+    let inReasoningBlock = false;
+
+    const ensureTextStarted = (
+      ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
+    ) => {
+      if (!textStarted) {
+        ctrl.enqueue({ type: "text-start", id: textId });
+        textStarted = true;
+      }
+    };
+
+    const emitDelta = (
+      ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
+      text: string,
+    ) => {
+      ensureTextStarted(ctrl);
+      ctrl.enqueue({ type: "text-delta", id: textId, delta: text });
+    };
+
+    const closeReasoningBlock = (
+      ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
+    ) => {
+      if (inReasoningBlock) {
+        emitDelta(ctrl, "</think>\n");
+        inReasoningBlock = false;
+      }
+    };
 
     const stream = new ReadableStream<LanguageModelV2StreamPart>({
       start: async (controller) => {
@@ -285,8 +340,6 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           let buffer = "";
           let finished = false;
 
-          // Start reading SSE BEFORE sending message to avoid race condition
-          // Start processing events immediately
           const processEventsPromise = (async () => {
             logger.debug("Starting to process SSE events...");
             while (!finished) {
@@ -340,23 +393,51 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
                   if (part.type === "text") {
                     if (!delta) continue;
+                    closeReasoningBlock(controller);
+                    emitDelta(controller, delta);
+                  } else if (part.type === "tool" && part.state && part.tool) {
+                    closeReasoningBlock(controller);
+                    const status = part.state.status;
+                    const lastStatus = emittedToolStates.get(part.id);
 
-                    if (messageId === null) {
-                      messageId = part.messageID;
-                    } else if (part.messageID !== messageId) {
-                      continue;
+                    if (status !== lastStatus) {
+                      emittedToolStates.set(part.id, status);
+                      const toolName = escapeXml(part.tool);
+                      const toolId = escapeXml(part.id);
+                      const title = escapeXml(
+                        part.state.title || part.tool,
+                      );
+
+                      if (status === "running") {
+                        emitDelta(
+                          controller,
+                          `\n<opencode-tool name="${toolName}" status="running" title="${title}" toolid="${toolId}"></opencode-tool>\n`,
+                        );
+                      } else if (status === "completed") {
+                        const output = part.state.output ?? "";
+                        emitDelta(
+                          controller,
+                          `\n<opencode-tool name="${toolName}" status="completed" title="${title}" toolid="${toolId}">\n${output}\n</opencode-tool>\n`,
+                        );
+                      } else if (status === "error") {
+                        const errMsg = part.state.error ?? "Unknown error";
+                        emitDelta(
+                          controller,
+                          `\n<opencode-tool name="${toolName}" status="error" title="${title}" toolid="${toolId}">\n${errMsg}\n</opencode-tool>\n`,
+                        );
+                      }
                     }
-
-                    if (!textStarted) {
-                      controller.enqueue({ type: "text-start", id: textId });
-                      textStarted = true;
+                  } else if (part.type === "reasoning" && delta) {
+                    if (!inReasoningBlock) {
+                      emitDelta(controller, "\n<think>\n");
+                      inReasoningBlock = true;
                     }
-
-                    controller.enqueue({
-                      type: "text-delta",
-                      id: textId,
-                      delta,
-                    });
+                    emitDelta(controller, delta);
+                  } else if (
+                    part.type === "step-start" ||
+                    part.type === "step-finish"
+                  ) {
+                    closeReasoningBlock(controller);
                   }
                 } else if (
                   event.type === "session.status" &&
@@ -364,6 +445,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   event.properties.status?.type === "idle"
                 ) {
                   finished = true;
+                  closeReasoningBlock(controller);
 
                   if (textStarted) {
                     controller.enqueue({ type: "text-end", id: textId });
