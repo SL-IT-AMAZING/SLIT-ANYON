@@ -18,6 +18,7 @@ import { BackupManager } from "./backup_manager";
 import { getDatabasePath, initializeDatabase } from "./db";
 import { UserSettings } from "./lib/schemas";
 import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
+import { handleVercelOAuthReturn } from "./vercel_admin/vercel_return_handler";
 import {
   AddMcpServerConfigSchema,
   AddMcpServerPayload,
@@ -457,6 +458,23 @@ async function handleDeepLinkReturn(url: string) {
     }
     await handleSupabaseOAuthReturn({ token, refreshToken, expiresIn });
     // Send message to renderer to trigger re-render
+    mainWindow?.webContents.send("deep-link-received", {
+      type: parsed.hostname,
+    });
+    return;
+  }
+  if (parsed.hostname === "vercel-oauth-return") {
+    const token = parsed.searchParams.get("token");
+    const refreshToken = parsed.searchParams.get("refreshToken");
+    const expiresIn = Number(parsed.searchParams.get("expiresIn"));
+    if (!token || !refreshToken || !expiresIn) {
+      dialog.showErrorBox(
+        "Invalid URL",
+        "Expected token, refreshToken, and expiresIn",
+      );
+      return;
+    }
+    handleVercelOAuthReturn({ token, refreshToken, expiresIn });
     mainWindow?.webContents.send("deep-link-received", {
       type: parsed.hostname,
     });

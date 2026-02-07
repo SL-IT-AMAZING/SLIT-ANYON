@@ -7,6 +7,7 @@ import { useDeepLink } from "@/contexts/DeepLinkContext";
 import { ExternalLink } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { isSupabaseConnected } from "@/lib/schemas";
+import { oauthEndpoints } from "@/lib/oauthConfig";
 
 import supabaseLogoLight from "../../assets/supabase/supabase-logo-wordmark--light.svg";
 import supabaseLogoDark from "../../assets/supabase/supabase-logo-wordmark--dark.svg";
@@ -85,9 +86,7 @@ export function SupabaseHubConnector() {
         </p>
         <img
           onClick={async () => {
-            await ipc.system.openExternalUrl(
-              "https://supabase-oauth.dyad.sh/api/connect-supabase/login",
-            );
+            await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
           }}
           src={isDarkMode ? connectSupabaseDark : connectSupabaseLight}
           alt="Connect to Supabase"

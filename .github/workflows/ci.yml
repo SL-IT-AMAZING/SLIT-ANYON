@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
@@ -62,10 +63,10 @@ jobs:
             exit 0
           fi
 
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            # Always run tests on pushes to main
+          if [ "${{ github.event_name }}" = "push" ] && ([ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/dev" ]); then
+            # Always run tests on pushes to main or dev
             echo "should_run_tests=true" >> $GITHUB_OUTPUT
-            echo "Running tests: push to main branch"
+            echo "Running tests: push to main/dev branch"
             exit 0
           fi
 

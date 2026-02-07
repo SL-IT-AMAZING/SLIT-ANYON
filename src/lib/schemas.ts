@@ -198,6 +198,14 @@ export const NeonSchema = z.object({
 });
 export type Neon = z.infer<typeof NeonSchema>;
 
+export const VercelSchema = z.object({
+  accessToken: SecretSchema.optional(),
+  refreshToken: SecretSchema.optional(),
+  expiresIn: z.number().optional(),
+  tokenTimestamp: z.number().optional(),
+});
+export type Vercel = z.infer<typeof VercelSchema>;
+
 export const ExperimentsSchema = z.object({
   // Deprecated
   enableLocalAgent: z.boolean().describe("DEPRECATED").optional(),
@@ -283,6 +291,7 @@ export const UserSettingsSchema = z
     vercelAccessToken: SecretSchema.optional(),
     supabase: SupabaseSchema.optional(),
     neon: NeonSchema.optional(),
+    vercel: VercelSchema.optional(),
     autoApproveChanges: z.boolean().optional(),
     telemetryConsent: z.enum(["opted_in", "opted_out", "unset"]).optional(),
     telemetryUserId: z.string().optional(),
@@ -302,6 +311,7 @@ export const UserSettingsSchema = z
     enableSupabaseWriteSqlMigration: z.boolean().optional(),
     skipPruneEdgeFunctions: z.boolean().optional(),
     selectedChatMode: ChatModeSchema.optional(),
+    selectedAgent: z.string().optional(),
     defaultChatMode: ChatModeSchema.optional(),
     acceptedCommunityCode: z.boolean().optional(),
     zoomLevel: ZoomLevelSchema.optional(),

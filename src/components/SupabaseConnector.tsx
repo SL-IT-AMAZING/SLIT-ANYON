@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useTheme } from "@/contexts/ThemeContext";
 import { isSupabaseConnected } from "@/lib/schemas";
+import { oauthEndpoints } from "@/lib/oauthConfig";
 
 export function SupabaseConnector({ appId }: { appId: number }) {
   const { settings, refreshSettings } = useSettings();
@@ -141,9 +142,7 @@ export function SupabaseConnector({ appId }: { appId: number }) {
         fakeProjectId: "fake-project-id",
       });
     } else {
-      await ipc.system.openExternalUrl(
-        "https://supabase-oauth.dyad.sh/api/connect-supabase/login",
-      );
+      await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
     }
   };
 

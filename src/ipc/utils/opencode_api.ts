@@ -73,7 +73,24 @@ export async function getOpenCodeAuthMethods(): Promise<
   return fetchOpenCodeAPI<Record<string, unknown[]>>("/provider/auth");
 }
 
-export async function getOpenCodeAgents(): Promise<unknown[]> {
+export interface OpenCodeAgent {
+  name: string;
+  description: string;
+  mode: "primary" | "subagent" | "all";
+  native: boolean;
+  hidden?: boolean;
+  color?: string;
+  variant?: string;
+  model?: {
+    providerID: string;
+    modelID: string;
+  };
+}
+
+export async function getOpenCodeAgents(): Promise<OpenCodeAgent[]> {
   logger.debug("Fetching agents from OpenCode server");
-  return fetchOpenCodeAPI<unknown[]>("/app/agents");
+  const agents = await fetchOpenCodeAPI<OpenCodeAgent[]>("/agent");
+  // Match OpenCode desktop app's filter: show all non-subagent, non-hidden agents
+  // This includes mode "primary" and "all" (agents usable as both primary and subagent)
+  return agents.filter((a) => !a.hidden && a.mode !== "subagent");
 }

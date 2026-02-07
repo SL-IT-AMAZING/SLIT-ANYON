@@ -16,6 +16,7 @@ import { createTestOnlyLoggedHandler } from "./safe_handle";
 import { safeSend } from "../utils/safe_sender";
 import { readSettings, writeSettings } from "../../main/settings";
 import { supabaseContracts } from "../types/supabase";
+import { oauthEndpoints } from "../../lib/oauthConfig";
 
 const logger = log.scope("supabase_handlers");
 const testOnlyHandle = createTestOnlyLoggedHandler(logger);
@@ -268,7 +269,7 @@ export function registerSupabaseHandlers() {
       // Simulate the deep link event
       safeSend(event.sender, "deep-link-received", {
         type: "supabase-oauth-return",
-        url: "https://supabase-oauth.dyad.sh/api/connect-supabase/login",
+        url: oauthEndpoints.supabase.login,
       });
       logger.info(
         `Sent fake deep-link-received event for app ${appId} during testing.`,
