@@ -2,6 +2,8 @@ import type { LanguageModel } from "ai";
 import type { LargeLanguageModel, UserSettings } from "../../lib/schemas";
 import log from "electron-log";
 import { createOpenCodeProvider } from "./opencode_provider";
+import { getModelClientUpstream } from "./get_model_client_upstream";
+import { IS_TEST_BUILD } from "./test_utils";
 
 export interface ModelClient {
   model: LanguageModel;
@@ -20,6 +22,19 @@ export async function getModelClient(
   isSmartContextEnabled?: boolean;
   isOpenCodeMode?: boolean;
 }> {
+  // E2E test mode: use original upstream provider routing so the
+  // fake-llm-server (OpenAI-format) works without an OpenCode server.
+  if (IS_TEST_BUILD) {
+    logger.info(
+      `E2E mode: using upstream provider for model: ${model.provider}/${model.name}`,
+    );
+    const result = await getModelClientUpstream(model, settings);
+    return {
+      ...result,
+      isOpenCodeMode: false,
+    };
+  }
+
   logger.info(`Using OpenCode for model: ${model.provider}/${model.name}`);
 
   const conversationId = options?.chatId
