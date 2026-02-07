@@ -7,7 +7,7 @@
 
 const OAUTH_SERVER_URL =
   (typeof process !== "undefined" && process.env.OAUTH_SERVER_URL) ||
-  "https://oauth.yourcompany.com";
+  "https://server-green-seven.vercel.app";
 
 export const oauthEndpoints = {
   neon: {
