@@ -63,10 +63,7 @@ export const DyadThink: React.FC<DyadThinkProps> = ({ children, node }) => {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Brain
-            size={16}
-            className="text-(--primary)"
-          />
+          <Brain size={16} className="text-(--primary)" />
           <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
             Thinking
           </span>

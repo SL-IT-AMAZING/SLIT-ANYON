@@ -229,9 +229,7 @@ class OpenCodeServerManager {
       }
 
       if (!this.isRunning() && !this._externalServer) {
-        const detail = this._lastStderr
-          ? `: ${this._lastStderr}`
-          : "";
+        const detail = this._lastStderr ? `: ${this._lastStderr}` : "";
         throw new Error(
           `OpenCode server process terminated unexpectedly${detail}`,
         );

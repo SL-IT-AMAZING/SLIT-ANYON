@@ -650,7 +650,7 @@ ${componentSnippet}
             throw streamError;
           }
 
-           if (!abortController.signal.aborted && fullResponse) {
+          if (!abortController.signal.aborted && fullResponse) {
             const chatTitle = fullResponse.match(
               /<dyad-chat-summary>(.*?)<\/dyad-chat-summary>/,
             );

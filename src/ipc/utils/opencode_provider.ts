@@ -404,9 +404,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                       emittedToolStates.set(part.id, status);
                       const toolName = escapeXml(part.tool);
                       const toolId = escapeXml(part.id);
-                      const title = escapeXml(
-                        part.state.title || part.tool,
-                      );
+                      const title = escapeXml(part.state.title || part.tool);
 
                       if (status === "running") {
                         emitDelta(
