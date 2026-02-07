@@ -1,5 +1,6 @@
 import { spawn, execSync, type ChildProcess } from "node:child_process";
 import log from "electron-log";
+import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
 const logger = log.scope("opencode-server");
 
@@ -121,7 +122,10 @@ class OpenCodeServerManager {
       "dyad-opencode-default";
     const timeout = options.timeout || 30000;
     const opencodePath =
-      options.opencodePath || process.env.OPENCODE_PATH || "opencode";
+      options.opencodePath ||
+      process.env.OPENCODE_PATH ||
+      getOpenCodeBinaryPath() ||
+      "opencode";
 
     const existingServer = await this._checkExistingServer(
       hostname,
@@ -167,9 +171,10 @@ class OpenCodeServerManager {
 
     this.process.on("error", (err: NodeJS.ErrnoException) => {
       if (err.code === "ENOENT") {
-        logger.error("ERROR: opencode command not found");
-        logger.error("Please install OpenCode CLI and add to PATH");
-        logger.error(`Attempted path: ${opencodePath}`);
+        logger.error(`ERROR: opencode binary not found at: ${opencodePath}`);
+        logger.error(
+          "This is likely a build/packaging issue. The binary should be bundled with the app.",
+        );
       }
       this.process = null;
       throw err;

@@ -16,7 +16,9 @@ import { handleDyadProReturn } from "./main/pro";
 import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
 import { BackupManager } from "./backup_manager";
 import { getDatabasePath, initializeDatabase } from "./db";
-import { UserSettings } from "./lib/schemas";
+import type { UserSettings } from "./lib/schemas";
+import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
+import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
 import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
 import { handleVercelOAuthReturn } from "./vercel_admin/vercel_return_handler";
 import {
@@ -33,6 +35,8 @@ import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai
 import fs from "fs";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
 import { getDyadAppsBaseDirectory } from "./paths/paths";
+import { initSentryMain } from "./lib/sentry";
+import { getUserRolloutBucket } from "./lib/rollout";
 
 log.errorHandler.startCatching();
 log.eventLogger.startLogging();
@@ -42,6 +46,8 @@ const logger = log.scope("main");
 
 // Load environment variables from .env file
 dotenv.config();
+
+initSentryMain();
 
 // Register IPC handlers before app is ready
 registerIpcHandlers();
@@ -66,6 +72,8 @@ const gitDir = resolveLocalGitDirectory();
 if (fs.existsSync(gitDir)) {
   process.env.LOCAL_GIT_DIRECTORY = gitDir;
 }
+
+resolveVendorBinaries();
 
 // https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app#main-process-mainjs
 if (process.defaultApp) {
@@ -122,6 +130,9 @@ export async function onReady() {
   startPerformanceMonitoring();
 
   await onFirstRunMaybe(settings);
+  await setupOpenCodeConfig().catch((err) => {
+    logger.error("OpenCode config setup failed:", err);
+  });
   createWindow();
   createApplicationMenu();
 
@@ -142,6 +153,12 @@ export async function onReady() {
       },
     }); // additional configuration options available
   }
+
+  // Staged rollout: log the user's deterministic bucket (0–99) for observability.
+  // Actual update gating happens server-side at api.dyad.sh; the client bucket
+  // is used for analytics (sent to PostHog via the existing telemetry pipeline).
+  const rolloutBucket = getUserRolloutBucket();
+  logger.info("Update rollout bucket=", rolloutBucket);
 }
 
 export async function onFirstRunMaybe(settings: UserSettings) {
@@ -167,6 +184,7 @@ async function promptMoveToApplicationsFolder(): Promise<void> {
   // There's no way to stub this dialog in time, so we just skip it
   // in e2e testing mode.
   if (IS_TEST_BUILD) return;
+  if (process.env.NODE_ENV === "development") return;
   if (process.platform !== "darwin") return;
   if (app.isInApplicationsFolder()) return;
   logger.log("Prompting user to move to applications folder");

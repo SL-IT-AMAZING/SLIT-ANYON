@@ -145,6 +145,9 @@ jobs:
         # do not run this on Windows (it fails and not necessary)
         if: contains(matrix.os.name, 'macos')
         run: npm run presubmit
+      - name: Security audit
+        if: contains(matrix.os.name, 'macos')
+        run: npm audit --audit-level=high --omit=dev
       - name: Type-checking
         # do not run this on windows (it's redundant)
         if: contains(matrix.os.name, 'macos')
@@ -157,6 +160,21 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
         run: npm run pre:e2e
+      - name: Report build size
+        if: contains(matrix.os.name, 'macos')
+        run: |
+          echo "## Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "out/dyad-darwin-arm64" ]; then
+            SIZE=$(du -sh "out/dyad-darwin-arm64" | awk '{print $1}')
+            echo "- **macOS (arm64):** $SIZE" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -d "out/dyad-darwin-x64" ]; then
+            SIZE=$(du -sh "out/dyad-darwin-x64" | awk '{print $1}')
+            echo "- **macOS (x64):** $SIZE" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          du -sh out/*/ 2>/dev/null || true
       - name: Prep test server
         run: cd testing/fake-llm-server && npm install && npm run build && cd -
       # macOS: Archive app bundle with tar to preserve metadata (code signatures, extended attributes)

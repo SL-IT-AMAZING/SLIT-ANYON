@@ -8,9 +8,20 @@ permissions:
 name: Release app
 on:
   workflow_dispatch:
+    inputs:
+      auto_publish:
+        description: "Auto-publish release (unset draft flag)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
   push:
     branches:
       - main
+    tags:
+      - "v*"
 jobs:
   build:
     environment: release
@@ -31,6 +42,17 @@ jobs:
           ]
     runs-on: ${{ matrix.os.image }}
     steps:
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref }}"
+            VERSION="${VERSION#refs/tags/v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        shell: bash
       - name: Github checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Use Node.js
@@ -119,6 +141,36 @@ jobs:
 
           echo "AZURE_METADATA_JSON=$PWD\signing-metadata.json" >> $env:GITHUB_ENV
 
+      - name: Import GPG key
+        if: contains(matrix.os.name, 'linux') && secrets.GPG_PRIVATE_KEY != ''
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --import --batch --no-tty || true
+          echo "GPG_KEY_IMPORTED=true" >> $GITHUB_ENV
+
+      - name: Sign Linux packages (DEB)
+        if: contains(matrix.os.name, 'linux') && env.GPG_KEY_IMPORTED == 'true'
+        run: |
+          for deb in out/make/*.deb; do
+            if [ -f "$deb" ]; then
+              echo "Signing $deb..."
+              dpkg-sig -k "${{ secrets.GPG_KEY_ID }}" --sign builder "$deb" || echo "Warning: Failed to sign $deb"
+            fi
+          done
+        continue-on-error: true
+
+      - name: Sign Linux packages (RPM)
+        if: contains(matrix.os.name, 'linux') && env.GPG_KEY_IMPORTED == 'true'
+        run: |
+          for rpm in out/make/*.rpm; do
+            if [ -f "$rpm" ]; then
+              echo "Signing $rpm..."
+              rpm --addsign "$rpm" || echo "Warning: Failed to sign $rpm"
+            fi
+          done
+        continue-on-error: true
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       # - name: Set up certificate
       #   if: contains(matrix.os.name, 'windows')
       #   run: |
@@ -176,3 +228,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/verify-release-assets.js
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref }}"
+            VERSION="${VERSION#refs/tags/v}"
+          else
+            VERSION="${{ github.event.inputs.version || 'dev' }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Auto-publish release if triggered by tag or auto_publish input
+        if: |
+          startsWith(github.ref, 'refs/tags/v') || 
+          github.event.inputs.auto_publish == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "v${{ steps.version.outputs.version }}" --draft=false
