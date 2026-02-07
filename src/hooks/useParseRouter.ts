@@ -21,19 +21,26 @@ export function useParseRouter(appId: number | null) {
     refreshApp,
   } = useLoadApp(appId);
 
+  // Detect Next.js app by presence of next.config.* in file list
+  const isNextApp = useMemo(() => {
+    if (!app?.files) return false;
+    return app.files.some((f) => f.toLowerCase().includes("next.config"));
+  }, [app?.files]);
+
+  // Only load src/App.tsx for non-Next.js apps once file list is known
+  const routerFilePath = useMemo(() => {
+    if (!app?.files) return null;
+    if (isNextApp) return null;
+    return "src/App.tsx";
+  }, [app?.files, isNextApp]);
+
   // Load router related file to extract routes for non-Next apps
   const {
     content: routerContent,
     loading: routerFileLoading,
     error: routerFileError,
     refreshFile,
-  } = useLoadAppFile(appId, "src/App.tsx");
-
-  // Detect Next.js app by presence of next.config.* in file list
-  const isNextApp = useMemo(() => {
-    if (!app?.files) return false;
-    return app.files.some((f) => f.toLowerCase().includes("next.config"));
-  }, [app?.files]);
+  } = useLoadAppFile(appId, routerFilePath);
 
   // Parse routes either from Next.js file-based routing or from router file
   useEffect(() => {
@@ -153,7 +160,7 @@ export function useParseRouter(appId: number | null) {
   }, [isNextApp, app?.files, routerContent]);
 
   const combinedLoading = appLoading || routerFileLoading;
-  const combinedError = appError || routerFileError || null;
+  const combinedError = appError || (routerFilePath ? routerFileError : null) || null;
   const refresh = async () => {
     await Promise.allSettled([refreshApp(), refreshFile()]);
   };

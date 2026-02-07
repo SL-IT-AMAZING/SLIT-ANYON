@@ -26,6 +26,8 @@ export function useAppOutputSubscription() {
   const setPreviewPanelKey = useSetAtom(previewPanelKeyAtom);
   const appId = useAtomValue(selectedAppIdAtom);
 
+  const setPreviewErrorMessage = useSetAtom(previewErrorMessageAtom);
+
   const processProxyServerOutput = useCallback(
     (output: AppOutput) => {
       const matchesProxyServerStart = output.message.includes(
@@ -96,10 +98,19 @@ export function useAppOutputSubscription() {
       // Also update UI state
       setConsoleEntries((prev) => [...prev, logEntry]);
 
+      // Detect server exit to show error instead of infinite spinner
+      if (output.message.includes("[dyad-server-exit]")) {
+        setPreviewErrorMessage({
+          message:
+            "App server failed to start. Open System Messages below to see the error details, or try Restart.",
+          source: "dyad-app",
+        });
+      }
+
       // Process proxy server output
       processProxyServerOutput(output);
     },
-    [setConsoleEntries, processProxyServerOutput],
+    [setConsoleEntries, processProxyServerOutput, setPreviewErrorMessage],
   );
 
   // Subscribe to app output events from main process

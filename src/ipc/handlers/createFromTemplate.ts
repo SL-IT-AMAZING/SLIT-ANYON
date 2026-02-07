@@ -119,10 +119,10 @@ async function cloneRepo(repoUrl: string): Promise<string> {
       }
     } catch (err) {
       logger.warn(
-        `Error checking for updates or comparing SHAs for ${repoName} at ${cachePath}. Will attempt to re-clone. Error: `,
+        `Error checking for updates for ${repoName} at ${cachePath}. Removing cache and re-cloning. Error: `,
         err,
       );
-      return cachePath;
+      fs.rmSync(cachePath, { recursive: true, force: true });
     }
   }
 

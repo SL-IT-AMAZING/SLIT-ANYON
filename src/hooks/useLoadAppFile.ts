@@ -21,7 +21,7 @@ export function useLoadAppFile(appId: number | null, filePath: string | null) {
         setContent(fileContent);
         setError(null);
       } catch (error) {
-        console.error(
+        console.debug(
           `Error loading file ${filePath} for app ${appId}:`,
           error,
         );
@@ -46,7 +46,7 @@ export function useLoadAppFile(appId: number | null, filePath: string | null) {
       setContent(fileContent);
       setError(null);
     } catch (error) {
-      console.error(
+      console.debug(
         `Error refreshing file ${filePath} for app ${appId}:`,
         error,
       );
