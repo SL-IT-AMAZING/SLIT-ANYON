@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_run_tests: ${{ steps.check.outputs.should_run_tests }}
+      should_run_e2e: ${{ steps.check.outputs.should_run_e2e }}
       pr_head_ref: ${{ steps.pr-info.outputs.head_ref }}
       pr_head_repo: ${{ steps.pr-info.outputs.head_repo }}
     steps:
@@ -57,16 +58,20 @@ jobs:
         id: check
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Always run tests for manual workflow dispatch (e.g., from pr-review-responder)
             echo "should_run_tests=true" >> $GITHUB_OUTPUT
-            echo "Running tests: manual workflow dispatch"
+            echo "should_run_e2e=true" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          if [ "${{ github.event_name }}" = "push" ] && ([ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/dev" ]); then
-            # Always run tests on pushes to main or dev
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "should_run_tests=true" >> $GITHUB_OUTPUT
-            echo "Running tests: push to main/dev branch"
+            echo "should_run_e2e=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            echo "should_run_tests=true" >> $GITHUB_OUTPUT
+            echo "should_run_e2e=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -96,11 +101,10 @@ jobs:
 
           if [ -z "$NON_CLAUDE_FILES" ]; then
             echo "should_run_tests=false" >> $GITHUB_OUTPUT
-            echo "Skipping tests: all changed files are in .claude/"
+            echo "should_run_e2e=false" >> $GITHUB_OUTPUT
           else
             echo "should_run_tests=true" >> $GITHUB_OUTPUT
-            echo "Running tests: found non-.claude files:"
-            echo "$NON_CLAUDE_FILES"
+            echo "should_run_e2e=false" >> $GITHUB_OUTPUT
           fi
 
   build:
@@ -182,7 +186,8 @@ jobs:
           retention-days: 1
 
   e2e-tests:
-    needs: [build]
+    needs: [check-changes, build]
+    if: needs.check-changes.outputs.should_run_e2e == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -257,9 +262,7 @@ jobs:
           retention-days: 1
 
   merge-reports:
-    # Merge reports after playwright-tests, even if some shards have failed
-    # Skip if tests were skipped (only .claude files changed)
-    if: ${{ !cancelled() && needs.check-changes.outputs.should_run_tests == 'true' }}
+    if: ${{ !cancelled() && needs.check-changes.outputs.should_run_e2e == 'true' }}
     needs: [check-changes, e2e-tests]
     permissions:
       contents: read
