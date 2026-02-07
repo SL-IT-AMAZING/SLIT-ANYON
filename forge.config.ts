@@ -2,6 +2,7 @@ import { windowsSign } from "./windowsSign";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerAppImage } from "./makers/MakerAppImage";
@@ -113,6 +114,10 @@ const config: ForgeConfig = {
             setupIcon: "./assets/icon/logo.ico",
           },
     ),
+    new MakerDMG({
+      icon: "./assets/icon/logo.icns",
+      format: "ULFO",
+    }),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({
       options: {

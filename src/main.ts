@@ -32,6 +32,8 @@ import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai
 import fs from "fs";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
 import { getDyadAppsBaseDirectory } from "./paths/paths";
+import { initSentryMain } from "./lib/sentry";
+import { getUserRolloutBucket } from "./lib/rollout";
 
 log.errorHandler.startCatching();
 log.eventLogger.startLogging();
@@ -41,6 +43,8 @@ const logger = log.scope("main");
 
 // Load environment variables from .env file
 dotenv.config();
+
+initSentryMain();
 
 // Register IPC handlers before app is ready
 registerIpcHandlers();
@@ -141,6 +145,12 @@ export async function onReady() {
       },
     }); // additional configuration options available
   }
+
+  // Staged rollout: log the user's deterministic bucket (0–99) for observability.
+  // Actual update gating happens server-side at api.dyad.sh; the client bucket
+  // is used for analytics (sent to PostHog via the existing telemetry pipeline).
+  const rolloutBucket = getUserRolloutBucket();
+  logger.info("Update rollout bucket=", rolloutBucket);
 }
 
 export async function onFirstRunMaybe(settings: UserSettings) {
