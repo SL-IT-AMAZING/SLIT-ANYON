@@ -635,15 +635,17 @@ We apologize for the inconvenience. If you're affected, please [workaround or ro
 
 ## Release Assets (Expected)
 
-The release should include exactly **8 assets**:
+The release should include exactly **10 assets**:
 
 | Asset                 | Platform      | Format      | Example Filename               |
 | --------------------- | ------------- | ----------- | ------------------------------ |
 | Windows Installer     | Windows       | `.exe`      | `dyad-0.36.0.Setup.exe`        |
 | Windows NuGet Package | Windows       | `.nupkg`    | `dyad-0.36.0-full.nupkg`       |
 | Windows RELEASES File | Windows       | `RELEASES`  | `RELEASES`                     |
-| macOS Apple Silicon   | macOS (arm64) | `.zip`      | `dyad-darwin-arm64-0.36.0.zip` |
-| macOS Intel           | macOS (x64)   | `.zip`      | `dyad-darwin-x64-0.36.0.zip`   |
+| macOS DMG (ARM)       | macOS (arm64) | `.dmg`      | `dyad-0.36.0-arm64.dmg`        |
+| macOS DMG (Intel)     | macOS (x64)   | `.dmg`      | `dyad-0.36.0-x64.dmg`          |
+| macOS ZIP (ARM)       | macOS (arm64) | `.zip`      | `dyad-darwin-arm64-0.36.0.zip` |
+| macOS ZIP (Intel)     | macOS (x64)   | `.zip`      | `dyad-darwin-x64-0.36.0.zip`   |
 | Linux Debian          | Linux         | `.deb`      | `dyad_0.36.0_amd64.deb`        |
 | Linux RPM             | Linux         | `.rpm`      | `dyad-0.36.0-1.x86_64.rpm`     |
 | Linux AppImage        | Linux         | `.AppImage` | `dyad_0.36.0_x86_64.AppImage`  |
