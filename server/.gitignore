@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+
+# Vercel
+.vercel
+
+# Environment
+.env.local
+
+# OS
+.DS_Store

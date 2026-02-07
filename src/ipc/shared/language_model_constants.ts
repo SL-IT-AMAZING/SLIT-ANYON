@@ -1,4 +1,4 @@
-import { LanguageModel } from "@/ipc/types";
+import type { LanguageModel } from "@/ipc/types";
 
 export const PROVIDERS_THAT_SUPPORT_THINKING: string[] = [];
 
@@ -28,6 +28,10 @@ export const MODEL_OPTIONS: Record<string, ModelOption[]> = {
 };
 
 export const TURBO_MODELS: LanguageModel[] = [];
+
+export const GPT_5_2_MODEL_NAME = "gpt-5.2";
+export const SONNET_4_5 = "claude-sonnet-4-5-20250929";
+export const GEMINI_3_FLASH = "gemini-3-flash-preview";
 
 export const FREE_OPENROUTER_MODEL_NAMES: string[] = [];
 

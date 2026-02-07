@@ -144,6 +144,27 @@ export const languageModelContracts = {
     input: z.void(),
     output: z.object({ models: z.array(LocalModelSchema) }),
   }),
+  getOpenCodeAgents: defineContract({
+    channel: "get-opencode-agents",
+    input: z.void(),
+    output: z.array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        mode: z.enum(["primary", "subagent", "all"]),
+        native: z.boolean(),
+        hidden: z.boolean().optional(),
+        color: z.string().optional(),
+        variant: z.string().optional(),
+        model: z
+          .object({
+            providerID: z.string(),
+            modelID: z.string(),
+          })
+          .optional(),
+      }),
+    ),
+  }),
 } as const;
 
 // =============================================================================

@@ -14,6 +14,7 @@ import { apps } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { EndpointType } from "@neondatabase/api-client";
 import { retryOnLocked } from "../utils/retryOnLocked";
+import { oauthEndpoints } from "../../lib/oauthConfig";
 
 export const logger = log.scope("neon_handlers");
 
@@ -205,7 +206,7 @@ export function registerNeonHandlers() {
     // Simulate the deep link event
     event.sender.send("deep-link-received", {
       type: "neon-oauth-return",
-      url: "https://oauth.dyad.sh/api/integrations/neon/login",
+      url: oauthEndpoints.neon.login,
     });
     logger.info("Sent fake neon deep-link-received event during testing.");
   });

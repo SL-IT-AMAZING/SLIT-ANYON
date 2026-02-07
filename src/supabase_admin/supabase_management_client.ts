@@ -9,6 +9,7 @@ import {
 import log from "electron-log";
 import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
 import type { SupabaseOrganizationCredentials } from "../lib/schemas";
+import { oauthEndpoints } from "../lib/oauthConfig";
 import {
   fetchWithRetry,
   RateLimitError,
@@ -121,16 +122,13 @@ export async function refreshSupabaseToken(): Promise<void> {
 
   try {
     // Make request to Supabase refresh endpoint
-    const response = await fetch(
-      "https://supabase-oauth.dyad.sh/api/connect-supabase/refresh",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
+    const response = await fetch(oauthEndpoints.supabase.refresh, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ refreshToken }),
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -250,16 +248,13 @@ async function refreshSupabaseTokenForOrganization(
   }
 
   try {
-    const response = await fetch(
-      "https://supabase-oauth.dyad.sh/api/connect-supabase/refresh",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
+    const response = await fetch(oauthEndpoints.supabase.refresh, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ refreshToken }),
+    });
 
     if (!response.ok) {
       throw new Error(
