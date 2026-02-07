@@ -789,7 +789,7 @@ Track adoption and usage via PostHog dashboard:
 - **Update success rate**: % of successful auto-updates
 - **Feature usage**: Track new feature adoption
 
-**PostHog Dashboard**: [Configure URL once integrated]
+**PostHog Dashboard**: https://us.posthog.com/ (project: Dyad)
 
 ### Crash Reporting
 
@@ -799,7 +799,7 @@ Monitor crash rates via Sentry dashboard (once integrated):
 - **Error rate**: % of sessions with errors
 - **Top errors**: Most frequent error messages
 
-**Sentry Dashboard**: [Configure URL once integrated]
+**Sentry Dashboard**: Configure at https://sentry.io/ after setting `SENTRY_DSN`
 
 ### Auto-Update Metrics
 
