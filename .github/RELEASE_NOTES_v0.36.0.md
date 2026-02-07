@@ -47,14 +47,14 @@
 
 ## Installation
 
-| Platform                  | Download                         |
-| ------------------------- | -------------------------------- |
-| **macOS (Apple Silicon)** | `dyad-0.36.0-arm64.dmg`          |
-| **macOS (Intel)**         | `dyad-0.36.0-x64.dmg`            |
-| **Windows**               | `dyad-0.36.0.Setup.exe`          |
-| **Linux (AppImage)**      | `dyad_0.36.0_x86_64.AppImage`    |
-| **Linux (Debian/Ubuntu)** | `dyad_0.36.0_amd64.deb`          |
-| **Linux (Fedora/RHEL)**   | `dyad-0.36.0-1.x86_64.rpm`       |
+| Platform                  | Download                      |
+| ------------------------- | ----------------------------- |
+| **macOS (Apple Silicon)** | `dyad-0.36.0-arm64.dmg`       |
+| **macOS (Intel)**         | `dyad-0.36.0-x64.dmg`         |
+| **Windows**               | `dyad-0.36.0.Setup.exe`       |
+| **Linux (AppImage)**      | `dyad_0.36.0_x86_64.AppImage` |
+| **Linux (Debian/Ubuntu)** | `dyad_0.36.0_amd64.deb`       |
+| **Linux (Fedora/RHEL)**   | `dyad-0.36.0-1.x86_64.rpm`    |
 
 ## Auto-Update
 

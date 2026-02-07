@@ -10,6 +10,7 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
+import fs from "node:fs";
 
 console.log("AZURE_CODE_SIGNING_DLIB", process.env.AZURE_CODE_SIGNING_DLIB);
 
@@ -91,7 +92,14 @@ const config: ForgeConfig = {
         },
     asar: true,
     ignore,
-    extraResource: ["node_modules/dugite/git", "node_modules/@vscode"],
+    extraResource: [
+      "node_modules/dugite/git",
+      "node_modules/@vscode",
+      ...(fs.existsSync("vendor/opencode") ? ["vendor/opencode"] : []),
+      ...(fs.existsSync("vendor/oh-my-opencode")
+        ? ["vendor/oh-my-opencode"]
+        : []),
+    ],
     // ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
   rebuildConfig: {

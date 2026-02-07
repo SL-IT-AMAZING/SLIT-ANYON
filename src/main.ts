@@ -16,7 +16,9 @@ import { handleDyadProReturn } from "./main/pro";
 import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
 import { BackupManager } from "./backup_manager";
 import { getDatabasePath, initializeDatabase } from "./db";
-import { UserSettings } from "./lib/schemas";
+import type { UserSettings } from "./lib/schemas";
+import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
+import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
 import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
 import { handleVercelOAuthReturn } from "./vercel_admin/vercel_return_handler";
 import {
@@ -70,6 +72,8 @@ const gitDir = resolveLocalGitDirectory();
 if (fs.existsSync(gitDir)) {
   process.env.LOCAL_GIT_DIRECTORY = gitDir;
 }
+
+resolveVendorBinaries();
 
 // https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app#main-process-mainjs
 if (process.defaultApp) {
@@ -126,6 +130,9 @@ export async function onReady() {
   startPerformanceMonitoring();
 
   await onFirstRunMaybe(settings);
+  await setupOpenCodeConfig().catch((err) => {
+    logger.error("OpenCode config setup failed:", err);
+  });
   createWindow();
   createApplicationMenu();
 
@@ -177,6 +184,7 @@ async function promptMoveToApplicationsFolder(): Promise<void> {
   // There's no way to stub this dialog in time, so we just skip it
   // in e2e testing mode.
   if (IS_TEST_BUILD) return;
+  if (process.env.NODE_ENV === "development") return;
   if (process.platform !== "darwin") return;
   if (app.isInApplicationsFolder()) return;
   logger.log("Prompting user to move to applications folder");

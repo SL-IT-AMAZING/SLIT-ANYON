@@ -36,6 +36,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "fetch-vendor": "npx tsx scripts/fetch-vendor-binaries.ts",
     "extract-codebase": "ts-node scripts/extract-codebase.ts",
     "init-precommit": "husky",
     "build": "npm run pre:e2e",
