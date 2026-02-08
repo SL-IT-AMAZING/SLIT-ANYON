@@ -1,27 +1,21 @@
 import {
   Card,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import { useNavigate } from "@tanstack/react-router";
-import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import type { LanguageModelProvider } from "@/ipc/types";
+import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
+import { useNavigate } from "@tanstack/react-router";
 
-import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useCustomLanguageModelProvider } from "@/hooks/useCustomLanguageModelProvider";
-import { GiftIcon, PlusIcon, Trash2, Edit } from "lucide-react";
-import { Skeleton } from "./ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
+import { Edit, GiftIcon, PlusIcon, Trash2 } from "lucide-react";
 import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Skeleton } from "./ui/skeleton";
 
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +26,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { CreateCustomProviderDialog } from "./CreateCustomProviderDialog";
 
@@ -79,7 +79,7 @@ export function ProviderSettingsGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <Card key={i} className="border-border">
-              <CardHeader className="p-4">
+              <CardHeader className="px-4 py-0">
                 <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/2" />
               </CardHeader>
@@ -120,7 +120,7 @@ export function ProviderSettingsGrid() {
                 className="relative transition-all hover:shadow-md border-border"
               >
                 <CardHeader
-                  className="p-4 cursor-pointer"
+                  className="px-4 py-0 cursor-pointer"
                   onClick={() => handleProviderClick(provider.id)}
                 >
                   {isCustom && (
@@ -169,7 +169,7 @@ export function ProviderSettingsGrid() {
                         Ready
                       </span>
                     ) : (
-                      <span className="text-sm text-gray-500 bg-gray-50 dark:bg-gray-900 dark:text-gray-300 px-2 py-1 rounded-full">
+                      <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
                         Needs Setup
                       </span>
                     )}
@@ -192,7 +192,7 @@ export function ProviderSettingsGrid() {
           className="cursor-pointer transition-all hover:shadow-md border-border border-dashed hover:border-primary/70"
           onClick={() => setIsDialogOpen(true)}
         >
-          <CardHeader className="p-4 flex flex-col items-center justify-center h-full">
+          <CardHeader className="px-4 py-0 flex flex-col items-center justify-center h-full">
             <PlusIcon className="h-8 w-8 text-muted-foreground mb-2" />
             <CardTitle className="text-lg font-medium text-center">
               Add custom provider

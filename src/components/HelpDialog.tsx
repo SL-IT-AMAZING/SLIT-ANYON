@@ -1,32 +1,32 @@
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/useSettings";
+import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import { ipc } from "@/ipc/types";
+import type { ChatLogsData } from "@/ipc/types";
+import { showError } from "@/lib/toast";
+import { useAtomValue } from "jotai";
 import {
   BookOpenIcon,
   BugIcon,
-  UploadIcon,
-  ChevronLeftIcon,
   CheckIcon,
-  XIcon,
+  ChevronLeftIcon,
   FileIcon,
   SparklesIcon,
+  UploadIcon,
+  XIcon,
 } from "lucide-react";
-import { ipc } from "@/ipc/types";
-import { useState, useEffect } from "react";
-import { useAtomValue } from "jotai";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { ChatLogsData } from "@/ipc/types";
-import { showError } from "@/lib/toast";
-import { HelpBotDialog } from "./HelpBotDialog";
-import { useSettings } from "@/hooks/useSettings";
+import { useEffect, useState } from "react";
 import { BugScreenshotDialog } from "./BugScreenshotDialog";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import { HelpBotDialog } from "./HelpBotDialog";
 
 interface HelpDialogProps {
   isOpen: boolean;
@@ -248,7 +248,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
             <h3 className="text-lg font-medium">
               Chat Logs Uploaded Successfully
             </h3>
-            <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded flex items-center space-x-2 font-mono text-sm">
+            <div className="bg-muted p-3 rounded flex items-center space-x-2 font-mono text-sm">
               <FileIcon
                 className="h-4 w-4 cursor-pointer"
                 onClick={async () => {
@@ -301,7 +301,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
           <div className="space-y-4 overflow-y-auto flex-grow">
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">Chat Messages</h3>
-              <div className="text-sm bg-slate-50 dark:bg-slate-900 rounded p-2 max-h-40 overflow-y-auto">
+              <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto">
                 {chatLogsData.chat.messages.map((msg) => (
                   <div key={msg.id} className="mb-2">
                     <span className="font-semibold">
@@ -315,21 +315,21 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
 
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">Codebase Snapshot</h3>
-              <div className="text-sm bg-slate-50 dark:bg-slate-900 rounded p-2 max-h-40 overflow-y-auto font-mono">
+              <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto font-mono">
                 {chatLogsData.codebase}
               </div>
             </div>
 
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">Logs</h3>
-              <div className="text-sm bg-slate-50 dark:bg-slate-900 rounded p-2 max-h-40 overflow-y-auto font-mono">
+              <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto font-mono">
                 {chatLogsData.debugInfo.logs}
               </div>
             </div>
 
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">System Information</h3>
-              <div className="text-sm bg-slate-50 dark:bg-slate-900 rounded p-2 max-h-32 overflow-y-auto">
+              <div className="text-sm bg-muted rounded p-2 max-h-32 overflow-y-auto">
                 <p>Dyad Version: {chatLogsData.debugInfo.dyadVersion}</p>
                 <p>Platform: {chatLogsData.debugInfo.platform}</p>
                 <p>Architecture: {chatLogsData.debugInfo.architecture}</p>

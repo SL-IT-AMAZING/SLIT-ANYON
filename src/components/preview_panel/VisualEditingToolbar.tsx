@@ -1,23 +1,23 @@
-import { useState, useEffect } from "react";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { X, Move, Square, Palette, Type } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { ComponentSelection } from "@/ipc/types";
-import { useSetAtom, useAtomValue } from "jotai";
-import {
+  currentComponentCoordinatesAtom,
   pendingVisualChangesAtom,
   selectedComponentsPreviewAtom,
-  currentComponentCoordinatesAtom,
   visualEditingSelectedComponentAtom,
 } from "@/atoms/previewAtoms";
-import { StylePopover } from "./StylePopover";
 import { ColorPicker } from "@/components/ui/ColorPicker";
 import { NumberInput } from "@/components/ui/NumberInput";
-import { rgbToHex, processNumericValue } from "@/utils/style-utils";
+import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { ComponentSelection } from "@/ipc/types";
+import { processNumericValue, rgbToHex } from "@/utils/style-utils";
+import { useAtomValue, useSetAtom } from "jotai";
+import { Move, Palette, Square, Type, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { StylePopover } from "./StylePopover";
 
 const FONT_WEIGHT_OPTIONS = [
   { value: "", label: "Default" },
@@ -324,7 +324,7 @@ export function VisualEditingToolbar({
           render={
             <button
               onClick={handleDeselectComponent}
-              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#7f22fe] dark:text-gray-200"
+              className="p-1 rounded hover:bg-accent text-[#7f22fe] dark:text-foreground"
               aria-label="Deselect Component"
             />
           }

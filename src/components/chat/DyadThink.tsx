@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { ChevronsDownUp, ChevronsUpDown, Brain, Loader2 } from "lucide-react";
+import { Brain, ChevronsDownUp, ChevronsUpDown, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { VanillaMarkdownParser } from "./DyadMarkdownParser";
-import type { CustomTagState } from "./stateTypes";
 import { DyadTokenSavings } from "./DyadTokenSavings";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadThinkProps {
   node?: { properties?: { state?: CustomTagState } };
@@ -64,7 +64,7 @@ export const DyadThink: React.FC<DyadThinkProps> = ({ children, node }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain size={16} className="text-(--primary)" />
-          <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+          <span className="text-muted-foreground font-medium text-sm">
             Thinking
           </span>
           {inProgress && (
@@ -86,7 +86,7 @@ export const DyadThink: React.FC<DyadThinkProps> = ({ children, node }) => {
         )}
       </div>
       {expanded && (
-        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
+        <div className="mt-2 text-sm text-muted-foreground italic">
           {typeof children === "string" ? (
             <VanillaMarkdownParser content={children} />
           ) : (

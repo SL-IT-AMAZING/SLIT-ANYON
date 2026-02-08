@@ -1,26 +1,26 @@
-import { useAtom } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useLoadApps } from "@/hooks/useLoadApps";
-import { useRouter, useLocation } from "@tanstack/react-router";
-import { useSettings } from "@/hooks/useSettings";
-import { Button } from "@/components/ui/button";
-// @ts-ignore
-import logo from "../../assets/logo.svg";
-import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
-import { cn } from "@/lib/utils";
-import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { useEffect, useState } from "react";
 import { DyadProSuccessDialog } from "@/components/DyadProSuccessDialog";
-import { useTheme } from "@/contexts/ThemeContext";
-import { ipc } from "@/ipc/types";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
-import type { UserBudgetInfo } from "@/ipc/types";
+import { ActionHeader } from "@/components/preview_panel/ActionHeader";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ActionHeader } from "@/components/preview_panel/ActionHeader";
+import { useDeepLink } from "@/contexts/DeepLinkContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLoadApps } from "@/hooks/useLoadApps";
+import { useSettings } from "@/hooks/useSettings";
+import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import { ipc } from "@/ipc/types";
+import type { UserBudgetInfo } from "@/ipc/types";
+import { cn } from "@/lib/utils";
+import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
+import { useLocation, useRouter } from "@tanstack/react-router";
+import { useAtom } from "jotai";
+import { useEffect, useState } from "react";
+// @ts-ignore
+import logo from "../../assets/logo.svg";
 
 export const TitleBar = () => {
   const [selectedAppId] = useAtom(selectedAppIdAtom);
@@ -131,7 +131,7 @@ function WindowsControls() {
   return (
     <div className="ml-auto flex no-app-region-drag">
       <button
-        className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        className="w-10 h-10 flex items-center justify-center hover:bg-accent transition-colors"
         onClick={minimizeWindow}
         aria-label="Minimize"
       >
@@ -150,7 +150,7 @@ function WindowsControls() {
         </svg>
       </button>
       <button
-        className="w-10 h-10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        className="w-10 h-10 flex items-center justify-center hover:bg-accent transition-colors"
         onClick={maximizeWindow}
         aria-label="Maximize"
       >
@@ -212,7 +212,7 @@ export function DyadProButton({
       variant="outline"
       className={cn(
         "hidden @2xl:block ml-1 no-app-region-drag h-7 bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white text-xs px-2 pt-1 pb-1",
-        !isDyadProEnabled && "bg-zinc-600 dark:bg-zinc-600",
+        !isDyadProEnabled && "bg-muted-foreground",
       )}
       size="sm"
     >

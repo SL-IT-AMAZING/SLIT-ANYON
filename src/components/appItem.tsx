@@ -1,8 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
+import type { ListedApp } from "@/ipc/types/app";
 import { formatDistanceToNow } from "date-fns";
 import { Star } from "lucide-react";
-import { SidebarMenuItem } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import type { ListedApp } from "@/ipc/types/app";
 
 type AppItemProps = {
   app: ListedApp;
@@ -34,7 +34,7 @@ export function AppItem({
         >
           <div className="flex flex-col w-4/5">
             <span className="truncate">{app.name}</span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(app.createdAt), {
                 addSuffix: true,
               })}

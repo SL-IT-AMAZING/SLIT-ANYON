@@ -1,31 +1,31 @@
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useStreamChat } from "@/hooks/useStreamChat";
+import { useVersions } from "@/hooks/useVersions";
 import type { Message } from "@/ipc/types";
+import { format, formatDistanceToNow } from "date-fns";
+import { useAtomValue } from "jotai";
+import {
+  Bot,
+  Check,
+  CheckCircle,
+  Clock,
+  Copy,
+  GitCommit,
+  Info,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DyadMarkdownParser,
   VanillaMarkdownParser,
 } from "./DyadMarkdownParser";
-import { useStreamChat } from "@/hooks/useStreamChat";
 import { StreamingLoadingAnimation } from "./StreamingLoadingAnimation";
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  GitCommit,
-  Copy,
-  Check,
-  Info,
-  Bot,
-} from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { useVersions } from "@/hooks/useVersions";
-import { useAtomValue } from "jotai";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 
 interface ChatMessageProps {
   message: Message;
@@ -134,7 +134,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                           data-testid="copy-message-button"
                           onClick={handleCopyFormatted}
                           aria-label="Copy"
-                          className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200 cursor-pointer"
+                          className="flex items-center space-x-1 px-2 py-1 text-xs text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded transition-colors duration-200 cursor-pointer"
                         />
                       }
                     >
@@ -167,7 +167,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                   </div>
                 )}
                 {message.role === "assistant" && message.model && (
-                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 w-full sm:w-auto">
+                  <div className="flex items-center gap-1 text-muted-foreground w-full sm:w-auto">
                     <Bot className="h-4 w-4 flex-shrink-0" />
                     <span>{message.model}</span>
                   </div>
@@ -178,7 +178,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
         </div>
         {/* Timestamp and commit info for assistant messages - only visible on hover */}
         {message.role === "assistant" && message.createdAt && (
-          <div className="mt-1 flex flex-wrap items-center justify-start space-x-2 text-xs text-gray-500 dark:text-gray-400 ">
+          <div className="mt-1 flex flex-wrap items-center justify-start space-x-2 text-xs text-muted-foreground ">
             <div className="flex items-center space-x-1">
               <Clock className="h-3 w-3" />
               <span>{formatTimestamp(message.createdAt)}</span>
@@ -224,7 +224,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                           });
                       }}
                       aria-label="Copy Request ID"
-                      className="flex items-center space-x-1 px-1 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200 cursor-pointer"
+                      className="flex items-center space-x-1 px-1 py-0.5 hover:bg-accent rounded transition-colors duration-200 cursor-pointer"
                     />
                   }
                 >

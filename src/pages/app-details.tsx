@@ -1,29 +1,10 @@
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { normalizePath } from "../../shared/normalizePath";
-import { useAtom, useSetAtom } from "jotai";
 import { appsListAtom, selectedAppIdAtom } from "@/atoms/appAtoms";
-import { ipc } from "@/ipc/types";
-import { useLoadApps } from "@/hooks/useLoadApps";
-import { useState } from "react";
+import { AppUpgrades } from "@/components/AppUpgrades";
+import { CapacitorControls } from "@/components/CapacitorControls";
+import { GitHubConnector } from "@/components/GitHubConnector";
+import { GithubCollaboratorManager } from "@/components/GithubCollaboratorManager";
+import { SupabaseConnector } from "@/components/SupabaseConnector";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  MoreVertical,
-  MessageCircle,
-  Pencil,
-  Folder,
-} from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -32,18 +13,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GitHubConnector } from "@/components/GitHubConnector";
-import { SupabaseConnector } from "@/components/SupabaseConnector";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useCheckName } from "@/hooks/useCheckName";
+import { useDebounce } from "@/hooks/useDebounce";
+import { invalidateAppQuery } from "@/hooks/useLoadApp";
+import { useLoadApps } from "@/hooks/useLoadApps";
+import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Label } from "@/components/ui/label";
+import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { useAtom, useSetAtom } from "jotai";
+import {
+  ArrowLeft,
+  Folder,
+  MessageCircle,
+  MoreVertical,
+  Pencil,
+} from "lucide-react";
 import { Loader2 } from "lucide-react";
-import { invalidateAppQuery } from "@/hooks/useLoadApp";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCheckName } from "@/hooks/useCheckName";
-import { AppUpgrades } from "@/components/AppUpgrades";
-import { CapacitorControls } from "@/components/CapacitorControls";
-import { GithubCollaboratorManager } from "@/components/GithubCollaboratorManager";
+import { useState } from "react";
+import { normalizePath } from "../../shared/normalizePath";
 
 export default function AppDetailsPage() {
   const navigate = useNavigate();
@@ -282,7 +282,7 @@ export default function AppDetailsPage() {
         Back
       </Button>
 
-      <div className="w-full max-w-2xl mx-auto mt-10 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm relative">
+      <div className="w-full max-w-2xl mx-auto mt-10 p-4 bg-card rounded-lg border border-border shadow-sm relative">
         <div className="flex items-center mb-3">
           <h2 className="text-2xl font-bold">{selectedApp.name}</h2>
           <Button
@@ -346,19 +346,19 @@ export default function AppDetailsPage() {
 
         <div className="grid grid-cols-2 gap-3 text-sm mb-4">
           <div>
-            <span className="block text-gray-500 dark:text-gray-400 mb-0.5 text-xs">
+            <span className="block text-muted-foreground mb-0.5 text-xs">
               Created
             </span>
             <span>{selectedApp.createdAt.toString()}</span>
           </div>
           <div>
-            <span className="block text-gray-500 dark:text-gray-400 mb-0.5 text-xs">
+            <span className="block text-muted-foreground mb-0.5 text-xs">
               Last Updated
             </span>
             <span>{selectedApp.updatedAt.toString()}</span>
           </div>
           <div className="col-span-2">
-            <span className="block text-gray-500 dark:text-gray-400 mb-0.5 text-xs">
+            <span className="block text-muted-foreground mb-0.5 text-xs">
               Path
             </span>
             <div className="flex items-center gap-1">
@@ -368,7 +368,7 @@ export default function AppDetailsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="ml-[-8px] p-0.5 h-auto cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="ml-[-8px] p-0.5 h-auto cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => {
                         ipc.system.showItemInFolder(currentAppPath);
                       }}
@@ -398,10 +398,10 @@ export default function AppDetailsPage() {
             Open in Chat
             <MessageCircle className="h-4 w-4" />
           </Button>
-          <div className="border border-gray-200 rounded-md p-4">
+          <div className="border border-border rounded-md p-4">
             <GitHubConnector appId={appId} folderName={selectedApp.path} />
             {selectedApp.githubOrg && selectedApp.githubRepo && appId && (
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="pt-4 border-t border-border">
                 <GithubCollaboratorManager appId={appId} />
               </div>
             )}
@@ -540,7 +540,7 @@ export default function AppDetailsPage() {
                 </div>
                 <div className="text-left">
                   <p className="font-medium text-xs">Rename app and folder</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Renames the folder to match the new app name.
                   </p>
                 </div>
@@ -554,7 +554,7 @@ export default function AppDetailsPage() {
               >
                 <div className="text-left">
                   <p className="font-medium text-xs">Rename app only</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     The folder name will remain the same.
                   </p>
                 </div>
@@ -641,7 +641,7 @@ export default function AppDetailsPage() {
                       <p className="font-medium text-xs">
                         Copy app with history
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         Copies the entire app, including the Git version
                         history.
                       </p>
@@ -669,7 +669,7 @@ export default function AppDetailsPage() {
                       <p className="font-medium text-xs">
                         Copy app without history
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         Useful if the current app has a Git-related issue.
                       </p>
                     </div>

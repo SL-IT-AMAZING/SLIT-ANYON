@@ -1,19 +1,19 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-// We might need a Supabase icon here, but for now, let's use a generic one or text.
-// import { Supabase } from "lucide-react"; // Placeholder
-import { DatabaseZap, Trash2 } from "lucide-react"; // Using DatabaseZap as a placeholder
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSettings } from "@/hooks/useSettings";
 import { useSupabase } from "@/hooks/useSupabase";
-import { showSuccess, showError } from "@/lib/toast";
 import { isSupabaseConnected } from "@/lib/schemas";
+import { showError, showSuccess } from "@/lib/toast";
+// We might need a Supabase icon here, but for now, let's use a generic one or text.
+// import { Supabase } from "lucide-react"; // Placeholder
+import { DatabaseZap, Trash2 } from "lucide-react"; // Using DatabaseZap as a placeholder
+import { useState } from "react";
 
 export function SupabaseIntegration() {
   const { settings, updateSettings } = useSettings();
@@ -88,10 +88,10 @@ export function SupabaseIntegration() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <h3 className="text-sm font-medium text-muted-foreground">
             Supabase Integration
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {organizations.length} organization
             {organizations.length !== 1 ? "s" : ""} connected to Supabase.
           </p>
@@ -116,11 +116,11 @@ export function SupabaseIntegration() {
             className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-sm gap-2"
           >
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-gray-700 dark:text-gray-300 font-medium truncate">
+              <span className="text-muted-foreground font-medium truncate">
                 {org.name || `Organization ${org.organizationSlug.slice(0, 8)}`}
               </span>
               {org.ownerEmail && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <span className="text-xs text-muted-foreground truncate">
                   {org.ownerEmail}
                 </span>
               )}
@@ -162,7 +162,7 @@ export function SupabaseIntegration() {
             >
               Write SQL migration files
             </Label>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Generate SQL migration files when modifying your Supabase schema.
               This helps you track database changes in version control, though
               these files aren't used for chat context, which uses the live
@@ -187,7 +187,7 @@ export function SupabaseIntegration() {
             >
               Keep extra Supabase edge functions
             </Label>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               When disabled, edge functions deployed to Supabase but not present
               in your codebase will be automatically deleted during sync
               operations (e.g., after reverting or modifying shared modules).

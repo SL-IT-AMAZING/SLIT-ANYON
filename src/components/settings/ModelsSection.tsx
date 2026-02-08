@@ -1,12 +1,6 @@
-import { useState } from "react";
-import { AlertTriangle, PlusIcon, TrashIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CreateCustomModelDialog } from "@/components/CreateCustomModelDialog";
 import { EditCustomModelDialog } from "@/components/EditCustomModelDialog";
-import { useLanguageModelsForProvider } from "@/hooks/useLanguageModelsForProvider"; // Use the hook directly here
-import { useDeleteCustomModel } from "@/hooks/useDeleteCustomModel"; // Import the new hook
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,8 +11,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDeleteCustomModel } from "@/hooks/useDeleteCustomModel"; // Import the new hook
+import { useLanguageModelsForProvider } from "@/hooks/useLanguageModelsForProvider"; // Use the hook directly here
 import { queryKeys } from "@/lib/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, PlusIcon, TrashIcon } from "lucide-react";
+import { useState } from "react";
 
 interface ModelsSectionProps {
   providerId: string;
@@ -115,7 +115,7 @@ export function ModelsSection({ providerId }: ModelsSectionProps) {
           {models.map((model) => (
             <div
               key={model.apiName + model.displayName}
-              className={`p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
+              className={`p-4 bg-card border border-border rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
                 selectedModel === model.apiName
                   ? "ring-2 ring-blue-500 dark:ring-blue-400"
                   : ""
@@ -124,7 +124,7 @@ export function ModelsSection({ providerId }: ModelsSectionProps) {
               onDoubleClick={() => handleModelDoubleClick(model)}
             >
               <div className="flex justify-between items-center">
-                <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                <h4 className="text-lg font-semibold text-foreground">
                   {model.displayName}
                 </h4>
                 {model.type === "custom" && (
@@ -167,15 +167,15 @@ export function ModelsSection({ providerId }: ModelsSectionProps) {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+              <p className="text-sm text-muted-foreground italic">
                 {model.apiName}
               </p>
               {model.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {model.description}
                 </p>
               )}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
                 {model.contextWindow && (
                   <span>
                     Context: {model.contextWindow.toLocaleString()} tokens

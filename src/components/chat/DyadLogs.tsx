@@ -1,15 +1,15 @@
-import type React from "react";
-import type { ReactNode } from "react";
-import { useState } from "react";
 import {
   ChevronsDownUp,
   ChevronsUpDown,
+  CircleX,
   FileText,
   Loader,
-  CircleX,
 } from "lucide-react";
+import type React from "react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { CodeHighlight } from "./CodeHighlight";
-import { CustomTagState } from "./stateTypes";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadLogsProps {
   children?: ReactNode;
@@ -54,7 +54,7 @@ export const DyadLogs: React.FC<DyadLogsProps> = ({ children, node }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText size={16} className="text-(--primary)" />
-          <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+          <span className="text-muted-foreground font-medium text-sm">
             <span className="font-bold mr-2 outline-2 outline-(--primary)/20 bg-(--primary)/10 text-(--primary) rounded-md px-1">
               LOGS
             </span>

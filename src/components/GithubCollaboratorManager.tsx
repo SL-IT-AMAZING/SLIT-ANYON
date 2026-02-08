@@ -1,23 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { SimpleAvatar } from "@/components/ui/SimpleAvatar";
-import { ipc } from "@/ipc/types";
-import {
-  Trash2,
-  UserPlus,
-  Users,
-  ChevronsDownUp,
-  ChevronsUpDown,
-} from "lucide-react";
-import { showSuccess, showError } from "@/lib/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +9,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import {
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Collaborator {
   login: string;
@@ -110,7 +110,7 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
   return (
     <Card className="transition-all duration-200">
       <CardHeader
-        className="p-2 cursor-pointer"
+        className="px-2 py-0 cursor-pointer"
         onClick={() => setIsExpanded((prev) => !prev)}
       >
         <div className="flex items-center justify-between">
@@ -126,9 +126,9 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
             </div>
           </div>
           {isExpanded ? (
-            <ChevronsDownUp className="w-5 h-5 text-gray-500" />
+            <ChevronsDownUp className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ChevronsUpDown className="w-5 h-5 text-gray-500" />
+            <ChevronsUpDown className="w-5 h-5 text-muted-foreground" />
           )}
         </div>
       </CardHeader>
@@ -165,15 +165,15 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
 
           {/* Collaborators List */}
           <div className="space-y-2 mt-4">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <h3 className="text-sm font-medium text-muted-foreground">
               Current Team
             </h3>
             {isLoading ? (
-              <div className="text-sm text-center py-4 text-gray-500">
+              <div className="text-sm text-center py-4 text-muted-foreground">
                 Loading collaborators...
               </div>
             ) : collaborators.length === 0 ? (
-              <div className="text-sm text-center py-4 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-md">
+              <div className="text-sm text-center py-4 text-muted-foreground bg-muted rounded-md">
                 No collaborators found.
               </div>
             ) : (
@@ -182,7 +182,7 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
                   <div
                     key={collab.login}
                     data-testid={`collaborator-item-${collab.login}`}
-                    className="flex items-center justify-between p-2 rounded-md border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+                    className="flex items-center justify-between p-2 rounded-md border border-border bg-card"
                   >
                     <div className="flex items-center gap-3">
                       <SimpleAvatar
@@ -192,7 +192,7 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
                       />
                       <div>
                         <p className="text-sm font-medium">{collab.login}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {collab.permissions?.admin
                             ? "Admin"
                             : collab.permissions?.push
@@ -204,7 +204,7 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       data-testid={`collaborator-remove-button-${collab.login}`}
                       onClick={() => setCollaboratorToDelete(collab.login)}
                     >

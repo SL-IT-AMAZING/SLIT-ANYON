@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import type { ReactNode } from "react";
 
 interface StylePopoverProps {
   icon: ReactNode;
@@ -23,7 +23,7 @@ export function StylePopover({
   return (
     <Popover>
       <PopoverTrigger
-        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#7f22fe] dark:text-gray-200"
+        className="p-1 rounded hover:bg-accent text-[#7f22fe] dark:text-foreground"
         aria-label={tooltip}
         title={tooltip}
       >

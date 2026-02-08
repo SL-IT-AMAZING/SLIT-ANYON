@@ -112,7 +112,7 @@ export function NeonConnector() {
               type="button"
               onClick={() =>
                 ipc.system.openExternalUrl(
-                  "https://console.neon.tech/app/settings/api-keys"
+                  "https://console.neon.tech/app/settings/api-keys",
                 )
               }
               className="text-blue-500 hover:underline"

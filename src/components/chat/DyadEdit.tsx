@@ -1,15 +1,15 @@
-import type React from "react";
-import type { ReactNode } from "react";
-import { useState } from "react";
 import {
   ChevronsDownUp,
   ChevronsUpDown,
-  Loader,
   CircleX,
+  Loader,
   Rabbit,
 } from "lucide-react";
+import type React from "react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { CodeHighlight } from "./CodeHighlight";
-import { CustomTagState } from "./stateTypes";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadEditProps {
   children?: ReactNode;
@@ -56,7 +56,7 @@ export const DyadEdit: React.FC<DyadEditProps> = ({
             </span>
           </div>
           {fileName && (
-            <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+            <span className="text-muted-foreground font-medium text-sm">
               {fileName}
             </span>
           )}
@@ -77,23 +77,23 @@ export const DyadEdit: React.FC<DyadEditProps> = ({
           {isContentVisible ? (
             <ChevronsDownUp
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           ) : (
             <ChevronsUpDown
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           )}
         </div>
       </div>
       {path && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
+        <div className="text-xs text-muted-foreground font-medium mb-1">
           {path}
         </div>
       )}
       {description && (
-        <div className="text-sm text-gray-600 dark:text-gray-300">
+        <div className="text-sm text-muted-foreground">
           <span className="font-medium">Summary: </span>
           {description}
         </div>

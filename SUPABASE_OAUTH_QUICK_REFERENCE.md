@@ -99,29 +99,29 @@ Per-App Linking:
 
 ```javascript
 // List all connected organizations
-ipc.supabase.listOrganizations()
+ipc.supabase.listOrganizations();
 // → [{ slug, name, ownerEmail }, ...]
 
 // Get all projects across orgs
-ipc.supabase.listAllProjects()
+ipc.supabase.listAllProjects();
 // → [{ id, name, region, organizationSlug }, ...]
 
 // Get database branches for a project
-ipc.supabase.listBranches({ projectId, organizationSlug })
+ipc.supabase.listBranches({ projectId, organizationSlug });
 // → [{ id, name, isDefault, projectRef, parentProjectRef }, ...]
 
 // Get edge function logs
-ipc.supabase.getEdgeLogs({ projectId, appId, organizationSlug })
+ipc.supabase.getEdgeLogs({ projectId, appId, organizationSlug });
 // → [{ level, type, message, timestamp, sourceName }, ...]
 
 // Link app to project
-ipc.supabase.setAppProject({ appId, projectId, organizationSlug })
+ipc.supabase.setAppProject({ appId, projectId, organizationSlug });
 
 // Unlink app from project
-ipc.supabase.unsetAppProject({ app })
+ipc.supabase.unsetAppProject({ app });
 
 // Remove organization connection
-ipc.supabase.deleteOrganization({ organizationSlug })
+ipc.supabase.deleteOrganization({ organizationSlug });
 ```
 
 ## Settings Controlled by User
@@ -141,6 +141,7 @@ ipc.supabase.deleteOrganization({ organizationSlug })
 ## Files That Use Supabase Connection
 
 ### Core Implementation
+
 - `src/supabase_admin/supabase_management_client.ts` - Main API wrapper
 - `src/supabase_admin/supabase_context.ts` - Schema extraction
 - `src/supabase_admin/supabase_utils.ts` - Function deployment
@@ -148,27 +149,30 @@ ipc.supabase.deleteOrganization({ organizationSlug })
 - `src/ipc/types/supabase.ts` - Contracts
 
 ### UI Components
+
 - `src/components/SupabaseConnector.tsx` - Per-app project linking
 - `src/components/SupabaseIntegration.tsx` - Global settings
 - `src/components/SupabaseHubConnector.tsx` - Hub integration
 
 ### Chat/AI
+
 - `src/ipc/handlers/chat_stream_handlers.ts` - Passes schema to AI
 - `src/ipc/processors/response_processor.ts` - Function deployment during chat
 
 ### Settings
+
 - `src/main/settings.ts` - Stores OAuth tokens
 
 ## Error Scenarios
 
-| Scenario | What Happens |
-|----------|-------------|
-| Token Expires | Automatically refreshed (5 min buffer) |
-| Refresh Fails | User gets error: "disconnect and reconnect" |
-| API Rate Limit | Automatic retry with exponential backoff |
-| Network Down | Request fails, user sees error |
-| Project Deleted | "Project not found" when trying to link |
-| Function Deploy Fails | Error message shows Supabase API error |
+| Scenario              | What Happens                                |
+| --------------------- | ------------------------------------------- |
+| Token Expires         | Automatically refreshed (5 min buffer)      |
+| Refresh Fails         | User gets error: "disconnect and reconnect" |
+| API Rate Limit        | Automatic retry with exponential backoff    |
+| Network Down          | Request fails, user sees error              |
+| Project Deleted       | "Project not found" when trying to link     |
+| Function Deploy Fails | Error message shows Supabase API error      |
 
 ## Performance Optimizations
 

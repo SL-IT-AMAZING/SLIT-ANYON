@@ -1,6 +1,6 @@
+import { ScanQrCode } from "lucide-react";
 import type React from "react";
 import type { ReactNode } from "react";
-import { ScanQrCode } from "lucide-react";
 
 interface DyadWebCrawlProps {
   children?: ReactNode;
@@ -19,7 +19,7 @@ export const DyadWebCrawl: React.FC<DyadWebCrawlProps> = ({
           <div className="text-xs text-blue-600 font-medium">Web Crawl</div>
         </div>
       </div>
-      <div className="text-sm italic text-gray-600 dark:text-gray-300 mt-2">
+      <div className="text-sm italic text-muted-foreground mt-2">
         {children}
       </div>
     </div>

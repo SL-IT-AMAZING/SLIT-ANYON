@@ -1,19 +1,19 @@
 import { appConsoleEntriesAtom, selectedAppIdAtom } from "@/atoms/appAtoms";
+import { useSettings } from "@/hooks/useSettings";
 import type { ConsoleEntry } from "@/ipc/types";
-import { useAtomValue, useSetAtom } from "jotai";
 import { ipc } from "@/ipc/types";
-import { useEffect, useRef, useState, useMemo, useCallback, memo } from "react";
-import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
+import { showError } from "@/lib/toast";
+import { useAtomValue, useSetAtom } from "jotai";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { ConsoleEntryComponent } from "./ConsoleEntry";
 import { ConsoleFilters } from "./ConsoleFilters";
-import { useSettings } from "@/hooks/useSettings";
-import { showError } from "@/lib/toast";
 
 // Placeholder component shown during fast scrolling
 const ScrollSeekPlaceholder = () => {
   return (
-    <div className="font-mono text-xs py-2 px-4 border-b border-gray-200 dark:border-gray-700">
-      <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+    <div className="font-mono text-xs py-2 px-4 border-b border-border">
+      <div className="h-4 bg-muted rounded animate-pulse" />
     </div>
   );
 };

@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { ipc } from "@/ipc/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Database, Loader2 } from "lucide-react";
-import { showSuccess, showError } from "@/lib/toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVersions } from "@/hooks/useVersions";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import { useMutation } from "@tanstack/react-query";
+import { Database, ExternalLink, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface PortalMigrateProps {
   appId: number;
@@ -47,14 +47,14 @@ export const PortalMigrate = ({ appId }: PortalMigrateProps) => {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="w-5 h-5 text-primary" />
           Portal Database Migration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Generate a new database migration file for your Portal app.
         </p>
 
@@ -90,12 +90,12 @@ export const PortalMigrate = ({ appId }: PortalMigrateProps) => {
 
         {output && (
           <div className="mt-4">
-            <div className="bg-gray-50 dark:bg-gray-900 border rounded-lg p-3">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-muted border rounded-lg p-3">
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">
                 Command Output:
               </h4>
               <div className="max-h-64 overflow-auto">
-                <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono">
+                <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">
                   {output}
                 </pre>
               </div>

@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
-import { showSuccess, showError } from "@/lib/toast";
+import { showError, showSuccess } from "@/lib/toast";
+import { useState } from "react";
 
 export function VercelIntegration() {
   const { settings, updateSettings } = useSettings();
@@ -36,10 +36,10 @@ export function VercelIntegration() {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-medium text-muted-foreground">
           Vercel Integration
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Your account is connected to Vercel.
         </p>
       </div>

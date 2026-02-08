@@ -1,18 +1,18 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/types";
-import { toast } from "sonner";
-import { useSettings } from "@/hooks/useSettings";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { ExternalLink } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { isSupabaseConnected } from "@/lib/schemas";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
+import { isSupabaseConnected } from "@/lib/schemas";
+import { ExternalLink } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
-import supabaseLogoLight from "../../assets/supabase/supabase-logo-wordmark--light.svg";
-import supabaseLogoDark from "../../assets/supabase/supabase-logo-wordmark--dark.svg";
 import connectSupabaseDark from "../../assets/supabase/connect-supabase-dark.svg";
 import connectSupabaseLight from "../../assets/supabase/connect-supabase-light.svg";
+import supabaseLogoDark from "../../assets/supabase/supabase-logo-wordmark--dark.svg";
+import supabaseLogoLight from "../../assets/supabase/supabase-logo-wordmark--light.svg";
 
 export function SupabaseHubConnector() {
   const { settings, refreshSettings, updateSettings } = useSettings();
@@ -34,7 +34,7 @@ export function SupabaseHubConnector() {
 
   if (isConnected) {
     return (
-      <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
+      <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
         <div className="flex flex-col items-start justify-between">
           <div className="flex items-center justify-between w-full">
             <h2 className="text-lg font-medium pb-1">Supabase</h2>
@@ -55,7 +55,7 @@ export function SupabaseHubConnector() {
               <ExternalLink className="h-3 w-3" />
             </Button>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
+          <p className="text-sm text-muted-foreground pb-3">
             You are connected to Supabase
           </p>
           <Button
@@ -77,10 +77,10 @@ export function SupabaseHubConnector() {
   }
 
   return (
-    <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
+    <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
         <h2 className="text-lg font-medium pb-1">Supabase</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
+        <p className="text-sm text-muted-foreground pb-3">
           Supabase provides auth, database, storage and more with a generous
           free tier.
         </p>

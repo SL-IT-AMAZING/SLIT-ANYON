@@ -1,10 +1,10 @@
-import { ContextFilesPicker } from "./ContextFilesPicker";
-import { ModelPicker } from "./ModelPicker";
-import { AgentPicker } from "./AgentPicker";
-import { ProModeSelector } from "./ProModeSelector";
-import { ChatModeSelector } from "./ChatModeSelector";
 import { McpToolsPicker } from "@/components/McpToolsPicker";
 import { useSettings } from "@/hooks/useSettings";
+import { AgentPicker } from "./AgentPicker";
+import { ChatModeSelector } from "./ChatModeSelector";
+import { ContextFilesPicker } from "./ContextFilesPicker";
+import { ModelPicker } from "./ModelPicker";
+import { ProModeSelector } from "./ProModeSelector";
 
 export function ChatInputControls({
   showContextFilesPicker = false,
@@ -14,27 +14,13 @@ export function ChatInputControls({
   const { settings } = useSettings();
 
   return (
-    <div className="flex">
+    <div className="flex items-center gap-1">
       <ChatModeSelector />
-      {settings?.selectedChatMode === "agent" && (
-        <>
-          <div className="w-1.5"></div>
-          <McpToolsPicker />
-        </>
-      )}
-      <div className="w-1.5"></div>
+      {settings?.selectedChatMode === "agent" && <McpToolsPicker />}
       <AgentPicker />
-      <div className="w-1.5"></div>
       <ModelPicker />
-      <div className="w-1.5"></div>
       <ProModeSelector />
-      <div className="w-1"></div>
-      {showContextFilesPicker && (
-        <>
-          <ContextFilesPicker />
-          <div className="w-0.5"></div>
-        </>
-      )}
+      {showContextFilesPicker && <ContextFilesPicker />}
     </div>
   );
 }

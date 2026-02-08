@@ -1,20 +1,20 @@
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import {
+  Check,
   MousePointer2,
   Pencil,
-  Type,
-  Trash2,
-  Undo,
   Redo,
-  Check,
+  Trash2,
+  Type,
+  Undo,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ToolbarColorPicker } from "./ToolbarColorPicker";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 
 interface AnnotatorToolbarProps {
   tool: "select" | "draw" | "text";
@@ -120,7 +120,7 @@ export const AnnotatorToolbar = ({
           <TooltipContent>Color</TooltipContent>
         </Tooltip>
 
-        <div className="w-px bg-gray-200 dark:bg-gray-700 h-4" />
+        <div className="w-px bg-border h-4" />
 
         <Tooltip>
           <TooltipTrigger
@@ -138,7 +138,7 @@ export const AnnotatorToolbar = ({
           <TooltipContent>Delete Selected</TooltipContent>
         </Tooltip>
 
-        <div className="w-px bg-gray-200 dark:bg-gray-700 h-4" />
+        <div className="w-px bg-border h-4" />
 
         <Tooltip>
           <TooltipTrigger
@@ -172,7 +172,7 @@ export const AnnotatorToolbar = ({
           <TooltipContent>Redo</TooltipContent>
         </Tooltip>
 
-        <div className="w-px bg-gray-200 dark:bg-gray-700 h-4" />
+        <div className="w-px bg-border h-4" />
 
         <Tooltip>
           <TooltipTrigger

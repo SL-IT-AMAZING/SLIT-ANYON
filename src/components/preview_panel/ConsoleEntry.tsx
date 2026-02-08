@@ -1,17 +1,17 @@
+import { chatInputValueAtom } from "@/atoms/chatAtoms";
 import {
-  MessageSquare,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSetAtom } from "jotai";
+import {
   AlertCircle,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  MessageSquare,
 } from "lucide-react";
-import { useSetAtom } from "jotai";
-import { chatInputValueAtom } from "@/atoms/chatAtoms";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 
 interface ConsoleEntryProps {
   type: "server" | "client" | "edge-function" | "network-requests";
@@ -71,7 +71,7 @@ export const ConsoleEntryComponent = (props: ConsoleEntryProps) => {
     if (level === "warn") {
       return "bg-yellow-50 dark:bg-yellow-950/30 hover:bg-yellow-100 dark:hover:bg-yellow-950/50";
     }
-    return "hover:bg-gray-100 dark:hover:bg-gray-800";
+    return "hover:bg-accent";
   };
 
   return (
@@ -90,19 +90,19 @@ export const ConsoleEntryComponent = (props: ConsoleEntryProps) => {
           />
         )}
         <span
-          className="text-gray-400 shrink-0"
+          className="text-muted-foreground shrink-0"
           title={new Date(timestamp).toLocaleString()}
         >
           {formatTimestamp(timestamp)}
         </span>
         <span className="flex-1 whitespace-pre-wrap break-all">
           {sourceName && (
-            <span className="text-gray-500 shrink-0 text-[10px] px-1 py-0.5 mr-2 bg-gray-200 dark:bg-gray-700 rounded">
+            <span className="text-muted-foreground shrink-0 text-[10px] px-1 py-0.5 mr-2 bg-muted rounded">
               {sourceName}
             </span>
           )}
           {typeFilter == "all" && type && (
-            <span className="text-purple-500 shrink-0 text-[10px] px-1 py-0.5 mr-2 bg-gray-200 dark:bg-gray-700 rounded">
+            <span className="text-purple-500 shrink-0 text-[10px] px-1 py-0.5 mr-2 bg-muted rounded">
               {type}
             </span>
           )}
@@ -130,12 +130,12 @@ export const ConsoleEntryComponent = (props: ConsoleEntryProps) => {
           render={
             <button
               onClick={handleSendToChat}
-              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded"
               data-testid="send-to-chat"
             />
           }
         >
-          <MessageSquare size={12} className="text-gray-500" />
+          <MessageSquare size={12} className="text-muted-foreground" />
         </TooltipTrigger>
         <TooltipContent>Send to chat</TooltipContent>
       </Tooltip>

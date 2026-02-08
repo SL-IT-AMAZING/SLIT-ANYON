@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface SimpleAvatarProps {
   src?: string;
@@ -17,7 +17,7 @@ export function SimpleAvatar({ src, alt, fallbackText }: SimpleAvatarProps) {
   const showImage = src && !hasError;
 
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden text-xs font-medium">
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted overflow-hidden text-xs font-medium">
       {showImage ? (
         <img
           src={src}

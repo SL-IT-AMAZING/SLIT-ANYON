@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import { CustomTagState } from "./stateTypes";
 import {
-  Table2,
-  Loader2,
-  CircleX,
   ChevronsDownUp,
   ChevronsUpDown,
+  CircleX,
+  Loader2,
+  Table2,
 } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadSupabaseTableSchemaProps {
   node: {
@@ -48,7 +49,7 @@ export function DyadSupabaseTableSchema({
           ) : (
             <Table2 className="size-4 text-muted-foreground" />
           )}
-          <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+          <span className="text-muted-foreground font-medium text-sm">
             {table ? `Table Schema: ${table}` : "Supabase Table Schema"}
           </span>
           {isLoading && (
@@ -62,12 +63,12 @@ export function DyadSupabaseTableSchema({
           {isContentVisible ? (
             <ChevronsDownUp
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           ) : (
             <ChevronsUpDown
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           )}
         </div>

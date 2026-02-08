@@ -1,56 +1,53 @@
 import {
-  selectedAppIdAtom,
-  appUrlAtom,
   appConsoleEntriesAtom,
-  previewErrorMessageAtom,
+  appUrlAtom,
   previewCurrentUrlAtom,
+  previewErrorMessageAtom,
+  selectedAppIdAtom,
 } from "@/atoms/appAtoms";
-import { useAtomValue, useSetAtom, useAtom } from "jotai";
-import { useEffect, useRef, useState } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  RefreshCw,
-  ExternalLink,
-  Loader2,
-  X,
-  Sparkles,
-  ChevronDown,
-  Lightbulb,
-  ChevronRight,
-  MousePointerClick,
-  Power,
-  MonitorSmartphone,
-  Monitor,
-  Tablet,
-  Smartphone,
-  Pen,
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { CopyErrorMessage } from "@/components/CopyErrorMessage";
 import { ipc } from "@/ipc/types";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Lightbulb,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Monitor,
+  MonitorSmartphone,
+  MousePointerClick,
+  Pen,
+  Power,
+  RefreshCw,
+  Smartphone,
+  Sparkles,
+  Tablet,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import { useParseRouter } from "@/hooks/useParseRouter";
+import {
+  annotatorModeAtom,
+  currentComponentCoordinatesAtom,
+  pendingVisualChangesAtom,
+  previewIframeRefAtom,
+  screenshotDataUrlAtom,
+  selectedComponentsPreviewAtom,
+  visualEditingSelectedComponentAtom,
+} from "@/atoms/previewAtoms";
+import { isChatPanelHiddenAtom } from "@/atoms/viewAtoms";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useStreamChat } from "@/hooks/useStreamChat";
-import {
-  selectedComponentsPreviewAtom,
-  visualEditingSelectedComponentAtom,
-  currentComponentCoordinatesAtom,
-  previewIframeRefAtom,
-  annotatorModeAtom,
-  screenshotDataUrlAtom,
-  pendingVisualChangesAtom,
-} from "@/atoms/previewAtoms";
-import { isChatPanelHiddenAtom } from "@/atoms/viewAtoms";
-import { ComponentSelection } from "@/ipc/types";
 import {
   Popover,
   PopoverContent,
@@ -59,20 +56,23 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAttachments } from "@/hooks/useAttachments";
+import { useParseRouter } from "@/hooks/useParseRouter";
 import { useRunApp } from "@/hooks/useRunApp";
 import { useSettings } from "@/hooks/useSettings";
 import { useShortcut } from "@/hooks/useShortcut";
-import { cn } from "@/lib/utils";
-import { normalizePath } from "../../../shared/normalizePath";
-import { showError } from "@/lib/toast";
-import type { DeviceMode } from "@/lib/schemas";
-import { AnnotatorOnlyForPro } from "./AnnotatorOnlyForPro";
-import { useAttachments } from "@/hooks/useAttachments";
+import { useStreamChat } from "@/hooks/useStreamChat";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import type { ComponentSelection } from "@/ipc/types";
+import type { DeviceMode } from "@/lib/schemas";
+import { showError } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import { Annotator } from "@/pro/ui/components/Annotator/Annotator";
+import { normalizePath } from "../../../shared/normalizePath";
+import { AnnotatorOnlyForPro } from "./AnnotatorOnlyForPro";
 import { VisualEditingToolbar } from "./VisualEditingToolbar";
 
 interface ErrorBannerProps {
@@ -289,7 +289,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
 
     // Parse componentId to extract file path and line number
     const [filePath, lineStr] = componentId.split(":");
-    const lineNumber = parseInt(lineStr, 10);
+    const lineNumber = Number.parseInt(lineStr, 10);
 
     if (!filePath || isNaN(lineNumber)) {
       console.error("Invalid componentId format:", componentId);
@@ -957,15 +957,13 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   if (loading) {
     return (
       <div className="flex flex-col h-full relative">
-        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-gray-50 dark:bg-gray-950">
+        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
           <div className="relative w-5 h-5 animate-spin">
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full"></div>
             <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary rounded-full opacity-80"></div>
             <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full opacity-60"></div>
           </div>
-          <p className="text-gray-600 dark:text-gray-300">
-            Preparing app preview...
-          </p>
+          <p className="text-muted-foreground">Preparing app preview...</p>
         </div>
       </div>
     );
@@ -974,7 +972,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   // Display message if no app is selected
   if (selectedAppId === null) {
     return (
-      <div className="p-4 text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-muted-foreground">
         Select an app to see the preview.
       </div>
     );
@@ -999,7 +997,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                 render={
                   <button
                     onClick={() => setIsChatPanelHidden(!isChatPanelHidden)}
-                    className="p-1 rounded transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    className="p-1 rounded transition-colors duration-200 hover:bg-accent text-muted-foreground"
                     data-testid="preview-toggle-chat-panel-button"
                   />
                 }
@@ -1068,7 +1066,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
               </TooltipContent>
             </Tooltip>
             <button
-              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-300"
+              className="p-1 rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-foreground"
               disabled={!canGoBack || loading || !selectedAppId}
               onClick={handleNavigateBack}
               data-testid="preview-navigate-back-button"
@@ -1076,7 +1074,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
               <ArrowLeft size={16} />
             </button>
             <button
-              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-300"
+              className="p-1 rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-foreground"
               disabled={!canGoForward || loading || !selectedAppId}
               onClick={handleNavigateForward}
               data-testid="preview-navigate-forward-button"
@@ -1085,7 +1083,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
             </button>
             <button
               onClick={handleReload}
-              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-300"
+              className="p-1 rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-foreground"
               disabled={loading || !selectedAppId}
               data-testid="preview-refresh-button"
             >
@@ -1096,7 +1094,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
           {/* Address Bar with Routes Dropdown - using shadcn/ui dropdown-menu */}
           <div className="relative flex-grow min-w-20">
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center justify-between px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 cursor-pointer w-full min-w-0">
+              <DropdownMenuTrigger className="flex items-center justify-between px-3 py-1 bg-muted rounded text-sm text-foreground cursor-pointer w-full min-w-0">
                 <span
                   className="truncate flex-1 mr-2 min-w-0"
                   data-testid="preview-address-bar-path"
@@ -1117,7 +1115,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                       className="flex justify-between"
                     >
                       <span>{route.label}</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-xs">
+                      <span className="text-muted-foreground text-xs">
                         {route.path}
                       </span>
                     </DropdownMenuItem>
@@ -1154,7 +1152,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   ipc.system.openExternalUrl(originalUrl);
                 }
               }}
-              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-300"
+              className="p-1 rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-foreground"
             >
               <ExternalLink size={16} />
             </button>
@@ -1173,9 +1171,8 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                         setIsDevicePopoverOpen(!isDevicePopoverOpen);
                       }}
                       className={cn(
-                        "p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-300",
-                        deviceMode !== "desktop" &&
-                          "bg-gray-200 dark:bg-gray-700",
+                        "p-1 rounded hover:bg-accent dark:text-foreground",
+                        deviceMode !== "desktop" && "bg-accent",
                       )}
                     />
                   }
@@ -1260,11 +1257,9 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
         />
 
         {!appUrl ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-gray-50 dark:bg-gray-950">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500" />
-            <p className="text-gray-600 dark:text-gray-300">
-              Starting your app server...
-            </p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">Starting your app server...</p>
           </div>
         ) : (
           <div
@@ -1275,7 +1270,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
           >
             {annotatorMode && screenshotDataUrl ? (
               <div
-                className="w-full h-full bg-white dark:bg-gray-950"
+                className="w-full h-full bg-background"
                 style={
                   deviceMode == "desktop"
                     ? {}
@@ -1307,7 +1302,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   ref={iframeRef}
                   key={reloadKey}
                   title={`Preview for App ${selectedAppId}`}
-                  className="w-full h-full border-none bg-white dark:bg-gray-950"
+                  className="w-full h-full border-none bg-background"
                   style={
                     deviceMode == "desktop"
                       ? {}
@@ -1368,8 +1363,8 @@ function parseComponentSelection(data: any): ComponentSelection | null {
     return null;
   }
 
-  const lineNumber = parseInt(lineStr, 10);
-  const columnNumber = parseInt(columnStr, 10);
+  const lineNumber = Number.parseInt(lineStr, 10);
+  const columnNumber = Number.parseInt(columnStr, 10);
 
   if (isNaN(lineNumber) || isNaN(columnNumber)) {
     console.error(`Could not parse line/column from id: "${id}"`);

@@ -1,22 +1,4 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/types";
-import { showSuccess } from "@/lib/toast";
-import {
-  Smartphone,
-  TabletSmartphone,
-  Loader2,
-  ExternalLink,
-  Copy,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -24,7 +6,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ipc } from "@/ipc/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { showSuccess } from "@/lib/toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Copy,
+  ExternalLink,
+  Loader2,
+  Smartphone,
+  TabletSmartphone,
+} from "lucide-react";
+import { useState } from "react";
 
 interface CapacitorControlsProps {
   appId: number;
@@ -140,7 +140,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
                   "https://dyad.sh/docs/guides/mobile-app#troubleshooting",
                 );
               }}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-accent-foreground flex items-center gap-1"
             >
               Need help?
               <ExternalLink className="h-3 w-3" />
@@ -166,7 +166,9 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               )}
               <div className="text-left">
                 <div className="text-xs font-medium">{iosButtonText.main}</div>
-                <div className="text-xs text-gray-500">{iosButtonText.sub}</div>
+                <div className="text-xs text-muted-foreground">
+                  {iosButtonText.sub}
+                </div>
               </div>
             </Button>
 
@@ -186,7 +188,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
                 <div className="text-xs font-medium">
                   {androidButtonText.main}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {androidButtonText.sub}
                 </div>
               </div>
@@ -210,7 +212,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
 
           {errorDetails && (
             <div className="relative">
-              <div className="max-h-[50vh] w-full max-w-md rounded border p-4 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+              <div className="max-h-[50vh] w-full max-w-md rounded border p-4 bg-muted overflow-y-auto">
                 <pre className="text-xs whitespace-pre-wrap font-mono">
                   {errorDetails.message}
                 </pre>

@@ -1,26 +1,26 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
-import { useSettings } from "@/hooks/useSettings";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
+import { useSettings } from "@/hooks/useSettings";
+import { useRouter } from "@tanstack/react-router";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
 
+import {} from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import {} from "@/components/ui/accordion";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { showError } from "@/lib/toast";
 import {
-  UserSettings,
-  AzureProviderSetting,
-  VertexProviderSetting,
+  type AzureProviderSetting,
+  type UserSettings,
+  type VertexProviderSetting,
   hasDyadProKey,
 } from "@/lib/schemas";
+import { showError } from "@/lib/toast";
 
-import { ProviderSettingsHeader } from "./ProviderSettingsHeader";
 import { ApiKeyConfiguration } from "./ApiKeyConfiguration";
 import { ModelsSection } from "./ModelsSection";
+import { ProviderSettingsHeader } from "./ProviderSettingsHeader";
 
 interface ProviderSettingsPageProps {
   provider: string;
@@ -231,7 +231,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mr-3 mb-6">
+          <h1 className="text-3xl font-bold text-foreground mr-3 mb-6">
             Configure Provider
           </h1>
           <Alert variant="destructive">
@@ -260,7 +260,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mr-3 mb-6">
+          <h1 className="text-3xl font-bold text-foreground mr-3 mb-6">
             Provider Not Found
           </h1>
           <Alert variant="destructive">
@@ -321,7 +321,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
           <div className="mt-6 flex items-center justify-between p-4 bg-(--background-lightest) rounded-lg border">
             <div>
               <h3 className="font-medium">Enable Dyad Pro</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Toggle to enable Dyad Pro
               </p>
             </div>

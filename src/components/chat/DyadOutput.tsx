@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import { CopyErrorMessage } from "@/components/CopyErrorMessage";
+import { useStreamChat } from "@/hooks/useStreamChat";
+import { useAtomValue } from "jotai";
 import {
+  AlertTriangle,
   ChevronsDownUp,
   ChevronsUpDown,
-  AlertTriangle,
-  XCircle,
   Sparkles,
+  XCircle,
 } from "lucide-react";
-import { useAtomValue } from "jotai";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { useStreamChat } from "@/hooks/useStreamChat";
-import { CopyErrorMessage } from "@/components/CopyErrorMessage";
+import type React from "react";
+import { useState } from "react";
 interface DyadOutputProps {
   type: "error" | "warning";
   message?: string;
@@ -53,7 +54,7 @@ export const DyadOutput: React.FC<DyadOutputProps> = ({
     >
       {/* Top-left label badge */}
       <div
-        className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${iconColor} bg-white dark:bg-gray-900`}
+        className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${iconColor} bg-card`}
         style={{ zIndex: 1 }}
       >
         {icon}
@@ -64,7 +65,7 @@ export const DyadOutput: React.FC<DyadOutputProps> = ({
       <div className="flex items-center justify-between pl-24 pr-6">
         <div className="flex items-center gap-2">
           {message && (
-            <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+            <span className="text-muted-foreground font-medium text-sm">
               {message.slice(0, isContentVisible ? undefined : 100) +
                 (!isContentVisible ? "..." : "")}
             </span>
@@ -74,12 +75,12 @@ export const DyadOutput: React.FC<DyadOutputProps> = ({
           {isContentVisible ? (
             <ChevronsDownUp
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           ) : (
             <ChevronsUpDown
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           )}
         </div>
@@ -87,9 +88,7 @@ export const DyadOutput: React.FC<DyadOutputProps> = ({
 
       {/* Content area */}
       {isContentVisible && children && (
-        <div className="mt-4 pl-20 text-sm text-gray-800 dark:text-gray-200">
-          {children}
-        </div>
+        <div className="mt-4 pl-20 text-sm text-foreground">{children}</div>
       )}
 
       {/* Action buttons at the bottom - always visible for errors */}

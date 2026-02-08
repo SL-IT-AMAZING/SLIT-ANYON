@@ -1,23 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { GithubBranchManager } from "@/components/GithubBranchManager";
 import { Button } from "@/components/ui/button";
-import {
-  Github,
-  Clipboard,
-  Check,
-  AlertTriangle,
-  ChevronRight,
-  GitMerge,
-} from "lucide-react";
-import { ipc, type GithubSyncOptions } from "@/ipc/types";
-import { useSettings } from "@/hooks/useSettings";
-import { useLoadApp } from "@/hooks/useLoadApp";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +10,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GithubBranchManager } from "@/components/GithubBranchManager";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useLoadApp } from "@/hooks/useLoadApp";
+import { useSettings } from "@/hooks/useSettings";
+import { type GithubSyncOptions, ipc } from "@/ipc/types";
+import {
+  AlertTriangle,
+  Check,
+  ChevronRight,
+  Clipboard,
+  GitMerge,
+  Github,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SyncResult =
   | { error: Error; handled?: boolean }
@@ -465,7 +465,7 @@ function ConnectedGitHubConnector({
         </p>
       )}
       {rebaseStatusMessage && (
-        <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           {rebaseStatusMessage}
         </p>
       )}
@@ -823,7 +823,7 @@ export function UnconnectedGitHubConnector({
 
         {/* GitHub Connection Status/Instructions */}
         {(githubUserCode || githubStatusMessage || githubError) && (
-          <div className="mt-6 p-4 border rounded-md bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600">
+          <div className="mt-6 p-4 border rounded-md bg-muted border-border">
             <h4 className="font-medium mb-2">GitHub Connection</h4>
             {githubError && (
               <p className="text-red-600 dark:text-red-400 mb-2">
@@ -849,11 +849,11 @@ export function UnconnectedGitHubConnector({
                 </p>
                 <p>
                   2. Enter code:
-                  <strong className="ml-1 font-mono text-lg tracking-wider bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">
+                  <strong className="ml-1 font-mono text-lg tracking-wider bg-muted px-2 py-0.5 rounded">
                     {githubUserCode}
                   </strong>
                   <button
-                    className="ml-2 p-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none"
+                    className="ml-2 p-1 rounded-md hover:bg-accent focus:outline-none"
                     onClick={() => {
                       if (githubUserCode) {
                         navigator.clipboard
@@ -879,7 +879,7 @@ export function UnconnectedGitHubConnector({
               </div>
             )}
             {githubStatusMessage && (
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-muted-foreground">
                 {githubStatusMessage}
               </p>
             )}
@@ -896,14 +896,12 @@ export function UnconnectedGitHubConnector({
         type="button"
         onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
         className={`w-full p-4 text-left transition-colors rounded-md flex items-center justify-between ${
-          !isExpanded
-            ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            : ""
+          !isExpanded ? "cursor-pointer hover:bg-accent" : ""
         }`}
       >
         <span className="font-medium">Set up your GitHub repo</span>
         {isExpanded ? undefined : (
-          <ChevronRight className="h-4 w-4 text-gray-500" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         )}
       </button>
 
@@ -916,14 +914,14 @@ export function UnconnectedGitHubConnector({
         <div className="p-4 pt-0 space-y-4">
           {/* Mode Selection */}
           <div>
-            <div className="flex rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="flex rounded-md border border-border">
               <Button
                 type="button"
                 variant={repoSetupMode === "create" ? "default" : "ghost"}
                 className={`flex-1 rounded-none rounded-l-md border-0 ${
                   repoSetupMode === "create"
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                    : "hover:bg-accent"
                 }`}
                 onClick={() => {
                   setRepoSetupMode("create");
@@ -936,10 +934,10 @@ export function UnconnectedGitHubConnector({
               <Button
                 type="button"
                 variant={repoSetupMode === "existing" ? "default" : "ghost"}
-                className={`flex-1 rounded-none rounded-r-md border-0 border-l border-gray-200 dark:border-gray-700 ${
+                className={`flex-1 rounded-none rounded-r-md border-0 border-l border-border ${
                   repoSetupMode === "existing"
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                    : "hover:bg-accent"
                 }`}
                 onClick={() => {
                   setRepoSetupMode("existing");
@@ -973,7 +971,7 @@ export function UnconnectedGitHubConnector({
                     disabled={isCreatingRepo}
                   />
                   {isCheckingRepo && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Checking availability...
                     </p>
                   )}

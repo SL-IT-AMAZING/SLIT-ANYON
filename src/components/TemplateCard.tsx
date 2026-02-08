@@ -10,7 +10,6 @@ import { Card, CardContent } from "./ui/card";
 import { showWarning } from "@/lib/toast";
 import { Github } from "lucide-react";
 
-
 interface TemplateCardProps {
   template: Template;
 }
@@ -64,10 +63,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
         />
         <CardContent className="p-4">
           {template.category && (
-            <Badge
-              variant="outline"
-              className="text-xs capitalize"
-            >
+            <Badge variant="outline" className="text-xs capitalize">
               {template.category}
             </Badge>
           )}

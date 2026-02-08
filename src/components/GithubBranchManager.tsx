@@ -1,52 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ipc } from "@/ipc/types";
-import {
-  ChevronsDownUp,
-  ChevronsUpDown,
-  Network,
-  GitBranch,
-  Plus,
-  Trash2,
-  RefreshCw,
-  GitMerge,
-  Edit2,
-  MoreHorizontal,
-  AlertCircle,
-  GitPullRequestArrow,
-  EllipsisVertical,
-} from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
-import { useSettings } from "@/hooks/useSettings";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,9 +9,57 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
+import { cn } from "@/lib/utils";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Edit2,
+  EllipsisVertical,
+  GitBranch,
+  GitMerge,
+  GitPullRequestArrow,
+  MoreHorizontal,
+  Network,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Label } from "@/components/ui/label";
-import { showSuccess, showError, showInfo } from "@/lib/toast";
+import { showError, showInfo, showSuccess } from "@/lib/toast";
 
 import {
   Card,
@@ -405,11 +405,11 @@ export function GithubBranchManager({
           <SelectContent>
             {branches.map((branch) => (
               <SelectItem key={branch} value={branch} aria-label={branch}>
-                <Network className="h-4 w-4 text-gray-500" />
+                <Network className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">Branch:</span>
                 <span
                   data-testid="current-branch-display"
-                  className="font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded"
+                  className="font-mono text-sm bg-muted px-2 py-0.5 rounded"
                 >
                   {branch}
                 </span>
@@ -713,7 +713,7 @@ export function GithubBranchManager({
 
       <Card className="transition-all duration-200">
         <CardHeader
-          className="p-2 cursor-pointer"
+          className="px-2 py-0 cursor-pointer"
           onClick={() => setIsExpanded((prev) => !prev)}
         >
           <div className="flex items-center justify-between">
@@ -729,9 +729,9 @@ export function GithubBranchManager({
               </div>
             </div>
             {isExpanded ? (
-              <ChevronsDownUp className="w-5 h-5 text-gray-500" />
+              <ChevronsDownUp className="w-5 h-5 text-muted-foreground" />
             ) : (
-              <ChevronsUpDown className="w-5 h-5 text-gray-500" />
+              <ChevronsUpDown className="w-5 h-5 text-muted-foreground" />
             )}
           </div>
         </CardHeader>
@@ -740,7 +740,7 @@ export function GithubBranchManager({
             isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <CardContent className="space-y-4 pt-0">
+          <CardContent className="space-y-4">
             {/* Banner for native git requirement */}
             {!settings?.enableNativeGit && (
               <Alert
@@ -774,7 +774,7 @@ export function GithubBranchManager({
                   {branches.map((branch) => (
                     <div
                       key={branch}
-                      className="flex items-center justify-between text-sm py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+                      className="flex items-center justify-between text-sm py-1 px-2 hover:bg-accent rounded"
                       data-testid={`branch-item-${branch}`}
                     >
                       <span

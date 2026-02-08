@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, Globe, Loader } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { VanillaMarkdownParser } from "./DyadMarkdownParser";
-import { CustomTagState } from "./stateTypes";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadWebSearchResultProps {
   node?: any;
@@ -25,7 +26,7 @@ export const DyadWebSearchResult: React.FC<DyadWebSearchResultProps> = ({
 
   return (
     <div
-      className={`relative bg-(--background-lightest) dark:bg-zinc-900 hover:bg-(--background-lighter) rounded-lg px-4 py-2 border my-2 cursor-pointer ${
+      className={`relative bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-4 py-2 border my-2 cursor-pointer ${
         inProgress ? "border-blue-500" : "border-border"
       }`}
       onClick={() => setIsExpanded(!isExpanded)}
@@ -41,7 +42,7 @@ export const DyadWebSearchResult: React.FC<DyadWebSearchResultProps> = ({
     >
       {/* Top-left label badge */}
       <div
-        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-blue-600 bg-white dark:bg-zinc-900"
+        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-blue-600 bg-card"
         style={{ zIndex: 1 }}
       >
         <Globe size={16} className="text-blue-600" />
@@ -52,7 +53,7 @@ export const DyadWebSearchResult: React.FC<DyadWebSearchResultProps> = ({
       </div>
 
       {/* Indicator icon */}
-      <div className="absolute top-2 right-2 p-1 text-gray-500">
+      <div className="absolute top-2 right-2 p-1 text-muted-foreground">
         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </div>
 
@@ -65,7 +66,7 @@ export const DyadWebSearchResult: React.FC<DyadWebSearchResultProps> = ({
           marginBottom: isExpanded ? "0" : "-6px",
         }}
       >
-        <div className="px-0 text-sm text-gray-600 dark:text-gray-300">
+        <div className="px-0 text-sm text-muted-foreground">
           {typeof children === "string" ? (
             <VanillaMarkdownParser content={children} />
           ) : (

@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { AnnotationCanvas } from "./AnnotationCanvas";
+import { chatInputValueAtom } from "@/atoms/chatAtoms";
 import { AnnotatorToolbar } from "@/components/preview_panel/AnnotatorToolbar";
 import { DraggableTextInput } from "@/components/preview_panel/DraggableTextInput";
 import { useSetAtom } from "jotai";
-import { chatInputValueAtom } from "@/atoms/chatAtoms";
+import type React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnnotationCanvas } from "./AnnotationCanvas";
 
 // Types
 type Point = [number, number];
@@ -343,7 +344,7 @@ export const Annotator = ({
   }, [image, scale, containerSize]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="w-full h-full flex flex-col bg-muted">
       {/* Toolbar */}
       <AnnotatorToolbar
         tool={tool}

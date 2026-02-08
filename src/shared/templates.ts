@@ -98,7 +98,8 @@ export const localTemplatesData: Template[] = [
   {
     id: "blazity-next-saas-starter",
     title: "SaaS Landing Page",
-    description: "A modern SaaS landing page starter with blog, documentation, and marketing pages.",
+    description:
+      "A modern SaaS landing page starter with blog, documentation, and marketing pages.",
     imageUrl: "https://opengraph.githubassets.com/1/Blazity/next-saas-starter",
     githubUrl: "https://github.com/Blazity/next-saas-starter",
     isOfficial: false,
@@ -115,7 +116,8 @@ export const localTemplatesData: Template[] = [
   {
     id: "arifszn-gitprofile",
     title: "Portfolio Site",
-    description: "An automatic portfolio builder that creates a portfolio from your GitHub profile.",
+    description:
+      "An automatic portfolio builder that creates a portfolio from your GitHub profile.",
     imageUrl: "https://opengraph.githubassets.com/1/arifszn/gitprofile",
     githubUrl: "https://github.com/arifszn/gitprofile",
     isOfficial: false,
@@ -132,8 +134,10 @@ export const localTemplatesData: Template[] = [
   {
     id: "timlrx-tailwind-nextjs-starter-blog",
     title: "Blog Starter",
-    description: "A feature-rich Next.js blog starter with Tailwind CSS, MDX support, and search.",
-    imageUrl: "https://opengraph.githubassets.com/1/timlrx/tailwind-nextjs-starter-blog",
+    description:
+      "A feature-rich Next.js blog starter with Tailwind CSS, MDX support, and search.",
+    imageUrl:
+      "https://opengraph.githubassets.com/1/timlrx/tailwind-nextjs-starter-blog",
     githubUrl: "https://github.com/timlrx/tailwind-nextjs-starter-blog",
     isOfficial: false,
     category: "web",
@@ -149,7 +153,8 @@ export const localTemplatesData: Template[] = [
   {
     id: "shadcn-ui-taxonomy",
     title: "Admin Dashboard",
-    description: "An open source application built with Next.js and shadcn/ui components.",
+    description:
+      "An open source application built with Next.js and shadcn/ui components.",
     imageUrl: "https://opengraph.githubassets.com/1/shadcn-ui/taxonomy",
     githubUrl: "https://github.com/shadcn-ui/taxonomy",
     isOfficial: false,
@@ -166,8 +171,10 @@ export const localTemplatesData: Template[] = [
   {
     id: "mickasmt-next-saas-stripe-starter",
     title: "SaaS Starter with Stripe",
-    description: "A Next.js SaaS starter with authentication, Stripe billing, and admin dashboard.",
-    imageUrl: "https://opengraph.githubassets.com/1/mickasmt/next-saas-stripe-starter",
+    description:
+      "A Next.js SaaS starter with authentication, Stripe billing, and admin dashboard.",
+    imageUrl:
+      "https://opengraph.githubassets.com/1/mickasmt/next-saas-stripe-starter",
     githubUrl: "https://github.com/mickasmt/next-saas-stripe-starter",
     isOfficial: false,
     category: "saas",
@@ -183,8 +190,10 @@ export const localTemplatesData: Template[] = [
   {
     id: "chatgptnextweb-chatgpt-next-web",
     title: "AI Chat App",
-    description: "A cross-platform ChatGPT/Gemini UI with deploy-your-own capability.",
-    imageUrl: "https://opengraph.githubassets.com/1/ChatGPTNextWeb/ChatGPT-Next-Web",
+    description:
+      "A cross-platform ChatGPT/Gemini UI with deploy-your-own capability.",
+    imageUrl:
+      "https://opengraph.githubassets.com/1/ChatGPTNextWeb/ChatGPT-Next-Web",
     githubUrl: "https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web",
     isOfficial: false,
     category: "saas",

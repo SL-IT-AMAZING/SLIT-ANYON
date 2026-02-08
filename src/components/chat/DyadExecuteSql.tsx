@@ -1,15 +1,15 @@
-import type React from "react";
-import type { ReactNode } from "react";
-import { useState } from "react";
 import {
   ChevronsDownUp,
   ChevronsUpDown,
+  CircleX,
   Database,
   Loader,
-  CircleX,
 } from "lucide-react";
+import type React from "react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { CodeHighlight } from "./CodeHighlight";
-import { CustomTagState } from "./stateTypes";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadExecuteSqlProps {
   children?: ReactNode;
@@ -42,8 +42,8 @@ export const DyadExecuteSql: React.FC<DyadExecuteSqlProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Database size={16} />
-          <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
-            <span className="font-bold mr-2 outline-2 outline-gray-200 dark:outline-gray-700 bg-gray-100 dark:bg-gray-800 rounded-md px-1">
+          <span className="text-muted-foreground font-medium text-sm">
+            <span className="font-bold mr-2 outline-2 outline-border bg-muted rounded-md px-1">
               SQL
             </span>
             {queryDescription}
@@ -65,12 +65,12 @@ export const DyadExecuteSql: React.FC<DyadExecuteSqlProps> = ({
           {isContentVisible ? (
             <ChevronsDownUp
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           ) : (
             <ChevronsUpDown
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           )}
         </div>

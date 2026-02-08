@@ -1,6 +1,6 @@
-import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 
 type SetupProviderVariant = "google" | "openrouter" | "dyad";
 
@@ -80,22 +80,20 @@ function getVariantStyles(variant: SetupProviderVariant) {
         container:
           "bg-blue-50/50 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/30 hover:bg-blue-50 dark:hover:bg-blue-900/30",
         iconWrapper: "bg-blue-100/50 dark:bg-blue-800/30",
-        titleColor: "text-zinc-700 dark:text-zinc-300",
+        titleColor: "text-muted-foreground",
         subtitleColor: "text-blue-500/70 dark:text-blue-400/70",
-        chipColor:
-          "text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
-        chevronColor: "text-zinc-400 dark:text-zinc-500",
+        chipColor: "text-muted-foreground bg-card border border-border",
+        chevronColor: "text-muted-foreground",
       } as const;
     case "openrouter":
       return {
         container:
           "bg-blue-50/50 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/30 hover:bg-blue-50 dark:hover:bg-blue-900/30",
         iconWrapper: "bg-blue-100/50 dark:bg-blue-800/30",
-        titleColor: "text-zinc-700 dark:text-zinc-300",
+        titleColor: "text-muted-foreground",
         subtitleColor: "text-blue-500/70 dark:text-blue-400/70",
-        chipColor:
-          "text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
-        chevronColor: "text-zinc-400 dark:text-zinc-500",
+        chipColor: "text-muted-foreground bg-card border border-border",
+        chevronColor: "text-muted-foreground",
       } as const;
     case "dyad":
       return {

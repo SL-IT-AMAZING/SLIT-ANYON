@@ -1,19 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { isChatPanelHiddenAtom, isPreviewOpenAtom } from "@/atoms/viewAtoms";
+import { useChats } from "@/hooks/useChats";
+import { usePlanImplementation } from "@/hooks/usePlanImplementation";
+import { cn } from "@/lib/utils";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect, useRef, useState } from "react";
 import {
-  PanelGroup,
-  Panel,
-  PanelResizeHandle,
   type ImperativePanelHandle,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "react-resizable-panels";
 import { ChatPanel } from "../components/ChatPanel";
 import { PreviewPanel } from "../components/preview_panel/PreviewPanel";
-import { useNavigate, useSearch } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isPreviewOpenAtom, isChatPanelHiddenAtom } from "@/atoms/viewAtoms";
-import { useChats } from "@/hooks/useChats";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { usePlanImplementation } from "@/hooks/usePlanImplementation";
 
 const DEFAULT_CHAT_PANEL_SIZE = 50;
 
@@ -121,7 +121,7 @@ export default function ChatPage() {
           }
         }}
         className={cn(
-          "relative bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors cursor-col-resize",
+          "relative bg-border hover:bg-accent dark:bg-border dark:hover:bg-accent transition-colors cursor-col-resize",
           isChatPanelHidden ? "w-2" : "w-1",
         )}
       />

@@ -1,15 +1,15 @@
-import { FileEditor } from "./FileEditor";
-import { FileTree } from "./FileTree";
-import { useEffect, useState } from "react";
-import { useLoadApp } from "@/hooks/useLoadApp";
-import { RefreshCw, Maximize2, Minimize2 } from "lucide-react";
+import { selectedFileAtom } from "@/atoms/viewAtoms";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLoadApp } from "@/hooks/useLoadApp";
 import { useAtomValue } from "jotai";
-import { selectedFileAtom } from "@/atoms/viewAtoms";
+import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileEditor } from "./FileEditor";
+import { FileTree } from "./FileTree";
 
 interface App {
   id?: number;
@@ -53,7 +53,9 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
 
   if (!app) {
     return (
-      <div className="text-center py-4 text-gray-500">No app selected</div>
+      <div className="text-center py-4 text-muted-foreground">
+        No app selected
+      </div>
     );
   }
 
@@ -69,7 +71,7 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
               render={
                 <button
                   onClick={() => refreshApp()}
-                  className="p-1 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-1 rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading || !app.id}
                 />
               }
@@ -78,14 +80,16 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
             </TooltipTrigger>
             <TooltipContent>Refresh Files</TooltipContent>
           </Tooltip>
-          <div className="text-sm text-gray-500">{app.files.length} files</div>
+          <div className="text-sm text-muted-foreground">
+            {app.files.length} files
+          </div>
           <div className="flex-1" />
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   onClick={() => setIsFullscreen((value) => !value)}
-                  className="p-1 rounded hover:bg-gray-200"
+                  className="p-1 rounded hover:bg-accent"
                 />
               }
             >
@@ -110,7 +114,7 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
                 initialLine={selectedFile.line ?? null}
               />
             ) : (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-muted-foreground">
                 Select a file to view
               </div>
             )}
@@ -120,5 +124,7 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
     );
   }
 
-  return <div className="text-center py-4 text-gray-500">No files found</div>;
+  return (
+    <div className="text-center py-4 text-muted-foreground">No files found</div>
+  );
 };

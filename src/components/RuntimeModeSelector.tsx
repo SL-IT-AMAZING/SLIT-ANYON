@@ -7,8 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSettings } from "@/hooks/useSettings";
-import { showError } from "@/lib/toast";
 import { ipc } from "@/ipc/types";
+import { showError } from "@/lib/toast";
 
 export function RuntimeModeSelector() {
   const { settings, updateSettings } = useSettings();
@@ -47,7 +47,7 @@ export function RuntimeModeSelector() {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           Choose whether to run apps directly on the local machine or in Docker
           containers
         </div>

@@ -1,23 +1,23 @@
-import React from "react";
 import type { Message } from "@/ipc/types";
-import { forwardRef, useState, useCallback, useMemo } from "react";
+import React from "react";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
-import ChatMessage from "./ChatMessage";
 import { OpenRouterSetupBanner, SetupBanner } from "../SetupBanner";
+import ChatMessage from "./ChatMessage";
 
-import { useStreamChat } from "@/hooks/useStreamChat";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { useAtomValue, useSetAtom } from "jotai";
-import { Loader2, RefreshCw, Undo } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useVersions } from "@/hooks/useVersions";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { showError, showWarning } from "@/lib/toast";
-import { ipc } from "@/ipc/types";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { chatMessagesByIdAtom } from "@/atoms/chatAtoms";
+import { Button } from "@/components/ui/button";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useSettings } from "@/hooks/useSettings";
+import { useStreamChat } from "@/hooks/useStreamChat";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import { useVersions } from "@/hooks/useVersions";
+import { ipc } from "@/ipc/types";
+import { showError, showWarning } from "@/lib/toast";
+import { useAtomValue, useSetAtom } from "jotai";
+import { Loader2, RefreshCw, Undo } from "lucide-react";
 import { PromoMessage } from "./PromoMessage";
 
 interface MessagesListProps {
@@ -362,7 +362,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           data-testid="messages-list"
         >
           <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto">
-            <div className="flex flex-1 items-center justify-center text-gray-500">
+            <div className="flex flex-1 items-center justify-center text-muted-foreground">
               No messages yet
             </div>
           </div>

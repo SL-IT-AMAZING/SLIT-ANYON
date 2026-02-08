@@ -1,5 +1,3 @@
-import React from "react";
-import { useSettings } from "@/hooks/useSettings";
 import {
   Select,
   SelectContent,
@@ -8,6 +6,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MAX_CHAT_TURNS_IN_CONTEXT } from "@/constants/settings_constants";
+import { useSettings } from "@/hooks/useSettings";
+import type React from "react";
 
 interface OptionInfo {
   value: string;
@@ -54,7 +54,7 @@ export const MaxChatTurnsSelector: React.FC = () => {
     if (value === "default") {
       updateSettings({ maxChatTurnsInContext: undefined });
     } else {
-      const numValue = parseInt(value, 10);
+      const numValue = Number.parseInt(value, 10);
       updateSettings({ maxChatTurnsInContext: numValue });
     }
   };
@@ -72,7 +72,7 @@ export const MaxChatTurnsSelector: React.FC = () => {
       <div className="flex items-center gap-4">
         <label
           htmlFor="max-chat-turns"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-muted-foreground"
         >
           Maximum number of chat turns used in context
         </label>
@@ -92,7 +92,7 @@ export const MaxChatTurnsSelector: React.FC = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground">
         {currentOption.description}
       </div>
     </div>

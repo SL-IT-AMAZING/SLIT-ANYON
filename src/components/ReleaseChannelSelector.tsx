@@ -7,9 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import { ipc } from "@/ipc/types";
 import type { ReleaseChannel } from "@/lib/schemas";
+import { toast } from "sonner";
 
 export function ReleaseChannelSelector() {
   const { settings, updateSettings } = useSettings();
@@ -50,7 +50,7 @@ export function ReleaseChannelSelector() {
       <div className="flex items-center space-x-2">
         <label
           htmlFor="release-channel"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-muted-foreground"
         >
           Release Channel
         </label>
@@ -67,7 +67,7 @@ export function ReleaseChannelSelector() {
           </SelectContent>
         </Select>
       </div>
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground">
         <p>Stable is recommended for most users. </p>
         <p>Beta receives more frequent updates but may have more bugs.</p>
       </div>

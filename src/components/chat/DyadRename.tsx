@@ -1,6 +1,6 @@
+import { FileEdit } from "lucide-react";
 import type React from "react";
 import type { ReactNode } from "react";
-import { FileEdit } from "lucide-react";
 
 interface DyadRenameProps {
   children?: ReactNode;
@@ -29,7 +29,7 @@ export const DyadRename: React.FC<DyadRenameProps> = ({
         <div className="flex items-center gap-2">
           <FileEdit size={16} className="text-amber-500" />
           {(fromFileName || toFileName) && (
-            <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+            <span className="text-muted-foreground font-medium text-sm">
               {fromFileName && toFileName
                 ? `${fromFileName} → ${toFileName}`
                 : fromFileName || toFileName}
@@ -39,23 +39,20 @@ export const DyadRename: React.FC<DyadRenameProps> = ({
         </div>
       </div>
       {(from || to) && (
-        <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
+        <div className="flex flex-col text-xs text-muted-foreground font-medium mb-1">
           {from && (
             <div>
-              <span className="text-gray-500 dark:text-gray-400">From:</span>{" "}
-              {from}
+              <span className="text-muted-foreground">From:</span> {from}
             </div>
           )}
           {to && (
             <div>
-              <span className="text-gray-500 dark:text-gray-400">To:</span> {to}
+              <span className="text-muted-foreground">To:</span> {to}
             </div>
           )}
         </div>
       )}
-      <div className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-        {children}
-      </div>
+      <div className="text-sm text-muted-foreground mt-2">{children}</div>
     </div>
   );
 };
