@@ -10,7 +10,6 @@ import { CommunityCodeConsentDialog } from "@/components/CommunityCodeConsentDia
 import { ipc } from "@/ipc/types";
 import { showWarning } from "@/lib/toast";
 
-
 interface TemplateDetailPageProps {
   templateId: string;
 }
@@ -100,10 +99,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
           {/* Right: Info */}
           <div className="lg:w-1/2">
             {template.category && (
-              <Badge
-                variant="outline"
-                className="text-xs capitalize"
-              >
+              <Badge variant="outline" className="text-xs capitalize">
                 {template.category}
               </Badge>
             )}
@@ -118,10 +114,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
 
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3 mt-6">
-              <Button
-                className="w-full text-lg py-6"
-                onClick={handleChoose}
-              >
+              <Button className="w-full text-lg py-6" onClick={handleChoose}>
                 Choose This Template
               </Button>
               <div className="flex gap-2">

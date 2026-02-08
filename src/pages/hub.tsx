@@ -88,13 +88,13 @@ const HubPage: React.FC = () => {
                   "flex flex-col items-center justify-center p-6 rounded-xl border cursor-pointer transition-colors duration-200",
                   isSelected
                     ? "border-foreground/30 bg-accent"
-                    : "border-border bg-card hover:bg-accent/50"
+                    : "border-border bg-card hover:bg-accent/50",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-8 w-8 mb-2",
-                    isSelected ? "text-foreground" : "text-muted-foreground"
+                    isSelected ? "text-foreground" : "text-muted-foreground",
                   )}
                 />
                 <span className="font-semibold text-foreground">

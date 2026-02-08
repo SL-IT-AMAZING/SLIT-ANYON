@@ -226,8 +226,6 @@ body[data-scroll-locked] .app-region-drag {
   }
 }
 
-
-
 @media (pointer: fine) {
   @supports not (selector(::-webkit-scrollbar)) {
     * {

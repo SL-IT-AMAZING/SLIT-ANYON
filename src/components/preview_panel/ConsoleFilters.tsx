@@ -129,7 +129,9 @@ export const ConsoleFilters = ({
         <TooltipContent>Clear logs</TooltipContent>
       </Tooltip>
 
-      <div className="ml-auto text-xs text-muted-foreground">{totalLogs} logs</div>
+      <div className="ml-auto text-xs text-muted-foreground">
+        {totalLogs} logs
+      </div>
     </div>
   );
 };

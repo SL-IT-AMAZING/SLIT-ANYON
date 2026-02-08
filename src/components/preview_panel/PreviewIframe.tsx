@@ -963,9 +963,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
             <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary rounded-full opacity-80"></div>
             <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full opacity-60"></div>
           </div>
-          <p className="text-muted-foreground">
-            Preparing app preview...
-          </p>
+          <p className="text-muted-foreground">Preparing app preview...</p>
         </div>
       </div>
     );
@@ -1174,8 +1172,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                       }}
                       className={cn(
                         "p-1 rounded hover:bg-accent dark:text-foreground",
-                        deviceMode !== "desktop" &&
-                          "bg-accent",
+                        deviceMode !== "desktop" && "bg-accent",
                       )}
                     />
                   }
@@ -1262,9 +1259,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
         {!appUrl ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground">
-              Starting your app server...
-            </p>
+            <p className="text-muted-foreground">Starting your app server...</p>
           </div>
         ) : (
           <div

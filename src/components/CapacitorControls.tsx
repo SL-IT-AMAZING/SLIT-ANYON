@@ -166,7 +166,9 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               )}
               <div className="text-left">
                 <div className="text-xs font-medium">{iosButtonText.main}</div>
-                <div className="text-xs text-muted-foreground">{iosButtonText.sub}</div>
+                <div className="text-xs text-muted-foreground">
+                  {iosButtonText.sub}
+                </div>
               </div>
             </Button>
 

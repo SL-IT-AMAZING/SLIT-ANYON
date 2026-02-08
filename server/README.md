@@ -41,11 +41,11 @@ VERCEL_CLIENT_SECRET=
 
 ## 지원 상태
 
-| Provider | Status | Auth Method |
-|----------|--------|-------------|
-| Supabase | ✅ Working | OAuth 2.0 |
-| Vercel | ✅ Working | OAuth 2.0 (Sign in with Vercel) |
-| Neon | ⚠️ API Key Only | API Key (OAuth requires Partner Program) |
+| Provider | Status          | Auth Method                              |
+| -------- | --------------- | ---------------------------------------- |
+| Supabase | ✅ Working      | OAuth 2.0                                |
+| Vercel   | ✅ Working      | OAuth 2.0 (Sign in with Vercel)          |
+| Neon     | ⚠️ API Key Only | API Key (OAuth requires Partner Program) |
 
 ## OAuth App 등록 가이드
 
@@ -56,11 +56,13 @@ VERCEL_CLIENT_SECRET=
 > ⚠️ **중요**: Neon OAuth는 Partner Program 가입이 필요합니다. 일반 사용자는 API 키 방식을 사용해야 합니다.
 
 **API 키 방식 (권장):**
+
 1. https://console.neon.tech/app/settings/api-keys 접속
 2. **Create new API Key** 클릭
 3. 생성된 API 키를 Dyad 앱의 Neon 커넥터에 입력
 
 **OAuth 방식 (Partner Program 필요):**
+
 1. https://console.neon.tech 접속
 2. **Settings** → **OAuth Applications** → **Create** 클릭
 3. 다음 정보 입력:

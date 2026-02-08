@@ -76,9 +76,7 @@ export default function SettingsPage() {
           Go Back
         </Button>
         <div className="flex justify-between mb-4">
-          <h1 className="text-3xl font-bold text-foreground">
-            Settings
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
         </div>
 
         <div className="space-y-6">
@@ -248,10 +246,7 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div
-      id={SECTION_IDS.general}
-      className="bg-card rounded-xl shadow-sm p-6"
-    >
+    <div id={SECTION_IDS.general} className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-medium text-foreground mb-4">
         General Settings
       </h2>
@@ -319,10 +314,7 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
 
 export function WorkflowSettings() {
   return (
-    <div
-      id={SECTION_IDS.workflow}
-      className="bg-card rounded-xl shadow-sm p-6"
-    >
+    <div id={SECTION_IDS.workflow} className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-medium text-foreground mb-4">
         Workflow Settings
       </h2>
@@ -367,13 +359,8 @@ export function WorkflowSettings() {
 }
 export function AISettings() {
   return (
-    <div
-      id={SECTION_IDS.ai}
-      className="bg-card rounded-xl shadow-sm p-6"
-    >
-      <h2 className="text-lg font-medium text-foreground mb-4">
-        AI Settings
-      </h2>
+    <div id={SECTION_IDS.ai} className="bg-card rounded-xl shadow-sm p-6">
+      <h2 className="text-lg font-medium text-foreground mb-4">AI Settings</h2>
 
       <div id={SETTING_IDS.thinkingBudget} className="mt-4">
         <ThinkingBudgetSelector />

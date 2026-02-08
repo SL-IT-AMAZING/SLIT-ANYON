@@ -194,9 +194,7 @@ function ReviewSummary({ data }: { data: SecurityReviewResult }) {
               <span className="font-medium text-foreground">
                 {counts[level]}
               </span>
-              <span className="text-muted-foreground capitalize">
-                {level}
-              </span>
+              <span className="text-muted-foreground capitalize">{level}</span>
             </span>
           ))}
       </div>
@@ -349,9 +347,7 @@ function LoadingView() {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold text-foreground mt-4">
-        Loading...
-      </h2>
+      <h2 className="text-xl font-semibold text-foreground mt-4">Loading...</h2>
     </div>
   );
 }
@@ -529,10 +525,7 @@ function FindingsTable({
             const isSelected = selectedFindings.has(findingKey);
 
             return (
-              <tr
-                key={index}
-                className="hover:bg-accent transition-colors"
-              >
+              <tr key={index} className="hover:bg-accent transition-colors">
                 <td className="px-4 py-4 align-top">
                   <Checkbox
                     checked={isSelected}

@@ -37,9 +37,7 @@ export const DyadDelete: React.FC<DyadDeleteProps> = ({
           {path}
         </div>
       )}
-      <div className="text-sm text-muted-foreground mt-2">
-        {children}
-      </div>
+      <div className="text-sm text-muted-foreground mt-2">{children}</div>
     </div>
   );
 };

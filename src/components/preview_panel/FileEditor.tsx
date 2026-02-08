@@ -239,7 +239,9 @@ export const FileEditor = ({
   }
 
   if (!content) {
-    return <div className="p-4 text-muted-foreground">No content available</div>;
+    return (
+      <div className="p-4 text-muted-foreground">No content available</div>
+    );
   }
 
   return (

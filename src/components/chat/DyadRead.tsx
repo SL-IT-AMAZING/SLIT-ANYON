@@ -35,9 +35,7 @@ export const DyadRead: React.FC<DyadReadProps> = ({
         </div>
       )}
       {children && (
-        <div className="text-sm text-muted-foreground mt-2">
-          {children}
-        </div>
+        <div className="text-sm text-muted-foreground mt-2">{children}</div>
       )}
     </div>
   );

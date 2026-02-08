@@ -88,9 +88,7 @@ export const DyadOutput: React.FC<DyadOutputProps> = ({
 
       {/* Content area */}
       {isContentVisible && children && (
-        <div className="mt-4 pl-20 text-sm text-foreground">
-          {children}
-        </div>
+        <div className="mt-4 pl-20 text-sm text-foreground">{children}</div>
       )}
 
       {/* Action buttons at the bottom - always visible for errors */}

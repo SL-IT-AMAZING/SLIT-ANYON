@@ -53,7 +53,9 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
 
   if (!app) {
     return (
-      <div className="text-center py-4 text-muted-foreground">No app selected</div>
+      <div className="text-center py-4 text-muted-foreground">
+        No app selected
+      </div>
     );
   }
 
@@ -78,7 +80,9 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
             </TooltipTrigger>
             <TooltipContent>Refresh Files</TooltipContent>
           </Tooltip>
-          <div className="text-sm text-muted-foreground">{app.files.length} files</div>
+          <div className="text-sm text-muted-foreground">
+            {app.files.length} files
+          </div>
           <div className="flex-1" />
           <Tooltip>
             <TooltipTrigger
@@ -120,5 +124,7 @@ export const CodeView = ({ loading, app }: CodeViewProps) => {
     );
   }
 
-  return <div className="text-center py-4 text-muted-foreground">No files found</div>;
+  return (
+    <div className="text-center py-4 text-muted-foreground">No files found</div>
+  );
 };

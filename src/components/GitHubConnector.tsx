@@ -896,9 +896,7 @@ export function UnconnectedGitHubConnector({
         type="button"
         onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
         className={`w-full p-4 text-left transition-colors rounded-md flex items-center justify-between ${
-          !isExpanded
-            ? "cursor-pointer hover:bg-accent"
-            : ""
+          !isExpanded ? "cursor-pointer hover:bg-accent" : ""
         }`}
       >
         <span className="font-medium">Set up your GitHub repo</span>

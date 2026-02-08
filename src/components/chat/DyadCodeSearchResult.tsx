@@ -94,10 +94,7 @@ export const DyadCodeSearchResult: React.FC<DyadCodeSearchResultProps> = ({
                   "";
 
                 return (
-                  <div
-                    key={index}
-                    className="px-2 py-1 bg-muted rounded-lg"
-                  >
+                  <div key={index} className="px-2 py-1 bg-muted rounded-lg">
                     <div className="flex items-center gap-1.5">
                       <FileText
                         size={14}

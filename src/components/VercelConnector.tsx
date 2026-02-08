@@ -169,10 +169,7 @@ function ConnectedVercelConnector({
           <h4 className="font-medium mb-2">Recent Deployments:</h4>
           <div className="space-y-2">
             {deployments.map((deployment) => (
-              <div
-                key={deployment.uid}
-                className="bg-muted rounded-md p-3"
-              >
+              <div key={deployment.uid} className="bg-muted rounded-md p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span
@@ -415,9 +412,7 @@ function UnconnectedVercelConnector({
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  or
-                </span>
+                <span className="bg-card px-2 text-muted-foreground">or</span>
               </div>
             </div>
 

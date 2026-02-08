@@ -270,9 +270,7 @@ export default function HomePage() {
                            hover:bg-card hover:shadow-md hover:border-border
                            active:scale-[0.98]"
               >
-                <span className="text-muted-foreground">
-                  {item.icon}
-                </span>
+                <span className="text-muted-foreground">{item.icon}</span>
                 <span className="text-sm font-medium text-muted-foreground">
                   {item.label}
                 </span>

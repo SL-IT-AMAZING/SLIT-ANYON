@@ -160,7 +160,8 @@ export function useParseRouter(appId: number | null) {
   }, [isNextApp, app?.files, routerContent]);
 
   const combinedLoading = appLoading || routerFileLoading;
-  const combinedError = appError || (routerFilePath ? routerFileError : null) || null;
+  const combinedError =
+    appError || (routerFilePath ? routerFileError : null) || null;
   const refresh = async () => {
     await Promise.allSettled([refreshApp(), refreshFile()]);
   };

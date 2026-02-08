@@ -131,7 +131,7 @@ export const DyadProblemSummary: React.FC<DyadProblemSummaryProps> = ({
       {/* Content area - show individual problems */}
       {isContentVisible && totalProblems > 0 && (
         <div className="mt-4">
-           <div className="bg-card rounded-lg border border-border overflow-hidden">
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
             {problems.map((problem, index) => (
               <ProblemItem
                 key={`${problem.file}-${problem.line}-${problem.column}-${index}`}

@@ -36,9 +36,7 @@ export const PublishPanel = () => {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-foreground">
-          Loading...
-        </h2>
+        <h2 className="text-xl font-semibold text-foreground">Loading...</h2>
       </div>
     );
   }

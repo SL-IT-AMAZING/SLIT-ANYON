@@ -80,7 +80,9 @@ export const DyadGrep: React.FC<DyadGrepProps> = ({ children, node }) => {
             </span>
             {description}
             {resultSummary && (
-              <span className="ml-2 text-muted-foreground">({resultSummary})</span>
+              <span className="ml-2 text-muted-foreground">
+                ({resultSummary})
+              </span>
             )}
           </span>
           {inProgress && (

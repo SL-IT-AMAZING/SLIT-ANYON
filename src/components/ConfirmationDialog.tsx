@@ -1,5 +1,3 @@
-
-
 interface ConfirmationDialogProps {
   isOpen: boolean;
   title: string;
@@ -54,9 +52,7 @@ export default function ConfirmationDialog({
                   {title}
                 </h3>
                 <div className="mt-2">
-                  <p className="text-sm text-muted-foreground">
-                    {message}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{message}</p>
                 </div>
               </div>
             </div>

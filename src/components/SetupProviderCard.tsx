@@ -82,8 +82,7 @@ function getVariantStyles(variant: SetupProviderVariant) {
         iconWrapper: "bg-blue-100/50 dark:bg-blue-800/30",
         titleColor: "text-muted-foreground",
         subtitleColor: "text-blue-500/70 dark:text-blue-400/70",
-        chipColor:
-          "text-muted-foreground bg-card border border-border",
+        chipColor: "text-muted-foreground bg-card border border-border",
         chevronColor: "text-muted-foreground",
       } as const;
     case "openrouter":
@@ -93,8 +92,7 @@ function getVariantStyles(variant: SetupProviderVariant) {
         iconWrapper: "bg-blue-100/50 dark:bg-blue-800/30",
         titleColor: "text-muted-foreground",
         subtitleColor: "text-blue-500/70 dark:text-blue-400/70",
-        chipColor:
-          "text-muted-foreground bg-card border border-border",
+        chipColor: "text-muted-foreground bg-card border border-border",
         chevronColor: "text-muted-foreground",
       } as const;
     case "dyad":
