@@ -1,19 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ipc } from "@/ipc/types";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/useSettings";
 
 import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { ExternalLink } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { ExternalLink, Key } from "lucide-react";
 import { NeonDisconnectButton } from "@/components/NeonDisconnectButton";
-import { oauthEndpoints } from "@/lib/oauthConfig";
+import { Input } from "@/components/ui/input";
 
 export function NeonConnector() {
   const { settings, refreshSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
-  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const handleDeepLink = async () => {
@@ -52,6 +50,28 @@ export function NeonConnector() {
     );
   }
 
+  const [apiKey, setApiKey] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleApiKeyConnect = async () => {
+    if (!apiKey.trim()) {
+      toast.error("Please enter your Neon API key");
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      await ipc.neon.connectWithApiKey({ apiKey: apiKey.trim() });
+      await refreshSettings();
+      toast.success("Successfully connected to Neon!");
+      setApiKey("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to connect to Neon");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
@@ -59,93 +79,49 @@ export function NeonConnector() {
         <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
           Neon Database has a good free tier with backups and up to 10 projects.
         </p>
-        <div
-          onClick={async () => {
-            if (settings?.isTestMode) {
-              await ipc.neon.fakeConnect();
-            } else {
-              await ipc.system.openExternalUrl(oauthEndpoints.neon.login);
-            }
-          }}
-          className="w-auto h-10 cursor-pointer flex items-center justify-center px-4 py-2 rounded-md border-2 transition-colors font-medium text-sm dark:bg-gray-900 dark:border-gray-700"
-          data-testid="connect-neon-button"
-        >
-          <span className="mr-2">Connect to</span>
-          <NeonSvg isDarkMode={isDarkMode} />
+
+        <div className="w-full space-y-3">
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              placeholder="Enter your Neon API key"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleApiKeyConnect();
+                }
+              }}
+              className="flex-1"
+              data-testid="neon-api-key-input"
+            />
+            <Button
+              onClick={handleApiKeyConnect}
+              disabled={isConnecting || !apiKey.trim()}
+              className="flex items-center gap-2"
+              data-testid="connect-neon-button"
+            >
+              <Key className="h-4 w-4" />
+              {isConnecting ? "Connecting..." : "Connect"}
+            </Button>
+          </div>
+
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Get your API key from{" "}
+            <button
+              type="button"
+              onClick={() =>
+                ipc.system.openExternalUrl(
+                  "https://console.neon.tech/app/settings/api-keys"
+                )
+              }
+              className="text-blue-500 hover:underline"
+            >
+              Neon Console → Account Settings → API Keys
+            </button>
+          </p>
         </div>
       </div>
     </div>
-  );
-}
-
-function NeonSvg({
-  isDarkMode,
-  className,
-}: {
-  isDarkMode?: boolean;
-  className?: string;
-}) {
-  const textColor = isDarkMode ? "#fff" : "#000";
-
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="68"
-      height="18"
-      fill="none"
-      viewBox="0 0 102 28"
-      className={className}
-    >
-      <path
-        fill="#12FFF7"
-        fillRule="evenodd"
-        d="M0 4.828C0 2.16 2.172 0 4.851 0h18.436c2.679 0 4.85 2.161 4.85 4.828V20.43c0 2.758-3.507 3.955-5.208 1.778l-5.318-6.809v8.256c0 2.4-1.955 4.345-4.367 4.345H4.851C2.172 28 0 25.839 0 23.172zm4.851-.966a.97.97 0 0 0-.97.966v18.344c0 .534.435.966.97.966h8.539c.268 0 .34-.216.34-.483v-11.07c0-2.76 3.507-3.956 5.208-1.779l5.319 6.809V4.828c0-.534.05-.966-.485-.966z"
-        clipRule="evenodd"
-      />
-      <path
-        fill="url(#a)"
-        fillRule="evenodd"
-        d="M0 4.828C0 2.16 2.172 0 4.851 0h18.436c2.679 0 4.85 2.161 4.85 4.828V20.43c0 2.758-3.507 3.955-5.208 1.778l-5.318-6.809v8.256c0 2.4-1.955 4.345-4.367 4.345H4.851C2.172 28 0 25.839 0 23.172zm4.851-.966a.97.97 0 0 0-.97.966v18.344c0 .534.435.966.97.966h8.539c.268 0 .34-.216.34-.483v-11.07c0-2.76 3.507-3.956 5.208-1.779l5.319 6.809V4.828c0-.534.05-.966-.485-.966z"
-        clipRule="evenodd"
-      />
-      <path
-        fill="url(#b)"
-        fillRule="evenodd"
-        d="M0 4.828C0 2.16 2.172 0 4.851 0h18.436c2.679 0 4.85 2.161 4.85 4.828V20.43c0 2.758-3.507 3.955-5.208 1.778l-5.318-6.809v8.256c0 2.4-1.955 4.345-4.367 4.345H4.851C2.172 28 0 25.839 0 23.172zm4.851-.966a.97.97 0 0 0-.97.966v18.344c0 .534.435.966.97.966h8.539c.268 0 .34-.216.34-.483v-11.07c0-2.76 3.507-3.956 5.208-1.779l5.319 6.809V4.828c0-.534.05-.966-.485-.966z"
-        clipRule="evenodd"
-      />
-      <path
-        fill="#B9FFB3"
-        d="M23.287 0c2.679 0 4.85 2.161 4.85 4.828V20.43c0 2.758-3.507 3.955-5.208 1.778l-5.319-6.809v8.256c0 2.4-1.954 4.345-4.366 4.345a.484.484 0 0 0 .485-.483V12.584c0-2.758 3.508-3.955 5.21-1.777l5.318 6.808V.965a.97.97 0 0 0-.97-.965"
-      />
-      <path
-        fill={textColor}
-        d="M48.112 7.432v8.032l-7.355-8.032H36.93v13.136h3.49v-8.632l8.01 8.632h3.173V7.432zM58.075 17.64v-2.326h7.815v-2.797h-7.815V10.36h9.48V7.432H54.514v13.136H67.75v-2.927zM77.028 21c4.909 0 8.098-2.552 8.098-7s-3.19-7-8.098-7c-4.91 0-8.081 2.552-8.081 7s3.172 7 8.08 7m0-3.115c-2.73 0-4.413-1.408-4.413-3.885s1.701-3.885 4.413-3.885c2.729 0 4.412 1.408 4.412 3.885s-1.683 3.885-4.412 3.885M98.508 7.432v8.032l-7.355-8.032h-3.828v13.136h3.491v-8.632l8.01 8.632H102V7.432z"
-      />
-      <defs>
-        <linearGradient
-          id="a"
-          x1="28.138"
-          x2="3.533"
-          y1="28"
-          y2="-.12"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#B9FFB3" />
-          <stop offset="1" stopColor="#B9FFB3" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient
-          id="b"
-          x1="28.138"
-          x2="11.447"
-          y1="28"
-          y2="21.476"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#1A1A1A" stopOpacity=".9" />
-          <stop offset="1" stopColor="#1A1A1A" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-    </svg>
   );
 }

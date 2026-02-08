@@ -12,9 +12,10 @@ import { neonContracts, type NeonBranch } from "../types/neon";
 import { db } from "../../db";
 import { apps } from "../../db/schema";
 import { eq } from "drizzle-orm";
-import { EndpointType } from "@neondatabase/api-client";
+import { EndpointType, createApiClient } from "@neondatabase/api-client";
 import { retryOnLocked } from "../utils/retryOnLocked";
 import { oauthEndpoints } from "../../lib/oauthConfig";
+import { writeSettings } from "../../main/settings";
 
 export const logger = log.scope("neon_handlers");
 
@@ -209,5 +210,40 @@ export function registerNeonHandlers() {
       url: oauthEndpoints.neon.login,
     });
     logger.info("Sent fake neon deep-link-received event during testing.");
+  });
+
+  createTypedHandler(neonContracts.connectWithApiKey, async (_, params) => {
+    const { apiKey } = params;
+    logger.info("Connecting to Neon with API key...");
+
+    try {
+      // Validate the API key by making a test request
+      const testClient = createApiClient({ apiKey });
+      const response = await testClient.getCurrentUserOrganizations();
+
+      if (!response.data?.organizations) {
+        throw new Error("Invalid API key: Unable to fetch organizations");
+      }
+
+      // Store the API key as access token (Neon API keys don't expire)
+      writeSettings({
+        neon: {
+          accessToken: {
+            value: apiKey,
+          },
+          // API keys don't need refresh tokens or expiration
+          refreshToken: undefined,
+          expiresIn: undefined,
+          tokenTimestamp: undefined,
+        },
+      });
+
+      logger.info("Successfully connected to Neon with API key");
+      return { success: true };
+    } catch (error: any) {
+      const errorMessage = getNeonErrorMessage(error);
+      logger.error("Failed to connect with Neon API key:", errorMessage);
+      throw new Error(`Failed to connect: ${errorMessage}`);
+    }
   });
 }
