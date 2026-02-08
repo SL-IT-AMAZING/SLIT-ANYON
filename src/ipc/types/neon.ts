@@ -55,6 +55,14 @@ export type GetNeonProjectResponse = z.infer<
 // Neon Contracts
 // =============================================================================
 
+export const ConnectWithApiKeyParamsSchema = z.object({
+  apiKey: z.string().min(1),
+});
+
+export type ConnectWithApiKeyParams = z.infer<
+  typeof ConnectWithApiKeyParamsSchema
+>;
+
 export const neonContracts = {
   createProject: defineContract({
     channel: "neon:create-project",
@@ -72,6 +80,12 @@ export const neonContracts = {
     channel: "neon:fake-connect",
     input: z.void(),
     output: z.void(),
+  }),
+
+  connectWithApiKey: defineContract({
+    channel: "neon:connect-with-api-key",
+    input: ConnectWithApiKeyParamsSchema,
+    output: z.object({ success: z.boolean() }),
   }),
 } as const;
 

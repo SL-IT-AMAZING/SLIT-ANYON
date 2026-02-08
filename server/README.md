@@ -39,12 +39,28 @@ VERCEL_CLIENT_SECRET=
 | `VERCEL_CLIENT_ID`       | Vercel OAuth 앱의 클라이언트 ID                                |
 | `VERCEL_CLIENT_SECRET`   | Vercel OAuth 앱의 클라이언트 시크릿                            |
 
+## 지원 상태
+
+| Provider | Status | Auth Method |
+|----------|--------|-------------|
+| Supabase | ✅ Working | OAuth 2.0 |
+| Vercel | ✅ Working | OAuth 2.0 (Sign in with Vercel) |
+| Neon | ⚠️ API Key Only | API Key (OAuth requires Partner Program) |
+
 ## OAuth App 등록 가이드
 
 각 서비스 제공자에서 OAuth 애플리케이션을 등록해야 합니다.
 
 ### Neon
 
+> ⚠️ **중요**: Neon OAuth는 Partner Program 가입이 필요합니다. 일반 사용자는 API 키 방식을 사용해야 합니다.
+
+**API 키 방식 (권장):**
+1. https://console.neon.tech/app/settings/api-keys 접속
+2. **Create new API Key** 클릭
+3. 생성된 API 키를 Dyad 앱의 Neon 커넥터에 입력
+
+**OAuth 방식 (Partner Program 필요):**
 1. https://console.neon.tech 접속
 2. **Settings** → **OAuth Applications** → **Create** 클릭
 3. 다음 정보 입력:
@@ -62,18 +78,20 @@ VERCEL_CLIENT_SECRET=
 
 ### Supabase
 
-1. https://supabase.com/dashboard 접속
-2. **Organization Settings** → **OAuth Apps** → **Add OAuth App** 클릭
+1. https://supabase.com/dashboard/account/oauth-apps 접속
+2. **Add OAuth App** 클릭
 3. 다음 정보 입력:
    - **Redirect URI**: `{OAUTH_SERVER_URL}/api/oauth/supabase/callback`
 4. 생성 후 받은 Client ID와 Client Secret을 환경 변수에 설정
 
 ### Vercel
 
-1. https://vercel.com/account/settings/integrations 접속
-2. **Create Integration** → **OAuth** 선택
+> ⚠️ **중요**: "Vercel Integration"이 아닌 **"Sign in with Vercel" App**을 생성해야 합니다!
+
+1. Vercel Dashboard → **Settings** → **Apps** 접속
+2. "Sign in with Vercel" 섹션에서 **Create App** 클릭
 3. 다음 정보 입력:
-   - **Redirect URI**: `{OAUTH_SERVER_URL}/api/oauth/vercel/callback`
+   - **Authorization Callback URL**: `{OAUTH_SERVER_URL}/api/oauth/vercel/callback`
 4. 생성 후 받은 Client ID와 Client Secret을 환경 변수에 설정
 
 **참고**: Vercel OAuth는 PKCE(Proof Key for Code Exchange)를 사용하여 추가적인 보안을 제공합니다. `code_challenge`와 `code_verifier`가 자동으로 처리됩니다.
