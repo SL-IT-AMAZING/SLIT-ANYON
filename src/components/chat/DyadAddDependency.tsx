@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { ipc } from "@/ipc/types";
 
-import { Package, ChevronsUpDown, ChevronsDownUp } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Package } from "lucide-react";
 import { CodeHighlight } from "./CodeHighlight";
 
 interface DyadAddDependencyProps {
@@ -24,7 +24,7 @@ export const DyadAddDependency: React.FC<DyadAddDependencyProps> = ({
 
   return (
     <div
-      className={`bg-(--background-lightest) dark:bg-gray-900 hover:bg-(--background-lighter) rounded-lg px-4 py-3 border my-2 border-border ${
+      className={`bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-4 py-3 border my-2 border-border ${
         hasChildren ? "cursor-pointer" : ""
       }`}
       onClick={
@@ -33,9 +33,9 @@ export const DyadAddDependency: React.FC<DyadAddDependencyProps> = ({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Package size={18} className="text-gray-600 dark:text-gray-400" />
+          <Package size={18} className="text-muted-foreground" />
           {packages.length > 0 && (
-            <div className="text-gray-800 dark:text-gray-200 font-semibold text-base">
+            <div className="text-foreground font-semibold text-base">
               <div className="font-normal">
                 Do you want to install these packages?
               </div>{" "}
@@ -62,12 +62,12 @@ export const DyadAddDependency: React.FC<DyadAddDependencyProps> = ({
             {isContentVisible ? (
               <ChevronsDownUp
                 size={20}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-accent-foreground"
               />
             ) : (
               <ChevronsUpDown
                 size={20}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-accent-foreground"
               />
             )}
           </div>
@@ -75,7 +75,7 @@ export const DyadAddDependency: React.FC<DyadAddDependencyProps> = ({
       </div>
 
       {packages.length > 0 && (
-        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        <div className="text-sm text-muted-foreground mb-1">
           Make sure these packages are what you want.{" "}
         </div>
       )}

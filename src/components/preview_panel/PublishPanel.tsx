@@ -1,12 +1,12 @@
-import { useAtomValue } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useLoadApp } from "@/hooks/useLoadApp";
 import { GitHubConnector } from "@/components/GitHubConnector";
-import { VercelConnector } from "@/components/VercelConnector";
-import { PortalMigrate } from "@/components/PortalMigrate";
-import { ipc } from "@/ipc/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GithubCollaboratorManager } from "@/components/GithubCollaboratorManager";
+import { PortalMigrate } from "@/components/PortalMigrate";
+import { VercelConnector } from "@/components/VercelConnector";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLoadApp } from "@/hooks/useLoadApp";
+import { ipc } from "@/ipc/types";
+import { useAtomValue } from "jotai";
 
 export const PublishPanel = () => {
   const selectedAppId = useAtomValue(selectedAppIdAtom);
@@ -36,7 +36,7 @@ export const PublishPanel = () => {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-foreground">
           Loading...
         </h2>
       </div>
@@ -46,9 +46,9 @@ export const PublishPanel = () => {
   if (!selectedAppId || !app) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-900/30 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
           <svg
-            className="w-6 h-6 text-gray-600 dark:text-gray-400"
+            className="w-6 h-6 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -61,10 +61,10 @@ export const PublishPanel = () => {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-foreground">
           No App Selected
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 max-w-md">
+        <p className="text-muted-foreground max-w-md">
           Select an app to view publishing options.
         </p>
       </div>
@@ -75,7 +75,7 @@ export const PublishPanel = () => {
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="p-4 space-y-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Publish App
           </h1>
         </div>
@@ -85,7 +85,7 @@ export const PublishPanel = () => {
 
         {/* GitHub Section */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -98,7 +98,7 @@ export const PublishPanel = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Sync your code to GitHub for collaboration.
             </p>
             <GitHubConnector
@@ -107,7 +107,7 @@ export const PublishPanel = () => {
               expanded={true}
             />
             {app.githubOrg && app.githubRepo && (
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="pt-4 border-t border-border">
                 <GithubCollaboratorManager appId={selectedAppId} />
               </div>
             )}
@@ -116,7 +116,7 @@ export const PublishPanel = () => {
 
         {/* Vercel Section */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -136,7 +136,7 @@ export const PublishPanel = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Publish your app by deploying it to Vercel.
             </p>
 

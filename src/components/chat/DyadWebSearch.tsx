@@ -1,7 +1,7 @@
-import type React from "react";
-import { useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, Globe, Loader } from "lucide-react";
-import { CustomTagState } from "./stateTypes";
+import type React from "react";
+import { type ReactNode, useState } from "react";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadWebSearchProps {
   children?: ReactNode;
@@ -20,7 +20,7 @@ export const DyadWebSearch: React.FC<DyadWebSearchProps> = ({
 
   return (
     <div
-      className={`bg-(--background-lightest) dark:bg-zinc-900 hover:bg-(--background-lighter) rounded-lg px-4 py-2 border my-2 cursor-pointer ${
+      className={`bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-4 py-2 border my-2 cursor-pointer ${
         inProgress ? "border-blue-500" : "border-border"
       }`}
       onClick={() => setIsExpanded(!isExpanded)}
@@ -45,14 +45,14 @@ export const DyadWebSearch: React.FC<DyadWebSearchProps> = ({
             </div>
           )}
         </div>
-        <div className="p-1 text-gray-500">
+        <div className="p-1 text-muted-foreground">
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </div>
 
       {/* Collapsed preview - show query */}
       <div
-        className="text-sm italic text-gray-600 dark:text-gray-300 mt-2 overflow-hidden transition-all duration-300 ease-in-out"
+        className="text-sm italic text-muted-foreground mt-2 overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           maxHeight: isExpanded ? "0px" : "3em",
           opacity: isExpanded ? 0 : 1,
@@ -70,10 +70,10 @@ export const DyadWebSearch: React.FC<DyadWebSearchProps> = ({
           marginTop: isExpanded ? "0.5rem" : "0",
         }}
       >
-        <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
+        <div className="text-sm text-muted-foreground space-y-2">
           {query && (
             <div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-xs font-medium text-muted-foreground">
                 Query:
               </span>
               <div className="italic mt-0.5">{query}</div>
@@ -81,7 +81,7 @@ export const DyadWebSearch: React.FC<DyadWebSearchProps> = ({
           )}
           {children && (
             <div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-xs font-medium text-muted-foreground">
                 Results:
               </span>
               <div className="mt-0.5">{children}</div>

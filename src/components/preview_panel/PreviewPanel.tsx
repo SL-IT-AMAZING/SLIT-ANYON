@@ -6,19 +6,19 @@ import {
   selectedAppIdAtom,
 } from "../../atoms/appAtoms";
 
-import { CodeView } from "./CodeView";
-import { PreviewIframe } from "./PreviewIframe";
-import { Problems } from "./Problems";
-import { ConfigurePanel } from "./ConfigurePanel";
+import { useRunApp } from "@/hooks/useRunApp";
+import { useSupabase } from "@/hooks/useSupabase";
 import { ChevronDown, ChevronUp, Logs } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { CodeView } from "./CodeView";
+import { ConfigurePanel } from "./ConfigurePanel";
 import { Console } from "./Console";
-import { useRunApp } from "@/hooks/useRunApp";
+import { PlanPanel } from "./PlanPanel";
+import { PreviewIframe } from "./PreviewIframe";
+import { Problems } from "./Problems";
 import { PublishPanel } from "./PublishPanel";
 import { SecurityPanel } from "./SecurityPanel";
-import { PlanPanel } from "./PlanPanel";
-import { useSupabase } from "@/hooks/useSupabase";
 
 interface ConsoleHeaderProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ const ConsoleHeader = ({
     <div className="flex flex-col">
       <span className="text-sm font-medium">System Messages</span>
       {!isOpen && latestMessage && (
-        <span className="text-xs text-gray-500 truncate max-w-[200px] md:max-w-[400px]">
+        <span className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-[400px]">
           {latestMessage}
         </span>
       )}
@@ -157,7 +157,7 @@ export function PreviewPanel() {
           </Panel>
           {isConsoleOpen && (
             <>
-              <PanelResizeHandle className="h-1 bg-border hover:bg-gray-400 transition-colors cursor-row-resize" />
+              <PanelResizeHandle className="h-1 bg-border hover:bg-accent transition-colors cursor-row-resize" />
               <Panel id="console" minSize={10} defaultSize={30}>
                 <div className="flex flex-col h-full">
                   <ConsoleHeader

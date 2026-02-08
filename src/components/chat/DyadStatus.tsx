@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import { CustomTagState } from "./stateTypes";
 import {
-  Loader2,
   CheckCircle2,
-  XCircle,
   ChevronsDownUp,
   ChevronsUpDown,
+  Loader2,
+  XCircle,
 } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import type { CustomTagState } from "./stateTypes";
 
 interface DyadStatusProps {
   node: {
@@ -49,7 +50,7 @@ export function DyadStatus({ node, children }: DyadStatusProps) {
             className={`font-medium text-sm ${
               isInProgress
                 ? "bg-gradient-to-r from-foreground via-muted-foreground to-foreground bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] bg-clip-text text-transparent"
-                : "text-gray-700 dark:text-gray-300"
+                : "text-muted-foreground"
             }`}
           >
             {title}
@@ -59,12 +60,12 @@ export function DyadStatus({ node, children }: DyadStatusProps) {
           {isContentVisible ? (
             <ChevronsDownUp
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           ) : (
             <ChevronsUpDown
               size={20}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-accent-foreground"
             />
           )}
         </div>

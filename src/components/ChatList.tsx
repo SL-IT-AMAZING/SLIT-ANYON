@@ -1,24 +1,11 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
-import { formatDistanceToNow } from "date-fns";
-import { PlusCircle, MoreVertical, Trash2, Edit3, Search } from "lucide-react";
-import { useAtom } from "jotai";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { dropdownOpenAtom } from "@/atoms/uiAtoms";
-import { ipc } from "@/ipc/types";
-import { showError, showSuccess } from "@/lib/toast";
-import { useSettings } from "@/hooks/useSettings";
-import { getEffectiveDefaultChatMode } from "@/lib/schemas";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { DeleteChatDialog } from "@/components/chat/DeleteChatDialog";
+import { RenameChatDialog } from "@/components/chat/RenameChatDialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,12 +13,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import { useChats } from "@/hooks/useChats";
-import { RenameChatDialog } from "@/components/chat/RenameChatDialog";
-import { DeleteChatDialog } from "@/components/chat/DeleteChatDialog";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { showError, showSuccess } from "@/lib/toast";
+import { formatDistanceToNow } from "date-fns";
+import { useAtom } from "jotai";
+import { Edit3, MoreVertical, PlusCircle, Search, Trash2 } from "lucide-react";
 
-import { ChatSearchDialog } from "./ChatSearchDialog";
 import { useSelectChat } from "@/hooks/useSelectChat";
+import { ChatSearchDialog } from "./ChatSearchDialog";
 
 export function ChatList({ show }: { show?: boolean }) {
   const navigate = useNavigate();
@@ -198,11 +198,11 @@ export function ChatList({ show }: { show?: boolean }) {
             </Button>
 
             {loading ? (
-              <div className="py-3 px-4 text-sm text-gray-500">
+              <div className="py-3 px-4 text-sm text-muted-foreground">
                 Loading chats...
               </div>
             ) : chats.length === 0 ? (
-              <div className="py-3 px-4 text-sm text-gray-500">
+              <div className="py-3 px-4 text-sm text-muted-foreground">
                 No chats found
               </div>
             ) : (
@@ -228,7 +228,7 @@ export function ChatList({ show }: { show?: boolean }) {
                           <span className="truncate">
                             {chat.title || "New Chat"}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(chat.createdAt), {
                               addSuffix: true,
                             })}

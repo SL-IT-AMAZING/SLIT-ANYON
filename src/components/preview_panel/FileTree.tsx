@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { selectedFileAtom } from "@/atoms/viewAtoms";
+import { Input } from "@/components/ui/input";
+import { useSearchAppFiles } from "@/hooks/useSearchAppFiles";
+import type { AppFileSearchResult } from "@/ipc/types";
+import { useSetAtom } from "jotai";
 import {
   ChevronDown,
   ChevronRight,
@@ -8,11 +12,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { selectedFileAtom } from "@/atoms/viewAtoms";
-import { useSetAtom } from "jotai";
-import { Input } from "@/components/ui/input";
-import type { AppFileSearchResult } from "@/ipc/types";
-import { useSearchAppFiles } from "@/hooks/useSearchAppFiles";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface FileTreeProps {
   appId: number | null;
@@ -402,7 +402,7 @@ const TreeNode = ({
         onClick={handleClick}
       >
         {node.isDirectory && (
-          <span className="mr-1 text-gray-500">
+          <span className="mr-1 text-muted-foreground">
             {expanded ? <FolderOpen size={16} /> : <Folder size={16} />}
           </span>
         )}

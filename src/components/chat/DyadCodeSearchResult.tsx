@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, FileCode, FileText } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
 
 interface DyadCodeSearchResultProps {
   node?: any;
@@ -37,7 +38,7 @@ export const DyadCodeSearchResult: React.FC<DyadCodeSearchResultProps> = ({
 
   return (
     <div
-      className="relative bg-(--background-lightest) dark:bg-zinc-900 hover:bg-(--background-lighter) rounded-lg px-4 py-2 border border-border my-2 cursor-pointer"
+      className="relative bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-4 py-2 border border-border my-2 cursor-pointer"
       onClick={() => setIsExpanded(!isExpanded)}
       role="button"
       aria-expanded={isExpanded}
@@ -51,7 +52,7 @@ export const DyadCodeSearchResult: React.FC<DyadCodeSearchResultProps> = ({
     >
       {/* Top-left label badge */}
       <div
-        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-purple-600 bg-white dark:bg-zinc-900"
+        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-purple-600 bg-card"
         style={{ zIndex: 1 }}
       >
         <FileCode size={16} className="text-purple-600" />
@@ -61,14 +62,14 @@ export const DyadCodeSearchResult: React.FC<DyadCodeSearchResultProps> = ({
       {/* File count when collapsed */}
       {files.length > 0 && (
         <div className="absolute top-2 left-44 flex items-center">
-          <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-zinc-800 text-xs rounded text-gray-600 dark:text-gray-300">
+          <span className="px-1.5 py-0.5 bg-muted text-xs rounded text-muted-foreground">
             Found {files.length} file{files.length !== 1 ? "s" : ""}
           </span>
         </div>
       )}
 
       {/* Indicator icon */}
-      <div className="absolute top-2 right-2 p-1 text-gray-500">
+      <div className="absolute top-2 right-2 p-1 text-muted-foreground">
         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </div>
 
@@ -95,19 +96,19 @@ export const DyadCodeSearchResult: React.FC<DyadCodeSearchResultProps> = ({
                 return (
                   <div
                     key={index}
-                    className="px-2 py-1 bg-gray-100 dark:bg-zinc-800 rounded-lg"
+                    className="px-2 py-1 bg-muted rounded-lg"
                   >
                     <div className="flex items-center gap-1.5">
                       <FileText
                         size={14}
-                        className="text-gray-500 dark:text-gray-400 flex-shrink-0"
+                        className="text-muted-foreground flex-shrink-0"
                       />
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <div className="text-sm font-medium text-muted-foreground">
                         {fileName}
                       </div>
                     </div>
                     {pathPart && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 ml-5">
+                      <div className="text-xs text-muted-foreground ml-5">
                         {pathPart}
                       </div>
                     )}

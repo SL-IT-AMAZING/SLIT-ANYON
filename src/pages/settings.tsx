@@ -1,39 +1,39 @@
+import { AutoApproveSwitch } from "@/components/AutoApproveSwitch";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
+import { GitHubIntegration } from "@/components/GitHubIntegration";
+import { MaxChatTurnsSelector } from "@/components/MaxChatTurnsSelector";
+import { ProviderSettingsGrid } from "@/components/ProviderSettings";
+import { SupabaseIntegration } from "@/components/SupabaseIntegration";
+import { TelemetrySwitch } from "@/components/TelemetrySwitch";
+import { ThinkingBudgetSelector } from "@/components/ThinkingBudgetSelector";
+import { VercelIntegration } from "@/components/VercelIntegration";
+import { Button } from "@/components/ui/button";
+import { useAppVersion } from "@/hooks/useAppVersion";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
-import { ProviderSettingsGrid } from "@/components/ProviderSettings";
-import ConfirmationDialog from "@/components/ConfirmationDialog";
-import { ipc } from "@/ipc/types";
-import { showSuccess, showError } from "@/lib/toast";
-import { AutoApproveSwitch } from "@/components/AutoApproveSwitch";
-import { TelemetrySwitch } from "@/components/TelemetrySwitch";
-import { MaxChatTurnsSelector } from "@/components/MaxChatTurnsSelector";
-import { ThinkingBudgetSelector } from "@/components/ThinkingBudgetSelector";
-import { useSettings } from "@/hooks/useSettings";
-import { useAppVersion } from "@/hooks/useAppVersion";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { GitHubIntegration } from "@/components/GitHubIntegration";
-import { VercelIntegration } from "@/components/VercelIntegration";
-import { SupabaseIntegration } from "@/components/SupabaseIntegration";
 
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { AutoFixProblemsSwitch } from "@/components/AutoFixProblemsSwitch";
-import { AutoExpandPreviewSwitch } from "@/components/AutoExpandPreviewSwitch";
-import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
-import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
-import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
-import { NeonIntegration } from "@/components/NeonIntegration";
-import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
-import { NodePathSelector } from "@/components/NodePathSelector";
-import { ToolsMcpSettings } from "@/components/settings/ToolsMcpSettings";
-import { AgentToolsSettings } from "@/components/settings/AgentToolsSettings";
-import { ZoomSelector } from "@/components/ZoomSelector";
-import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
-import { useSetAtom } from "jotai";
 import { activeSettingsSectionAtom } from "@/atoms/viewAtoms";
+import { AutoExpandPreviewSwitch } from "@/components/AutoExpandPreviewSwitch";
+import { AutoFixProblemsSwitch } from "@/components/AutoFixProblemsSwitch";
+import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
+import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
+import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
+import { NeonIntegration } from "@/components/NeonIntegration";
+import { NodePathSelector } from "@/components/NodePathSelector";
+import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
+import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
+import { ZoomSelector } from "@/components/ZoomSelector";
+import { AgentToolsSettings } from "@/components/settings/AgentToolsSettings";
+import { ToolsMcpSettings } from "@/components/settings/ToolsMcpSettings";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { SECTION_IDS, SETTING_IDS } from "@/lib/settingsSearchIndex";
+import { useSetAtom } from "jotai";
 
 export default function SettingsPage() {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -76,7 +76,7 @@ export default function SettingsPage() {
           Go Back
         </Button>
         <div className="flex justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             Settings
           </h1>
         </div>
@@ -88,7 +88,7 @@ export default function SettingsPage() {
 
           <div
             id={SECTION_IDS.providers}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm"
+            className="bg-card rounded-xl shadow-sm"
           >
             <ProviderSettingsGrid />
           </div>
@@ -96,21 +96,21 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <div
               id={SECTION_IDS.telemetry}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+              className="bg-card rounded-xl shadow-sm p-6"
             >
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              <h2 className="text-lg font-medium text-foreground mb-4">
                 Telemetry
               </h2>
               <div id={SETTING_IDS.telemetry} className="space-y-2">
                 <TelemetrySwitch />
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   This records anonymous usage data to improve the product.
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="mt-2 flex items-center text-sm text-muted-foreground">
                 <span className="mr-2 font-medium">Telemetry ID:</span>
-                <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-800 dark:text-gray-200 font-mono">
+                <span className="bg-muted px-2 py-0.5 rounded text-foreground font-mono">
                   {settings ? settings.telemetryUserId : "n/a"}
                 </span>
               </div>
@@ -120,9 +120,9 @@ export default function SettingsPage() {
           {/* Integrations Section */}
           <div
             id={SECTION_IDS.integrations}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+            className="bg-card rounded-xl shadow-sm p-6"
           >
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            <h2 className="text-lg font-medium text-foreground mb-4">
               Integrations
             </h2>
             <div className="space-y-4">
@@ -145,9 +145,9 @@ export default function SettingsPage() {
 
           <div
             id={SECTION_IDS.agentPermissions}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+            className="bg-card rounded-xl shadow-sm p-6"
           >
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            <h2 className="text-lg font-medium text-foreground mb-4">
               Agent Permissions (Pro)
             </h2>
             <AgentToolsSettings />
@@ -156,9 +156,9 @@ export default function SettingsPage() {
           {/* Tools (MCP) */}
           <div
             id={SECTION_IDS.toolsMcp}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+            className="bg-card rounded-xl shadow-sm p-6"
           >
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            <h2 className="text-lg font-medium text-foreground mb-4">
               Tools (MCP)
             </h2>
             <ToolsMcpSettings />
@@ -167,9 +167,9 @@ export default function SettingsPage() {
           {/* Experiments Section */}
           <div
             id={SECTION_IDS.experiments}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+            className="bg-card rounded-xl shadow-sm p-6"
           >
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            <h2 className="text-lg font-medium text-foreground mb-4">
               Experiments
             </h2>
             <div className="space-y-4">
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                   />
                   <Label htmlFor="enable-native-git">Enable Native Git</Label>
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   This doesn't require any external Git installation and offers
                   a faster, native-Git performance experience.
                 </div>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
           {/* Danger Zone */}
           <div
             id={SECTION_IDS.dangerZone}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-800"
+            className="bg-card rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-800"
           >
             <h2 className="text-lg font-medium text-red-600 dark:text-red-400 mb-4">
               Danger Zone
@@ -210,10 +210,10 @@ export default function SettingsPage() {
                 className="flex items-start justify-between flex-col sm:flex-row sm:items-center gap-4"
               >
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-sm font-medium text-foreground">
                     Reset Everything
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     This will delete all your apps, chats, and settings. This
                     action cannot be undone.
                   </p>
@@ -250,19 +250,19 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
   return (
     <div
       id={SECTION_IDS.general}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+      className="bg-card rounded-xl shadow-sm p-6"
     >
-      <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <h2 className="text-lg font-medium text-foreground mb-4">
         General Settings
       </h2>
 
       <div className="space-y-4 mb-4">
         <div id={SETTING_IDS.theme} className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="text-sm font-medium text-muted-foreground">
             Theme
           </label>
 
-          <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg p-1 flex">
+          <div className="relative bg-muted rounded-lg p-1 flex">
             {(["system", "light", "dark"] as const).map((option) => (
               <button
                 key={option}
@@ -272,8 +272,8 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
                 transition-all duration-200
                 ${
                   theme === option
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }
               `}
               >
@@ -290,7 +290,7 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
 
       <div id={SETTING_IDS.autoUpdate} className="space-y-1 mt-4">
         <AutoUpdateSwitch />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           This will automatically update the app when new versions are
           available.
         </div>
@@ -307,9 +307,9 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
         <NodePathSelector />
       </div>
 
-      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+      <div className="flex items-center text-sm text-muted-foreground mt-4">
         <span className="mr-2 font-medium">App Version:</span>
-        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-800 dark:text-gray-200 font-mono">
+        <span className="bg-muted px-2 py-0.5 rounded text-foreground font-mono">
           {appVersion ? appVersion : "-"}
         </span>
       </div>
@@ -321,9 +321,9 @@ export function WorkflowSettings() {
   return (
     <div
       id={SECTION_IDS.workflow}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+      className="bg-card rounded-xl shadow-sm p-6"
     >
-      <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <h2 className="text-lg font-medium text-foreground mb-4">
         Workflow Settings
       </h2>
 
@@ -333,21 +333,21 @@ export function WorkflowSettings() {
 
       <div id={SETTING_IDS.autoApprove} className="space-y-1 mt-4">
         <AutoApproveSwitch showToast={false} />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           This will automatically approve code changes and run them.
         </div>
       </div>
 
       <div id={SETTING_IDS.autoFix} className="space-y-1 mt-4">
         <AutoFixProblemsSwitch />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           This will automatically fix TypeScript errors.
         </div>
       </div>
 
       <div id={SETTING_IDS.autoExpandPreview} className="space-y-1 mt-4">
         <AutoExpandPreviewSwitch />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           Automatically expand the preview panel when code changes are made.
         </div>
       </div>
@@ -357,7 +357,7 @@ export function WorkflowSettings() {
         className="space-y-1 mt-4"
       >
         <ChatCompletionNotificationSwitch />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           Show a native notification when a chat response completes while the
           app is not focused.
         </div>
@@ -369,9 +369,9 @@ export function AISettings() {
   return (
     <div
       id={SECTION_IDS.ai}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+      className="bg-card rounded-xl shadow-sm p-6"
     >
-      <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <h2 className="text-lg font-medium text-foreground mb-4">
         AI Settings
       </h2>
 

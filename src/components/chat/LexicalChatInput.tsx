@@ -1,33 +1,33 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  $getRoot,
-  $createParagraphNode,
-  $createTextNode,
-  EditorState,
-} from "lexical";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import {
-  BeautifulMentionsPlugin,
-  BeautifulMentionNode,
-  $createBeautifulMentionNode,
-  type BeautifulMentionsTheme,
-  type BeautifulMentionsMenuItemProps,
-} from "lexical-beautiful-mentions";
-import { KEY_ENTER_COMMAND, COMMAND_PRIORITY_HIGH } from "lexical";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { useLoadApp } from "@/hooks/useLoadApp";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { usePrompts } from "@/hooks/usePrompts";
-import { forwardRef } from "react";
-import { useAtomValue } from "jotai";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { MENTION_REGEX, parseAppMentions } from "@/shared/parse_mention_apps";
-import { useLoadApp } from "@/hooks/useLoadApp";
-import { HistoryNavigation, HISTORY_TRIGGER } from "./HistoryNavigation";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { useAtomValue } from "jotai";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  type EditorState,
+} from "lexical";
+import { COMMAND_PRIORITY_HIGH, KEY_ENTER_COMMAND } from "lexical";
+import {
+  $createBeautifulMentionNode,
+  BeautifulMentionNode,
+  type BeautifulMentionsMenuItemProps,
+  BeautifulMentionsPlugin,
+  type BeautifulMentionsTheme,
+} from "lexical-beautiful-mentions";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef } from "react";
+import { HISTORY_TRIGGER, HistoryNavigation } from "./HistoryNavigation";
 
 // Define the theme for mentions
 const beautifulMentionsTheme: BeautifulMentionsTheme = {
@@ -450,10 +450,10 @@ export function LexicalChatInput({
         <PlainTextPlugin
           contentEditable={
             <ContentEditable
-              className="flex-1 p-2 focus:outline-none overflow-y-auto min-h-[40px] max-h-[200px] resize-none"
+              className="flex-1 px-4 pt-4 pb-2 focus:outline-none overflow-y-auto min-h-[44px] max-h-[200px] resize-none text-sm"
               aria-placeholder={placeholder}
               placeholder={
-                <div className="absolute top-2 left-2 text-muted-foreground pointer-events-none select-none">
+                <div className="absolute top-4 left-4 text-muted-foreground pointer-events-none select-none text-sm">
                   {placeholder}
                 </div>
               }

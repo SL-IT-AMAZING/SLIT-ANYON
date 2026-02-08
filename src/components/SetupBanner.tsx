@@ -1,21 +1,19 @@
+import { SECTION_IDS } from "@/lib/settingsSearchIndex";
+import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  ChevronRight,
-  GiftIcon,
-  CheckCircle,
   AlertCircle,
-  XCircle,
+  CheckCircle,
+  ChevronRight,
+  Folder,
+  GiftIcon,
   Loader2,
   Settings,
-  Folder,
+  XCircle,
 } from "lucide-react";
-import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
-import { SECTION_IDS } from "@/lib/settingsSearchIndex";
 
 import SetupProviderCard from "@/components/SetupProviderCard";
 
-import { useState, useEffect, useCallback } from "react";
-import { ipc, NodeSystemInfo } from "@/ipc/types";
 import {
   Accordion,
   AccordionContent,
@@ -23,20 +21,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { usePostHog } from "posthog-js/react";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useScrollAndNavigateTo } from "@/hooks/useScrollAndNavigateTo";
-// @ts-ignore
-import logo from "../../assets/logo.svg";
+import { useSettings } from "@/hooks/useSettings";
+import { type NodeSystemInfo, ipc } from "@/ipc/types";
+import { showError } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { usePostHog } from "posthog-js/react";
+import { useCallback, useEffect, useState } from "react";
 // @ts-ignore
 import googleIcon from "../../assets/ai-logos/google-g-icon.svg";
 // @ts-ignore
 import openrouterLogo from "../../assets/ai-logos/openrouter-logo.png";
-import { OnboardingBanner } from "./home/OnboardingBanner";
-import { showError } from "@/lib/toast";
-import { useSettings } from "@/hooks/useSettings";
+// @ts-ignore
+import logo from "../../assets/logo.svg";
 import { DyadProTrialDialog } from "./DyadProTrialDialog";
+import { OnboardingBanner } from "./home/OnboardingBanner";
 
 type NodeInstallStep =
   | "install"
@@ -164,10 +164,10 @@ export function SetupBanner() {
 
   const bannerClasses = cn(
     "w-full mb-6 border rounded-xl shadow-sm overflow-hidden",
-    "border-zinc-200 dark:border-zinc-700",
+    "border-border",
   );
 
-  const getStatusIcon = (isComplete: boolean, hasError: boolean = false) => {
+  const getStatusIcon = (isComplete: boolean, hasError = false) => {
     if (hasError) {
       return <XCircle className="w-5 h-5 text-red-500" />;
     }
@@ -180,7 +180,7 @@ export function SetupBanner() {
 
   return (
     <>
-      <p className="text-xl font-medium text-zinc-700 dark:text-zinc-300 p-4 pt-6">
+      <p className="text-xl font-medium text-muted-foreground p-4 pt-6">
         Setup Dyad
       </p>
       <OnboardingBanner
@@ -209,7 +209,7 @@ export function SetupBanner() {
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pt-2 pb-4 bg-white dark:bg-zinc-900 border-t border-inherit">
+            <AccordionContent className="px-4 pt-2 pb-4 bg-card border-t border-inherit">
               {nodeCheckError && (
                 <p className="text-sm text-red-600 dark:text-red-400">
                   Error checking Node.js status. Try installing Node.js.
@@ -219,7 +219,7 @@ export function SetupBanner() {
                 <p className="text-sm">
                   Node.js ({nodeSystemInfo!.nodeVersion}) installed.{" "}
                   {nodeSystemInfo!.pnpmVersion && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {" "}
                       (optional) pnpm ({nodeSystemInfo!.pnpmVersion}) installed.
                     </span>
@@ -251,7 +251,7 @@ export function SetupBanner() {
                     finishNodeInstall={finishNodeInstall}
                   />
 
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <button
                       onClick={() => setShowManualConfig(!showManualConfig)}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
@@ -260,7 +260,7 @@ export function SetupBanner() {
                     </button>
 
                     {showManualConfig && (
-                      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="mt-3 p-3 bg-muted rounded-lg">
                         <Button
                           onClick={handleManualNodeConfig}
                           disabled={isSelectingPath}
@@ -310,7 +310,7 @@ export function SetupBanner() {
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pt-2 pb-4 bg-white dark:bg-zinc-900 border-t border-inherit">
+            <AccordionContent className="px-4 pt-2 pb-4 bg-card border-t border-inherit">
               <p className="text-[15px] mb-3">
                 Not sure what to do? Watch the Get Started video above ☝️
               </p>
@@ -357,26 +357,26 @@ export function SetupBanner() {
               </div>
 
               <div
-                className="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                className="mt-2 p-3 bg-muted border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors"
                 onClick={handleOtherProvidersClick}
                 role="button"
                 tabIndex={isNodeSetupComplete ? 0 : -1}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full">
-                      <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <div className="bg-muted p-1.5 rounded-full">
+                      <Settings className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-[15px] text-gray-800 dark:text-gray-300">
+                      <h4 className="font-medium text-[15px] text-foreground">
                         Setup other AI providers
                       </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         OpenAI, Anthropic and more
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
             </AccordionContent>

@@ -1,10 +1,10 @@
-import { Copy, Check } from "lucide-react";
-import { useState } from "react";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 
 interface CopyErrorMessageProps {
   errorMessage: string;
@@ -37,7 +37,7 @@ export const CopyErrorMessage = ({
             className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
               isCopied
                 ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                : "bg-muted text-muted-foreground hover:bg-accent"
             } ${className}`}
           />
         }

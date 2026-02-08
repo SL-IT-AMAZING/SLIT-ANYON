@@ -1,5 +1,3 @@
-import { useSettings } from "@/hooks/useSettings";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import {
   Select,
   SelectContent,
@@ -7,8 +5,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
+import { useSettings } from "@/hooks/useSettings";
 import type { ChatMode } from "@/lib/schemas";
-import { isDyadProEnabled, getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { getEffectiveDefaultChatMode, isDyadProEnabled } from "@/lib/schemas";
 
 export function DefaultChatModeSelector() {
   const { settings, updateSettings, envVars } = useSettings();
@@ -52,7 +52,7 @@ export function DefaultChatModeSelector() {
       <div className="flex items-center space-x-2">
         <label
           htmlFor="default-chat-mode"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-muted-foreground"
         >
           Default Chat Mode
         </label>
@@ -97,7 +97,7 @@ export function DefaultChatModeSelector() {
           </SelectContent>
         </Select>
       </div>
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground">
         The chat mode used when creating new chats.
       </div>
     </div>

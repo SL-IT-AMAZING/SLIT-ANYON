@@ -1,11 +1,11 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/types";
-import { toast } from "sonner";
-import { useSettings } from "@/hooks/useSettings";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { ExternalLink } from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
+import { ExternalLink } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export function VercelHubConnector() {
   const { settings, refreshSettings, updateSettings } = useSettings();
@@ -27,7 +27,7 @@ export function VercelHubConnector() {
 
   if (isConnected) {
     return (
-      <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
+      <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
         <div className="flex flex-col items-start justify-between">
           <div className="flex items-center justify-between w-full">
             <h2 className="text-lg font-medium pb-1">Vercel</h2>
@@ -42,7 +42,7 @@ export function VercelHubConnector() {
               <ExternalLink className="h-3 w-3" />
             </Button>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
+          <p className="text-sm text-muted-foreground pb-3">
             You are connected to Vercel
           </p>
           <Button
@@ -64,17 +64,17 @@ export function VercelHubConnector() {
   }
 
   return (
-    <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
+    <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
         <h2 className="text-lg font-medium pb-1">Vercel</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
+        <p className="text-sm text-muted-foreground pb-3">
           Deploy your projects to the web with Vercel's generous free tier.
         </p>
         <div
           onClick={async () => {
             await ipc.system.openExternalUrl(oauthEndpoints.vercel.login);
           }}
-          className="w-auto h-10 cursor-pointer flex items-center justify-center px-4 py-2 rounded-md border-2 transition-colors font-medium text-sm dark:bg-gray-900 dark:border-gray-700"
+          className="w-auto h-10 cursor-pointer flex items-center justify-center px-4 py-2 rounded-md border-2 transition-colors font-medium text-sm dark:bg-muted dark:border-border"
           data-testid="connect-vercel-hub-button"
         >
           <span className="mr-2">Connect to</span>

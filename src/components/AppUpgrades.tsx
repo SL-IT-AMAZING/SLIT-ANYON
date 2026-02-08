@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
-import { ipc, type AppUpgrade } from "@/ipc/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { type AppUpgrade, ipc } from "@/ipc/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 export function AppUpgrades({ appId }: { appId: number | null }) {
   const queryClient = useQueryClient();
@@ -67,7 +67,7 @@ export function AppUpgrades({ appId }: { appId: number | null }) {
   if (isLoading) {
     return (
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+        <h3 className="text-lg font-semibold mb-3 text-foreground">
           App Upgrades
         </h3>
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -78,7 +78,7 @@ export function AppUpgrades({ appId }: { appId: number | null }) {
   if (queryError) {
     return (
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+        <h3 className="text-lg font-semibold mb-3 text-foreground">
           App Upgrades
         </h3>
         <Alert variant="destructive">
@@ -93,7 +93,7 @@ export function AppUpgrades({ appId }: { appId: number | null }) {
 
   return (
     <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+      <h3 className="text-lg font-semibold mb-3 text-foreground">
         App Upgrades
       </h3>
       {currentUpgrades.length === 0 ? (
@@ -108,13 +108,13 @@ export function AppUpgrades({ appId }: { appId: number | null }) {
           {currentUpgrades.map((upgrade: AppUpgrade) => (
             <div
               key={upgrade.id}
-              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg flex justify-between items-start"
+              className="p-4 border border-border rounded-lg flex justify-between items-start"
             >
               <div className="flex-grow">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                <h4 className="font-semibold text-foreground">
                   {upgrade.title}
                 </h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {upgrade.description}
                 </p>
                 {mutationError && upgradingVariables === upgrade.id && (

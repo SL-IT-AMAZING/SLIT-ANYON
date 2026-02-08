@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useSettings } from "@/hooks/useSettings";
-import { showError, showSuccess } from "@/lib/toast";
 import { ipc } from "@/ipc/types";
-import { FolderOpen, RotateCcw, CheckCircle, AlertCircle } from "lucide-react";
+import { showError, showSuccess } from "@/lib/toast";
+import { AlertCircle, CheckCircle, FolderOpen, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function NodePathSelector() {
   const { settings, updateSettings } = useSettings();
@@ -130,11 +130,11 @@ export function NodePathSelector() {
             </Button>
           )}
         </div>
-        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="p-3 bg-muted rounded-lg border border-border">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-muted-foreground">
                   {isCustomPath ? "Custom Path:" : "System PATH:"}
                 </span>
                 {isCustomPath && (
@@ -143,7 +143,7 @@ export function NodePathSelector() {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-mono text-gray-700 dark:text-gray-300 break-all max-h-32 overflow-y-auto">
+              <p className="text-sm font-mono text-muted-foreground break-all max-h-32 overflow-y-auto">
                 {currentPath}
               </p>
             </div>
@@ -151,7 +151,7 @@ export function NodePathSelector() {
             {/* Status Indicator */}
             <div className="ml-3 flex items-center">
               {isCheckingNode ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-500" />
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-border border-t-blue-500" />
               ) : nodeStatus.isValid ? (
                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                   <CheckCircle className="w-4 h-4" />
@@ -168,7 +168,7 @@ export function NodePathSelector() {
         </div>
 
         {/* Help Text */}
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-muted-foreground">
           {nodeStatus.isValid ? (
             <p>Node.js is properly configured and ready to use.</p>
           ) : (

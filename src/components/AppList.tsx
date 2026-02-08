@@ -1,19 +1,19 @@
-import { useNavigate } from "@tanstack/react-router";
-import { PlusCircle, Search } from "lucide-react";
-import { useAtom, useSetAtom } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import { useAddAppToFavorite } from "@/hooks/useAddAppToFavorite";
 import { useLoadApps } from "@/hooks/useLoadApps";
+import { useNavigate } from "@tanstack/react-router";
+import { useAtom, useSetAtom } from "jotai";
+import { PlusCircle, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppSearchDialog } from "./AppSearchDialog";
-import { useAddAppToFavorite } from "@/hooks/useAddAppToFavorite";
 import { AppItem } from "./appItem";
 export function AppList({ show }: { show?: boolean }) {
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ export function AppList({ show }: { show?: boolean }) {
             </Button>
 
             {loading ? (
-              <div className="py-2 px-4 text-sm text-gray-500">
+              <div className="py-2 px-4 text-sm text-muted-foreground">
                 Loading apps...
               </div>
             ) : error ? (
@@ -107,7 +107,7 @@ export function AppList({ show }: { show?: boolean }) {
                 Error loading apps
               </div>
             ) : apps.length === 0 ? (
-              <div className="py-2 px-4 text-sm text-gray-500">
+              <div className="py-2 px-4 text-sm text-muted-foreground">
                 No apps found
               </div>
             ) : (

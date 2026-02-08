@@ -1,43 +1,43 @@
-import { useAtomValue, useSetAtom } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { useSecurityReview } from "@/hooks/useSecurityReview";
-import { ipc } from "@/ipc/types";
-import { queryKeys } from "@/lib/queryKeys";
-import { Card, CardContent } from "@/components/ui/card";
+import { VanillaMarkdownParser } from "@/components/chat/DyadMarkdownParser";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Shield,
-  AlertTriangle,
-  AlertCircle,
-  Info,
-  ChevronDown,
-  Pencil,
-  Wrench,
-} from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useLoadAppFile } from "@/hooks/useLoadAppFile";
+import { useSecurityReview } from "@/hooks/useSecurityReview";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { showError } from "@/lib/toast";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ipc } from "@/ipc/types";
 import type {
   SecurityFinding,
   SecurityReviewResult,
 } from "@/ipc/types/security";
-import { useState, useEffect } from "react";
-import { VanillaMarkdownParser } from "@/components/chat/DyadMarkdownParser";
+import { queryKeys } from "@/lib/queryKeys";
+import { showError } from "@/lib/toast";
 import { showSuccess, showWarning } from "@/lib/toast";
-import { useLoadAppFile } from "@/hooks/useLoadAppFile";
+import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useAtomValue, useSetAtom } from "jotai";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ChevronDown,
+  Info,
+  Pencil,
+  Shield,
+  Wrench,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 const getSeverityColor = (level: SecurityFinding["level"]) => {
   switch (level) {
@@ -48,7 +48,7 @@ const getSeverityColor = (level: SecurityFinding["level"]) => {
     case "medium":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800";
     case "low":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200 dark:border-gray-800";
+      return "bg-muted text-foreground border-border";
   }
 };
 
@@ -182,7 +182,7 @@ function ReviewSummary({ data }: { data: SecurityReviewResult }) {
 
   return (
     <div className="space-y-1 mt-1">
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground">
         Last reviewed {formatTimeAgo(data.timestamp)}
       </div>
       <div className="flex items-center gap-3 text-sm">
@@ -191,10 +191,10 @@ function ReviewSummary({ data }: { data: SecurityReviewResult }) {
           .map((level) => (
             <span key={level} className="flex items-center gap-1.5">
               <span className="flex-shrink-0">{getSeverityIcon(level)}</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span className="font-medium text-foreground">
                 {counts[level]}
               </span>
-              <span className="text-gray-600 dark:text-gray-400 capitalize">
+              <span className="text-muted-foreground capitalize">
                 {level}
               </span>
             </span>
@@ -243,7 +243,7 @@ function SecurityHeader({
     <div className="sticky top-0 z-10 bg-background pt-3 pb-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-foreground mb-1 flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Security Review
             <Badge variant="secondary" className="uppercase tracking-wide">
@@ -349,7 +349,7 @@ function LoadingView() {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-4">
+      <h2 className="text-xl font-semibold text-foreground mt-4">
         Loading...
       </h2>
     </div>
@@ -359,13 +359,13 @@ function LoadingView() {
 function NoAppSelectedView() {
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-        <Shield className="w-8 h-8 text-gray-400" />
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Shield className="w-8 h-8 text-muted-foreground" />
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <h2 className="text-xl font-semibold text-foreground mb-2">
         No App Selected
       </h2>
-      <p className="text-gray-600 dark:text-gray-400 max-w-md">
+      <p className="text-muted-foreground max-w-md">
         Select an app to run a security review
       </p>
     </div>
@@ -375,7 +375,7 @@ function NoAppSelectedView() {
 function RunningReviewCard() {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="text-center py-8">
           <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
             <svg
@@ -398,10 +398,10 @@ function RunningReviewCard() {
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Security review is running
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Results will be available soon.
           </p>
         </div>
@@ -419,15 +419,15 @@ function NoReviewCard({
 }) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="text-center py-8">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             No Security Review Found
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             Run a security review to identify potential vulnerabilities in your
             application.
           </p>
@@ -441,19 +441,19 @@ function NoReviewCard({
 function NoIssuesCard({ data }: { data?: SecurityReviewResult }) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="text-center py-8">
           <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             No Security Issues Found
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Your application passed the security review with no issues detected.
           </p>
           {data && (
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Last reviewed {formatTimeAgo(data.timestamp)}
             </p>
           )}
@@ -496,27 +496,27 @@ function FindingsTable({
       data-testid="security-findings-table"
     >
       <table className="w-full">
-        <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+        <thead className="bg-muted border-b border-border">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-12">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12">
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={onToggleSelectAll}
                 aria-label="Select all issues"
               />
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-24">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
               Level
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Issue
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-32">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">
               Action
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-border">
           {sortedFindings.map((finding, index) => {
             const isLongDescription =
               finding.description.length > DESCRIPTION_PREVIEW_LENGTH;
@@ -531,7 +531,7 @@ function FindingsTable({
             return (
               <tr
                 key={index}
-                className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                className="hover:bg-accent transition-colors"
               >
                 <td className="px-4 py-4 align-top">
                   <Checkbox
@@ -557,10 +557,10 @@ function FindingsTable({
                       }
                     }}
                   >
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                    <div className="font-medium text-foreground">
                       {finding.title}
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
+                    <div className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none">
                       <VanillaMarkdownParser content={displayDescription} />
                     </div>
                     {isLongDescription && (
@@ -646,7 +646,7 @@ function FindingDetailsDialog({
             {finding && <SeverityBadge level={finding.level} />}
           </DialogTitle>
         </DialogHeader>
-        <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none break-words max-h-[60vh] overflow-auto">
+        <div className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none break-words max-h-[60vh] overflow-auto">
           {finding && <VanillaMarkdownParser content={finding.description} />}
         </div>
         <DialogFooter>
@@ -973,7 +973,7 @@ ${issuesList}`;
             <DialogHeader>
               <DialogTitle>Edit Security Rules</DialogTitle>
             </DialogHeader>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               This allows you to add additional context about your project
               specifically for security reviews. This content is saved to the{" "}
               <code className="text-xs">SECURITY_RULES.md</code> file. This can
@@ -982,7 +982,7 @@ ${issuesList}`;
             </div>
             <div className="mt-3">
               <textarea
-                className="w-full h-72 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-72 rounded-md border border-border bg-transparent p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 value={rulesContent}
                 onChange={(e) => setRulesContent(e.target.value)}
                 placeholder="# SECURITY_RULES.md\n\nDescribe relevant security context, accepted risks, non-issues, and environment details."

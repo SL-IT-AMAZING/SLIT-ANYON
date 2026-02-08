@@ -1,95 +1,95 @@
 import {
-  StopCircleIcon,
-  X,
+  AlertOctagon,
+  AlertTriangle,
+  ArrowUpIcon,
+  Check,
   ChevronDown,
   ChevronUp,
-  AlertTriangle,
-  AlertOctagon,
-  FileText,
-  Check,
-  Loader2,
-  Package,
-  FileX,
-  SendToBack,
-  Database,
-  ChevronsUpDown,
   ChevronsDownUp,
-  SendHorizontalIcon,
+  ChevronsUpDown,
+  Database,
+  FileText,
+  FileX,
+  Loader2,
   Lock,
+  Package,
+  SendToBack,
+  StopCircleIcon,
+  X,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useSettings } from "@/hooks/useSettings";
-import { ipc } from "@/ipc/types";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import {
+  agentTodosByChatIdAtom,
   chatInputValueAtom,
   chatMessagesByIdAtom,
-  selectedChatIdAtom,
-  pendingAgentConsentsAtom,
-  agentTodosByChatIdAtom,
   needsFreshPlanChatAtom,
+  pendingAgentConsentsAtom,
+  selectedChatIdAtom,
 } from "@/atoms/chatAtoms";
-import { atom, useAtom, useSetAtom, useAtomValue } from "jotai";
-import { useStreamChat } from "@/hooks/useStreamChat";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Button } from "@/components/ui/button";
 import { useProposal } from "@/hooks/useProposal";
-import {
+import { useSettings } from "@/hooks/useSettings";
+import { useStreamChat } from "@/hooks/useStreamChat";
+import { ipc } from "@/ipc/types";
+import type {
   ActionProposal,
-  Proposal,
-  SuggestedAction,
   FileChange,
+  Proposal,
   SqlQuery,
+  SuggestedAction,
 } from "@/lib/schemas";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { useRunApp } from "@/hooks/useRunApp";
-import { AutoApproveSwitch } from "../AutoApproveSwitch";
 import { usePostHog } from "posthog-js/react";
+import { AutoApproveSwitch } from "../AutoApproveSwitch";
 import { CodeHighlight } from "./CodeHighlight";
 import { TokenBar } from "./TokenBar";
 
-import { useVersions } from "@/hooks/useVersions";
-import { useAttachments } from "@/hooks/useAttachments";
-import { AttachmentsList } from "./AttachmentsList";
-import { DragDropOverlay } from "./DragDropOverlay";
-import { showExtraFilesToast, showInfo } from "@/lib/toast";
-import { useSummarizeInNewChat } from "./SummarizeInNewChatButton";
-import { ChatInputControls } from "../ChatInputControls";
-import { ChatErrorBox } from "./ChatErrorBox";
-import { AgentConsentBanner } from "./AgentConsentBanner";
-import { TodoList } from "./TodoList";
-import { QuestionnaireInput } from "./QuestionnaireInput";
 import {
-  selectedComponentsPreviewAtom,
-  previewIframeRefAtom,
-  visualEditingSelectedComponentAtom,
   currentComponentCoordinatesAtom,
   pendingVisualChangesAtom,
+  previewIframeRefAtom,
+  selectedComponentsPreviewAtom,
+  visualEditingSelectedComponentAtom,
 } from "@/atoms/previewAtoms";
-import { SelectedComponentsDisplay } from "./SelectedComponentDisplay";
-import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { LexicalChatInput } from "./LexicalChatInput";
-import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
-import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { VisualEditingChangesDialog } from "@/components/preview_panel/VisualEditingChangesDialog";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAttachments } from "@/hooks/useAttachments";
+import { useChatModeToggle } from "@/hooks/useChatModeToggle";
+import { useChats } from "@/hooks/useChats";
+import { useCheckProblems } from "@/hooks/useCheckProblems";
+import { useCountTokens } from "@/hooks/useCountTokens";
+import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
+import { useVersions } from "@/hooks/useVersions";
+import { queryKeys } from "@/lib/queryKeys";
+import { showExtraFilesToast, showInfo } from "@/lib/toast";
+import { showError as showErrorToast } from "@/lib/toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
+import { ChatInputControls } from "../ChatInputControls";
+import { AgentConsentBanner } from "./AgentConsentBanner";
+import { AttachmentsList } from "./AttachmentsList";
+import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
+import { ChatErrorBox } from "./ChatErrorBox";
 import {
   ContextLimitBanner,
   shouldShowContextLimitBanner,
 } from "./ContextLimitBanner";
-import { useCountTokens } from "@/hooks/useCountTokens";
-import { useChats } from "@/hooks/useChats";
-import { useRouter } from "@tanstack/react-router";
-import { showError as showErrorToast } from "@/lib/toast";
+import { DragDropOverlay } from "./DragDropOverlay";
+import { LexicalChatInput } from "./LexicalChatInput";
+import { QuestionnaireInput } from "./QuestionnaireInput";
+import { SelectedComponentsDisplay } from "./SelectedComponentDisplay";
+import { useSummarizeInNewChat } from "./SummarizeInNewChatButton";
+import { TodoList } from "./TodoList";
 
 const showTokenBarAtom = atom(false);
 
@@ -426,8 +426,8 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           />
         )}
         <div
-          className={`relative flex flex-col border border-border rounded-lg bg-(--background-lighter) shadow-sm ${
-            isDraggingOver ? "ring-2 ring-blue-500 border-blue-500" : ""
+          className={`relative flex flex-col border border-border rounded-xl bg-background ${
+            isDraggingOver ? "ring-2 ring-ring border-ring" : ""
           } ${showBanner ? "rounded-t-none border-t-0" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -553,7 +553,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           {/* Use the DragDropOverlay component */}
           <DragDropOverlay isDraggingOver={isDraggingOver} />
 
-          <div className="flex items-start space-x-2 ">
+          <div className="flex items-end gap-2 px-4 pb-3 pt-2">
             <LexicalChatInput
               value={inputValue}
               onChange={setInputValue}
@@ -572,7 +572,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                     <button
                       onClick={handleCancel}
                       aria-label="Cancel generation"
-                      className="px-2 py-2 mt-1 mr-1 hover:bg-(--background-darkest) text-(--sidebar-accent-fg) rounded-lg"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     />
                   }
                 >
@@ -591,17 +591,17 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                         disableSendButton
                       }
                       aria-label="Send message"
-                      className="px-2 py-2 mt-1 mr-1 hover:bg-(--background-darkest) text-(--sidebar-accent-fg) rounded-lg disabled:opacity-50"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
                     />
                   }
                 >
-                  <SendHorizontalIcon size={20} />
+                  <ArrowUpIcon size={16} />
                 </TooltipTrigger>
                 <TooltipContent>Send message</TooltipContent>
               </Tooltip>
             )}
           </div>
-          <div className="pl-2 pr-1 flex items-center justify-between pb-2">
+          <div className="px-3 pb-3 flex items-center justify-between">
             <div className="flex items-center">
               <ChatInputControls showContextFilesPicker={false} />
             </div>

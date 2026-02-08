@@ -1,20 +1,20 @@
-import { useMemo, useState } from "react";
 import {
+  Bot,
   ChevronsDownUp,
   ChevronsUpDown,
-  Loader2,
   Eye,
-  List,
-  Search,
-  Globe,
-  Bot,
-  Terminal,
   FileEdit,
   FilePlus,
+  Globe,
+  List,
   ListChecks,
+  Loader2,
   MessageCircle,
+  Search,
+  Terminal,
   Wrench,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { CodeHighlight } from "./CodeHighlight";
 
 interface OpenCodeToolProps {
@@ -117,7 +117,7 @@ export const OpenCodeTool: React.FC<OpenCodeToolProps> = ({
             size={16}
             className={isError ? "text-red-500" : "text-(--primary)"}
           />
-          <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+          <span className="text-muted-foreground font-medium text-sm">
             <span className="font-bold mr-2 outline-2 outline-(--primary)/20 bg-(--primary)/10 text-(--primary) rounded-md px-1">
               {label.toUpperCase()}
             </span>

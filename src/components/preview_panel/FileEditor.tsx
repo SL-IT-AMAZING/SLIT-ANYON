@@ -1,22 +1,22 @@
-import React, { useState, useRef, useEffect } from "react";
-import Editor, { OnMount } from "@monaco-editor/react";
-import { useLoadAppFile } from "@/hooks/useLoadAppFile";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLoadAppFile } from "@/hooks/useLoadAppFile";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import { ChevronRight, Circle, Save } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
 import "@/components/chat/monaco";
-import { ipc } from "@/ipc/types";
-import { showError, showSuccess, showWarning } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSettings } from "@/hooks/useSettings";
-import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { getLanguage } from "@/utils/get_language";
-import { queryKeys } from "@/lib/queryKeys";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCheckProblems } from "@/hooks/useCheckProblems";
+import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
+import { queryKeys } from "@/lib/queryKeys";
+import { showError, showSuccess, showWarning } from "@/lib/toast";
+import { getLanguage } from "@/utils/get_language";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface FileEditorProps {
   appId: number | null;
@@ -40,7 +40,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
   const segments = path.split("/").filter(Boolean);
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border">
       <div className="flex items-center gap-1 overflow-hidden">
         <div className="flex items-center gap-1 overflow-hidden min-w-0">
           {segments.map((segment, index) => (
@@ -48,10 +48,10 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
               {index > 0 && (
                 <ChevronRight
                   size={14}
-                  className="text-gray-400 flex-shrink-0"
+                  className="text-muted-foreground flex-shrink-0"
                 />
               )}
-              <span className="hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer truncate">
+              <span className="hover:text-accent-foreground cursor-pointer truncate">
                 {segment}
               </span>
             </React.Fragment>
@@ -239,7 +239,7 @@ export const FileEditor = ({
   }
 
   if (!content) {
-    return <div className="p-4 text-gray-500">No content available</div>;
+    return <div className="p-4 text-muted-foreground">No content available</div>;
   }
 
   return (

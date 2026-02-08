@@ -1,5 +1,3 @@
-import React from "react";
-import { useSettings } from "@/hooks/useSettings";
 import {
   Select,
   SelectContent,
@@ -7,6 +5,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSettings } from "@/hooks/useSettings";
+import type React from "react";
 
 interface OptionInfo {
   value: string;
@@ -55,7 +55,7 @@ export const ThinkingBudgetSelector: React.FC = () => {
       <div className="flex items-center gap-4">
         <label
           htmlFor="thinking-budget"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-muted-foreground"
         >
           Thinking Budget
         </label>
@@ -75,7 +75,7 @@ export const ThinkingBudgetSelector: React.FC = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground">
         {currentOption.description}
       </div>
     </div>

@@ -1,3 +1,11 @@
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ipc } from "@/ipc/types";
 import {
   ArrowLeft,
   ArrowUp,
@@ -6,14 +14,6 @@ import {
   GiftIcon,
   KeyRound,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ipc } from "@/ipc/types";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {} from "react";
 
 interface ProviderSettingsHeaderProps {
@@ -82,7 +82,7 @@ export function ProviderSettingsHeader({
 
       <div className="mb-6">
         <div className="flex items-center mb-1">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mr-3">
+          <h1 className="text-3xl font-bold text-foreground mr-3">
             Configure {providerDisplayName}
           </h1>
           {isLoading ? (
@@ -96,7 +96,7 @@ export function ProviderSettingsHeader({
               }`}
             />
           )}
-          <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+          <span className="ml-2 text-sm text-muted-foreground">
             {isLoading
               ? "Loading..."
               : isConfigured

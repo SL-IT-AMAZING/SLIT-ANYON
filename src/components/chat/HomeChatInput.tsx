@@ -1,24 +1,24 @@
-import { SendIcon, StopCircleIcon } from "lucide-react";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ArrowUpIcon, StopCircleIcon } from "lucide-react";
 
-import { useSettings } from "@/hooks/useSettings";
 import { homeChatInputValueAtom } from "@/atoms/chatAtoms"; // Use a different atom for home input
-import { useAtom } from "jotai";
-import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAttachments } from "@/hooks/useAttachments";
-import { AttachmentsList } from "./AttachmentsList";
-import { DragDropOverlay } from "./DragDropOverlay";
-import { usePostHog } from "posthog-js/react";
-import { HomeSubmitOptions } from "@/pages/home";
-import { ChatInputControls } from "../ChatInputControls";
-import { LexicalChatInput } from "./LexicalChatInput";
 import { useChatModeToggle } from "@/hooks/useChatModeToggle";
+import { useSettings } from "@/hooks/useSettings";
+import { useStreamChat } from "@/hooks/useStreamChat";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
+import type { HomeSubmitOptions } from "@/pages/home";
+import { useAtom } from "jotai";
+import { usePostHog } from "posthog-js/react";
+import { ChatInputControls } from "../ChatInputControls";
+import { AttachmentsList } from "./AttachmentsList";
 import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
+import { DragDropOverlay } from "./DragDropOverlay";
+import { LexicalChatInput } from "./LexicalChatInput";
 
 export function HomeChatInput({
   onSubmit,
@@ -77,8 +77,8 @@ export function HomeChatInput({
     <>
       <div className="p-4" data-testid="home-chat-input-container">
         <div
-          className={`relative flex flex-col space-y-2 border border-border rounded-lg bg-(--background-lighter) shadow-sm ${
-            isDraggingOver ? "ring-2 ring-blue-500 border-blue-500" : ""
+          className={`relative flex flex-col border border-border rounded-xl bg-background ${
+            isDraggingOver ? "ring-2 ring-ring border-ring" : ""
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -93,7 +93,7 @@ export function HomeChatInput({
           {/* Drag and drop overlay */}
           <DragDropOverlay isDraggingOver={isDraggingOver} />
 
-          <div className="flex items-start space-x-2 ">
+          <div className="flex items-end gap-2 px-4 pb-3 pt-2">
             <LexicalChatInput
               value={inputValue}
               onChange={setInputValue}
@@ -112,7 +112,7 @@ export function HomeChatInput({
                   render={
                     <button
                       aria-label="Cancel generation (unavailable here)"
-                      className="px-2 py-2 mt-1 mr-1 text-(--sidebar-accent-fg) rounded-lg opacity-50 cursor-not-allowed"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-muted text-muted-foreground cursor-not-allowed"
                     />
                   }
                 >
@@ -130,17 +130,17 @@ export function HomeChatInput({
                       onClick={handleCustomSubmit}
                       disabled={!inputValue.trim() && attachments.length === 0}
                       aria-label="Send message"
-                      className="px-2 py-2 mt-1 mr-1 hover:bg-(--background-darkest) text-(--sidebar-accent-fg) rounded-lg disabled:opacity-50"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
                     />
                   }
                 >
-                  <SendIcon size={20} />
+                  <ArrowUpIcon size={16} />
                 </TooltipTrigger>
                 <TooltipContent>Send message</TooltipContent>
               </Tooltip>
             )}
           </div>
-          <div className="pl-2 pr-1 flex items-center justify-between pb-2">
+          <div className="px-3 pb-3 flex items-center justify-between">
             <div className="flex items-center">
               <ChatInputControls showContextFilesPicker={false} />
             </div>

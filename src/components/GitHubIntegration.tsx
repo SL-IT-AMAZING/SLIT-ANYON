@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
-import { showSuccess, showError } from "@/lib/toast";
+import { showError, showSuccess } from "@/lib/toast";
+import { Github } from "lucide-react";
+import { useState } from "react";
 
 export function GitHubIntegration() {
   const { settings, updateSettings } = useSettings();
@@ -38,10 +38,10 @@ export function GitHubIntegration() {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-medium text-muted-foreground">
           GitHub Integration
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Your account is connected to GitHub.
         </p>
       </div>

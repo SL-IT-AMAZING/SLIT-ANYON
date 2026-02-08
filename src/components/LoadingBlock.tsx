@@ -1,6 +1,6 @@
+import { ipc } from "@/ipc/types";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ipc } from "@/ipc/types";
 
 const customLink = ({
   node: _node,
@@ -115,9 +115,9 @@ function ChatLoader() {
       `}</style>
       <div className="text-center animate-text-pulse">
         <div className="inline-block">
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+          <p className="text-sm text-muted-foreground font-medium">
             {renderFadingText()}
-            <span className="ml-1 inline-block w-2 h-4 bg-gray-500 dark:bg-gray-400 animate-blink" />
+            <span className="ml-1 inline-block w-2 h-4 bg-muted-foreground animate-blink" />
           </p>
         </div>
       </div>

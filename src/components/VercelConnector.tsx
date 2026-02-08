@@ -1,10 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
-import { ipc, App } from "@/ipc/types";
-import { useSettings } from "@/hooks/useSettings";
-import { useLoadApp } from "@/hooks/useLoadApp";
-import { useVercelDeployments } from "@/hooks/useVercelDeployments";
+import {} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,12 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { toast } from "sonner";
+import { useLoadApp } from "@/hooks/useLoadApp";
+import { useSettings } from "@/hooks/useSettings";
+import { useVercelDeployments } from "@/hooks/useVercelDeployments";
+import { type App, ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
+import { Globe } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface VercelConnectorProps {
   appId: number | null;
@@ -84,7 +84,7 @@ function ConnectedVercelConnector({
       className="mt-4 w-full rounded-md"
       data-testid="vercel-connected-project"
     >
-      <p className="text-sm text-gray-600 dark:text-gray-300">
+      <p className="text-sm text-muted-foreground">
         Connected to Vercel Project:
       </p>
       <a
@@ -102,7 +102,7 @@ function ConnectedVercelConnector({
       </a>
       {app.vercelDeploymentUrl && (
         <div className="mt-2">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-muted-foreground">
             Live URL:{" "}
             <a
               onClick={(e) => {
@@ -171,7 +171,7 @@ function ConnectedVercelConnector({
             {deployments.map((deployment) => (
               <div
                 key={deployment.uid}
-                className="bg-gray-50 dark:bg-gray-800 rounded-md p-3"
+                className="bg-muted rounded-md p-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -181,12 +181,12 @@ function ConnectedVercelConnector({
                           ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
                           : deployment.readyState === "BUILDING"
                             ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                            : "bg-muted text-foreground"
                       }`}
                     >
                       {deployment.readyState}
                     </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                    <span className="text-sm text-muted-foreground">
                       {new Date(deployment.createdAt).toLocaleString()}
                     </span>
                   </div>
@@ -415,7 +415,7 @@ function UnconnectedVercelConnector({
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">
+                <span className="bg-card px-2 text-muted-foreground">
                   or
                 </span>
               </div>
@@ -476,7 +476,7 @@ function UnconnectedVercelConnector({
             ) : (
               <Button
                 variant="ghost"
-                className="w-full text-sm text-gray-500"
+                className="w-full text-sm text-muted-foreground"
                 onClick={() => setShowManualToken(true)}
               >
                 Use manual access token instead
@@ -500,14 +500,14 @@ function UnconnectedVercelConnector({
         <div className="pt-0 space-y-4">
           {/* Mode Selection */}
           <div>
-            <div className="flex rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="flex rounded-md border border-border">
               <Button
                 type="button"
                 variant={projectSetupMode === "create" ? "default" : "ghost"}
                 className={`flex-1 rounded-none rounded-l-md border-0 ${
                   projectSetupMode === "create"
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                    : "hover:bg-accent"
                 }`}
                 onClick={() => {
                   setProjectSetupMode("create");
@@ -520,10 +520,10 @@ function UnconnectedVercelConnector({
               <Button
                 type="button"
                 variant={projectSetupMode === "existing" ? "default" : "ghost"}
-                className={`flex-1 rounded-none rounded-r-md border-0 border-l border-gray-200 dark:border-gray-700 ${
+                className={`flex-1 rounded-none rounded-r-md border-0 border-l border-border ${
                   projectSetupMode === "existing"
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                    : "hover:bg-accent"
                 }`}
                 onClick={() => {
                   setProjectSetupMode("existing");
@@ -557,7 +557,7 @@ function UnconnectedVercelConnector({
                     disabled={isCreatingProject}
                   />
                   {isCheckingProject && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Checking availability...
                     </p>
                   )}

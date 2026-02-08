@@ -1,5 +1,5 @@
-import { FileText, X, MessageSquare, Upload } from "lucide-react";
 import type { FileAttachment } from "@/ipc/types";
+import { FileText, MessageSquare, Upload, X } from "lucide-react";
 
 interface AttachmentsListProps {
   attachments: FileAttachment[];
@@ -43,7 +43,7 @@ export function AttachmentsList({
                   <img
                     src={URL.createObjectURL(attachment.file)}
                     alt={attachment.file.name}
-                    className="max-w-[200px] max-h-[200px] object-contain bg-white p-1 rounded shadow-lg"
+                    className="max-w-[200px] max-h-[200px] object-contain bg-card p-1 rounded shadow-lg"
                     onLoad={(e) =>
                       URL.revokeObjectURL((e.target as HTMLImageElement).src)
                     }

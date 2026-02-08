@@ -1,16 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Database, GitBranch } from "lucide-react";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { NeonDisconnectButton } from "@/components/NeonDisconnectButton";
 import { useLoadApp } from "@/hooks/useLoadApp";
 import { ipc } from "@/ipc/types";
 import type { GetNeonProjectResponse, NeonBranch } from "@/ipc/types";
-import { NeonDisconnectButton } from "@/components/NeonDisconnectButton";
 import { queryKeys } from "@/lib/queryKeys";
+import { Database, GitBranch } from "lucide-react";
 
 const getBranchTypeColor = (type: NeonBranch["type"]) => {
   switch (type) {
@@ -19,11 +19,11 @@ const getBranchTypeColor = (type: NeonBranch["type"]) => {
     case "development":
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
     case "snapshot":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      return "bg-muted text-foreground";
     case "preview":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      return "bg-muted text-foreground";
   }
 };
 
