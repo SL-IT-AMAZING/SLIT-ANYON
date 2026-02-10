@@ -15,7 +15,6 @@ export const addDependencyTool: ToolDefinition<
   name: "add_dependency",
   description: "Install npm packages",
   inputSchema: addDependencySchema,
-  defaultConsent: "ask",
   modifiesState: true,
 
   getConsentPreview: (args) => `Install ${args.packages.join(", ")}`,

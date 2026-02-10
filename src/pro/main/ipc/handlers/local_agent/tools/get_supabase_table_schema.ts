@@ -23,7 +23,6 @@ export const getSupabaseTableSchemaTool: ToolDefinition<
   description:
     "Get database table schema from Supabase. If tableName is provided, returns schema for that specific table (columns, policies, triggers). If omitted, returns schema for all tables.",
   inputSchema: getSupabaseTableSchemaSchema,
-  defaultConsent: "always",
   isEnabled: (ctx) => !!ctx.supabaseProjectId,
 
   getConsentPreview: (args) =>

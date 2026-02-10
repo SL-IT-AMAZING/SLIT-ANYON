@@ -26,7 +26,6 @@ import {
   chatInputValueAtom,
   chatMessagesByIdAtom,
   needsFreshPlanChatAtom,
-  pendingAgentConsentsAtom,
   selectedChatIdAtom,
 } from "@/atoms/chatAtoms";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,6 @@ import { showError as showErrorToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { ChatInputControls } from "../ChatInputControls";
-import { AgentConsentBanner } from "./AgentConsentBanner";
 import { AttachmentsList } from "./AttachmentsList";
 import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
 import { ChatErrorBox } from "./ChatErrorBox";
@@ -124,14 +122,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
     currentComponentCoordinatesAtom,
   );
   const setPendingVisualChanges = useSetAtom(pendingVisualChangesAtom);
-  const [pendingAgentConsents, setPendingAgentConsents] = useAtom(
-    pendingAgentConsentsAtom,
-  );
-  // Get the first consent in the queue for this chat (if any)
-  const consentsForThisChat = pendingAgentConsents.filter(
-    (c) => c.chatId === chatId,
-  );
-  const pendingAgentConsent = consentsForThisChat[0] ?? null;
 
   // Get todos for this chat
   const agentTodosByChatId = useAtomValue(agentTodosByChatIdAtom);
@@ -438,40 +428,8 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
           {/* Show todo list if there are todos for this chat */}
           {chatTodos.length > 0 && <TodoList todos={chatTodos} />}
-          {/* Show agent consent banner if there's a pending consent request */}
-          {pendingAgentConsent && (
-            <AgentConsentBanner
-              consent={pendingAgentConsent}
-              queueTotal={consentsForThisChat.length}
-              onDecision={(decision) => {
-                ipc.agent.respondToConsent({
-                  requestId: pendingAgentConsent.requestId,
-                  decision,
-                });
-                // Remove this consent from the queue by requestId
-                setPendingAgentConsents((prev) =>
-                  prev.filter(
-                    (c) => c.requestId !== pendingAgentConsent.requestId,
-                  ),
-                );
-              }}
-              onClose={() => {
-                ipc.agent.respondToConsent({
-                  requestId: pendingAgentConsent.requestId,
-                  decision: "decline",
-                });
-                // Remove this consent from the queue by requestId
-                setPendingAgentConsents((prev) =>
-                  prev.filter(
-                    (c) => c.requestId !== pendingAgentConsent.requestId,
-                  ),
-                );
-              }}
-            />
-          )}
-          {/* Only render ChatInputActions if proposal is loaded and no pending consent */}
-          {!pendingAgentConsent &&
-            proposal &&
+          {/* Only render ChatInputActions if proposal is loaded */}
+          {proposal &&
             proposalResult?.chatId === chatId &&
             settings.selectedChatMode !== "ask" &&
             settings.selectedChatMode !== "local-agent" && (

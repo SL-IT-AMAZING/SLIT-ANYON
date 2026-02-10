@@ -3,65 +3,60 @@
  * Main orchestrator for tool-based agent mode with parallel execution
  */
 
-import { IpcMainInvokeEvent } from "electron";
 import {
-  streamText,
-  ToolSet,
-  stepCountIs,
-  hasToolCall,
-  ModelMessage,
+  type ModelMessage,
   type ToolExecutionOptions,
+  type ToolSet,
+  hasToolCall,
+  stepCountIs,
+  streamText,
 } from "ai";
+import type { IpcMainInvokeEvent } from "electron";
 import log from "electron-log";
 
 import { db } from "@/db";
 import { chats, messages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-import { isDyadProEnabled, isBasicAgentMode } from "@/lib/schemas";
-import { readSettings } from "@/main/settings";
-import { getDyadAppPath } from "@/paths/paths";
 import { getModelClient } from "@/ipc/utils/get_model_client";
+import { getAiHeaders, getProviderOptions } from "@/ipc/utils/provider_options";
 import { safeSend } from "@/ipc/utils/safe_sender";
 import { getMaxTokens, getTemperature } from "@/ipc/utils/token_utils";
-import { getProviderOptions, getAiHeaders } from "@/ipc/utils/provider_options";
+import { isBasicAgentMode, isDyadProEnabled } from "@/lib/schemas";
+import { readSettings } from "@/main/settings";
+import { getDyadAppPath } from "@/paths/paths";
 
-import {
-  AgentToolName,
-  buildAgentToolSet,
-  requireAgentToolConsent,
-  clearPendingConsentsForChat,
-} from "./tool_definitions";
-import {
-  deployAllFunctionsIfNeeded,
-  commitAllChanges,
-} from "./processors/file_operations";
-import { mcpManager } from "@/ipc/utils/mcp_manager";
 import { mcpServers } from "@/db/schema";
-import { requireMcpToolConsent } from "@/ipc/utils/mcp_consent";
 import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
+import { requireMcpToolConsent } from "@/ipc/utils/mcp_consent";
+import { mcpManager } from "@/ipc/utils/mcp_manager";
+import {
+  commitAllChanges,
+  deployAllFunctionsIfNeeded,
+} from "./processors/file_operations";
+import { buildAgentToolSet } from "./tool_definitions";
 
-import type { ChatStreamParams, ChatResponseEnd } from "@/ipc/types";
-import {
-  AgentContext,
-  parsePartialJson,
-  escapeXmlAttr,
-  escapeXmlContent,
-  UserMessageContentPart,
-  FileEditTracker,
-} from "./tools/types";
-import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
-import {
-  prepareStepMessages,
-  type InjectedMessage,
-} from "./prepare_step_utils";
-import { TOOL_DEFINITIONS } from "./tool_definitions";
+import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { parseAiMessagesJson } from "@/ipc/utils/ai_messages_utils";
 import { parseMcpToolKey, sanitizeMcpName } from "@/ipc/utils/mcp_tool_utils";
+import { sendTelemetryEvent } from "@/ipc/utils/telemetry";
+import {
+  type InjectedMessage,
+  prepareStepMessages,
+} from "./prepare_step_utils";
+import { TOOL_DEFINITIONS } from "./tool_definitions";
 import { addIntegrationTool } from "./tools/add_integration";
-import { planningQuestionnaireTool } from "./tools/planning_questionnaire";
-import { writePlanTool } from "./tools/write_plan";
 import { exitPlanTool } from "./tools/exit_plan";
+import { planningQuestionnaireTool } from "./tools/planning_questionnaire";
+import {
+  type AgentContext,
+  type FileEditTracker,
+  type UserMessageContentPart,
+  escapeXmlAttr,
+  escapeXmlContent,
+  parsePartialJson,
+} from "./tools/types";
+import { writePlanTool } from "./tools/write_plan";
 
 const logger = log.scope("local_agent_handler");
 
@@ -220,17 +215,9 @@ export async function handleLocalAgentStream(
         updateResponseInDb(placeholderMessageId, fullResponse);
         sendResponseChunk(event, req.chatId, chat, fullResponse);
       },
-      requireConsent: async (params: {
-        toolName: string;
-        toolDescription?: string | null;
-        inputPreview?: string | null;
-      }) => {
-        return requireAgentToolConsent(event, {
-          chatId: chat.id,
-          toolName: params.toolName as AgentToolName,
-          toolDescription: params.toolDescription,
-          inputPreview: params.inputPreview,
-        });
+      requireConsent: async () => {
+        // Always allow - consent UI removed (OpenCode handles permissions)
+        return true;
       },
       appendUserMessage: (content: UserMessageContentPart[]) => {
         pendingUserMessages.push(content);
@@ -342,8 +329,6 @@ export async function handleLocalAgentStream(
     for await (const part of streamResult.fullStream) {
       if (abortController.signal.aborted) {
         logger.log(`Stream aborted for chat ${req.chatId}`);
-        // Clean up pending consent requests to prevent stale UI banners
-        clearPendingConsentsForChat(req.chatId);
         break;
       }
 
@@ -505,10 +490,6 @@ export async function handleLocalAgentStream(
 
     return true; // Success
   } catch (error) {
-    // Clean up any pending consent requests for this chat to prevent
-    // stale UI banners and orphaned promises
-    clearPendingConsentsForChat(req.chatId);
-
     if (abortController.signal.aborted) {
       // Handle cancellation
       if (fullResponse) {

@@ -1,12 +1,12 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useScrollAndNavigateTo } from "@/hooks/useScrollAndNavigateTo";
-import { useAtom } from "jotai";
 import { activeSettingsSectionAtom } from "@/atoms/viewAtoms";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useScrollAndNavigateTo } from "@/hooks/useScrollAndNavigateTo";
 import { SECTION_IDS, SETTINGS_SEARCH_INDEX } from "@/lib/settingsSearchIndex";
+import { cn } from "@/lib/utils";
 import Fuse from "fuse.js";
+import { useAtom } from "jotai";
 import { SearchIcon, XIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type SettingsSection = {
   id: string;
@@ -20,7 +20,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: SECTION_IDS.providers, label: "Model Providers" },
   { id: SECTION_IDS.telemetry, label: "Telemetry" },
   { id: SECTION_IDS.integrations, label: "Integrations" },
-  { id: SECTION_IDS.agentPermissions, label: "Agent Permissions" },
   { id: SECTION_IDS.toolsMcp, label: "Tools (MCP)" },
   { id: SECTION_IDS.experiments, label: "Experiments" },
   { id: SECTION_IDS.dangerZone, label: "Danger Zone" },

@@ -170,7 +170,6 @@ export const grepTool: ToolDefinition<z.infer<typeof grepSchema>> = {
 - Use include_pattern to filter by file type (e.g. '*.tsx')
 - Use exclude_pattern to skip certain files (e.g. '*.test.ts')`,
   inputSchema: grepSchema,
-  defaultConsent: "always",
 
   getConsentPreview: (args) => {
     let preview = `Search for "${args.query}"`;

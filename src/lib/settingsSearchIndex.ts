@@ -5,7 +5,6 @@ export const SECTION_IDS = {
   providers: "provider-settings",
   telemetry: "telemetry",
   integrations: "integrations",
-  agentPermissions: "agent-permissions",
   toolsMcp: "tools-mcp",
   experiments: "experiments",
   dangerZone: "danger-zone",
@@ -239,24 +238,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     ],
     sectionId: SECTION_IDS.integrations,
     sectionLabel: "Integrations",
-  },
-
-  // Agent Permissions
-  {
-    id: SECTION_IDS.agentPermissions,
-    label: "Agent Permissions",
-    description: "Configure permissions for agent built-in tools",
-    keywords: [
-      "agent",
-      "permissions",
-      "tools",
-      "approve",
-      "allow",
-      "consent",
-      "pro",
-    ],
-    sectionId: SECTION_IDS.agentPermissions,
-    sectionLabel: "Agent Permissions",
   },
 
   // Tools (MCP)

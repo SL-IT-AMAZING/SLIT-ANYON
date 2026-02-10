@@ -87,7 +87,6 @@ export const readLogsTool: ToolDefinition<z.infer<typeof readLogsSchema>> = {
   description:
     "Read logs at the moment this tool is called. Includes client logs, server logs, edge function logs, and network requests. Use this to debug errors, investigate issues, or understand app behavior. IMPORTANT: Logs are a snapshot from when you call this tool - they will NOT update while you are writing code or making changes. Use filters (searchTerm, type, level) to narrow down relevant logs on the first call.",
   inputSchema: readLogsSchema,
-  defaultConsent: "always",
 
   buildXml: (args, isComplete) => {
     // When complete, return undefined so execute's onXmlComplete provides the final XML

@@ -159,7 +159,6 @@ export const webSearchTool: ToolDefinition<z.infer<typeof webSearchSchema>> = {
   name: "web_search",
   description: DESCRIPTION,
   inputSchema: webSearchSchema,
-  defaultConsent: "ask",
 
   // Requires Dyad Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,

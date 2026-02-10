@@ -259,9 +259,6 @@ export const SmartContextModeSchema = z.enum([
 ]);
 export type SmartContextMode = z.infer<typeof SmartContextModeSchema>;
 
-export const AgentToolConsentSchema = z.enum(["ask", "always", "never"]);
-export type AgentToolConsent = z.infer<typeof AgentToolConsentSchema>;
-
 /**
  * Zod schema for user settings
  */
@@ -284,7 +281,6 @@ export const UserSettingsSchema = z
     ////////////////////////////////
     selectedModel: LargeLanguageModelSchema,
     providerSettings: z.record(z.string(), ProviderSettingSchema),
-    agentToolConsents: z.record(z.string(), AgentToolConsentSchema).optional(),
     githubUser: GithubUserSchema.optional(),
     githubAccessToken: SecretSchema.optional(),
     vercelAccessToken: SecretSchema.optional(),

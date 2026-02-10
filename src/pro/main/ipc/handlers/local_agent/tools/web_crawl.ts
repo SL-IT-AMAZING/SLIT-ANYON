@@ -78,7 +78,6 @@ export const webCrawlTool: ToolDefinition<z.infer<typeof webCrawlSchema>> = {
   name: "web_crawl",
   description: DESCRIPTION,
   inputSchema: webCrawlSchema,
-  defaultConsent: "ask",
 
   // Requires Dyad Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,

@@ -4,7 +4,6 @@ import { AgentPicker } from "./AgentPicker";
 import { ChatModeSelector } from "./ChatModeSelector";
 import { ContextFilesPicker } from "./ContextFilesPicker";
 import { ModelPicker } from "./ModelPicker";
-import { ProModeSelector } from "./ProModeSelector";
 
 export function ChatInputControls({
   showContextFilesPicker = false,
@@ -19,7 +18,6 @@ export function ChatInputControls({
       {settings?.selectedChatMode === "agent" && <McpToolsPicker />}
       <AgentPicker />
       <ModelPicker />
-      <ProModeSelector />
       {showContextFilesPicker && <ContextFilesPicker />}
     </div>
   );

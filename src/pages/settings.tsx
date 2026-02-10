@@ -28,7 +28,7 @@ import { NodePathSelector } from "@/components/NodePathSelector";
 import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
 import { ZoomSelector } from "@/components/ZoomSelector";
-import { AgentToolsSettings } from "@/components/settings/AgentToolsSettings";
+
 import { ToolsMcpSettings } from "@/components/settings/ToolsMcpSettings";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -137,18 +137,6 @@ export default function SettingsPage() {
                 <NeonIntegration />
               </div>
             </div>
-          </div>
-
-          {/* Agent v2 Permissions */}
-
-          <div
-            id={SECTION_IDS.agentPermissions}
-            className="bg-card rounded-xl shadow-sm p-6"
-          >
-            <h2 className="text-lg font-medium text-foreground mb-4">
-              Agent Permissions (Pro)
-            </h2>
-            <AgentToolsSettings />
           </div>
 
           {/* Tools (MCP) */}

@@ -15,7 +15,6 @@ export const readFileTool: ToolDefinition<z.infer<typeof readFileSchema>> = {
   
 - You have the capability to call multiple tools in a single response. It is always better to speculatively read multiple files as a batch that are potentially useful.`,
   inputSchema: readFileSchema,
-  defaultConsent: "always",
 
   getConsentPreview: (args) => `Read ${args.path}`,
 

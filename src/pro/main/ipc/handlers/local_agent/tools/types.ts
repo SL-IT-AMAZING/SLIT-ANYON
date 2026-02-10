@@ -5,7 +5,6 @@
 import { z } from "zod";
 import { IpcMainInvokeEvent } from "electron";
 import { jsonrepair } from "jsonrepair";
-import { AgentToolConsent } from "@/lib/schemas";
 import { AgentTodo } from "@/ipc/types";
 
 // ============================================================================
@@ -139,7 +138,6 @@ export interface ToolDefinition<T = any> {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: z.ZodType<T>;
-  readonly defaultConsent: AgentToolConsent;
   /**
    * If true, this tool modifies state (files, database, etc.).
    * Used to filter out state-modifying tools in read-only mode (e.g., ask mode).
