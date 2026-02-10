@@ -1,15 +1,15 @@
-import { streamText, Tool } from "ai";
+import { type Tool, streamText } from "ai";
 import { readSettings } from "../../main/settings";
 
-import log from "electron-log";
-import { safeSend } from "../utils/safe_sender";
 import {
+  type OpenAIResponsesProviderOptions,
   createOpenAI,
   openai,
-  OpenAIResponsesProviderOptions,
 } from "@ai-sdk/openai";
-import { createTypedHandler } from "./base";
+import log from "electron-log";
 import { helpContracts } from "../types/help";
+import { safeSend } from "../utils/safe_sender";
+import { createTypedHandler } from "./base";
 
 const logger = log.scope("help-bot");
 
@@ -45,7 +45,7 @@ export function registerHelpBotHandlers() {
       const settings = await readSettings();
       const apiKey = settings.providerSettings?.["auto"]?.apiKey?.value;
       const provider = createOpenAI({
-        baseURL: "https://helpchat.dyad.sh/v1",
+        baseURL: "https://helpchat.any-on.dev/v1",
         apiKey,
       });
 
@@ -66,7 +66,7 @@ export function registerHelpBotHandlers() {
         messages: updatedHistory as any,
         maxRetries: 1,
         onError: (error) => {
-          let errorMessage = (error as any)?.error?.message;
+          const errorMessage = (error as any)?.error?.message;
           logger.error("help bot stream error", errorMessage);
           safeSend(event.sender, "help:chat:response:error", {
             sessionId,

@@ -1,9 +1,9 @@
+import log from "electron-log";
 import {
-  type Template,
   type ApiTemplate,
+  type Template,
   localTemplatesData,
 } from "../../shared/templates";
-import log from "electron-log";
 
 const logger = log.scope("template_utils");
 
@@ -39,7 +39,7 @@ export async function fetchApiTemplates(): Promise<Template[]> {
   // Start new fetch
   apiTemplatesFetchPromise = (async (): Promise<Template[]> => {
     try {
-      const response = await fetch("https://api.dyad.sh/v1/templates");
+      const response = await fetch("https://api.any-on.dev/v1/templates");
       if (!response.ok) {
         throw new Error(
           `Failed to fetch templates: ${response.status} ${response.statusText}`,

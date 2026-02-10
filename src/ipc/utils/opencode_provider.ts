@@ -83,7 +83,10 @@ export interface OpenCodeProviderSettings {
   appPath?: string;
 }
 
-export type OpenCodeProvider = (modelId: string, providerID?: string) => LanguageModelV2
+export type OpenCodeProvider = (
+  modelId: string,
+  providerID?: string,
+) => LanguageModelV2;
 
 class OpenCodeLanguageModel implements LanguageModelV2 {
   readonly specificationVersion = "v2" as const;

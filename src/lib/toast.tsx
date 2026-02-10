@@ -1,6 +1,5 @@
+import type { PostHog } from "posthog-js";
 import { toast } from "sonner";
-import { PostHog } from "posthog-js";
-import React from "react";
 import { CustomErrorToast } from "../components/CustomErrorToast";
 import { InputRequestToast } from "../components/InputRequestToast";
 import { McpConsentToast } from "../components/McpConsentToast";
@@ -38,7 +37,7 @@ export const showError = (message: any) => {
           onCopy={() => onCopy(t)}
         />
       ),
-      { id: toastId, duration: Infinity },
+      { id: toastId, duration: Number.POSITIVE_INFINITY },
     );
 
     // After 2 seconds, revert the toast back to the original state
@@ -52,7 +51,7 @@ export const showError = (message: any) => {
             onCopy={() => onCopy(t)}
           />
         ),
-        { id: toastId, duration: Infinity },
+        { id: toastId, duration: Number.POSITIVE_INFINITY },
       );
     }, 2000);
   };
@@ -106,7 +105,7 @@ export const showInputRequest = (
         onResponse={onResponse}
       />
     ),
-    { duration: Infinity }, // Don't auto-close
+    { duration: Number.POSITIVE_INFINITY }, // Don't auto-close
   );
 
   return toastId;
@@ -130,7 +129,7 @@ export function showMcpConsentToast(args: {
         onDecision={args.onDecision}
       />
     ),
-    { duration: Infinity },
+    { duration: Number.POSITIVE_INFINITY },
   );
   return toastId;
 }
@@ -146,7 +145,7 @@ export const showExtraFilesToast = ({
 }) => {
   if (error) {
     showError(
-      `Error committing files ${files.join(", ")} changed outside of Dyad: ${error}`,
+      `Error committing files ${files.join(", ")} changed outside of ANYON: ${error}`,
     );
     posthog.capture("extra-files:error", {
       files: files,
@@ -154,7 +153,7 @@ export const showExtraFilesToast = ({
     });
   } else {
     showWarning(
-      `Files changed outside of Dyad have automatically been committed:
+      `Files changed outside of ANYON have automatically been committed:
     \n\n${files.join("\n")}`,
     );
     posthog.capture("extra-files:warning", {

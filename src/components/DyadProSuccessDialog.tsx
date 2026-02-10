@@ -1,12 +1,12 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Bot, Zap } from "lucide-react";
+import { Bot, Sparkles, Zap } from "lucide-react";
 
 interface DyadProSuccessDialogProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ export function DyadProSuccessDialog({
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <span>Welcome to Dyad Pro!</span>
+            <span>Welcome to ANYON Pro!</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -55,7 +55,7 @@ export function DyadProSuccessDialog({
               <div>
                 <p className="font-medium">Agent mode</p>
                 <p className="text-sm text-muted-foreground">
-                  Dyad can work on bigger tasks and debug issues
+                  ANYON can work on bigger tasks and debug issues
                 </p>
               </div>
             </div>

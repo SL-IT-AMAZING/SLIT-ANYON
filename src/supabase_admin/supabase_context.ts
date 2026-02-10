@@ -1,9 +1,9 @@
-import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
 import { retryWithRateLimit } from "@/ipc/utils/retryWithRateLimit";
+import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
 import { getSupabaseClient } from "./supabase_management_client";
 import {
-  SUPABASE_SCHEMA_QUERY,
   SUPABASE_FUNCTIONS_QUERY,
+  SUPABASE_SCHEMA_QUERY,
   buildSupabaseSchemaQuery,
 } from "./supabase_schema_query";
 
@@ -40,18 +40,18 @@ async function getPublishableKey({
 
   if (!publishableKey) {
     throw new Error(
-      "No publishable key found for project. Make sure you are connected to the correct Supabase account and project. See https://dyad.sh/docs/integrations/supabase#no-publishable-keys",
+      "No publishable key found for project. Make sure you are connected to the correct Supabase account and project. See https://docs.any-on.dev/integrations/supabase#no-publishable-keys",
     );
   }
   return publishableKey.api_key;
 }
-export const getSupabaseClientCode = async function ({
+export const getSupabaseClientCode = async ({
   projectId,
   organizationSlug,
 }: {
   projectId: string;
   organizationSlug: string | null;
-}) {
+}) => {
   const publishableKey = await getPublishableKey({
     projectId,
     organizationSlug,

@@ -13,7 +13,7 @@ interface RolloutConfig {
 export function getUserRolloutBucket(): number {
   const machineId = app.getPath("userData");
   const hash = crypto.createHash("md5").update(machineId).digest("hex");
-  return parseInt(hash.substring(0, 8), 16) % 100;
+  return Number.parseInt(hash.substring(0, 8), 16) % 100;
 }
 
 /**
@@ -31,7 +31,7 @@ export async function shouldApplyUpdate(
     const timeout = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(
-      "https://api.dyad.sh/v1/update/rollout-config.json",
+      "https://api.any-on.dev/v1/update/rollout-config.json",
       { signal: controller.signal },
     );
     clearTimeout(timeout);

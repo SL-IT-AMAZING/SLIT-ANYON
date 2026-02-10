@@ -1,32 +1,32 @@
-import { createLoggedHandler } from "../../../../ipc/handlers/safe_handle";
-import log from "electron-log";
-import path from "path";
-import os from "os";
 import fs from "fs";
-import { readFile, writeFile, unlink, mkdir } from "fs/promises";
-import { themesData, type Theme } from "../../../../shared/themes";
-import { db } from "../../../../db";
-import { apps, customThemes } from "../../../../db/schema";
-import { eq, sql } from "drizzle-orm";
-import { streamText, TextPart, ImagePart } from "ai";
-import { readSettings } from "../../../../main/settings";
-import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
-import { getModelClient } from "../../../../ipc/utils/get_model_client";
-import { v4 as uuidv4 } from "uuid";
+import os from "os";
+import path from "path";
 import type {
-  SetAppThemeParams,
-  GetAppThemeParams,
-  CustomTheme,
+  CleanupThemeImagesParams,
   CreateCustomThemeParams,
-  UpdateCustomThemeParams,
+  CustomTheme,
   DeleteCustomThemeParams,
+  GenerateThemeFromUrlParams,
   GenerateThemePromptParams,
   GenerateThemePromptResult,
-  GenerateThemeFromUrlParams,
+  GetAppThemeParams,
   SaveThemeImageParams,
   SaveThemeImageResult,
-  CleanupThemeImagesParams,
+  SetAppThemeParams,
+  UpdateCustomThemeParams,
 } from "@/ipc/types";
+import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
+import { type ImagePart, type TextPart, streamText } from "ai";
+import { eq, sql } from "drizzle-orm";
+import log from "electron-log";
+import { mkdir, readFile, unlink, writeFile } from "fs/promises";
+import { v4 as uuidv4 } from "uuid";
+import { db } from "../../../../db";
+import { apps, customThemes } from "../../../../db/schema";
+import { createLoggedHandler } from "../../../../ipc/handlers/safe_handle";
+import { getModelClient } from "../../../../ipc/utils/get_model_client";
+import { readSettings } from "../../../../main/settings";
+import { type Theme, themesData } from "../../../../shared/themes";
 import { webCrawlResponseSchema } from "./local_agent/tools/web_crawl";
 
 const logger = log.scope("themes_handlers");
@@ -770,7 +770,7 @@ Modern theme extracted from website for testing.
       logger.log(`Crawling website for theme: ${params.url}`);
 
       const DYAD_ENGINE_URL =
-        process.env.DYAD_ENGINE_URL ?? "https://engine.dyad.sh/v1";
+        process.env.DYAD_ENGINE_URL ?? "https://engine.any-on.dev/v1";
 
       // Create AbortController for timeout
       const controller = new AbortController();

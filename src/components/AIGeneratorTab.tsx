@@ -317,7 +317,6 @@ export function AIGeneratorTab({
             Pro-only feature
           </p>
         </div>
-
       </div>
     );
   }

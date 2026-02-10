@@ -86,7 +86,7 @@ export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
 <!-- Screenshot of the bug -->
 
 ## System Information
-- Dyad Version: ${debugInfo.dyadVersion}
+- ANYON Version: ${debugInfo.dyadVersion}
 - Platform: ${debugInfo.platform}
 - Architecture: ${debugInfo.architecture}
 - Node Version: ${debugInfo.nodeVersion || "n/a"}
@@ -149,54 +149,9 @@ ${debugInfo.logs.slice(-3_500) || "No logs available"}
   const handleSubmitChatLogs = async () => {
     if (!chatLogsData) return;
 
-    setIsUploading(true);
-    try {
-      // Prepare data for upload
-      const chatLogsJson = {
-        systemInfo: chatLogsData.debugInfo,
-        chat: chatLogsData.chat,
-        codebaseSnippet: chatLogsData.codebase,
-      };
-
-      // Get signed URL
-      const response = await fetch(
-        "https://upload-logs.dyad.sh/generate-upload-url",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            extension: "json",
-            contentType: "application/json",
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        showError(`Failed to get upload URL: ${response.statusText}`);
-        throw new Error(`Failed to get upload URL: ${response.statusText}`);
-      }
-
-      const { uploadUrl, filename } = await response.json();
-
-      await ipc.system.uploadToSignedUrl({
-        url: uploadUrl,
-        contentType: "application/json",
-        data: chatLogsJson,
-      });
-
-      // Extract session ID (filename without extension)
-      const sessionId = filename.replace(".json", "");
-      setSessionId(sessionId);
-      setUploadComplete(true);
-      setReviewMode(false);
-    } catch (error) {
-      console.error("Failed to upload chat logs:", error);
-      alert("Failed to upload chat logs. Please try again.");
-    } finally {
-      setIsUploading(false);
-    }
+    // Upload feature is currently disabled for ANYON
+    // TODO: Implement ANYON-specific chat log upload when backend is ready
+    showError("Upload feature is currently disabled");
   };
 
   const handleCancelReview = () => {
@@ -330,7 +285,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">System Information</h3>
               <div className="text-sm bg-muted rounded p-2 max-h-32 overflow-y-auto">
-                <p>Dyad Version: {chatLogsData.debugInfo.dyadVersion}</p>
+                <p>ANYON Version: {chatLogsData.debugInfo.dyadVersion}</p>
                 <p>Platform: {chatLogsData.debugInfo.platform}</p>
                 <p>Architecture: {chatLogsData.debugInfo.architecture}</p>
                 <p>
@@ -372,7 +327,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Need help with Dyad?</DialogTitle>
+          <DialogTitle>Need help with ANYON?</DialogTitle>
         </DialogHeader>
         <DialogDescription className="">
           If you need help or want to report an issue, here are some options:
@@ -387,12 +342,12 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
                 }}
                 className="w-full py-6 border-primary/50 shadow-sm shadow-primary/10 transition-all hover:shadow-md hover:shadow-primary/15"
               >
-                <SparklesIcon className="mr-2 h-5 w-5" /> Chat with Dyad help
+                <SparklesIcon className="mr-2 h-5 w-5" /> Chat with ANYON help
                 bot (Pro)
               </Button>
               <p className="text-sm text-muted-foreground px-2">
-                Opens an in-app help chat assistant that searches through Dyad's
-                docs.
+                Opens an in-app help chat assistant that searches through
+                ANYON's docs.
               </p>
             </div>
           ) : (
@@ -400,7 +355,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               <Button
                 variant="outline"
                 onClick={() => {
-                  ipc.system.openExternalUrl("https://www.dyad.sh/docs");
+                  ipc.system.openExternalUrl("https://docs.any-on.dev");
                 }}
                 className="w-full py-6 bg-(--background-lightest)"
               >

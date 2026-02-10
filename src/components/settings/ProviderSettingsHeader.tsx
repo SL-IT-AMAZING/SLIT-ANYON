@@ -35,8 +35,8 @@ function getKeyButtonText({
 }) {
   if (isDyad) {
     return isConfigured
-      ? "Manage Dyad Pro Subscription"
-      : "Setup Dyad Pro Subscription";
+      ? "Manage ANYON Pro Subscription"
+      : "Setup ANYON Pro Subscription";
   }
   return isConfigured ? "Manage API Keys" : "Setup API Key";
 }

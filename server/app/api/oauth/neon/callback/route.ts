@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       },
     );
 
-    const deepLinkUrl = new URL("dyad://neon-oauth-return");
+    const deepLinkUrl = new URL("anyon://neon-oauth-return");
     deepLinkUrl.searchParams.set("token", tokenData.access_token);
     deepLinkUrl.searchParams.set("refreshToken", tokenData.refresh_token);
     deepLinkUrl.searchParams.set("expiresIn", String(tokenData.expires_in));

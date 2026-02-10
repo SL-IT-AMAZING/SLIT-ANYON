@@ -137,7 +137,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               onClick={() => {
                 // TODO: Add actual help link
                 ipc.system.openExternalUrl(
-                  "https://dyad.sh/docs/guides/mobile-app#troubleshooting",
+                  "https://docs.any-on.dev/guides/mobile-app#troubleshooting",
                 );
               }}
               className="text-sm text-muted-foreground hover:text-accent-foreground flex items-center gap-1"

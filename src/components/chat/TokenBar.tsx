@@ -1,4 +1,4 @@
-import React from "react";
+import { chatInputValueAtom } from "@/atoms/chatAtoms";
 import {
   Tooltip,
   TooltipContent,
@@ -6,17 +6,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCountTokens } from "@/hooks/useCountTokens";
-import {
-  MessageSquare,
-  Code,
-  Bot,
-  AlignLeft,
-  ExternalLink,
-} from "lucide-react";
-import { chatInputValueAtom } from "@/atoms/chatAtoms";
-import { useAtom } from "jotai";
 import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
+import { useAtom } from "jotai";
+import {
+  AlignLeft,
+  Bot,
+  Code,
+  ExternalLink,
+  MessageSquare,
+} from "lucide-react";
 
 interface TokenBarProps {
   chatId?: number;
@@ -137,13 +136,13 @@ export function TokenBar({ chatId }: TokenBarProps) {
             onClick={() =>
               settings?.enableDyadPro
                 ? ipc.system.openExternalUrl(
-                    "https://www.dyad.sh/docs/guides/ai-models/pro-modes#smart-context",
+                    "https://docs.any-on.dev/guides/ai-models/pro-modes#smart-context",
                   )
-                : ipc.system.openExternalUrl("https://dyad.sh/pro#ai")
+                : ipc.system.openExternalUrl("https://any-on.dev/pro#ai")
             }
             className="text-blue-500 dark:text-blue-400 cursor-pointer hover:underline"
           >
-            Dyad Pro's Smart Context
+            ANYON Pro's Smart Context
           </a>
         </div>
       )}
