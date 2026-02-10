@@ -1,42 +1,42 @@
-import { app, BrowserWindow, dialog, Menu } from "electron";
+import fs from "fs";
 import * as path from "node:path";
-import { registerIpcHandlers } from "./ipc/ipc_host";
 import dotenv from "dotenv";
+import { BrowserWindow, Menu, app, dialog } from "electron";
+import log from "electron-log";
 // @ts-ignore
 import started from "electron-squirrel-startup";
-import { updateElectronApp, UpdateSourceType } from "update-electron-app";
-import log from "electron-log";
+import { UpdateSourceType, updateElectronApp } from "update-electron-app";
+import { BackupManager } from "./backup_manager";
+import { getDatabasePath, initializeDatabase } from "./db";
+import {
+  AddMcpServerConfigSchema,
+  type AddMcpServerPayload,
+  AddPromptDataSchema,
+  type AddPromptPayload,
+} from "./ipc/deep_link_data";
+import { registerIpcHandlers } from "./ipc/ipc_host";
+import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
+import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
+import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
+import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
+import { getUserRolloutBucket } from "./lib/rollout";
+import type { UserSettings } from "./lib/schemas";
+import { initSentryMain } from "./lib/sentry";
+import { handleDyadProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
   readSettings,
   writeSettings,
 } from "./main/settings";
-import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
-import { handleDyadProReturn } from "./main/pro";
-import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
-import { BackupManager } from "./backup_manager";
-import { getDatabasePath, initializeDatabase } from "./db";
-import type { UserSettings } from "./lib/schemas";
-import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
-import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
 import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
-import { handleVercelOAuthReturn } from "./vercel_admin/vercel_return_handler";
-import {
-  AddMcpServerConfigSchema,
-  AddMcpServerPayload,
-  AddPromptDataSchema,
-  AddPromptPayload,
-} from "./ipc/deep_link_data";
+import { getDyadAppsBaseDirectory } from "./paths/paths";
+import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai_messages_cleanup";
+import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
 import {
   startPerformanceMonitoring,
   stopPerformanceMonitoring,
 } from "./utils/performance_monitor";
-import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai_messages_cleanup";
-import fs from "fs";
-import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
-import { getDyadAppsBaseDirectory } from "./paths/paths";
-import { initSentryMain } from "./lib/sentry";
-import { getUserRolloutBucket } from "./lib/rollout";
+import { handleVercelOAuthReturn } from "./vercel_admin/vercel_return_handler";
 
 log.errorHandler.startCatching();
 log.eventLogger.startLogging();
@@ -242,9 +242,24 @@ const createWindow = () => {
       path.join(__dirname, "../renderer/main_window/index.html"),
     );
   }
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development" || MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
+
+    mainWindow.webContents.on("before-input-event", (_event, input) => {
+      if (
+        input.type === "keyDown" &&
+        input.key === "r" &&
+        (input.meta || input.control) &&
+        !input.alt
+      ) {
+        if (input.shift) {
+          mainWindow?.webContents.reloadIgnoringCache();
+        } else {
+          mainWindow?.webContents.reload();
+        }
+      }
+    });
   }
 
   // Send force-close event if it was detected

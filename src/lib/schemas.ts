@@ -64,7 +64,6 @@ const providers = [
   "anthropic",
   "google",
   "vertex",
-  "auto",
   "openrouter",
   "ollama",
   "lmstudio",

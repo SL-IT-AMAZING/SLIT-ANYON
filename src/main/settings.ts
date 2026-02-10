@@ -1,18 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getUserDataPath } from "../paths/paths";
-import {
-  UserSettingsSchema,
-  type UserSettings,
-  Secret,
-  VertexProviderSetting,
-} from "../lib/schemas";
-import { safeStorage } from "electron";
-import { v4 as uuidv4 } from "uuid";
-import log from "electron-log";
+import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
 import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
 import { DEFAULT_THEME_ID } from "@/shared/themes";
-import { IS_TEST_BUILD } from "@/ipc/utils/test_utils";
+import { safeStorage } from "electron";
+import log from "electron-log";
+import { v4 as uuidv4 } from "uuid";
+import {
+  type Secret,
+  type UserSettings,
+  UserSettingsSchema,
+  type VertexProviderSetting,
+} from "../lib/schemas";
+import { getUserDataPath } from "../paths/paths";
 
 const logger = log.scope("settings");
 
@@ -20,8 +20,8 @@ const logger = log.scope("settings");
 // Need to maintain backwards compatibility!
 const DEFAULT_SETTINGS: UserSettings = {
   selectedModel: {
-    name: "auto",
-    provider: "auto",
+    name: "claude-opus-4-6",
+    provider: "anthropic",
   },
   providerSettings: {},
   telemetryConsent: "unset",
@@ -61,6 +61,14 @@ export function readSettings(): UserSettings {
       ...DEFAULT_SETTINGS,
       ...rawSettings,
     };
+
+    if (
+      combinedSettings.selectedModel?.provider === "auto" ||
+      combinedSettings.selectedModel?.name === "auto"
+    ) {
+      combinedSettings.selectedModel = DEFAULT_SETTINGS.selectedModel;
+    }
+
     const supabase = combinedSettings.supabase;
     if (supabase) {
       // Decrypt legacy tokens (kept but ignored)
