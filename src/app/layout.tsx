@@ -5,6 +5,7 @@ import {
 } from "@/atoms/appAtoms";
 import { chatInputValueAtom } from "@/atoms/chatAtoms";
 import { selectedComponentsPreviewAtom } from "@/atoms/previewAtoms";
+import { SidebarToggle } from "@/components/SidebarToggle";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePlanEvents } from "@/hooks/usePlanEvents";
@@ -104,9 +105,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AppSidebar />
             <div
               id="layout-main-content-container"
-              className="flex h-screenish w-full overflow-x-hidden mt-12 mb-4 mr-4 border-t border-l border-border rounded-lg bg-background"
+              className="flex flex-col h-screenish w-full overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
             >
-              {children}
+              <div className="flex items-center h-10 px-2 shrink-0">
+                <SidebarToggle />
+              </div>
+              <div className="flex flex-1 overflow-hidden">{children}</div>
             </div>
             <Toaster richColors />
           </SidebarProvider>

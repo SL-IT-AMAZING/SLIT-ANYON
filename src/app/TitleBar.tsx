@@ -1,4 +1,4 @@
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
+
 import { DyadProSuccessDialog } from "@/components/DyadProSuccessDialog";
 import { ActionHeader } from "@/components/preview_panel/ActionHeader";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSettings } from "@/hooks/useSettings";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { ipc } from "@/ipc/types";
@@ -17,15 +16,9 @@ import type { UserBudgetInfo } from "@/ipc/types";
 import { cn } from "@/lib/utils";
 import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import { useLocation, useRouter } from "@tanstack/react-router";
-import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
-// @ts-ignore
-import logo from "../../assets/logo.svg";
 
 export const TitleBar = () => {
-  const [selectedAppId] = useAtom(selectedAppIdAtom);
-  const { apps } = useLoadApps();
-  const { navigate } = useRouter();
   const location = useLocation();
   const { settings, refreshSettings } = useSettings();
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
@@ -61,18 +54,6 @@ export const TitleBar = () => {
     handleDeepLink();
   }, [lastDeepLink?.timestamp]);
 
-  // Get selected app name
-  const selectedApp = apps.find((app) => app.id === selectedAppId);
-  const displayText = selectedApp
-    ? `App: ${selectedApp.name}`
-    : "(no app selected)";
-
-  const handleAppClick = () => {
-    if (selectedApp) {
-      navigate({ to: "/app-details", search: { appId: selectedApp.id } });
-    }
-  };
-
   const isDyadPro = !!settings?.providerSettings?.auto?.apiKey?.value;
   const isDyadProEnabled = Boolean(settings?.enableDyadPro);
 
@@ -81,18 +62,6 @@ export const TitleBar = () => {
       <div className="@container z-11 w-full h-11 bg-(--sidebar) absolute top-0 left-0 app-region-drag flex items-center">
         <div className={`${showWindowControls ? "pl-2" : "pl-18"}`}></div>
 
-        <img src={logo} alt="ANYON Logo" className="w-6 h-6 mr-0.5" />
-        <Button
-          data-testid="title-bar-app-name-button"
-          variant="outline"
-          size="sm"
-          className={`hidden @2xl:block no-app-region-drag text-xs max-w-38 truncate font-medium ${
-            selectedApp ? "cursor-pointer" : ""
-          }`}
-          onClick={handleAppClick}
-        >
-          {displayText}
-        </Button>
         {isDyadPro && <DyadProButton isDyadProEnabled={isDyadProEnabled} />}
 
         {/* Preview Header */}

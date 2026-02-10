@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Palette, FileText } from "lucide-react";
+import { FileText, Palette } from "lucide-react";
 
 type LibrarySection = {
   id: string;
@@ -15,13 +15,9 @@ const LIBRARY_SECTIONS: LibrarySection[] = [
   { id: "prompts", label: "Prompts", to: "/library", icon: FileText },
 ];
 
-export function LibraryList({ show }: { show: boolean }) {
+export function LibraryList() {
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
-
-  if (!show) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col h-full">

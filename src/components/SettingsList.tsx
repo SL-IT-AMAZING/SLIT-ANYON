@@ -37,7 +37,7 @@ const fuse = new Fuse(SETTINGS_SEARCH_INDEX, {
   ignoreLocation: true,
 });
 
-export function SettingsList({ show }: { show: boolean }) {
+export function SettingsList() {
   const [activeSection, setActiveSection] = useAtom(activeSettingsSectionAtom);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,8 +59,6 @@ export function SettingsList({ show }: { show: boolean }) {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (!show) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -83,11 +81,7 @@ export function SettingsList({ show }: { show: boolean }) {
     return () => {
       observer.disconnect();
     };
-  }, [show, setActiveSection]);
-
-  if (!show) {
-    return null;
-  }
+  }, [setActiveSection]);
 
   return (
     <div className="flex flex-col h-full">

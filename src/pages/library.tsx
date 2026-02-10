@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { usePrompts } from "@/hooks/usePrompts";
 import {
-  CreatePromptDialog,
   CreateOrEditPromptDialog,
+  CreatePromptDialog,
 } from "@/components/CreatePromptDialog";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import { LibraryList } from "@/components/LibraryList";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { AddPromptDeepLinkData } from "@/ipc/deep_link_data";
+import { usePrompts } from "@/hooks/usePrompts";
+import type { AddPromptDeepLinkData } from "@/ipc/deep_link_data";
 import { showInfo } from "@/lib/toast";
+import { useEffect, useState } from "react";
 
 export default function LibraryPage() {
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } =
@@ -50,36 +51,42 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="min-h-screen px-8 py-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold mr-4">Library: Prompts</h1>
-          <CreatePromptDialog
-            onCreatePrompt={createPrompt}
-            prefillData={prefillData}
-            isOpen={dialogOpen}
-            onOpenChange={handleDialogClose}
-          />
-        </div>
+    <div className="flex min-h-screen">
+      <aside className="w-56 shrink-0 border-r border-border bg-card">
+        <LibraryList />
+      </aside>
 
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : prompts.length === 0 ? (
-          <div className="text-muted-foreground">
-            No prompts yet. Create one to get started.
+      <div className="flex-1 px-8 py-6 overflow-y-auto">
+        <div className="max-w-5xl">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold mr-4">Library: Prompts</h1>
+            <CreatePromptDialog
+              onCreatePrompt={createPrompt}
+              prefillData={prefillData}
+              isOpen={dialogOpen}
+              onOpenChange={handleDialogClose}
+            />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {prompts.map((p) => (
-              <PromptCard
-                key={p.id}
-                prompt={p}
-                onUpdate={updatePrompt}
-                onDelete={deletePrompt}
-              />
-            ))}
-          </div>
-        )}
+
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : prompts.length === 0 ? (
+            <div className="text-muted-foreground">
+              No prompts yet. Create one to get started.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {prompts.map((p) => (
+                <PromptCard
+                  key={p.id}
+                  prompt={p}
+                  onUpdate={updatePrompt}
+                  onDelete={deletePrompt}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

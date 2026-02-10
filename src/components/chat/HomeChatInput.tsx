@@ -3,9 +3,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowUpIcon, StopCircleIcon } from "lucide-react";
+import { ArrowUpIcon, StopCircleIcon, Upload } from "lucide-react";
+import { useState } from "react";
 
-import { homeChatInputValueAtom } from "@/atoms/chatAtoms"; // Use a different atom for home input
+import { homeChatInputValueAtom } from "@/atoms/chatAtoms";
+import { ImportAppDialog } from "@/components/ImportAppDialog";
 import { useAttachments } from "@/hooks/useAttachments";
 import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { useSettings } from "@/hooks/useSettings";
@@ -27,6 +29,7 @@ export function HomeChatInput({
 }) {
   const posthog = usePostHog();
   const [inputValue, setInputValue] = useAtom(homeChatInputValueAtom);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { settings } = useSettings();
   const { isStreaming } = useStreamChat({
     hasChatId: false,
@@ -145,13 +148,33 @@ export function HomeChatInput({
               <ChatInputControls showContextFilesPicker={false} />
             </div>
 
-            <AuxiliaryActionsMenu
-              onFileSelect={handleFileSelect}
-              hideContextFilesPicker
-            />
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={() => setIsImportDialogOpen(true)}
+                      className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                    />
+                  }
+                >
+                  <Upload size={14} />
+                  <span>Import</span>
+                </TooltipTrigger>
+                <TooltipContent>Import existing project</TooltipContent>
+              </Tooltip>
+              <AuxiliaryActionsMenu
+                onFileSelect={handleFileSelect}
+                hideContextFilesPicker
+              />
+            </div>
           </div>
         </div>
       </div>
+      <ImportAppDialog
+        isOpen={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+      />
     </>
   );
 }

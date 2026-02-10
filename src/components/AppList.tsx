@@ -15,7 +15,7 @@ import { PlusCircle, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppSearchDialog } from "./AppSearchDialog";
 import { AppItem } from "./appItem";
-export function AppList({ show }: { show?: boolean }) {
+export function AppList() {
   const navigate = useNavigate();
   const [selectedAppId, setSelectedAppId] = useAtom(selectedAppIdAtom);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
@@ -46,10 +46,6 @@ export function AppList({ show }: { show?: boolean }) {
     () => apps.filter((app) => !app.isFavorite),
     [apps],
   );
-
-  if (!show) {
-    return null;
-  }
 
   const handleAppClick = (id: number) => {
     setSelectedAppId(id);
