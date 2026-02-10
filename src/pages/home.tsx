@@ -1,6 +1,5 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
-import { SetupBanner } from "@/components/SetupBanner";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
 import { useAppVersion } from "@/hooks/useAppVersion";
@@ -32,14 +31,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 
 import { neonTemplateHook } from "@/client_logic/template_hook";
-import {
-  ManageDyadProButton,
-  ProBanner,
-  SetupDyadProButton,
-} from "@/components/ProBanner";
 import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import type { FileAttachment } from "@/ipc/types";
-import { getEffectiveDefaultChatMode, hasDyadProKey } from "@/lib/schemas";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
 import { NEON_TEMPLATE_IDS } from "@/shared/templates";
 
 // Adding an export for attachments
@@ -237,19 +231,12 @@ export default function HomePage() {
   // Main Home Page Content
   return (
     <div className="flex flex-col items-center justify-center max-w-3xl w-full m-auto p-8 relative">
-      <div className="fixed top-16 right-8 z-50">
-        {settings && hasDyadProKey(settings) ? (
-          <ManageDyadProButton className="mt-0 w-auto h-9 px-3 text-base shadow-sm bg-card/80 backdrop-blur-sm hover:bg-card" />
-        ) : (
-          <SetupDyadProButton />
-        )}
-      </div>
+
       <ForceCloseDialog
         isOpen={forceCloseDialogOpen}
         onClose={() => setForceCloseDialogOpen(false)}
         performanceData={performanceData}
       />
-      <SetupBanner />
 
       <div className="w-full">
         <div className="flex items-center justify-center gap-4 mb-4">
@@ -305,7 +292,7 @@ export default function HomePage() {
             </span>
           </button>
         </div>
-        <ProBanner />
+
       </div>
       <PrivacyBanner />
 

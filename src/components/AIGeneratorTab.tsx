@@ -1,18 +1,18 @@
-import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, X, Sparkles, Lock, Link } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  useGenerateThemePrompt,
   useGenerateThemeFromUrl,
+  useGenerateThemePrompt,
 } from "@/hooks/useCustomThemes";
+import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { ipc } from "@/ipc/types";
 import { showError } from "@/lib/toast";
+import { Link, Loader2, Lock, Sparkles, Upload, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
-import { AiAccessBanner } from "./ProBanner";
+
 import type {
   ThemeGenerationMode,
   ThemeGenerationModel,
@@ -317,7 +317,7 @@ export function AIGeneratorTab({
             Pro-only feature
           </p>
         </div>
-        <AiAccessBanner />
+
       </div>
     );
   }
