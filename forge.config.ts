@@ -1,16 +1,16 @@
-import { windowsSign } from "./windowsSign";
-import type { ForgeConfig } from "@electron-forge/shared-types";
+import fs from "node:fs";
+import { MakerDeb } from "@electron-forge/maker-deb";
+import { MakerDMG } from "@electron-forge/maker-dmg";
+import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
-import { MakerDMG } from "@electron-forge/maker-dmg";
-import { MakerDeb } from "@electron-forge/maker-deb";
-import { MakerRpm } from "@electron-forge/maker-rpm";
-import { MakerAppImage } from "./makers/MakerAppImage";
-import { VitePlugin } from "@electron-forge/plugin-vite";
-import { FusesPlugin } from "@electron-forge/plugin-fuses";
-import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
-import fs from "node:fs";
+import { FusesPlugin } from "@electron-forge/plugin-fuses";
+import { VitePlugin } from "@electron-forge/plugin-vite";
+import type { ForgeConfig } from "@electron-forge/shared-types";
+import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { MakerAppImage } from "./makers/MakerAppImage";
+import { windowsSign } from "./windowsSign";
 
 console.log("AZURE_CODE_SIGNING_DLIB", process.env.AZURE_CODE_SIGNING_DLIB);
 
@@ -72,8 +72,8 @@ const config: ForgeConfig = {
     windowsSign: isWindowsSigningEnabled ? windowsSign : undefined,
     protocols: [
       {
-        name: "Dyad",
-        schemes: ["dyad"],
+        name: "ANYON",
+        schemes: ["anyon"],
       },
     ],
     icon: "./assets/icon/logo",
@@ -113,12 +113,12 @@ const config: ForgeConfig = {
         ? {
             windowsSign,
             iconUrl:
-              "https://raw.githubusercontent.com/dyad-sh/dyad/main/assets/icon/logo.ico",
+              "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/assets/icon/logo.ico",
             setupIcon: "./assets/icon/logo.ico",
           }
         : {
             iconUrl:
-              "https://raw.githubusercontent.com/dyad-sh/dyad/main/assets/icon/logo.ico",
+              "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/assets/icon/logo.ico",
             setupIcon: "./assets/icon/logo.ico",
           },
     ),
@@ -134,7 +134,7 @@ const config: ForgeConfig = {
     }),
     new MakerDeb({
       options: {
-        mimeType: ["x-scheme-handler/dyad"],
+        mimeType: ["x-scheme-handler/anyon"],
         icon: "./assets/icon/logo.png",
       },
     }),
@@ -147,8 +147,8 @@ const config: ForgeConfig = {
       name: "@electron-forge/publisher-github",
       config: {
         repository: {
-          owner: "dyad-sh",
-          name: "dyad",
+          owner: "SL-IT-AMAZING",
+          name: "SLIT-ANYON",
         },
         draft: true,
         force: true,

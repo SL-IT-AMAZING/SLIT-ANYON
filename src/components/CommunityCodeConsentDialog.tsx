@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type React from "react";
 
 interface CommunityCodeConsentDialogProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export const CommunityCodeConsentDialog: React.FC<
           <AlertDialogTitle>Community Code Notice</AlertDialogTitle>
           <AlertDialogDescription className="space-y-3">
             <p>
-              This code was created by a Dyad community member, not our core
+              This code was created by a ANYON community member, not our core
               team.
             </p>
             <p>

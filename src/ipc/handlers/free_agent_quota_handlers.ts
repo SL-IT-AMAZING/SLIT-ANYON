@@ -1,12 +1,12 @@
+import { eq } from "drizzle-orm";
+import { ipcMain } from "electron";
+import log from "electron-log";
+import fetch from "node-fetch";
 import { db } from "../../db";
 import { messages } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import { createTypedHandler } from "./base";
 import { freeAgentQuotaContracts } from "../types/free_agent_quota";
-import log from "electron-log";
-import { ipcMain } from "electron";
 import { IS_TEST_BUILD } from "../utils/test_utils";
-import fetch from "node-fetch";
+import { createTypedHandler } from "./base";
 
 const logger = log.scope("free_agent_quota_handlers");
 
@@ -15,7 +15,7 @@ const SERVER_TIME_TIMEOUT_MS = 5000;
 
 /**
  * Fetches the current time from a trusted server to prevent clock manipulation.
- * Uses the HTTP Date header from api.dyad.sh.
+ * Uses the HTTP Date header from api.any-on.dev.
  * Falls back to local time if the server is unreachable (but logs a warning).
  */
 async function getServerTime(): Promise<number> {
@@ -31,7 +31,7 @@ async function getServerTime(): Promise<number> {
       SERVER_TIME_TIMEOUT_MS,
     );
 
-    const response = await fetch("https://api.dyad.sh/health", {
+    const response = await fetch("https://api.any-on.dev/health", {
       method: "HEAD",
       signal: controller.signal,
     });

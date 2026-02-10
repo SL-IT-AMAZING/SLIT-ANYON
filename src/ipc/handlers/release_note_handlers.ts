@@ -1,8 +1,8 @@
 import log from "electron-log";
 import fetch from "node-fetch";
+import { systemContracts } from "../types/system";
 import { IS_TEST_BUILD } from "../utils/test_utils";
 import { createTypedHandler } from "./base";
-import { systemContracts } from "../types/system";
 
 const logger = log.scope("release_note_handlers");
 
@@ -21,7 +21,7 @@ export function registerReleaseNoteHandlers() {
       if (IS_TEST_BUILD) {
         return { exists: false };
       }
-      const releaseNoteUrl = `https://www.dyad.sh/docs/releases/${version}`;
+      const releaseNoteUrl = `https://docs.any-on.dev/releases/${version}`;
 
       logger.debug(`Checking for release note at: ${releaseNoteUrl}`);
 

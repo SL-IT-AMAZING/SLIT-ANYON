@@ -25,14 +25,14 @@ export function PrivacyBanner() {
             Share anonymous data?
           </h4>
           <p className="text-sm text-muted-foreground mt-1">
-            Help improve Dyad with anonymous usage data.
+            Help improve ANYON with anonymous usage data.
             <em className="block italic mt-0.5">
               Note: this does not log your code or messages.
             </em>
             <a
               onClick={() => {
                 ipc.system.openExternalUrl(
-                  "https://dyad.sh/docs/policies/privacy-policy",
+                  "https://docs.any-on.dev/policies/privacy-policy",
                 );
               }}
               className="cursor-pointer text-sm text-blue-600 dark:text-blue-400 hover:underline"

@@ -1,4 +1,4 @@
-import { spawn, execSync, type ChildProcess } from "node:child_process";
+import { type ChildProcess, execSync, spawn } from "node:child_process";
 import log from "electron-log";
 import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
@@ -164,6 +164,13 @@ class OpenCodeServerManager {
         ...process.env,
         OPENCODE_SERVER_USERNAME: "opencode",
         OPENCODE_SERVER_PASSWORD: password,
+        // ANYON Pro: Route LLM requests through SLIT proxy
+        ANTHROPIC_BASE_URL:
+          process.env.ANYON_PROXY_URL ||
+          "https://engine.any-on.dev/v1/anthropic",
+        OPENAI_BASE_URL: process.env.ANYON_PROXY_URL
+          ? `${process.env.ANYON_PROXY_URL}/openai`
+          : "https://engine.any-on.dev/v1/openai",
       },
       stdio: ["ignore", "pipe", "pipe"],
       ...(options.cwd && { cwd: options.cwd }),

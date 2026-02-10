@@ -1,5 +1,5 @@
-import { test } from "./helpers/test_helper";
 import { expect } from "@playwright/test";
+import { test } from "./helpers/test_helper";
 
 test("add prompt via deep link with base64-encoded data", async ({
   po,
@@ -20,7 +20,7 @@ test("add prompt via deep link with base64-encoded data", async ({
 
   // Encode the data as base64 (matching the pattern in main.ts)
   const base64Data = Buffer.from(JSON.stringify(promptData)).toString("base64");
-  const deepLinkUrl = `dyad://add-prompt?data=${encodeURIComponent(base64Data)}`;
+  const deepLinkUrl = `anyon://add-prompt?data=${encodeURIComponent(base64Data)}`;
 
   console.log("Triggering deep link:", deepLinkUrl);
 

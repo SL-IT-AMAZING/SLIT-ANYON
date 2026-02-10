@@ -1,15 +1,15 @@
-import { createLoggedHandler } from "./safe_handle";
-import log from "electron-log";
-import { AppUpgrade } from "@/ipc/types";
-import { db } from "../../db";
-import { apps } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import { getDyadAppPath } from "../../paths/paths";
+import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import type { AppUpgrade } from "@/ipc/types";
+import { eq } from "drizzle-orm";
+import log from "electron-log";
+import { db } from "../../db";
+import { apps } from "../../db/schema";
+import { getDyadAppPath } from "../../paths/paths";
 import { gitAddAll, gitCommit } from "../utils/git_utils";
 import { simpleSpawn } from "../utils/simpleSpawn";
+import { createLoggedHandler } from "./safe_handle";
 
 export const logger = log.scope("app_upgrade_handlers");
 const handle = createLoggedHandler(logger);
@@ -20,14 +20,15 @@ const availableUpgrades: Omit<AppUpgrade, "isNeeded">[] = [
     title: "Enable select component to edit",
     description:
       "Installs the Dyad component tagger Vite plugin and its dependencies.",
-    manualUpgradeUrl: "https://dyad.sh/docs/upgrades/select-component",
+    manualUpgradeUrl: "https://docs.any-on.dev/upgrades/select-component",
   },
   {
     id: "capacitor",
     title: "Upgrade to hybrid mobile app with Capacitor",
     description:
       "Adds Capacitor to your app lets it run on iOS and Android in addition to the web.",
-    manualUpgradeUrl: "https://dyad.sh/docs/guides/mobile-app#upgrade-your-app",
+    manualUpgradeUrl:
+      "https://docs.any-on.dev/guides/mobile-app#upgrade-your-app",
   },
 ];
 

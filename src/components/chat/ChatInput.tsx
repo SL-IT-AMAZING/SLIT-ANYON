@@ -524,7 +524,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                     render={
                       <button
                         onClick={() => {
-                          ipc.system.openExternalUrl("https://dyad.sh/pro");
+                          ipc.system.openExternalUrl("https://any-on.dev/pro");
                         }}
                         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       />
@@ -559,7 +559,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               onChange={setInputValue}
               onSubmit={handleSubmit}
               onPaste={handlePaste}
-              placeholder="Ask Dyad to build..."
+              placeholder="Ask ANYON to build..."
               excludeCurrentApp={true}
               disableSendButton={disableSendButton}
               messageHistory={userMessageHistory}
