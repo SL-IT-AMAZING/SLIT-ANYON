@@ -2,6 +2,8 @@ import { initSentryRenderer } from "./lib/sentry-renderer";
 
 initSentryRenderer();
 
+import "@/i18n";
+
 import {
   MutationCache,
   QueryCache,

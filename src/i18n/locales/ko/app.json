@@ -1,0 +1,29 @@
+{
+  "name": "ANYON",
+  "nav": {
+    "home": "홈",
+    "settings": "설정",
+    "chat": "채팅",
+    "help": "도움말"
+  },
+  "apps": {
+    "title": "내 앱",
+    "new": "새 앱",
+    "search": "앱 검색",
+    "favorites": "즐겨찾기 앱",
+    "other": "기타 앱",
+    "noApps": "앱이 없습니다",
+    "create": "새 앱 만들기",
+    "import": "앱 가져오기",
+    "delete": "앱 삭제",
+    "rename": "앱 이름 변경"
+  },
+  "sidebar": {
+    "collapse": "사이드바 접기",
+    "expand": "사이드바 펼치기"
+  },
+  "welcome": {
+    "title": "새 앱 만들기",
+    "subtitle": "오늘 무엇을 만들어 볼까요?"
+  }
+}

@@ -31,6 +31,7 @@ export const SETTING_IDS = {
   neon: "setting-neon",
   nativeGit: "setting-native-git",
   reset: "setting-reset",
+  language: "setting-language",
 } as const;
 
 type SearchableSettingItem = {
@@ -57,6 +58,14 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     label: "Zoom Level",
     description: "Adjust the zoom level to make content easier to read",
     keywords: ["font size", "magnify", "scale", "accessibility", "zoom"],
+    sectionId: SECTION_IDS.general,
+    sectionLabel: "General",
+  },
+  {
+    id: SETTING_IDS.language,
+    label: "Language",
+    description: "Choose your preferred display language",
+    keywords: ["language", "locale", "korean", "english", "i18n", "한국어", "영어"],
     sectionId: SECTION_IDS.general,
     sectionLabel: "General",
   },

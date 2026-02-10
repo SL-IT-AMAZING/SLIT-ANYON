@@ -23,6 +23,7 @@ import { AutoFixProblemsSwitch } from "@/components/AutoFixProblemsSwitch";
 import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
 import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
 import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { NeonIntegration } from "@/components/NeonIntegration";
 import { NodePathSelector } from "@/components/NodePathSelector";
 import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
@@ -269,6 +270,10 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
 
       <div id={SETTING_IDS.zoom} className="mt-4">
         <ZoomSelector />
+      </div>
+
+      <div id={SETTING_IDS.language} className="mt-4">
+        <LanguageSelector />
       </div>
 
       <div id={SETTING_IDS.autoUpdate} className="space-y-1 mt-4">

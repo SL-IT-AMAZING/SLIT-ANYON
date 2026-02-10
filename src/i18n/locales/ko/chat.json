@@ -1,0 +1,56 @@
+{
+  "input": {
+    "placeholder": "ANYON에게 만들어달라고 요청하세요...",
+    "send": "메시지 보내기",
+    "cancel": "생성 취소",
+    "attach": "파일 첨부"
+  },
+  "messages": {
+    "noMessages": "메시지가 없습니다",
+    "thinking": "생각 중...",
+    "generating": "생성 중...",
+    "approved": "승인됨",
+    "rejected": "거부됨",
+    "didNotFinish": "완료되지 않음"
+  },
+  "actions": {
+    "newChat": "새 채팅",
+    "deleteChat": "채팅 삭제",
+    "renameChat": "채팅 이름 변경",
+    "undo": "실행 취소",
+    "retry": "다시 시도",
+    "copy": "복사",
+    "regenerate": "다시 생성",
+    "scrollToBottom": "맨 아래로 스크롤"
+  },
+  "history": {
+    "title": "최근 채팅 활동",
+    "noChats": "최근 채팅이 없습니다",
+    "search": "채팅 검색"
+  },
+  "modes": {
+    "plan": "계획",
+    "build": "빌드",
+    "ask": "질문",
+    "basicAgent": "기본 에이전트",
+    "buildWithMcp": "MCP로 빌드"
+  },
+  "tokens": {
+    "title": "토큰 사용량 분석",
+    "messageHistory": "메시지 기록",
+    "codebase": "코드베이스",
+    "systemPrompt": "시스템 프롬프트",
+    "currentInput": "현재 입력",
+    "total": "합계"
+  },
+  "errors": {
+    "sendFailed": "메시지 전송 실패",
+    "connectionLost": "연결이 끊어졌습니다",
+    "rateLimited": "요청이 제한되었습니다. 잠시 후 다시 시도하세요."
+  },
+  "quota": {
+    "exceeded": "오늘 무료 에이전트 모드의 5개 메시지를 모두 사용했습니다.",
+    "upgrade": "ANYON Pro로 업그레이드",
+    "switchMode": "빌드 모드로 전환"
+  }
+}

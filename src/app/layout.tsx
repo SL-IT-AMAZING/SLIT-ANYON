@@ -1,22 +1,23 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ThemeProvider } from "../contexts/ThemeContext";
-import { DeepLinkProvider } from "../contexts/DeepLinkContext";
-import { Toaster } from "sonner";
-import { TitleBar } from "./TitleBar";
-import { useEffect, type ReactNode } from "react";
-import { useRunApp, useAppOutputSubscription } from "@/hooks/useRunApp";
-import { useAtomValue, useSetAtom } from "jotai";
 import {
   appConsoleEntriesAtom,
   previewModeAtom,
   selectedAppIdAtom,
 } from "@/atoms/appAtoms";
-import { useSettings } from "@/hooks/useSettings";
-import type { ZoomLevel } from "@/lib/schemas";
-import { selectedComponentsPreviewAtom } from "@/atoms/previewAtoms";
 import { chatInputValueAtom } from "@/atoms/chatAtoms";
+import { selectedComponentsPreviewAtom } from "@/atoms/previewAtoms";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePlanEvents } from "@/hooks/usePlanEvents";
+import { useAppOutputSubscription, useRunApp } from "@/hooks/useRunApp";
+import { useSettings } from "@/hooks/useSettings";
+import i18n from "@/i18n";
+import type { ZoomLevel } from "@/lib/schemas";
+import { useAtomValue, useSetAtom } from "jotai";
+import { type ReactNode, useEffect } from "react";
+import { Toaster } from "sonner";
+import { DeepLinkProvider } from "../contexts/DeepLinkContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { TitleBar } from "./TitleBar";
 
 const DEFAULT_ZOOM_LEVEL: ZoomLevel = "100";
 
@@ -60,6 +61,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     return () => {};
   }, [settings?.zoomLevel]);
+
+  useEffect(() => {
+    const language = settings?.language ?? "en";
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [settings?.language]);
   // Global keyboard listener for refresh events
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
