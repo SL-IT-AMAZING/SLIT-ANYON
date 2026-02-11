@@ -1,22 +1,21 @@
 import path from "path";
-import fs from "fs-extra";
+import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
 import { app } from "electron";
-import { copyDirectoryRecursive } from "../utils/file_utils";
-import { gitClone, getCurrentCommitHash } from "../utils/git_utils";
-import { readSettings } from "@/main/settings";
-import { getTemplateOrThrow } from "../utils/template_utils";
 import log from "electron-log";
+import fs from "fs-extra";
+import { copyDirectoryRecursive } from "../utils/file_utils";
+import { getCurrentCommitHash, gitClone } from "../utils/git_utils";
+import { getTemplateOrThrow } from "../utils/template_utils";
 
 const logger = log.scope("createFromTemplate");
 
 export async function createFromTemplate({
   fullAppPath,
+  templateId = DEFAULT_TEMPLATE_ID,
 }: {
   fullAppPath: string;
+  templateId?: string;
 }) {
-  const settings = readSettings();
-  const templateId = settings.selectedTemplateId;
-
   if (templateId === "react") {
     await copyDirectoryRecursive(
       path.join(__dirname, "..", "..", "scaffold"),

@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +8,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCreateApp } from "@/hooks/useCreateApp";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useCheckName } from "@/hooks/useCheckName";
+import { useCreateApp } from "@/hooks/useCreateApp";
+import { NEON_TEMPLATE_IDS, type Template } from "@/shared/templates";
 import { useSetAtom } from "jotai";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { NEON_TEMPLATE_IDS, Template } from "@/shared/templates";
+import type React from "react";
+import { useState } from "react";
 
 import { useRouter } from "@tanstack/react-router";
 
-import { Loader2 } from "lucide-react";
 import { neonTemplateHook } from "@/client_logic/template_hook";
 import { showError } from "@/lib/toast";
+import { Loader2 } from "lucide-react";
 
 interface CreateAppDialogProps {
   open: boolean;
@@ -52,7 +53,10 @@ export function CreateAppDialog({
 
     setIsSubmitting(true);
     try {
-      const result = await createApp({ name: appName.trim() });
+      const result = await createApp({
+        name: appName.trim(),
+        templateId: template?.id,
+      });
       if (template && NEON_TEMPLATE_IDS.has(template.id)) {
         await neonTemplateHook({
           appId: result.app.id,
