@@ -133,7 +133,6 @@ export default function HomePage() {
     navigate({ to: "/app-details", search: { appId: id } });
   };
 
-
   useEffect(() => {
     if (appId) {
       navigate({ to: "/app-details", search: { appId } });
@@ -245,7 +244,10 @@ export default function HomePage() {
 
       <div className="w-full">
         <div className="text-center mb-10">
-          <h1 className="text-6xl font-bold tracking-tight mb-4 flex items-center justify-center gap-3 flex-wrap" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h1
+            className="text-6xl font-bold tracking-tight mb-4 flex items-center justify-center gap-3 flex-wrap"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
             <span>Build</span>
             <span className="italic text-primary">anything</span>
             <span>with</span>
