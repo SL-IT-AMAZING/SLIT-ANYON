@@ -44,7 +44,9 @@ export function LanguageSelector() {
       </div>
       <Select
         value={currentLanguage}
-        onValueChange={(value) => updateSettings({ language: value as Language })}
+        onValueChange={(value) =>
+          updateSettings({ language: value as Language })
+        }
       >
         <SelectTrigger id="language" className="w-[220px]">
           <SelectValue placeholder="Select language" />

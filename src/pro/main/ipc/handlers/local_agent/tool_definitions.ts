@@ -1,4 +1,3 @@
-
 import { addDependencyTool } from "./tools/add_dependency";
 import { deleteFileTool } from "./tools/delete_file";
 import { executeSqlTool } from "./tools/execute_sql";

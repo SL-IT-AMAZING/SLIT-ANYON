@@ -88,11 +88,7 @@ export function AppSidebar() {
 
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    as={Link}
-                    to={item.to}
-                    isActive={isActive}
-                  >
+                  <SidebarMenuButton as={Link} to={item.to} isActive={isActive}>
                     <item.icon className="size-4" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
