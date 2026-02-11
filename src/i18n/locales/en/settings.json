@@ -1,0 +1,68 @@
+{
+  "title": "Settings",
+  "sections": {
+    "general": "General",
+    "workflow": "Workflow",
+    "ai": "AI",
+    "providers": "Model Providers",
+    "telemetry": "Telemetry",
+    "integrations": "Integrations",
+    "tools": "Tools (MCP)",
+    "experiments": "Experiments",
+    "dangerZone": "Danger Zone"
+  },
+  "general": {
+    "theme": "Theme",
+    "themeDescription": "Choose your preferred color theme.",
+    "themeOptions": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": "Language",
+    "languageDescription": "Choose your preferred display language.",
+    "zoom": "Zoom level",
+    "zoomDescription": "Adjust the interface zoom level.",
+    "autoUpdate": "Auto-update",
+    "autoUpdateDescription": "Automatically download and install updates.",
+    "releaseChannel": "Release channel",
+    "releaseChannelDescription": "Choose which version updates to receive.",
+    "releaseChannelOptions": {
+      "stable": "Stable",
+      "beta": "Beta"
+    }
+  },
+  "workflow": {
+    "autoApprove": "Auto-approve",
+    "autoApproveDescription": "Automatically approve AI-suggested changes.",
+    "autoFix": "Auto-fix problems",
+    "autoFixDescription": "Automatically fix detected issues.",
+    "autoExpandPreview": "Auto-expand preview panel",
+    "autoExpandPreviewDescription": "Automatically expand the preview panel when content is available."
+  },
+  "ai": {
+    "model": "Model",
+    "modelDescription": "Select the AI model to use.",
+    "maxChatTurns": "Max chat turns",
+    "maxChatTurnsDescription": "Maximum number of conversation turns in context.",
+    "thinkingBudget": "Thinking budget",
+    "thinkingBudgetDescription": "Control the AI's thinking depth.",
+    "thinkingBudgetOptions": {
+      "low": "Low",
+      "medium": "Medium (default)",
+      "high": "High"
+    }
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "description": "Help us improve by sending anonymous usage data.",
+    "optIn": "Share usage data",
+    "optOut": "Don't share"
+  },
+  "dangerZone": {
+    "title": "Danger Zone",
+    "deleteData": "Delete all data",
+    "deleteDataDescription": "This will permanently delete all your apps and settings.",
+    "deleteDataConfirm": "Are you sure? This action cannot be undone."
+  }
+}

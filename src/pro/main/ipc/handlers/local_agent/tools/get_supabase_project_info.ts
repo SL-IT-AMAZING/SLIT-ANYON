@@ -18,7 +18,6 @@ export const getSupabaseProjectInfoTool: ToolDefinition<
   description:
     "Get Supabase project overview: project ID, publishable key, secret names, and table names. Use this to discover what tables exist before fetching detailed schemas. Optionally include database functions.",
   inputSchema: getSupabaseProjectInfoSchema,
-  defaultConsent: "always",
   isEnabled: (ctx) => !!ctx.supabaseProjectId,
 
   getConsentPreview: () => "Get Supabase project info",

@@ -1,14 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
+import { useContextPaths } from "@/hooks/useContextPaths";
+import { useSettings } from "@/hooks/useSettings";
+import type { ContextPathResult } from "@/lib/schemas";
 import { InfoIcon, Settings2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -17,9 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { useSettings } from "@/hooks/useSettings";
-import { useContextPaths } from "@/hooks/useContextPaths";
-import type { ContextPathResult } from "@/lib/schemas";
 
 export function ContextFilesPicker() {
   const { settings } = useSettings();
@@ -142,11 +142,11 @@ export function ContextFilesPicker() {
                   <TooltipContent className="max-w-[300px]">
                     {isSmartContextEnabled ? (
                       <p>
-                        With Smart Context, Dyad uses the most relevant files as
-                        context.
+                        With Smart Context, ANYON uses the most relevant files
+                        as context.
                       </p>
                     ) : (
-                      <p>By default, Dyad uses your whole codebase.</p>
+                      <p>By default, ANYON uses your whole codebase.</p>
                     )}
                   </TooltipContent>
                 </Tooltip>

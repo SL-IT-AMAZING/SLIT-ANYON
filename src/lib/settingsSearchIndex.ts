@@ -5,7 +5,6 @@ export const SECTION_IDS = {
   providers: "provider-settings",
   telemetry: "telemetry",
   integrations: "integrations",
-  agentPermissions: "agent-permissions",
   toolsMcp: "tools-mcp",
   experiments: "experiments",
   dangerZone: "danger-zone",
@@ -32,6 +31,7 @@ export const SETTING_IDS = {
   neon: "setting-neon",
   nativeGit: "setting-native-git",
   reset: "setting-reset",
+  language: "setting-language",
 } as const;
 
 type SearchableSettingItem = {
@@ -58,6 +58,22 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     label: "Zoom Level",
     description: "Adjust the zoom level to make content easier to read",
     keywords: ["font size", "magnify", "scale", "accessibility", "zoom"],
+    sectionId: SECTION_IDS.general,
+    sectionLabel: "General",
+  },
+  {
+    id: SETTING_IDS.language,
+    label: "Language",
+    description: "Choose your preferred display language",
+    keywords: [
+      "language",
+      "locale",
+      "korean",
+      "english",
+      "i18n",
+      "한국어",
+      "영어",
+    ],
     sectionId: SECTION_IDS.general,
     sectionLabel: "General",
   },
@@ -239,24 +255,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     ],
     sectionId: SECTION_IDS.integrations,
     sectionLabel: "Integrations",
-  },
-
-  // Agent Permissions
-  {
-    id: SECTION_IDS.agentPermissions,
-    label: "Agent Permissions",
-    description: "Configure permissions for agent built-in tools",
-    keywords: [
-      "agent",
-      "permissions",
-      "tools",
-      "approve",
-      "allow",
-      "consent",
-      "pro",
-    ],
-    sectionId: SECTION_IDS.agentPermissions,
-    sectionLabel: "Agent Permissions",
   },
 
   // Tools (MCP)

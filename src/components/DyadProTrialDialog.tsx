@@ -1,7 +1,7 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, Zap, Wand2, Cpu } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ipc } from "@/ipc/types";
+import { Check, Cpu, Sparkles, Wand2, Zap } from "lucide-react";
 
 interface DyadProTrialDialogProps {
   isOpen: boolean;
@@ -14,14 +14,14 @@ export function DyadProTrialDialog({
 }: DyadProTrialDialogProps) {
   const handleStartTrial = () => {
     ipc.system.openExternalUrl(
-      "https://academy.dyad.sh/redirect-to-checkout?trialCode=1PRO30&utm_source=dyad-app&utm_medium=app&utm_campaign=setup-dialog-v2",
+      "https://pay.any-on.dev/checkout?trialCode=1PRO30&utm_source=dyad-app&utm_medium=app&utm_campaign=setup-dialog-v2",
     );
     onClose();
   };
 
   const handleLearnMore = () => {
     ipc.system.openExternalUrl(
-      "https://www.dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=setup-dialog-v2",
+      "https://any-on.dev/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=setup-dialog-v2",
     );
   };
 
@@ -54,7 +54,7 @@ export function DyadProTrialDialog({
           {/* Title */}
           <div className="text-center">
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              Unlock Dyad Pro
+              Unlock ANYON Pro
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Start your free 3-day trial today

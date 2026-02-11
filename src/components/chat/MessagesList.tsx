@@ -2,7 +2,7 @@ import type { Message } from "@/ipc/types";
 import React from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
-import { OpenRouterSetupBanner, SetupBanner } from "../SetupBanner";
+import { OpenRouterSetupBanner } from "../SetupBanner";
 import ChatMessage from "./ChatMessage";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
@@ -262,26 +262,18 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
       setIsRetryLoading(loading);
     }, []);
 
-    // Stabilize renderSetupBanner with proper dependencies
     const renderSetupBanner = useCallback(() => {
       const selectedModel = settings?.selectedModel;
-      if (
-        selectedModel?.name === "free" &&
-        selectedModel?.provider === "auto" &&
-        !isProviderSetup("openrouter")
-      ) {
-        return <OpenRouterSetupBanner className="w-full" />;
-      }
-      if (!isAnyProviderSetup()) {
-        return <SetupBanner />;
-      }
-      return null;
-    }, [
-      settings?.selectedModel?.name,
-      settings?.selectedModel?.provider,
-      isProviderSetup,
-      isAnyProviderSetup,
-    ]);
+      const needsOpenRouterSetup =
+        (selectedModel?.name === "free" &&
+          selectedModel?.provider === "auto" &&
+          !isProviderSetup("openrouter")) ||
+        !isAnyProviderSetup();
+
+      return needsOpenRouterSetup ? (
+        <OpenRouterSetupBanner className="w-full" />
+      ) : null;
+    }, [settings?.selectedModel, isProviderSetup, isAnyProviderSetup]);
 
     // Memoized item renderer for virtualized list
     const itemContent = useCallback(

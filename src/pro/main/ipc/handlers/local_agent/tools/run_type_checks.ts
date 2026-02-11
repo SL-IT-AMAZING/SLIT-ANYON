@@ -76,7 +76,6 @@ export const runTypeChecksTool: ToolDefinition<
 - This tool can return type errors that were already present before your edits, so avoid calling it with a very wide scope of files
 - NEVER call this tool on a file unless you've edited it or are about to edit it`,
   inputSchema: runTypeChecksSchema,
-  defaultConsent: "always",
 
   getConsentPreview: (args) =>
     args.paths && args.paths.length > 0

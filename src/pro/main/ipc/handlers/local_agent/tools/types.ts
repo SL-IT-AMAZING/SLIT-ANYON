@@ -5,7 +5,6 @@
 import { z } from "zod";
 import { IpcMainInvokeEvent } from "electron";
 import { jsonrepair } from "jsonrepair";
-import { AgentToolConsent } from "@/lib/schemas";
 import { AgentTodo } from "@/ipc/types";
 
 // ============================================================================
@@ -58,8 +57,8 @@ export interface AgentContext {
   /** Tracks file edit tool usage per file for telemetry */
   fileEditTracker: FileEditTracker;
   /**
-   * If true, the user has Dyad Pro enabled.
-   * Engine-dependent tools require this to access the Dyad Pro API.
+   * If true, the user has ANYON Pro enabled.
+   * Engine-dependent tools require this to access the ANYON Pro API.
    */
   isDyadPro: boolean;
   /**
@@ -139,7 +138,6 @@ export interface ToolDefinition<T = any> {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: z.ZodType<T>;
-  readonly defaultConsent: AgentToolConsent;
   /**
    * If true, this tool modifies state (files, database, etc.).
    * Used to filter out state-modifying tools in read-only mode (e.g., ask mode).

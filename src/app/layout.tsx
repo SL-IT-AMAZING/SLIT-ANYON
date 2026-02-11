@@ -1,22 +1,24 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ThemeProvider } from "../contexts/ThemeContext";
-import { DeepLinkProvider } from "../contexts/DeepLinkContext";
-import { Toaster } from "sonner";
-import { TitleBar } from "./TitleBar";
-import { useEffect, type ReactNode } from "react";
-import { useRunApp, useAppOutputSubscription } from "@/hooks/useRunApp";
-import { useAtomValue, useSetAtom } from "jotai";
 import {
   appConsoleEntriesAtom,
   previewModeAtom,
   selectedAppIdAtom,
 } from "@/atoms/appAtoms";
-import { useSettings } from "@/hooks/useSettings";
-import type { ZoomLevel } from "@/lib/schemas";
-import { selectedComponentsPreviewAtom } from "@/atoms/previewAtoms";
 import { chatInputValueAtom } from "@/atoms/chatAtoms";
+import { selectedComponentsPreviewAtom } from "@/atoms/previewAtoms";
+import { SidebarToggle } from "@/components/SidebarToggle";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePlanEvents } from "@/hooks/usePlanEvents";
+import { useAppOutputSubscription, useRunApp } from "@/hooks/useRunApp";
+import { useSettings } from "@/hooks/useSettings";
+import i18n from "@/i18n";
+import type { ZoomLevel } from "@/lib/schemas";
+import { useAtomValue, useSetAtom } from "jotai";
+import { type ReactNode, useEffect } from "react";
+import { Toaster } from "sonner";
+import { DeepLinkProvider } from "../contexts/DeepLinkContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { TitleBar } from "./TitleBar";
 
 const DEFAULT_ZOOM_LEVEL: ZoomLevel = "100";
 
@@ -60,6 +62,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     return () => {};
   }, [settings?.zoomLevel]);
+
+  useEffect(() => {
+    const language = settings?.language ?? "en";
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [settings?.language]);
   // Global keyboard listener for refresh events
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -96,9 +105,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AppSidebar />
             <div
               id="layout-main-content-container"
-              className="flex h-screenish w-full overflow-x-hidden mt-12 mb-4 mr-4 border-t border-l border-border rounded-lg bg-background"
+              className="flex flex-col h-screenish w-full overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
             >
-              {children}
+              <div className="flex items-center h-10 px-2 shrink-0">
+                <SidebarToggle />
+              </div>
+              <div className="flex flex-1 min-h-0 overflow-auto">
+                {children}
+              </div>
             </div>
             <Toaster richColors />
           </SidebarProvider>

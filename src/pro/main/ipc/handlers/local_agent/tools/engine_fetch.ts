@@ -7,7 +7,7 @@ import { readSettings } from "@/main/settings";
 import type { AgentContext } from "./types";
 
 export const DYAD_ENGINE_URL =
-  process.env.DYAD_ENGINE_URL ?? "https://engine.dyad.sh/v1";
+  process.env.DYAD_ENGINE_URL ?? "https://engine.any-on.dev/v1";
 
 export interface EngineFetchOptions extends Omit<RequestInit, "headers"> {
   /** Additional headers to include */
@@ -22,7 +22,7 @@ export interface EngineFetchOptions extends Omit<RequestInit, "headers"> {
  * @param endpoint - The API endpoint path (e.g., "/tools/web-search")
  * @param options - Fetch options (method, body, additional headers, etc.)
  * @returns The fetch Response
- * @throws Error if Dyad Pro API key is not configured
+ * @throws Error if ANYON Pro API key is not configured
  */
 export async function engineFetch(
   ctx: Pick<AgentContext, "dyadRequestId">,
@@ -33,7 +33,7 @@ export async function engineFetch(
   const apiKey = settings.providerSettings?.auto?.apiKey?.value;
 
   if (!apiKey) {
-    throw new Error("Dyad Pro API key is required");
+    throw new Error("ANYON Pro API key is required");
   }
 
   const { headers: extraHeaders, ...restOptions } = options;

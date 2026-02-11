@@ -1,23 +1,23 @@
+import { ipc } from "@/ipc/types";
 import { useAtom, useAtomValue } from "jotai";
 import { previewModeAtom, selectedAppIdAtom } from "../../atoms/appAtoms";
-import { ipc } from "@/ipc/types";
 
-import {
-  Eye,
-  Code,
-  MoreVertical,
-  Cog,
-  Trash2,
-  AlertTriangle,
-  Wrench,
-  Globe,
-  Shield,
-} from "lucide-react";
 import { ChatActivityButton } from "@/components/chat/ChatActivity";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  AlertTriangle,
+  Code,
+  Cog,
+  Eye,
+  Globe,
+  MoreVertical,
+  Shield,
+  Trash2,
+  Wrench,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useRunApp } from "@/hooks/useRunApp";
+import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCheckProblems } from "@/hooks/useCheckProblems";
+import { useRunApp } from "@/hooks/useRunApp";
 import { showError, showSuccess } from "@/lib/toast";
 import { useMutation } from "@tanstack/react-query";
-import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 
 export type PreviewMode =
   | "preview"
@@ -199,7 +199,7 @@ export const ActionHeader = () => {
   const iconSize = 15;
 
   return (
-    <div className="flex items-center justify-between px-1 py-2 mt-1 border-b border-border">
+    <div className="flex items-center justify-between px-1 py-2 mt-1">
       <div className="relative flex rounded-md p-0.5 gap-0.5">
         <motion.div
           className="absolute top-0.5 bottom-0.5 bg-[var(--background-lightest)] shadow rounded-md"

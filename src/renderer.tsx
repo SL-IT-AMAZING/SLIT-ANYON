@@ -2,28 +2,27 @@ import { initSentryRenderer } from "./lib/sentry-renderer";
 
 initSentryRenderer();
 
-import { StrictMode, useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import { router } from "./router";
-import { RouterProvider } from "@tanstack/react-router";
-import { PostHogProvider } from "posthog-js/react";
-import posthog from "posthog-js";
-import { version } from "../package.json";
-import { getTelemetryUserId, isTelemetryOptedIn } from "./hooks/useSettings";
+import "@/i18n";
+
 import {
+  MutationCache,
   QueryCache,
   QueryClient,
   QueryClientProvider,
-  MutationCache,
 } from "@tanstack/react-query";
-import { showError, showMcpConsentToast } from "./lib/toast";
-import { ipc } from "./ipc/types";
+import { RouterProvider } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
-import {
-  pendingAgentConsentsAtom,
-  agentTodosByChatIdAtom,
-} from "./atoms/chatAtoms";
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
+import { StrictMode, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { version } from "../package.json";
+import { agentTodosByChatIdAtom } from "./atoms/chatAtoms";
+import { getTelemetryUserId, isTelemetryOptedIn } from "./hooks/useSettings";
+import { ipc } from "./ipc/types";
 import { queryKeys } from "./lib/queryKeys";
+import { showError, showMcpConsentToast } from "./lib/toast";
+import { router } from "./router";
 
 // @ts-ignore
 console.log("Running in mode:", import.meta.env.MODE);
@@ -147,8 +146,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Agent v2 tool consent requests - queue consents instead of overwriting
-  const setPendingAgentConsents = useSetAtom(pendingAgentConsentsAtom);
   const setAgentTodosByChatId = useSetAtom(agentTodosByChatIdAtom);
 
   // Agent todos updates
@@ -174,33 +171,6 @@ function App() {
     });
     return () => unsubscribe();
   }, [setAgentTodosByChatId]);
-
-  useEffect(() => {
-    const unsubscribe = ipc.events.agent.onConsentRequest((payload) => {
-      setPendingAgentConsents((prev) => [
-        ...prev,
-        {
-          requestId: payload.requestId,
-          chatId: payload.chatId,
-          toolName: payload.toolName,
-          toolDescription: payload.toolDescription,
-          inputPreview: payload.inputPreview,
-        },
-      ]);
-    });
-    return () => unsubscribe();
-  }, [setPendingAgentConsents]);
-
-  // Clear pending agent consents when a chat stream ends or errors
-  // This prevents stale consent banners from remaining visible after cancellation
-  useEffect(() => {
-    const unsubscribe = ipc.events.misc.onChatStreamEnd(({ chatId }) => {
-      setPendingAgentConsents((prev) =>
-        prev.filter((consent) => consent.chatId !== chatId),
-      );
-    });
-    return () => unsubscribe();
-  }, [setPendingAgentConsents]);
 
   // Forward telemetry events from main process to PostHog
   useEffect(() => {

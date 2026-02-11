@@ -60,7 +60,6 @@ CRITICAL REQUIREMENTS FOR USING THIS TOOL:
    - Plan separate tool calls for each instance
 `,
   inputSchema: searchReplaceSchema,
-  defaultConsent: "always",
   modifiesState: true,
 
   getConsentPreview: (args) => `Edit ${args.file_path}`,

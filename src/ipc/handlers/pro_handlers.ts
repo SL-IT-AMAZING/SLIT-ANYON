@@ -1,10 +1,10 @@
-import fetch from "node-fetch"; // Electron main process might need node-fetch
+import { type UserBudgetInfo, UserBudgetInfoSchema } from "@/ipc/types";
 import log from "electron-log";
-import { createLoggedHandler } from "./safe_handle";
-import { readSettings } from "../../main/settings"; // Assuming settings are read this way
-import { UserBudgetInfo, UserBudgetInfoSchema } from "@/ipc/types";
-import { IS_TEST_BUILD } from "../utils/test_utils";
+import fetch from "node-fetch"; // Electron main process might need node-fetch
 import { z } from "zod";
+import { readSettings } from "../../main/settings"; // Assuming settings are read this way
+import { IS_TEST_BUILD } from "../utils/test_utils";
+import { createLoggedHandler } from "./safe_handle";
 
 export const UserInfoResponseSchema = z.object({
   usedCredits: z.number(),
@@ -41,11 +41,11 @@ export function registerProHandlers() {
     const apiKey = settings.providerSettings?.auto?.apiKey?.value;
 
     if (!apiKey) {
-      logger.error("LLM Gateway API key (Dyad Pro) is not configured.");
+      logger.error("LLM Gateway API key (ANYON Pro) is not configured.");
       return null;
     }
 
-    const url = "https://api.dyad.sh/v1/user/info";
+    const url = "https://api.any-on.dev/v1/user/info";
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,

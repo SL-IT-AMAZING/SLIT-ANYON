@@ -1,20 +1,20 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogleGenerativeAI as createGoogle } from "@ai-sdk/google";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createXai } from "@ai-sdk/xai";
-import { createVertex as createGoogleVertex } from "@ai-sdk/google-vertex";
-import { createAzure } from "@ai-sdk/azure";
-import type { LanguageModel } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import type { LanguageModelProvider } from "@/ipc/types";
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createAzure } from "@ai-sdk/azure";
+import { createGoogleGenerativeAI as createGoogle } from "@ai-sdk/google";
+import { createVertex as createGoogleVertex } from "@ai-sdk/google-vertex";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createXai } from "@ai-sdk/xai";
+import type { LanguageModel } from "ai";
+import log from "electron-log";
 import type {
+  AzureProviderSetting,
   LargeLanguageModel,
   UserSettings,
   VertexProviderSetting,
-  AzureProviderSetting,
 } from "../../lib/schemas";
-import { getEnvVar } from "./read_env";
-import log from "electron-log";
 import {
   FREE_OPENROUTER_MODEL_NAMES,
   GEMINI_3_FLASH,
@@ -22,16 +22,16 @@ import {
   SONNET_4_5,
 } from "../shared/language_model_constants";
 import { getLanguageModelProviders } from "../shared/language_model_helpers";
-import { LanguageModelProvider } from "@/ipc/types";
 import {
-  createDyadEngine,
   type DyadEngineProvider,
+  createDyadEngine,
 } from "./llm_engine_provider";
+import { getEnvVar } from "./read_env";
 
-import { LM_STUDIO_BASE_URL } from "./lm_studio_utils";
-import { createOllamaProvider } from "./ollama_provider";
 import { getOllamaApiUrl } from "../handlers/local_model_ollama_handler";
 import { createFallback } from "./fallback_ai_model";
+import { LM_STUDIO_BASE_URL } from "./lm_studio_utils";
+import { createOllamaProvider } from "./ollama_provider";
 
 const dyadEngineUrl = process.env.DYAD_ENGINE_URL;
 
@@ -80,9 +80,9 @@ export async function getModelClientUpstream(
     throw new Error(`Configuration not found for provider: ${model.provider}`);
   }
 
-  // Handle Dyad Pro override
+  // Handle ANYON Pro override
   if (dyadApiKey && settings.enableDyadPro) {
-    // Check if the selected provider supports Dyad Pro (has a gateway prefix) OR
+    // Check if the selected provider supports ANYON Pro (has a gateway prefix) OR
     // we're using local engine.
     // IMPORTANT: some providers like OpenAI have an empty string gateway prefix,
     // so we do a nullish and not a truthy check here.
@@ -90,7 +90,7 @@ export async function getModelClientUpstream(
       const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
       const provider = createDyadEngine({
         apiKey: dyadApiKey,
-        baseURL: dyadEngineUrl ?? "https://engine.dyad.sh/v1",
+        baseURL: dyadEngineUrl ?? "https://engine.any-on.dev/v1",
         dyadOptions: {
           enableLazyEdits:
             settings.selectedChatMode === "ask"
@@ -104,11 +104,11 @@ export async function getModelClientUpstream(
       });
 
       logger.info(
-        `\x1b[1;97;44m Using Dyad Pro API key for model: ${model.name} \x1b[0m`,
+        `\x1b[1;97;44m Using ANYON Pro API key for model: ${model.name} \x1b[0m`,
       );
 
       logger.info(
-        `\x1b[1;30;42m Using Dyad Pro engine: ${dyadEngineUrl ?? "<prod>"} \x1b[0m`,
+        `\x1b[1;30;42m Using ANYON Pro engine: ${dyadEngineUrl ?? "<prod>"} \x1b[0m`,
       );
 
       // Do not use free variant (for openrouter).
@@ -127,7 +127,7 @@ export async function getModelClientUpstream(
       };
     } else {
       logger.warn(
-        `Dyad Pro enabled, but provider ${model.provider} does not have a gateway prefix defined. Falling back to direct provider connection.`,
+        `ANYON Pro enabled, but provider ${model.provider} does not have a gateway prefix defined. Falling back to direct provider connection.`,
       );
       // Fall through to regular provider logic if gateway prefix is missing
     }

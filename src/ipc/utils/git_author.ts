@@ -9,7 +9,7 @@ export async function getGitAuthor() {
       }
     : {
         name: "[dyad]",
-        email: "git@dyad.sh",
+        email: "git@any-on.dev",
       };
   return author;
 }

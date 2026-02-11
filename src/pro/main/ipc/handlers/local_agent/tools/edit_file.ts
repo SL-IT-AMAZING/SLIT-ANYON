@@ -139,10 +139,9 @@ export const editFileTool: ToolDefinition<z.infer<typeof editFileSchema>> = {
   name: "edit_file",
   description: DESCRIPTION,
   inputSchema: editFileSchema,
-  defaultConsent: "always",
   modifiesState: true,
 
-  // Requires Dyad Pro engine API
+  // Requires ANYON Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,
 
   getConsentPreview: (args) => `Edit ${args.path}`,

@@ -167,13 +167,6 @@ export const queryKeys = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Agent Tools
-  // ─────────────────────────────────────────────────────────────────────────────
-  agentTools: {
-    all: ["agent-tools"] as const,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   // Language Models / Providers
   // ─────────────────────────────────────────────────────────────────────────────
   languageModels: {
@@ -302,7 +295,6 @@ export type AppQueryKey =
     >
   | QueryKeyOf<(typeof queryKeys.templates)[keyof typeof queryKeys.templates]>
   | QueryKeyOf<(typeof queryKeys.prompts)[keyof typeof queryKeys.prompts]>
-  | QueryKeyOf<(typeof queryKeys.agentTools)[keyof typeof queryKeys.agentTools]>
   | QueryKeyOf<
       (typeof queryKeys.languageModels)[keyof typeof queryKeys.languageModels]
     >

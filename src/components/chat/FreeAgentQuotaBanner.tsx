@@ -1,7 +1,7 @@
-import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { ipc } from "@/ipc/types";
+import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 
 interface FreeAgentQuotaBannerProps {
   onSwitchToBuildMode: () => void;
@@ -39,7 +39,7 @@ export function FreeAgentQuotaBanner({
     : "";
 
   const handleUpgrade = () => {
-    ipc.system.openExternalUrl("https://dyad.sh/pro");
+    ipc.system.openExternalUrl("https://any-on.dev/pro");
   };
 
   return (
@@ -53,12 +53,12 @@ export function FreeAgentQuotaBanner({
           <p className="text-sm text-amber-700 dark:text-amber-300">
             You have used all 5 messages for the free Agent mode today. Check
             back in {resetTimeDisplay} ({resetDateTime}). If you don't want to
-            wait, upgrade to Dyad Pro or switch back to Build mode.
+            wait, upgrade to ANYON Pro or switch back to Build mode.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleUpgrade} size="sm" className="gap-1.5">
               <Sparkles className="h-3.5 w-3.5" />
-              Upgrade to Dyad Pro
+              Upgrade to ANYON Pro
             </Button>
             <Button
               onClick={onSwitchToBuildMode}

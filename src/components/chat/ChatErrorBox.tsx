@@ -1,18 +1,18 @@
-import { ipc } from "@/ipc/types";
-import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
-import {
-  X,
-  ExternalLink as ExternalLinkIcon,
-  CircleArrowUp,
-  MessageSquarePlus,
-} from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ipc } from "@/ipc/types";
+import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
+import {
+  CircleArrowUp,
+  ExternalLink as ExternalLinkIcon,
+  MessageSquarePlus,
+  X,
+} from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function ChatErrorBox({
   onDismiss,
@@ -31,10 +31,10 @@ export function ChatErrorBox({
         {error}
         <span className="ml-1">
           <ExternalLink
-            href="https://dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=free-quota-error"
+            href="https://any-on.dev/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=free-quota-error"
             variant="primary"
           >
-            Access with Dyad Pro
+            Access with ANYON Pro
           </ExternalLink>
         </span>{" "}
         or switch to another model.
@@ -45,9 +45,9 @@ export function ChatErrorBox({
   // Important, this needs to come after the "free quota tier" check
   // because it also includes this URL in the error message
   //
-  // Sometimes Dyad Pro can return rate limit errors and we do not want to
-  // show the upgrade to Dyad Pro link in that case because they are
-  // already on the Dyad Pro plan.
+  // Sometimes ANYON Pro can return rate limit errors and we do not want to
+  // show the upgrade to ANYON Pro link in that case because they are
+  // already on the ANYON Pro plan.
   if (
     !isDyadProEnabled &&
     (error.includes("Resource has been exhausted") ||
@@ -59,13 +59,13 @@ export function ChatErrorBox({
         {error}
         <div className="mt-2 space-y-2 space-x-2">
           <ExternalLink
-            href="https://dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=rate-limit-error"
+            href="https://any-on.dev/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=free-agent-quota-exceeded"
             variant="primary"
           >
-            Upgrade to Dyad Pro
+            Upgrade to ANYON Pro
           </ExternalLink>
 
-          <ExternalLink href="https://dyad.sh/docs/help/ai-rate-limit">
+          <ExternalLink href="https://docs.any-on.dev/help/ai-rate-limit">
             Troubleshooting guide
           </ExternalLink>
         </div>
@@ -77,58 +77,15 @@ export function ChatErrorBox({
     return (
       <ChatInfoContainer onDismiss={onDismiss}>
         <span>
-          Looks like you don't have a valid Dyad Pro key.{" "}
+          Looks like you don't have a valid ANYON Pro key.{" "}
           <ExternalLink
-            href="https://dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=invalid-pro-key-error"
+            href="https://any-on.dev/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=general-error"
             variant="primary"
           >
-            Upgrade to Dyad Pro
-          </ExternalLink>{" "}
-          today.
-        </span>
-      </ChatInfoContainer>
-    );
-  }
-  if (isDyadProEnabled && error.includes("ExceededBudget:")) {
-    return (
-      <ChatInfoContainer onDismiss={onDismiss}>
-        <span>
-          You have used all of your Dyad AI credits this month.{" "}
-          <ExternalLink
-            href="https://academy.dyad.sh/subscription?utm_source=dyad-app&utm_medium=app&utm_campaign=exceeded-budget-error"
-            variant="primary"
-          >
-            Reload or upgrade your subscription
-          </ExternalLink>{" "}
-          and get more AI credits
-        </span>
-      </ChatInfoContainer>
-    );
-  }
-  // This is a very long list of model fallbacks that clutters the error message.
-  //
-  // We are matching "Fallbacks=[{" and not just "Fallbacks=" because the fallback
-  // model itself can error and we want to include the fallback model error in the error message.
-  // Example: https://github.com/dyad-sh/dyad/issues/1849#issuecomment-3590685911
-  const fallbackPrefix = "Fallbacks=[{";
-  if (error.includes(fallbackPrefix)) {
-    error = error.split(fallbackPrefix)[0];
-  }
-  // Handle FREE_AGENT_QUOTA_EXCEEDED error (Basic Agent mode quota exceeded)
-  if (error.includes("FREE_AGENT_QUOTA_EXCEEDED")) {
-    return (
-      <ChatErrorContainer onDismiss={onDismiss}>
-        You have used all 5 free Agent messages for today. Please upgrade to
-        Dyad Pro for unlimited access or switch to Build mode.
-        <div className="mt-2 space-y-2 space-x-2">
-          <ExternalLink
-            href="https://dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=free-agent-quota-exceeded"
-            variant="primary"
-          >
-            Upgrade to Dyad Pro
+            Upgrade to ANYON Pro
           </ExternalLink>
-        </div>
-      </ChatErrorContainer>
+        </span>
+      </ChatInfoContainer>
     );
   }
 
@@ -140,10 +97,10 @@ export function ChatErrorBox({
           error.includes(AI_STREAMING_ERROR_MESSAGE_PREFIX) &&
           !error.includes("TypeError: terminated") && (
             <ExternalLink
-              href="https://dyad.sh/pro?utm_source=dyad-app&utm_medium=app&utm_campaign=general-error"
+              href="https://pay.any-on.dev/subscription?utm_source=dyad-app&utm_medium=app&utm_campaign=exceeded-budget-error"
               variant="primary"
             >
-              Upgrade to Dyad Pro
+              Reload or upgrade your subscription
             </ExternalLink>
           )}
         {isDyadProEnabled && onStartNewChat && (
@@ -160,7 +117,7 @@ export function ChatErrorBox({
             </TooltipContent>
           </Tooltip>
         )}
-        <ExternalLink href="https://www.dyad.sh/docs/faq">
+        <ExternalLink href="https://docs.any-on.dev/faq">
           Read docs
         </ExternalLink>
       </div>

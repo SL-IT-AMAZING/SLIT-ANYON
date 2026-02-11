@@ -1,0 +1,56 @@
+{
+  "input": {
+    "placeholder": "Ask ANYON to build...",
+    "send": "Send message",
+    "cancel": "Cancel generation",
+    "attach": "Attach files"
+  },
+  "messages": {
+    "noMessages": "No messages yet",
+    "thinking": "Thinking...",
+    "generating": "Generating...",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "didNotFinish": "Did not finish"
+  },
+  "actions": {
+    "newChat": "New Chat",
+    "deleteChat": "Delete Chat",
+    "renameChat": "Rename Chat",
+    "undo": "Undo",
+    "retry": "Retry",
+    "copy": "Copy",
+    "regenerate": "Regenerate",
+    "scrollToBottom": "Scroll to bottom"
+  },
+  "history": {
+    "title": "Recent chat activity",
+    "noChats": "No recent chats",
+    "search": "Search chats"
+  },
+  "modes": {
+    "plan": "Plan",
+    "build": "Build",
+    "ask": "Ask",
+    "basicAgent": "Basic Agent",
+    "buildWithMcp": "Build with MCP"
+  },
+  "tokens": {
+    "title": "Token Usage Breakdown",
+    "messageHistory": "Message History",
+    "codebase": "Codebase",
+    "systemPrompt": "System Prompt",
+    "currentInput": "Current Input",
+    "total": "Total"
+  },
+  "errors": {
+    "sendFailed": "Failed to send message",
+    "connectionLost": "Connection lost",
+    "rateLimited": "Rate limited. Please wait."
+  },
+  "quota": {
+    "exceeded": "You have used all 5 messages for the free Agent mode today.",
+    "upgrade": "Upgrade to ANYON Pro",
+    "switchMode": "Switch back to Build mode"
+  }
+}

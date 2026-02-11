@@ -1,8 +1,8 @@
-import { useSettings } from "@/hooks/useSettings";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
+import { toast } from "sonner";
 
 export function AutoUpdateSwitch() {
   const { settings, updateSettings } = useSettings();
@@ -21,9 +21,9 @@ export function AutoUpdateSwitch() {
           updateSettings({ enableAutoUpdate: checked });
           toast("Auto-update settings changed", {
             description:
-              "You will need to restart Dyad for your settings to take effect.",
+              "You will need to restart ANYON for your settings to take effect.",
             action: {
-              label: "Restart Dyad",
+              label: "Restart ANYON",
               onClick: () => {
                 ipc.system.restartDyad();
               },

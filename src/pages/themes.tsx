@@ -1,52 +1,59 @@
-import { useState } from "react";
+import { CustomThemeDialog } from "@/components/CustomThemeDialog";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import { EditThemeDialog } from "@/components/EditThemeDialog";
+import { LibraryList } from "@/components/LibraryList";
+import { Button } from "@/components/ui/button";
 import {
   useCustomThemes,
-  useUpdateCustomTheme,
   useDeleteCustomTheme,
+  useUpdateCustomTheme,
 } from "@/hooks/useCustomThemes";
-import { CustomThemeDialog } from "@/components/CustomThemeDialog";
-import { EditThemeDialog } from "@/components/EditThemeDialog";
-import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
-import { Button } from "@/components/ui/button";
-import { Plus, Palette } from "lucide-react";
-import { showError } from "@/lib/toast";
 import type { CustomTheme } from "@/ipc/types";
+import { showError } from "@/lib/toast";
+import { Palette, Plus } from "lucide-react";
+import { useState } from "react";
 
 export default function ThemesPage() {
   const { customThemes, isLoading } = useCustomThemes();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   return (
-    <div className="min-h-screen px-8 py-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold mr-4">
-            <Palette className="inline-block h-8 w-8 mr-2" />
-            Themes
-          </h1>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> New Theme
-          </Button>
+    <div className="flex min-h-screen">
+      <aside className="w-56 shrink-0 border-r border-border bg-card">
+        <LibraryList />
+      </aside>
+
+      <div className="flex-1 px-8 py-6 overflow-y-auto">
+        <div className="max-w-5xl">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold mr-4">
+              <Palette className="inline-block h-8 w-8 mr-2" />
+              Themes
+            </h1>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> New Theme
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : customThemes.length === 0 ? (
+            <div className="text-muted-foreground">
+              No custom themes yet. Create one to get started.
+            </div>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+              {customThemes.map((theme) => (
+                <ThemeCard key={theme.id} theme={theme} />
+              ))}
+            </div>
+          )}
+
+          <CustomThemeDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+          />
         </div>
-
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : customThemes.length === 0 ? (
-          <div className="text-muted-foreground">
-            No custom themes yet. Create one to get started.
-          </div>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
-            {customThemes.map((theme) => (
-              <ThemeCard key={theme.id} theme={theme} />
-            ))}
-          </div>
-        )}
-
-        <CustomThemeDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-        />
       </div>
     </div>
   );

@@ -64,7 +64,6 @@ const providers = [
   "anthropic",
   "google",
   "vertex",
-  "auto",
   "openrouter",
   "ollama",
   "lmstudio",
@@ -250,6 +249,9 @@ export type ReleaseChannel = z.infer<typeof ReleaseChannelSchema>;
 export const ZoomLevelSchema = z.enum(["90", "100", "110", "125", "150"]);
 export type ZoomLevel = z.infer<typeof ZoomLevelSchema>;
 
+export const LanguageSchema = z.enum(["en", "ko"]);
+export type Language = z.infer<typeof LanguageSchema>;
+
 export const DeviceModeSchema = z.enum(["desktop", "tablet", "mobile"]);
 export type DeviceMode = z.infer<typeof DeviceModeSchema>;
 
@@ -259,9 +261,6 @@ export const SmartContextModeSchema = z.enum([
   "deep",
 ]);
 export type SmartContextMode = z.infer<typeof SmartContextModeSchema>;
-
-export const AgentToolConsentSchema = z.enum(["ask", "always", "never"]);
-export type AgentToolConsent = z.infer<typeof AgentToolConsentSchema>;
 
 /**
  * Zod schema for user settings
@@ -285,7 +284,6 @@ export const UserSettingsSchema = z
     ////////////////////////////////
     selectedModel: LargeLanguageModelSchema,
     providerSettings: z.record(z.string(), ProviderSettingSchema),
-    agentToolConsents: z.record(z.string(), AgentToolConsentSchema).optional(),
     githubUser: GithubUserSchema.optional(),
     githubAccessToken: SecretSchema.optional(),
     vercelAccessToken: SecretSchema.optional(),
@@ -315,6 +313,7 @@ export const UserSettingsSchema = z
     defaultChatMode: ChatModeSchema.optional(),
     acceptedCommunityCode: z.boolean().optional(),
     zoomLevel: ZoomLevelSchema.optional(),
+    language: LanguageSchema.optional(),
     previewDeviceMode: DeviceModeSchema.optional(),
 
     enableAutoFixProblems: z.boolean().optional(),

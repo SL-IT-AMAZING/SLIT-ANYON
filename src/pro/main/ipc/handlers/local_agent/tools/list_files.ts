@@ -33,7 +33,6 @@ export const listFilesTool: ToolDefinition<ListFilesArgs> = {
   description:
     "List files in the application directory. By default, lists only the immediate directory contents. Use recursive=true to list all files recursively. If you are not sure, list all files by omitting the directory parameter.",
   inputSchema: listFilesSchema,
-  defaultConsent: "always",
 
   getConsentPreview: (args) => {
     const recursiveText = args.recursive ? " (recursive)" : "";

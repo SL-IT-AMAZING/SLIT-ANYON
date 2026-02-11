@@ -83,9 +83,10 @@ export interface OpenCodeProviderSettings {
   appPath?: string;
 }
 
-export interface OpenCodeProvider {
-  (modelId: string, providerID?: string): LanguageModelV2;
-}
+export type OpenCodeProvider = (
+  modelId: string,
+  providerID?: string,
+) => LanguageModelV2;
 
 class OpenCodeLanguageModel implements LanguageModelV2 {
   readonly specificationVersion = "v2" as const;
@@ -261,12 +262,13 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const promptPayload = {
       parts: [{ type: "text", text: userMessage }],
       ...(systemPrompt && { system: systemPrompt }),
-      ...(this.providerID && {
-        model: {
-          providerID: this.providerID,
-          modelID: this.modelId,
-        },
-      }),
+      ...(this.providerID &&
+        this.providerID !== "auto" && {
+          model: {
+            providerID: this.providerID,
+            modelID: this.modelId,
+          },
+        }),
       ...(this.settings.agentName && { agent: this.settings.agentName }),
     };
 

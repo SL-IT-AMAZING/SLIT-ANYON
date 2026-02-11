@@ -1,55 +1,9 @@
 import { z } from "zod";
-import {
-  defineContract,
-  defineEvent,
-  createClient,
-  createEventClient,
-} from "../contracts/core";
-import { AgentToolConsentSchema } from "../../lib/schemas";
+import { createEventClient, defineEvent } from "../contracts/core";
 
 // =============================================================================
 // Agent Schemas
 // =============================================================================
-
-/**
- * Schema for agent tool consent request payload.
- */
-export const AgentToolConsentRequestSchema = z.object({
-  requestId: z.string(),
-  chatId: z.number(),
-  toolName: z.string(),
-  toolDescription: z.string().nullable().optional(),
-  inputPreview: z.string().nullable().optional(),
-});
-
-export type AgentToolConsentRequestPayload = z.infer<
-  typeof AgentToolConsentRequestSchema
->;
-
-/**
- * Schema for agent tool consent decision.
- */
-export const AgentToolConsentDecisionSchema = z.enum([
-  "accept-once",
-  "accept-always",
-  "decline",
-]);
-
-export type AgentToolConsentDecision = z.infer<
-  typeof AgentToolConsentDecisionSchema
->;
-
-/**
- * Schema for agent tool consent response params.
- */
-export const AgentToolConsentResponseParamsSchema = z.object({
-  requestId: z.string(),
-  decision: AgentToolConsentDecisionSchema,
-});
-
-export type AgentToolConsentResponseParams = z.infer<
-  typeof AgentToolConsentResponseParamsSchema
->;
 
 /**
  * Schema for agent todo item.
@@ -109,67 +63,11 @@ export type AgentProblemsUpdatePayload = z.infer<
   typeof AgentProblemsUpdateSchema
 >;
 
-/**
- * Schema for agent tool info.
- */
-export const AgentToolSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  isAllowedByDefault: z.boolean(),
-  consent: AgentToolConsentSchema,
-});
-
-export type AgentTool = z.infer<typeof AgentToolSchema>;
-
-/**
- * Schema for set agent tool consent params.
- */
-export const SetAgentToolConsentParamsSchema = z.object({
-  toolName: z.string(),
-  consent: AgentToolConsentSchema,
-});
-
-export type SetAgentToolConsentParams = z.infer<
-  typeof SetAgentToolConsentParamsSchema
->;
-
-// =============================================================================
-// Agent Contracts (Invoke/Response)
-// =============================================================================
-
-export const agentContracts = {
-  getTools: defineContract({
-    channel: "agent-tool:get-tools",
-    input: z.void(),
-    output: z.array(AgentToolSchema),
-  }),
-
-  setConsent: defineContract({
-    channel: "agent-tool:set-consent",
-    input: SetAgentToolConsentParamsSchema,
-    output: z.void(),
-  }),
-
-  respondToConsent: defineContract({
-    channel: "agent-tool:consent-response",
-    input: AgentToolConsentResponseParamsSchema,
-    output: z.void(),
-  }),
-} as const;
-
 // =============================================================================
 // Agent Event Contracts (Main -> Renderer)
 // =============================================================================
 
 export const agentEvents = {
-  /**
-   * Emitted when the agent needs consent for a tool invocation.
-   */
-  consentRequest: defineEvent({
-    channel: "agent-tool:consent-request",
-    payload: AgentToolConsentRequestSchema,
-  }),
-
   /**
    * Emitted when the agent's todo list is updated.
    */
@@ -192,20 +90,11 @@ export const agentEvents = {
 // =============================================================================
 
 /**
- * Type-safe client for agent IPC operations.
- *
- * @example
- * const tools = await agentClient.getTools();
- * await agentClient.setConsent({ toolName: "file_write", consent: "always" });
- */
-export const agentClient = createClient(agentContracts);
-
-/**
  * Type-safe event client for agent events.
  *
  * @example
- * const unsubscribe = agentEventClient.onConsentRequest((payload) => {
- *   showConsentDialog(payload);
+ * const unsubscribe = agentEventClient.onTodosUpdate((payload) => {
+ *   updateTodoList(payload.todos);
  * });
  * // Later: unsubscribe();
  */

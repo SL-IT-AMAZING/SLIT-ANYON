@@ -33,7 +33,7 @@ import { Edit3, MoreVertical, PlusCircle, Search, Trash2 } from "lucide-react";
 import { useSelectChat } from "@/hooks/useSelectChat";
 import { ChatSearchDialog } from "./ChatSearchDialog";
 
-export function ChatList({ show }: { show?: boolean }) {
+export function ChatList() {
   const navigate = useNavigate();
   const [selectedChatId, setSelectedChatId] = useAtom(selectedChatIdAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
@@ -69,10 +69,6 @@ export function ChatList({ show }: { show?: boolean }) {
       }
     }
   }, [isChatRoute, routerState.location.search, setSelectedChatId]);
-
-  if (!show) {
-    return;
-  }
 
   const handleChatClick = ({
     chatId,

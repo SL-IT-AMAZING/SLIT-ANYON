@@ -1,4 +1,4 @@
-import type { FileAttachment, Message, AgentTodo } from "@/ipc/types";
+import type { AgentTodo, FileAttachment, Message } from "@/ipc/types";
 import { atom } from "jotai";
 
 // Per-chat atoms implemented with maps keyed by chatId
@@ -17,17 +17,6 @@ export const chatStreamCountByIdAtom = atom<Map<number, number>>(new Map());
 export const recentStreamChatIdsAtom = atom<Set<number>>(new Set<number>());
 
 export const attachmentsAtom = atom<FileAttachment[]>([]);
-
-// Agent tool consent request queue
-export interface PendingAgentConsent {
-  requestId: string;
-  chatId: number;
-  toolName: string;
-  toolDescription?: string | null;
-  inputPreview?: string | null;
-}
-
-export const pendingAgentConsentsAtom = atom<PendingAgentConsent[]>([]);
 
 // Agent todos per chat
 export const agentTodosByChatIdAtom = atom<Map<number, AgentTodo[]>>(new Map());

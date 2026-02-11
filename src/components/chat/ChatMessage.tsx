@@ -87,10 +87,16 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
     <div
       className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
     >
-      <div className={`mt-2 w-full max-w-3xl mx-auto group`}>
+      <div
+        className={`mt-2 group ${
+          message.role === "assistant"
+            ? "w-full max-w-3xl mx-auto"
+            : "max-w-[85%] mr-4"
+        }`}
+      >
         <div
           className={`rounded-lg p-2 ${
-            message.role === "assistant" ? "" : "ml-24 bg-(--sidebar-accent)"
+            message.role === "assistant" ? "" : "bg-(--sidebar-accent)"
           }`}
         >
           {message.role === "assistant" &&

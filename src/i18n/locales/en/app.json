@@ -1,0 +1,29 @@
+{
+  "name": "ANYON",
+  "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "chat": "Chat",
+    "help": "Help"
+  },
+  "apps": {
+    "title": "Your Apps",
+    "new": "New App",
+    "search": "Search Apps",
+    "favorites": "Favorite apps",
+    "other": "Other apps",
+    "noApps": "No apps yet",
+    "create": "Create New App",
+    "import": "Import App",
+    "delete": "Delete App",
+    "rename": "Rename App"
+  },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "welcome": {
+    "title": "Build a new app",
+    "subtitle": "What would you like to build today?"
+  }
+}

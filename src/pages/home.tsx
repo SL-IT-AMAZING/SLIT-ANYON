@@ -1,6 +1,5 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
-import { SetupBanner } from "@/components/SetupBanner";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
 import { useAppVersion } from "@/hooks/useAppVersion";
@@ -17,7 +16,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { homeChatInputValueAtom } from "../atoms/chatAtoms";
 
 import { ForceCloseDialog } from "@/components/ForceCloseDialog";
-import { ImportAppButton } from "@/components/ImportAppButton";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,18 +27,16 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { invalidateAppQuery } from "@/hooks/useLoadApp";
 import { showError } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 import { ExternalLink } from "lucide-react";
 
 import { neonTemplateHook } from "@/client_logic/template_hook";
-import {
-  ManageDyadProButton,
-  ProBanner,
-  SetupDyadProButton,
-} from "@/components/ProBanner";
 import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import type { FileAttachment } from "@/ipc/types";
-import { getEffectiveDefaultChatMode, hasDyadProKey } from "@/lib/schemas";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
 import { NEON_TEMPLATE_IDS } from "@/shared/templates";
+// @ts-ignore
+import anyonLogo from "../../img/logo3.svg";
 
 // Adding an export for attachments
 export interface HomeSubmitOptions {
@@ -52,7 +48,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
-  const { refreshApps } = useLoadApps();
+  const { apps, refreshApps } = useLoadApps();
   const { settings, updateSettings, envVars } = useSettings();
   const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
 
@@ -128,12 +124,15 @@ export default function HomePage() {
     return shuffled.slice(0, 3);
   }, []);
 
-  // Initialize random prompts
   useEffect(() => {
     setRandomPrompts(getRandomPrompts());
   }, [getRandomPrompts]);
 
-  // Redirect to app details page if appId is present
+  const handleAppClick = (id: number) => {
+    setSelectedAppId(id);
+    navigate({ to: "/app-details", search: { appId: id } });
+  };
+
   useEffect(() => {
     if (appId) {
       navigate({ to: "/app-details", search: { appId } });
@@ -237,23 +236,26 @@ export default function HomePage() {
   // Main Home Page Content
   return (
     <div className="flex flex-col items-center justify-center max-w-3xl w-full m-auto p-8 relative">
-      <div className="fixed top-16 right-8 z-50">
-        {settings && hasDyadProKey(settings) ? (
-          <ManageDyadProButton className="mt-0 w-auto h-9 px-3 text-base shadow-sm bg-card/80 backdrop-blur-sm hover:bg-card" />
-        ) : (
-          <SetupDyadProButton />
-        )}
-      </div>
       <ForceCloseDialog
         isOpen={forceCloseDialogOpen}
         onClose={() => setForceCloseDialogOpen(false)}
         performanceData={performanceData}
       />
-      <SetupBanner />
 
       <div className="w-full">
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <ImportAppButton className="px-0 pb-0 flex-none" />
+        <div className="text-center mb-10">
+          <h1
+            className="text-6xl font-bold tracking-tight mb-4 flex items-center justify-center gap-3 flex-wrap"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            <span>Build</span>
+            <span className="italic text-primary">anything</span>
+            <span>with</span>
+            <img src={anyonLogo} alt="ANYON" className="h-14 inline-block" />
+          </h1>
+          <p className="text-muted-foreground text-xl font-medium">
+            Just tell me what you want. I'll handle the rest.
+          </p>
         </div>
         <HomeChatInput onSubmit={handleSubmit} />
 
@@ -305,7 +307,37 @@ export default function HomePage() {
             </span>
           </button>
         </div>
-        <ProBanner />
+
+        {apps.length > 0 && (
+          <div className="mt-8 w-full">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Recent Projects
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {apps.slice(0, 6).map((app) => (
+                <button
+                  type="button"
+                  key={app.id}
+                  onClick={() => handleAppClick(app.id)}
+                  className="flex flex-col items-start p-4 rounded-xl border border-border
+                             bg-card/50 backdrop-blur-sm text-left
+                             transition-all duration-200
+                             hover:bg-card hover:shadow-md hover:border-border
+                             active:scale-[0.98]"
+                >
+                  <span className="font-medium text-foreground truncate w-full">
+                    {app.name}
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {formatDistanceToNow(new Date(app.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <PrivacyBanner />
 
