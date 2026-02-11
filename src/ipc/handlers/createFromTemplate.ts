@@ -16,7 +16,6 @@ export async function createFromTemplate({
   fullAppPath: string;
   templateId?: string;
 }) {
-
   if (templateId === "react") {
     await copyDirectoryRecursive(
       path.join(__dirname, "..", "..", "scaffold"),
