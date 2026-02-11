@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { safeStorage } from "electron";
-import { readSettings, getSettingsFilePath } from "@/main/settings";
+import type { UserSettings } from "@/lib/schemas";
+import { getSettingsFilePath, readSettings } from "@/main/settings";
 import { getUserDataPath } from "@/paths/paths";
-import { UserSettings } from "@/lib/schemas";
+import { safeStorage } from "electron";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("node:fs");
@@ -67,8 +67,8 @@ describe("readSettings", () => {
           "releaseChannel": "stable",
           "selectedChatMode": "build",
           "selectedModel": {
-            "name": "auto",
-            "provider": "auto",
+            "name": "claude-opus-4-6",
+            "provider": "anthropic",
           },
           "selectedTemplateId": "react",
           "selectedThemeId": "default",
@@ -323,8 +323,8 @@ describe("readSettings", () => {
           "releaseChannel": "stable",
           "selectedChatMode": "build",
           "selectedModel": {
-            "name": "auto",
-            "provider": "auto",
+            "name": "claude-opus-4-6",
+            "provider": "anthropic",
           },
           "selectedTemplateId": "react",
           "selectedThemeId": "default",
@@ -342,8 +342,8 @@ describe("readSettings", () => {
 
       expect(result).toMatchObject({
         selectedModel: {
-          name: "auto",
-          provider: "auto",
+          name: "claude-opus-4-6",
+          provider: "anthropic",
         },
         releaseChannel: "stable",
       });
@@ -365,8 +365,8 @@ describe("readSettings", () => {
 
       expect(result).toMatchObject({
         selectedModel: {
-          name: "auto",
-          provider: "auto",
+          name: "claude-opus-4-6",
+          provider: "anthropic",
         },
         releaseChannel: "stable",
       });
@@ -390,8 +390,8 @@ describe("readSettings", () => {
 
       expect(result).toMatchObject({
         selectedModel: {
-          name: "auto",
-          provider: "auto",
+          name: "claude-opus-4-6",
+          provider: "anthropic",
         },
         releaseChannel: "stable",
       });
