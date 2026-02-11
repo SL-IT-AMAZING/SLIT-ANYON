@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className="flex items-center h-10 px-2 shrink-0">
                 <SidebarToggle />
               </div>
-              <div className="flex flex-1 overflow-hidden">{children}</div>
+              <div className="flex flex-1 min-h-0 overflow-auto">{children}</div>
             </div>
             <Toaster richColors />
           </SidebarProvider>

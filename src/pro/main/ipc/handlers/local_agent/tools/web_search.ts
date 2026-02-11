@@ -160,7 +160,7 @@ export const webSearchTool: ToolDefinition<z.infer<typeof webSearchSchema>> = {
   description: DESCRIPTION,
   inputSchema: webSearchSchema,
 
-  // Requires Dyad Pro engine API
+  // Requires ANYON Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,
 
   getConsentPreview: (args) => `Search the web: "${args.query}"`,

@@ -79,7 +79,7 @@ export const webCrawlTool: ToolDefinition<z.infer<typeof webCrawlSchema>> = {
   description: DESCRIPTION,
   inputSchema: webCrawlSchema,
 
-  // Requires Dyad Pro engine API
+  // Requires ANYON Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,
 
   getConsentPreview: (args) => `Crawl URL: "${args.url}"`,

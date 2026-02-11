@@ -581,7 +581,7 @@ Modern dark theme with purple accents for testing.
 
       if (!settings.enableDyadPro) {
         throw new Error(
-          "Dyad Pro is required for AI theme generation. Please enable Dyad Pro in Settings.",
+          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
         );
       }
 
@@ -709,7 +709,7 @@ Modern theme extracted from website for testing.
 
       if (!settings.enableDyadPro) {
         throw new Error(
-          "Dyad Pro is required for AI theme generation. Please enable Dyad Pro in Settings.",
+          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
         );
       }
 
@@ -763,7 +763,7 @@ Modern theme extracted from website for testing.
       // Get API key for Dyad Engine
       const apiKey = settings.providerSettings?.auto?.apiKey?.value;
       if (!apiKey) {
-        throw new Error("Dyad Pro API key is required");
+        throw new Error("ANYON Pro API key is required");
       }
 
       // Crawl the website

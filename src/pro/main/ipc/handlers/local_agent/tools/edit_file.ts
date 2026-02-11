@@ -141,7 +141,7 @@ export const editFileTool: ToolDefinition<z.infer<typeof editFileSchema>> = {
   inputSchema: editFileSchema,
   modifiesState: true,
 
-  // Requires Dyad Pro engine API
+  // Requires ANYON Pro engine API
   isEnabled: (ctx) => ctx.isDyadPro,
 
   getConsentPreview: (args) => `Edit ${args.path}`,

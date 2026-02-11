@@ -140,7 +140,7 @@ export async function handleLocalAgentStream(
     safeSend(event.sender, "chat:response:error", {
       chatId: req.chatId,
       error:
-        "Agent v2 requires Dyad Pro. Please enable Dyad Pro in Settings → Pro.",
+        "Agent v2 requires ANYON Pro. Please enable ANYON Pro in Settings → Pro.",
     });
     return false;
   }
