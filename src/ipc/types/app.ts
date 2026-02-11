@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineContract, createClient } from "../contracts/core";
+import { createClient, defineContract } from "../contracts/core";
 
 // =============================================================================
 // App Schemas
@@ -51,6 +51,7 @@ export type App = z.infer<typeof AppSchema>;
  */
 export const CreateAppParamsSchema = z.object({
   name: z.string().min(1),
+  templateId: z.string().optional(),
 });
 
 /**

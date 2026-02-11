@@ -24,17 +24,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { invalidateAppQuery } from "@/hooks/useLoadApp";
+import type { FileAttachment } from "@/ipc/types";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink } from "lucide-react";
-
-import { neonTemplateHook } from "@/client_logic/template_hook";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
-import type { FileAttachment } from "@/ipc/types";
-import { getEffectiveDefaultChatMode } from "@/lib/schemas";
-import { NEON_TEMPLATE_IDS } from "@/shared/templates";
 // @ts-ignore
 import anyonLogo from "../../img/logo3.svg";
 
@@ -168,15 +165,6 @@ export default function HomePage() {
       const result = await ipc.app.createApp({
         name: generateCuteAppName(),
       });
-      if (
-        settings?.selectedTemplateId &&
-        NEON_TEMPLATE_IDS.has(settings.selectedTemplateId)
-      ) {
-        await neonTemplateHook({
-          appId: result.app.id,
-          appName: result.app.name,
-        });
-      }
 
       // Apply selected theme to the new app (if one is set)
       if (settings?.selectedThemeId) {

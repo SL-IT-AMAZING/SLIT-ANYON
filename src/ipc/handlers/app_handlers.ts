@@ -1,70 +1,70 @@
-import { ipcMain, app, dialog } from "electron";
+import { type ChildProcess, spawn } from "node:child_process";
+import fs from "node:fs";
+import { promises as fsPromises } from "node:fs";
+import path from "node:path";
+import { desc, eq, like } from "drizzle-orm";
+import { app, dialog, ipcMain } from "electron";
 import { db, getDatabasePath } from "../../db";
 import { apps, chats, messages } from "../../db/schema";
-import { desc, eq, like } from "drizzle-orm";
-import { createTypedHandler } from "./base";
+import { getDyadAppPath, getUserDataPath } from "../../paths/paths";
 import { appContracts } from "../types/app";
 import type { AppFileSearchResult } from "../types/app";
 import { miscContracts } from "../types/misc";
 import { systemContracts } from "../types/system";
-import fs from "node:fs";
-import path from "node:path";
-import { getDyadAppPath, getUserDataPath } from "../../paths/paths";
-import { ChildProcess, spawn } from "node:child_process";
-import { promises as fsPromises } from "node:fs";
+import { createTypedHandler } from "./base";
 
+import { addLog, clearLogs } from "../../lib/log_store";
+import { readSettings } from "../../main/settings";
+import { getFilesRecursively } from "../utils/file_utils";
 // Import our utility modules
 import { withLock } from "../utils/lock_utils";
-import { getFilesRecursively } from "../utils/file_utils";
 import {
-  runningApps,
   processCounter,
   removeAppIfCurrentProcess,
-  stopAppByInfo,
   removeDockerVolumesForApp,
+  runningApps,
+  stopAppByInfo,
 } from "../utils/process_manager";
 import { getEnvVar } from "../utils/read_env";
-import { readSettings } from "../../main/settings";
-import { addLog, clearLogs } from "../../lib/log_store";
 
 import fixPath from "fix-path";
 
-import killPort from "kill-port";
 import util from "util";
+import type { AppSearchResult } from "@/lib/schemas";
+import {
+  deployAllSupabaseFunctions,
+  extractFunctionNameFromPath,
+  isServerFunction,
+  isSharedServerModule,
+} from "@/supabase_admin/supabase_utils";
 import log from "electron-log";
+import killPort from "kill-port";
+import type { Worker } from "worker_threads";
+import { normalizePath } from "../../../shared/normalizePath";
 import {
   deploySupabaseFunction,
   getSupabaseProjectName,
 } from "../../supabase_admin/supabase_management_client";
-import { createLoggedHandler } from "./safe_handle";
 import { getLanguageModelProviders } from "../shared/language_model_helpers";
-import { startProxy } from "../utils/start_proxy_server";
-import { Worker } from "worker_threads";
-import { createFromTemplate } from "./createFromTemplate";
 import {
-  gitCommit,
   gitAdd,
+  gitCommit,
   gitInit,
   gitListBranches,
   gitRenameBranch,
 } from "../utils/git_utils";
-import { safeSend } from "../utils/safe_sender";
-import { normalizePath } from "../../../shared/normalizePath";
-import {
-  isServerFunction,
-  isSharedServerModule,
-  deployAllSupabaseFunctions,
-  extractFunctionNameFromPath,
-} from "@/supabase_admin/supabase_utils";
-import { getVercelTeamSlug } from "../utils/vercel_utils";
 import { storeDbTimestampAtCurrentVersion } from "../utils/neon_timestamp_utils";
-import { AppSearchResult } from "@/lib/schemas";
+import { safeSend } from "../utils/safe_sender";
+import { startProxy } from "../utils/start_proxy_server";
+import { getVercelTeamSlug } from "../utils/vercel_utils";
+import { createFromTemplate } from "./createFromTemplate";
+import { createLoggedHandler } from "./safe_handle";
 
 import { getAppPort } from "../../../shared/ports";
 import {
-  getRgExecutablePath,
   MAX_FILE_SEARCH_SIZE,
   RIPGREP_EXCLUDED_GLOBS,
+  getRgExecutablePath,
 } from "../utils/ripgrep_utils";
 
 const logger = log.scope("app_handlers");
@@ -807,6 +807,7 @@ export function registerAppHandlers() {
 
     await createFromTemplate({
       fullAppPath,
+      templateId: params.templateId,
     });
 
     // Initialize git repo and create first commit
@@ -1405,7 +1406,7 @@ export function registerAppHandlers() {
   createTypedHandler(appContracts.renameApp, async (_, params) => {
     const { appId, appName, appPath: newPath } = params;
     return withLock(appId, async () => {
-      let appPath = newPath;
+      const appPath = newPath;
       // Check if app exists
       const app = await db.query.apps.findFirst({
         where: eq(apps.id, appId),
