@@ -1,6 +1,6 @@
-# @dyad-sh/nextjs-webpack-component-tagger
+# @anyon/nextjs-webpack-component-tagger
 
-> **Note**: This package is maintained under the `@dyad-sh` npm scope for backward compatibility.
+> **Note**: This package is maintained under the `@anyon` npm scope.
 
 A webpack loader for Next.js that automatically adds `data-anyon-id` and `data-anyon-name` attributes to your React components.
 
@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
         test: /\.(jsx|tsx)$/,
         exclude: /node_modules/,
         enforce: "pre",
-        use: "@dyad-sh/nextjs-webpack-component-tagger",
+        use: "@anyon/nextjs-webpack-component-tagger",
       });
     }
     return config;
@@ -29,5 +29,5 @@ export default nextConfig;
 ## Publishing
 
 ```sh
-cd packages/@dyad-sh/nextjs-webpack-component-tagger/ && npm run prepublishOnly && npm publish
+cd packages/@anyon/nextjs-webpack-component-tagger/ && npm run prepublishOnly && npm publish
 ```

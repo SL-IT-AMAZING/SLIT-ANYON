@@ -84,7 +84,7 @@ tell them that they need to add supabase to their app.
 
 The following response will show a button that allows the user to add supabase to their app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 # Examples
 
@@ -98,7 +98,7 @@ I want to use supabase in my app.
 
 You need to first add Supabase to your app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 ## Example 2: User wants to add auth to their app
 
@@ -110,12 +110,12 @@ I want to add auth to my app.
 
 You need to first add Supabase to your app and then we can add auth.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 
 ===
 role: user
-message: This is my codebase. <dyad-file path=".gitignore">
+message: This is my codebase. <anyon-file path=".gitignore">
 # Logs
 logs
 *.log
@@ -141,9 +141,9 @@ dist-ssr
 *.sln
 *.sw?
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="AI_RULES.md">
+<anyon-file path="AI_RULES.md">
 # Tech Stack
 
 - You are building a React application.
@@ -164,23 +164,23 @@ Available packages and libraries:
 - You have ALL the necessary Radix UI components installed.
 - Use prebuilt components from the shadcn/ui library after importing them. Note that these files shouldn't be edited, so make new components if you need to change them.
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="components.json">
+<anyon-file path="components.json">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="eslint.config.js">
+<anyon-file path="eslint.config.js">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="index.html">
+<anyon-file path="index.html">
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dyad-generated-app</title>
+    <title>anyon-generated-app</title>
   </head>
 
   <body>
@@ -189,9 +189,9 @@ Available packages and libraries:
   </body>
 </html>
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="postcss.config.js">
+<anyon-file path="postcss.config.js">
 export default {
   plugins: {
     tailwindcss: {},
@@ -199,26 +199,26 @@ export default {
   },
 };
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="public/favicon.ico">
+<anyon-file path="public/favicon.ico">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="public/placeholder.svg">
+<anyon-file path="public/placeholder.svg">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="public/robots.txt">
+<anyon-file path="public/robots.txt">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="README.md">
-# Welcome to your Dyad app
+<anyon-file path="README.md">
+# Welcome to your Anyon app
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/App.css">
+<anyon-file path="src/App.css">
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -262,9 +262,9 @@ export default {
   color: #888;
 }
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/App.tsx">
+<anyon-file path="src/App.tsx">
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -293,223 +293,223 @@ const App = () => (
 
 export default App;
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/made-with-dyad.tsx">
-export const MadeWithDyad = () => {
+<anyon-file path="src/components/made-with-anyon.tsx">
+export const MadeWithAnyon = () => {
   return (
     <div className="p-4 text-center">
       <a
-        href="https://www.dyad.sh/"
+        href="https://www.any-on.dev/"
         target="_blank"
         rel="noopener noreferrer"
         className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
       >
-        Made with Dyad
+        Made with Anyon
       </a>
     </div>
   );
 };
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/accordion.tsx">
+<anyon-file path="src/components/ui/accordion.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/alert-dialog.tsx">
+<anyon-file path="src/components/ui/alert-dialog.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/alert.tsx">
+<anyon-file path="src/components/ui/alert.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/aspect-ratio.tsx">
+<anyon-file path="src/components/ui/aspect-ratio.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/avatar.tsx">
+<anyon-file path="src/components/ui/avatar.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/badge.tsx">
+<anyon-file path="src/components/ui/badge.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/breadcrumb.tsx">
+<anyon-file path="src/components/ui/breadcrumb.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/button.tsx">
+<anyon-file path="src/components/ui/button.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/calendar.tsx">
+<anyon-file path="src/components/ui/calendar.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/card.tsx">
+<anyon-file path="src/components/ui/card.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/carousel.tsx">
+<anyon-file path="src/components/ui/carousel.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/chart.tsx">
+<anyon-file path="src/components/ui/chart.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/checkbox.tsx">
+<anyon-file path="src/components/ui/checkbox.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/collapsible.tsx">
+<anyon-file path="src/components/ui/collapsible.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/command.tsx">
+<anyon-file path="src/components/ui/command.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/context-menu.tsx">
+<anyon-file path="src/components/ui/context-menu.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/dialog.tsx">
+<anyon-file path="src/components/ui/dialog.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/drawer.tsx">
+<anyon-file path="src/components/ui/drawer.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/dropdown-menu.tsx">
+<anyon-file path="src/components/ui/dropdown-menu.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/form.tsx">
+<anyon-file path="src/components/ui/form.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/hover-card.tsx">
+<anyon-file path="src/components/ui/hover-card.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/input-otp.tsx">
+<anyon-file path="src/components/ui/input-otp.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/input.tsx">
+<anyon-file path="src/components/ui/input.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/label.tsx">
+<anyon-file path="src/components/ui/label.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/menubar.tsx">
+<anyon-file path="src/components/ui/menubar.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/navigation-menu.tsx">
+<anyon-file path="src/components/ui/navigation-menu.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/pagination.tsx">
+<anyon-file path="src/components/ui/pagination.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/popover.tsx">
+<anyon-file path="src/components/ui/popover.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/progress.tsx">
+<anyon-file path="src/components/ui/progress.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/radio-group.tsx">
+<anyon-file path="src/components/ui/radio-group.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/resizable.tsx">
+<anyon-file path="src/components/ui/resizable.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/scroll-area.tsx">
+<anyon-file path="src/components/ui/scroll-area.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/select.tsx">
+<anyon-file path="src/components/ui/select.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/separator.tsx">
+<anyon-file path="src/components/ui/separator.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/sheet.tsx">
+<anyon-file path="src/components/ui/sheet.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/sidebar.tsx">
+<anyon-file path="src/components/ui/sidebar.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/skeleton.tsx">
+<anyon-file path="src/components/ui/skeleton.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/slider.tsx">
+<anyon-file path="src/components/ui/slider.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/sonner.tsx">
+<anyon-file path="src/components/ui/sonner.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/switch.tsx">
+<anyon-file path="src/components/ui/switch.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/table.tsx">
+<anyon-file path="src/components/ui/table.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/tabs.tsx">
+<anyon-file path="src/components/ui/tabs.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/textarea.tsx">
+<anyon-file path="src/components/ui/textarea.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/toast.tsx">
+<anyon-file path="src/components/ui/toast.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/toaster.tsx">
+<anyon-file path="src/components/ui/toaster.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/toggle-group.tsx">
+<anyon-file path="src/components/ui/toggle-group.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/toggle.tsx">
+<anyon-file path="src/components/ui/toggle.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/tooltip.tsx">
+<anyon-file path="src/components/ui/tooltip.tsx">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/components/ui/use-toast.ts">
+<anyon-file path="src/components/ui/use-toast.ts">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/globals.css">
+<anyon-file path="src/globals.css">
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -612,9 +612,9 @@ export const MadeWithDyad = () => {
   }
 }
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/hooks/use-mobile.tsx">
+<anyon-file path="src/hooks/use-mobile.tsx">
 import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
@@ -637,9 +637,9 @@ export function useIsMobile() {
   return !!isMobile;
 }
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/hooks/use-toast.ts">
+<anyon-file path="src/hooks/use-toast.ts">
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
@@ -829,9 +829,9 @@ function useToast() {
 
 export { useToast, toast };
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/lib/utils.ts">
+<anyon-file path="src/lib/utils.ts">
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -839,21 +839,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/main.tsx">
+<anyon-file path="src/main.tsx">
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./globals.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/pages/Index.tsx">
+<anyon-file path="src/pages/Index.tsx">
 // Update this page (the content is just a fallback if you fail to update the page)
 
-import { MadeWithDyad } from "@/components/made-with-dyad";
+import { MadeWithAnyon } from "@/components/made-with-anyon";
 
 const Index = () => {
   return (
@@ -864,16 +864,16 @@ const Index = () => {
           Start building your amazing project here!
         </p>
       </div>
-      <MadeWithDyad />
+      <MadeWithAnyon />
     </div>
   );
 };
 
 export default Index;
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/pages/NotFound.tsx">
+<anyon-file path="src/pages/NotFound.tsx">
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -902,9 +902,9 @@ const NotFound = () => {
 
 export default NotFound;
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/utils/toast.ts">
+<anyon-file path="src/utils/toast.ts">
 import { toast } from "sonner";
 
 export const showSuccess = (message: string) => {
@@ -923,14 +923,14 @@ export const dismissToast = (toastId: string) => {
   toast.dismiss(toastId);
 };
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="src/vite-env.d.ts">
+<anyon-file path="src/vite-env.d.ts">
 /// <reference types="vite/client" />
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="tailwind.config.ts">
+<anyon-file path="tailwind.config.ts">
 import type { Config } from "tailwindcss";
 
 export default {
@@ -1028,21 +1028,21 @@ export default {
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="tsconfig.app.json">
+<anyon-file path="tsconfig.app.json">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="tsconfig.json">
+<anyon-file path="tsconfig.json">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="tsconfig.node.json">
+<anyon-file path="tsconfig.node.json">
 // File contents excluded from context
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="vercel.json">
+<anyon-file path="vercel.json">
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
@@ -1053,11 +1053,11 @@ export default {
   ]
 }
 
-</dyad-file>
+</anyon-file>
 
-<dyad-file path="vite.config.ts">
+<anyon-file path="vite.config.ts">
 import { defineConfig } from "vite";
-import dyadComponentTagger from "@dyad-sh/react-vite-component-tagger";
+import anyonComponentTagger from "@anyon/react-vite-component-tagger";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
@@ -1066,7 +1066,7 @@ export default defineConfig(() => ({
     host: "::",
     port: 8080,
   },
-  plugins: [dyadComponentTagger(), react()],
+  plugins: [anyonComponentTagger(), react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -1074,7 +1074,7 @@ export default defineConfig(() => ({
   },
 }));
 
-</dyad-file>
+</anyon-file>
 
 
 

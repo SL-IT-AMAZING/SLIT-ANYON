@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   SupabaseManagementAPI,
   SupabaseManagementAPIError,
+  // TODO: Replace with @anyon/supabase-management-js once the package is forked & published
 } from "@dyad-sh/supabase-management-js";
 import log from "electron-log";
 import { withLock } from "../ipc/utils/lock_utils";
