@@ -24,6 +24,14 @@ export async function createFromTemplate({
     return;
   }
 
+  if (templateId === "next") {
+    await copyDirectoryRecursive(
+      path.join(__dirname, "..", "..", "scaffold-nextjs"),
+      fullAppPath,
+    );
+    return;
+  }
+
   const template = await getTemplateOrThrow(templateId);
   if (!template.githubUrl) {
     throw new Error(`Template ${templateId} has no GitHub URL`);
