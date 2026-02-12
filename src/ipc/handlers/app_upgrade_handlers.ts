@@ -64,10 +64,7 @@ function isComponentTaggerUpgradeNeeded(appPath: string): boolean {
 
   try {
     const viteConfigContent = fs.readFileSync(viteConfigPath, "utf-8");
-    return (
-      !viteConfigContent.includes("anyon-component-tagger") &&
-      !viteConfigContent.includes("@dyad-sh/react-vite-component-tagger")
-    );
+    return !viteConfigContent.includes("anyon-component-tagger");
   } catch (e) {
     logger.error("Error reading vite config", e);
     return false;

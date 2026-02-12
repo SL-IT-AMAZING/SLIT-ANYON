@@ -131,19 +131,21 @@ jobs:
             exit 1
           }
 
-      - name: Create Azure signing metadata
-        if: contains(matrix.os.name, 'windows')
-        shell: pwsh
-        run: |
-          @'
-          {
-            "Endpoint": "https://eus.codesigning.azure.net/",
-            "CodeSigningAccountName": "dyad",
-            "CertificateProfileName": "dyad-tech"
-          }
-          '@ | Out-File -Encoding utf8 signing-metadata.json
-
-          echo "AZURE_METADATA_JSON=$PWD\signing-metadata.json" >> $env:GITHUB_ENV
+      # Windows Azure Trusted Signing is disabled until an ANYON signing account is set up.
+      # To re-enable, create an Azure Trusted Signing account and uncomment the step below.
+      # - name: Create Azure signing metadata
+      #   if: contains(matrix.os.name, 'windows')
+      #   shell: pwsh
+      #   run: |
+      #     @'
+      #     {
+      #       "Endpoint": "https://eus.codesigning.azure.net/",
+      #       "CodeSigningAccountName": "anyon",
+      #       "CertificateProfileName": "anyon-tech"
+      #     }
+      #     '@ | Out-File -Encoding utf8 signing-metadata.json
+      #
+      #     echo "AZURE_METADATA_JSON=$PWD\signing-metadata.json" >> $env:GITHUB_ENV
 
       - name: Import GPG key
         if: contains(matrix.os.name, 'linux') && secrets.GPG_PRIVATE_KEY != ''

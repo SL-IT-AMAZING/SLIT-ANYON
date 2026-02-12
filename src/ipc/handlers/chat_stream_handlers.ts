@@ -107,11 +107,7 @@ import {
   markMessageAsUsingFreeAgentQuota,
   unmarkMessageAsUsingFreeAgentQuota,
 } from "./free_agent_quota_handlers";
-import {
-  migrateLegacyAnyonDir,
-  parsePlanFile,
-  validatePlanId,
-} from "./planUtils";
+import { parsePlanFile, validatePlanId } from "./planUtils";
 
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
@@ -388,7 +384,6 @@ export function registerChatStreamHandlers() {
           const planSlug = implementPlanMatch[1];
           validatePlanId(planSlug);
           const appPath = getAnyonAppPath(chat.app.path);
-          migrateLegacyAnyonDir(appPath);
           const planFilePath = path.join(
             appPath,
             ".anyon",

@@ -17,6 +17,7 @@ Usage:
     Receives JSON on stdin with tool_name and tool_input
     Outputs hookSpecificOutput JSON for allow/deny, or nothing for passthrough
 """
+
 import json
 import os
 import shutil
@@ -26,7 +27,11 @@ from pathlib import Path
 from typing import Optional
 
 # Allow disabling this hook via environment variable
-if os.environ.get("DYAD_DISABLE_CLAUDE_CODE_HOOKS", "").lower() in ("true", "1", "yes"):
+if os.environ.get("ANYON_DISABLE_CLAUDE_CODE_HOOKS", "").lower() in (
+    "true",
+    "1",
+    "yes",
+):
     sys.exit(0)
 
 
@@ -86,10 +91,12 @@ Analyze this request and provide your safety assessment. Respond with ONLY a JSO
             [
                 claude_path,
                 "--print",
-                "--output-format", "text",
-                "--model", "sonnet",
+                "--output-format",
+                "text",
+                "--model",
+                "sonnet",
                 "--no-session-persistence",
-                prompt
+                prompt,
             ],
             capture_output=True,
             text=True,
@@ -110,7 +117,7 @@ Analyze this request and provide your safety assessment. Respond with ONLY a JSO
             # Extract JSON from markdown code fences if present
             # Use a more robust approach that handles braces in string values
             # by finding all potential JSON objects and trying to parse each
-            start_indices = [i for i, c in enumerate(response_text) if c == '{']
+            start_indices = [i for i, c in enumerate(response_text) if c == "{"]
             for start in start_indices:
                 # Find matching closing brace by counting brace depth
                 depth = 0
@@ -120,22 +127,26 @@ Analyze this request and provide your safety assessment. Respond with ONLY a JSO
                     if escape_next:
                         escape_next = False
                         continue
-                    if c == '\\' and in_string:
+                    if c == "\\" and in_string:
                         escape_next = True
                         continue
                     if c == '"' and not escape_next:
                         in_string = not in_string
                         continue
                     if not in_string:
-                        if c == '{':
+                        if c == "{":
                             depth += 1
-                        elif c == '}':
+                        elif c == "}":
                             depth -= 1
                             if depth == 0:
-                                candidate = response_text[start:i + 1]
+                                candidate = response_text[start : i + 1]
                                 try:
                                     parsed = json.loads(candidate)
-                                    if "score" in parsed and parsed["score"] in ("GREEN", "YELLOW", "RED"):
+                                    if "score" in parsed and parsed["score"] in (
+                                        "GREEN",
+                                        "YELLOW",
+                                        "RED",
+                                    ):
                                         return parsed
                                 except json.JSONDecodeError:
                                     pass
@@ -152,7 +163,7 @@ def make_allow_decision() -> dict:
     return {
         "hookSpecificOutput": {
             "hookEventName": "PermissionRequest",
-            "decision": {"behavior": "allow"}
+            "decision": {"behavior": "allow"},
         }
     }
 
@@ -162,10 +173,7 @@ def make_deny_decision(reason: str) -> dict:
     return {
         "hookSpecificOutput": {
             "hookEventName": "PermissionRequest",
-            "decision": {
-                "behavior": "deny",
-                "message": f"[AI-RED] {reason}"
-            }
+            "decision": {"behavior": "deny", "message": f"[AI-RED] {reason}"},
         }
     }
 

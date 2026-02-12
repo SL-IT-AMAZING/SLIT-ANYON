@@ -1,16 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const LEGACY_ANYON_DIR = ".dyad";
-const CURRENT_ANYON_DIR = ".anyon";
-
-export function migrateLegacyAnyonDir(appPath: string): void {
-  const legacyDir = path.join(appPath, LEGACY_ANYON_DIR);
-  const currentDir = path.join(appPath, CURRENT_ANYON_DIR);
-  if (!fs.existsSync(currentDir) && fs.existsSync(legacyDir)) {
-    fs.renameSync(legacyDir, currentDir);
-  }
-}
+const ANYON_DIR = ".anyon";
 
 export async function ensureAnyonGitignored(appPath: string): Promise<void> {
   const gitignorePath = path.join(appPath, ".gitignore");
@@ -23,18 +14,14 @@ export async function ensureAnyonGitignored(appPath: string): Promise<void> {
 
   const lines = content.split(/\r?\n/);
   const alreadyIgnored = lines.some(
-    (line) =>
-      line.trim() === CURRENT_ANYON_DIR ||
-      line.trim() === `${CURRENT_ANYON_DIR}/` ||
-      line.trim() === LEGACY_ANYON_DIR ||
-      line.trim() === `${LEGACY_ANYON_DIR}/`,
+    (line) => line.trim() === ANYON_DIR || line.trim() === `${ANYON_DIR}/`,
   );
   if (alreadyIgnored) return;
 
   const suffix = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
   await fs.promises.writeFile(
     gitignorePath,
-    `${content}${suffix}${CURRENT_ANYON_DIR}/\n`,
+    `${content}${suffix}${ANYON_DIR}/\n`,
     "utf-8",
   );
 }
