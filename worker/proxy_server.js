@@ -36,12 +36,12 @@ let rememberedOrigin = null; // e.g. "http://localhost:5173"
 /* ---------- optional resources for HTML injection ---------------------- */
 
 let stacktraceJsContent = null;
-let dyadShimContent = null;
-let dyadComponentSelectorClientContent = null;
-let dyadScreenshotClientContent = null;
+let anyonShimContent = null;
+let anyonComponentSelectorClientContent = null;
+let anyonScreenshotClientContent = null;
 let htmlToImageContent = null;
-let dyadVisualEditorClientContent = null;
-let dyadLogsContent = null;
+let anyonVisualEditorClientContent = null;
+let anyonLogsContent = null;
 
 try {
   const htmlToImagePath = path.join(
@@ -80,98 +80,98 @@ try {
 }
 
 try {
-  const dyadShimPath = path.join(__dirname, "dyad-shim.js");
-  dyadShimContent = fs.readFileSync(dyadShimPath, "utf-8");
-  parentPort?.postMessage("[proxy-worker] dyad-shim.js loaded.");
+  const anyonShimPath = path.join(__dirname, "anyon-shim.js");
+  anyonShimContent = fs.readFileSync(anyonShimPath, "utf-8");
+  parentPort?.postMessage("[proxy-worker] anyon-shim.js loaded.");
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-shim.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-shim.js: ${error.message}`,
   );
 }
 
 try {
-  const dyadComponentSelectorClientPath = path.join(
+  const anyonComponentSelectorClientPath = path.join(
     __dirname,
-    "dyad-component-selector-client.js",
+    "anyon-component-selector-client.js",
   );
-  dyadComponentSelectorClientContent = fs.readFileSync(
-    dyadComponentSelectorClientPath,
+  anyonComponentSelectorClientContent = fs.readFileSync(
+    anyonComponentSelectorClientPath,
     "utf-8",
   );
   parentPort?.postMessage(
-    "[proxy-worker] dyad-component-selector-client.js loaded.",
+    "[proxy-worker] anyon-component-selector-client.js loaded.",
   );
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-component-selector-client.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-component-selector-client.js: ${error.message}`,
   );
 }
 
 try {
-  const dyadScreenshotClientPath = path.join(
+  const anyonScreenshotClientPath = path.join(
     __dirname,
-    "dyad-screenshot-client.js",
+    "anyon-screenshot-client.js",
   );
-  dyadScreenshotClientContent = fs.readFileSync(
-    dyadScreenshotClientPath,
+  anyonScreenshotClientContent = fs.readFileSync(
+    anyonScreenshotClientPath,
     "utf-8",
   );
-  parentPort?.postMessage("[proxy-worker] dyad-screenshot-client.js loaded.");
+  parentPort?.postMessage("[proxy-worker] anyon-screenshot-client.js loaded.");
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-screenshot-client.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-screenshot-client.js: ${error.message}`,
   );
 }
 
 try {
-  const dyadVisualEditorClientPath = path.join(
+  const anyonVisualEditorClientPath = path.join(
     __dirname,
-    "dyad-visual-editor-client.js",
+    "anyon-visual-editor-client.js",
   );
-  dyadVisualEditorClientContent = fs.readFileSync(
-    dyadVisualEditorClientPath,
+  anyonVisualEditorClientContent = fs.readFileSync(
+    anyonVisualEditorClientPath,
     "utf-8",
   );
   parentPort?.postMessage(
-    "[proxy-worker] dyad-visual-editor-client.js loaded.",
+    "[proxy-worker] anyon-visual-editor-client.js loaded.",
   );
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-visual-editor-client.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-visual-editor-client.js: ${error.message}`,
   );
 }
 
 try {
-  const dyadLogsPath = path.join(__dirname, "dyad_logs.js");
-  dyadLogsContent = fs.readFileSync(dyadLogsPath, "utf-8");
-  parentPort?.postMessage("[proxy-worker] dyad_logs.js loaded.");
+  const anyonLogsPath = path.join(__dirname, "anyon_logs.js");
+  anyonLogsContent = fs.readFileSync(anyonLogsPath, "utf-8");
+  parentPort?.postMessage("[proxy-worker] anyon_logs.js loaded.");
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad_logs.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon_logs.js: ${error.message}`,
   );
 }
 
 // Load Service Worker files
-let dyadSwContent = null;
-let dyadSwRegisterContent = null;
+let anyonSwContent = null;
+let anyonSwRegisterContent = null;
 
 try {
-  const dyadSwPath = path.join(__dirname, "dyad-sw.js");
-  dyadSwContent = fs.readFileSync(dyadSwPath, "utf-8");
-  parentPort?.postMessage("[proxy-worker] dyad-sw.js loaded.");
+  const anyonSwPath = path.join(__dirname, "anyon-sw.js");
+  anyonSwContent = fs.readFileSync(anyonSwPath, "utf-8");
+  parentPort?.postMessage("[proxy-worker] anyon-sw.js loaded.");
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-sw.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-sw.js: ${error.message}`,
   );
 }
 
 try {
-  const dyadSwRegisterPath = path.join(__dirname, "dyad-sw-register.js");
-  dyadSwRegisterContent = fs.readFileSync(dyadSwRegisterPath, "utf-8");
-  parentPort?.postMessage("[proxy-worker] dyad-sw-register.js loaded.");
+  const anyonSwRegisterPath = path.join(__dirname, "anyon-sw-register.js");
+  anyonSwRegisterContent = fs.readFileSync(anyonSwRegisterPath, "utf-8");
+  parentPort?.postMessage("[proxy-worker] anyon-sw-register.js loaded.");
 } catch (error) {
   parentPort?.postMessage(
-    `[proxy-worker] Failed to read dyad-sw-register.js: ${error.message}`,
+    `[proxy-worker] Failed to read anyon-sw-register.js: ${error.message}`,
   );
 }
 
@@ -184,8 +184,8 @@ function needsInjection(pathname) {
 
 function injectHTML(buf) {
   let txt = buf.toString("utf8");
-  // These are strings that were used since the first version of the dyad shim.
-  // If the dyad shim is used from legacy apps which came pre-baked with the shim
+  // These are strings that were used since the first version of the anyon shim.
+  // If the anyon shim is used from legacy apps which came pre-baked with the shim
   // as a vite plugin, then do not inject the shim twice to avoid weird behaviors.
   const legacyAppWithShim =
     txt.includes("window-error") && txt.includes("unhandled-rejection");
@@ -201,19 +201,19 @@ function injectHTML(buf) {
       );
     }
 
-    if (dyadShimContent) {
-      scripts.push(`<script>${dyadShimContent}</script>`);
+    if (anyonShimContent) {
+      scripts.push(`<script>${anyonShimContent}</script>`);
     } else {
       scripts.push(
-        '<script>console.warn("[proxy-worker] dyad shim was not injected.");</script>',
+        '<script>console.warn("[proxy-worker] anyon shim was not injected.");</script>',
       );
     }
   }
-  if (dyadComponentSelectorClientContent) {
-    scripts.push(`<script>${dyadComponentSelectorClientContent}</script>`);
+  if (anyonComponentSelectorClientContent) {
+    scripts.push(`<script>${anyonComponentSelectorClientContent}</script>`);
   } else {
     scripts.push(
-      '<script>console.warn("[proxy-worker] dyad component selector client was not injected.");</script>',
+      '<script>console.warn("[proxy-worker] anyon component selector client was not injected.");</script>',
     );
   }
   if (htmlToImageContent) {
@@ -229,32 +229,32 @@ function injectHTML(buf) {
       "[proxy-worker] WARNING: html-to-image not injected!",
     );
   }
-  if (dyadScreenshotClientContent) {
-    scripts.push(`<script>${dyadScreenshotClientContent}</script>`);
+  if (anyonScreenshotClientContent) {
+    scripts.push(`<script>${anyonScreenshotClientContent}</script>`);
   } else {
     scripts.push(
-      '<script>console.warn("[proxy-worker] dyad screenshot client was not injected.");</script>',
+      '<script>console.warn("[proxy-worker] anyon screenshot client was not injected.");</script>',
     );
   }
-  if (dyadVisualEditorClientContent) {
-    scripts.push(`<script>${dyadVisualEditorClientContent}</script>`);
+  if (anyonVisualEditorClientContent) {
+    scripts.push(`<script>${anyonVisualEditorClientContent}</script>`);
   } else {
     scripts.push(
-      '<script>console.warn("[proxy-worker] dyad visual editor client was not injected.");</script>',
+      '<script>console.warn("[proxy-worker] anyon visual editor client was not injected.");</script>',
     );
   }
-  if (dyadLogsContent) {
-    scripts.push(`<script>${dyadLogsContent}</script>`);
+  if (anyonLogsContent) {
+    scripts.push(`<script>${anyonLogsContent}</script>`);
   } else {
     scripts.push(
-      '<script>console.warn("[proxy-worker] dyad_logs.js was not injected.");</script>',
+      '<script>console.warn("[proxy-worker] anyon_logs.js was not injected.");</script>',
     );
   }
-  if (dyadSwRegisterContent) {
-    scripts.push(`<script>${dyadSwRegisterContent}</script>`);
+  if (anyonSwRegisterContent) {
+    scripts.push(`<script>${anyonSwRegisterContent}</script>`);
   } else {
     scripts.push(
-      '<script>console.warn("[proxy-worker] dyad-sw-register.js was not injected.");</script>',
+      '<script>console.warn("[proxy-worker] anyon-sw-register.js was not injected.");</script>',
     );
   }
   const allScripts = scripts.join("\n");
@@ -285,14 +285,14 @@ function buildTargetURL(clientReq) {
 
 const server = http.createServer((clientReq, clientRes) => {
   // Special handling for Service Worker file
-  if (clientReq.url === "/dyad-sw.js") {
-    if (dyadSwContent) {
+  if (clientReq.url === "/anyon-sw.js") {
+    if (anyonSwContent) {
       clientRes.writeHead(200, {
         "content-type": "application/javascript",
         "service-worker-allowed": "/",
         "cache-control": "no-cache",
       });
-      clientRes.end(dyadSwContent);
+      clientRes.end(anyonSwContent);
       return;
     } else {
       clientRes.writeHead(404, { "content-type": "text/plain" });

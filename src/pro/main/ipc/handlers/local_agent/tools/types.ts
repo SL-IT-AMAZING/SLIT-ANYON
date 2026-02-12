@@ -52,15 +52,15 @@ export interface AgentContext {
   chatSummary?: string;
   /** Turn-scoped todo list for agent task tracking */
   todos: Todo[];
-  /** Request ID for tracking requests to the Dyad engine */
-  dyadRequestId: string;
+  /** Request ID for tracking requests to the Anyon engine */
+  anyonRequestId: string;
   /** Tracks file edit tool usage per file for telemetry */
   fileEditTracker: FileEditTracker;
   /**
    * If true, the user has ANYON Pro enabled.
    * Engine-dependent tools require this to access the ANYON Pro API.
    */
-  isDyadPro: boolean;
+  isAnyonPro: boolean;
   /**
    * Streams accumulated XML to UI without persisting to DB (for live preview).
    * Call this repeatedly with the full accumulated XML so far.

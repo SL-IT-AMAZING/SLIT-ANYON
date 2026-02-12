@@ -14,7 +14,7 @@
 - text: Search & Replace Index.tsx
 - img
 - text: src/pages/Index.tsx
-- paragraph: "[[dyad-dump-path=*]]"
+- paragraph: "[[anyon-dump-path=*]]"
 - img
 - text: Warning Could not apply Turbo Edits properly for some of the files; re-generating code......
 - img
@@ -24,7 +24,7 @@
   - img
 - img
 - text: "src/pages/Index.tsx Summary: Rewrite file."
-- paragraph: "[[dyad-dump-path=*]]"
+- paragraph: "[[anyon-dump-path=*]]"
 - button "Copy":
   - img
 - img

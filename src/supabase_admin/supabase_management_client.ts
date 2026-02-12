@@ -1,20 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
-import { withLock } from "../ipc/utils/lock_utils";
-import { readSettings, writeSettings } from "../main/settings";
+import log from "electron-log";
 import {
   SupabaseManagementAPI,
   SupabaseManagementAPIError,
-} from "@dyad-sh/supabase-management-js";
-import log from "electron-log";
-import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
-import type { SupabaseOrganizationCredentials } from "../lib/schemas";
-import { oauthEndpoints } from "../lib/oauthConfig";
+} from "supabase-management-js";
+import { withLock } from "../ipc/utils/lock_utils";
 import {
-  fetchWithRetry,
   RateLimitError,
+  fetchWithRetry,
   retryWithRateLimit,
 } from "../ipc/utils/retryWithRateLimit";
+import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
+import { oauthEndpoints } from "../lib/oauthConfig";
+import type { SupabaseOrganizationCredentials } from "../lib/schemas";
+import { readSettings, writeSettings } from "../main/settings";
 
 const fsPromises = fs.promises;
 

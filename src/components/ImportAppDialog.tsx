@@ -48,7 +48,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
   const [isCheckingName, setIsCheckingName] = useState<boolean>(false);
   const [installCommand, setInstallCommand] = useState("");
   const [startCommand, setStartCommand] = useState("");
-  const [copyToDyadApps, setCopyToDyadApps] = useState(true);
+  const [copyToAnyonApps, setCopyToAnyonApps] = useState(true);
   const navigate = useNavigate();
   const { streamMessage } = useStreamChat({ hasChatId: false });
   const { refreshApps } = useLoadApps();
@@ -75,12 +75,12 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     }
   }, [isOpen, isAuthenticated]);
 
-  // Re-check app name when copyToDyadApps changes
+  // Re-check app name when copyToAnyonApps changes
   useEffect(() => {
     if (customAppName.trim() && selectedPath) {
-      checkAppName({ name: customAppName, skipCopy: !copyToDyadApps });
+      checkAppName({ name: customAppName, skipCopy: !copyToAnyonApps });
     }
-  }, [copyToDyadApps]);
+  }, [copyToAnyonApps]);
 
   const fetchRepos = async () => {
     setLoading(true);
@@ -239,7 +239,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       // Use the folder name from the IPC response
       setCustomAppName(result.name);
       // Check if the app name already exists
-      await checkAppName({ name: result.name, skipCopy: !copyToDyadApps });
+      await checkAppName({ name: result.name, skipCopy: !copyToAnyonApps });
       return result;
     },
     onError: (error: Error) => {
@@ -255,13 +255,13 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         appName: customAppName,
         installCommand: installCommand || undefined,
         startCommand: startCommand || undefined,
-        skipCopy: !copyToDyadApps,
+        skipCopy: !copyToAnyonApps,
       });
     },
     onSuccess: async (result) => {
       showSuccess(
         !hasAiRules
-          ? "App imported successfully. Dyad will automatically generate an AI_RULES.md now."
+          ? "App imported successfully. Anyon will automatically generate an AI_RULES.md now."
           : "App imported successfully",
       );
       onClose();
@@ -296,7 +296,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     setNameExists(false);
     setInstallCommand("");
     setStartCommand("");
-    setCopyToDyadApps(true);
+    setCopyToAnyonApps(true);
   };
 
   const handleAppNameChange = async (
@@ -305,7 +305,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     const newName = e.target.value;
     setCustomAppName(newName);
     if (newName.trim()) {
-      await checkAppName({ name: newName, skipCopy: !copyToDyadApps });
+      await checkAppName({ name: newName, skipCopy: !copyToAnyonApps });
     }
   };
 
@@ -396,21 +396,21 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
 
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="copy-to-dyad-apps"
-                        aria-label="Copy to the dyad-apps folder"
-                        checked={copyToDyadApps}
+                        id="copy-to-anyon-apps"
+                        aria-label="Copy to the anyon-apps folder"
+                        checked={copyToAnyonApps}
                         onCheckedChange={(checked) =>
-                          setCopyToDyadApps(checked === true)
+                          setCopyToAnyonApps(checked === true)
                         }
                         disabled={importAppMutation.isPending}
                       />
                       <label
-                        htmlFor="copy-to-dyad-apps"
+                        htmlFor="copy-to-anyon-apps"
                         className="text-xs sm:text-sm cursor-pointer"
                       >
                         Copy to the{" "}
                         <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                          dyad-apps
+                          anyon-apps
                         </code>{" "}
                         folder
                       </label>
@@ -486,14 +486,14 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                     {hasAiRules === false && (
                       <Alert className="border-yellow-500/20 text-yellow-500 flex items-start gap-2">
                         <span
-                          title="AI_RULES.md lets Dyad know which tech stack to use for editing the app"
+                          title="AI_RULES.md lets Anyon know which tech stack to use for editing the app"
                           className="flex-shrink-0 mt-1"
                         >
                           <Info className="h-4 w-4" />
                         </span>
                         <AlertDescription className="text-xs sm:text-sm">
-                          No AI_RULES.md found. Dyad will automatically generate
-                          one after importing.
+                          No AI_RULES.md found. Anyon will automatically
+                          generate one after importing.
                         </AlertDescription>
                       </Alert>
                     )}

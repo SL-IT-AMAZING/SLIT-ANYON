@@ -142,16 +142,16 @@ export const editFileTool: ToolDefinition<z.infer<typeof editFileSchema>> = {
   modifiesState: true,
 
   // Requires ANYON Pro engine API
-  isEnabled: (ctx) => ctx.isDyadPro,
+  isEnabled: (ctx) => ctx.isAnyonPro,
 
   getConsentPreview: (args) => `Edit ${args.path}`,
 
   buildXml: (args, isComplete) => {
     if (!args.path) return undefined;
 
-    let xml = `<dyad-edit path="${escapeXmlAttr(args.path)}" description="${escapeXmlAttr(args.instructions ?? "")}">\n${args.content ?? ""}`;
+    let xml = `<anyon-edit path="${escapeXmlAttr(args.path)}" description="${escapeXmlAttr(args.instructions ?? "")}">\n${args.content ?? ""}`;
     if (isComplete) {
-      xml += "\n</dyad-edit>";
+      xml += "\n</anyon-edit>";
     }
     return xml;
   },

@@ -22,14 +22,14 @@ import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
 import { getUserRolloutBucket } from "./lib/rollout";
 import type { UserSettings } from "./lib/schemas";
 import { initSentryMain } from "./lib/sentry";
-import { handleDyadProReturn } from "./main/pro";
+import { handleAnyonProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
   readSettings,
   writeSettings,
 } from "./main/settings";
 import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
-import { getDyadAppsBaseDirectory } from "./paths/paths";
+import { getAnyonAppsBaseDirectory } from "./paths/paths";
 import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai_messages_cleanup";
 import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
 import {
@@ -103,13 +103,13 @@ export async function onReady() {
 
   const settings = readSettings();
 
-  // Add dyad-apps directory to git safe.directory (required for Windows).
+  // Add anyon-apps directory to git safe.directory (required for Windows).
   // The trailing /* allows access to all repositories under the named directory.
   // See: https://git-scm.com/docs/git-config#Documentation/git-config.txt-safedirectory
   if (settings.enableNativeGit) {
     // Don't need to await because this only needs to run before
-    // the user starts interacting with Dyad app and uses a git-related feature.
-    gitAddSafeDirectory(`${getDyadAppsBaseDirectory()}/*`);
+    // the user starts interacting with Anyon app and uses a git-related feature.
+    gitAddSafeDirectory(`${getAnyonAppsBaseDirectory()}/*`);
   }
 
   // Check if app was force-closed
@@ -519,7 +519,7 @@ async function handleDeepLinkReturn(url: string) {
       dialog.showErrorBox("Invalid URL", "Expected key");
       return;
     }
-    handleDyadProReturn({
+    handleAnyonProReturn({
       apiKey,
     });
     // Send message to renderer to trigger re-render

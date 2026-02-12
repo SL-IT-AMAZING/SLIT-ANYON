@@ -1,10 +1,10 @@
-# Dyad System Prompts Documentation
+# Anyon System Prompts Documentation
 
-This directory contains documentation for all system prompts used in Dyad, an Electron-based AI code editor.
+This directory contains documentation for all system prompts used in Anyon, an Electron-based AI code editor.
 
 ## Overview
 
-Dyad uses multiple specialized system prompts to handle different interaction modes and features. Each prompt is designed for a specific purpose and includes instructions, constraints, and examples to guide the AI's behavior.
+Anyon uses multiple specialized system prompts to handle different interaction modes and features. Each prompt is designed for a specific purpose and includes instructions, constraints, and examples to guide the AI's behavior.
 
 ## Chat Modes
 
@@ -73,16 +73,16 @@ When no `AI_RULES.md` exists, the default rules specify:
 
 ## Custom Tags
 
-Dyad uses custom XML-like tags for structured output:
+Anyon uses custom XML-like tags for structured output:
 
-| Tag                       | Purpose                                       |
-| ------------------------- | --------------------------------------------- |
-| `<dyad-write>`            | Create or update files                        |
-| `<dyad-delete>`           | Remove files                                  |
-| `<dyad-rename>`           | Rename files                                  |
-| `<dyad-add-dependency>`   | Install npm packages                          |
-| `<dyad-command>`          | Suggest UI commands (rebuild/restart/refresh) |
-| `<dyad-chat-summary>`     | Set chat title                                |
-| `<dyad-search-replace>`   | Surgical file edits                           |
-| `<dyad-add-integration>`  | Add integrations (e.g., Supabase)             |
-| `<dyad-security-finding>` | Security review findings                      |
+| Tag                        | Purpose                                       |
+| -------------------------- | --------------------------------------------- |
+| `<anyon-write>`            | Create or update files                        |
+| `<anyon-delete>`           | Remove files                                  |
+| `<anyon-rename>`           | Rename files                                  |
+| `<anyon-add-dependency>`   | Install npm packages                          |
+| `<anyon-command>`          | Suggest UI commands (rebuild/restart/refresh) |
+| `<anyon-chat-summary>`     | Set chat title                                |
+| `<anyon-search-replace>`   | Surgical file edits                           |
+| `<anyon-add-integration>`  | Add integrations (e.g., Supabase)             |
+| `<anyon-security-finding>` | Security review findings                      |

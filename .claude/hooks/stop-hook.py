@@ -14,6 +14,7 @@ Usage:
     Receives JSON on stdin with session info including transcript_path
     Outputs JSON with decision="block" and reason to continue, or no output to allow stop
 """
+
 import json
 import os
 import shutil
@@ -22,7 +23,11 @@ import sys
 from pathlib import Path
 
 # Allow disabling this hook via environment variable
-if os.environ.get("DYAD_DISABLE_CLAUDE_CODE_HOOKS", "").lower() in ("true", "1", "yes"):
+if os.environ.get("ANYON_DISABLE_CLAUDE_CODE_HOOKS", "").lower() in (
+    "true",
+    "1",
+    "yes",
+):
     sys.exit(0)
 
 
@@ -55,10 +60,9 @@ def extract_task_tool_calls(transcript_path: str) -> list[dict]:
 
                     tool_name = part.get("name", "")
                     if tool_name.startswith("Task"):
-                        task_calls.append({
-                            "tool_name": tool_name,
-                            "input": part.get("input", {})
-                        })
+                        task_calls.append(
+                            {"tool_name": tool_name, "input": part.get("input", {})}
+                        )
 
             except json.JSONDecodeError:
                 continue
@@ -110,7 +114,9 @@ def read_transcript(transcript_path: str, max_chars: int = 32000) -> str:
                     content = entry.get("message", {}).get("content", "")
                     if isinstance(content, list):
                         text_parts = [
-                            p.get("text", "") for p in content if p.get("type") == "text"
+                            p.get("text", "")
+                            for p in content
+                            if p.get("type") == "text"
                         ]
                         content = " ".join(text_parts)
                     formatted.append(f"USER: {content[:500]}")
@@ -153,7 +159,9 @@ def read_transcript(transcript_path: str, max_chars: int = 32000) -> str:
         return ""
 
 
-def analyze_with_claude(transcript: str, task_calls: list[dict], cwd: str) -> dict | None:
+def analyze_with_claude(
+    transcript: str, task_calls: list[dict], cwd: str
+) -> dict | None:
     """
     Use Claude CLI to analyze whether Claude should continue working.
     Returns dict with 'continue' (bool) and 'reason' (str) or None on failure.
@@ -227,10 +235,13 @@ JSON response:"""
             [
                 claude_path,
                 "--print",
-                "--output-format", "text",
-                "--model", "sonnet",
+                "--output-format",
+                "text",
+                "--model",
+                "sonnet",
                 "--no-session-persistence",
-                "-p", "-"
+                "-p",
+                "-",
             ],
             input=prompt,
             capture_output=True,
@@ -253,7 +264,7 @@ JSON response:"""
             pass
 
         # Extract JSON from response (handle markdown code fences, etc.)
-        start_indices = [i for i, c in enumerate(response_text) if c == '{']
+        start_indices = [i for i, c in enumerate(response_text) if c == "{"]
         for start in start_indices:
             depth = 0
             in_string = False
@@ -262,19 +273,19 @@ JSON response:"""
                 if escape_next:
                     escape_next = False
                     continue
-                if c == '\\' and in_string:
+                if c == "\\" and in_string:
                     escape_next = True
                     continue
                 if c == '"' and not escape_next:
                     in_string = not in_string
                     continue
                 if not in_string:
-                    if c == '{':
+                    if c == "{":
                         depth += 1
-                    elif c == '}':
+                    elif c == "}":
                         depth -= 1
                         if depth == 0:
-                            candidate = response_text[start:i + 1]
+                            candidate = response_text[start : i + 1]
                             try:
                                 parsed = json.loads(candidate)
                                 if "continue" in parsed:
@@ -291,10 +302,7 @@ JSON response:"""
 
 def make_block_decision(reason: str) -> dict:
     """Block Claude from stopping - force continuation."""
-    return {
-        "decision": "block",
-        "reason": reason
-    }
+    return {"decision": "block", "reason": reason}
 
 
 def main():

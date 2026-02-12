@@ -73,7 +73,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 ### 방법 3: 앱 설정에서 동적 주입
 
 - [ ] `src/lib/schemas.ts`의 UserSettings에 ANYON Pro API 키 필드 확인
-  - 기존 `enableDyadPro` → `enableAnyonPro`로 리네이밍 (Phase 2)
+  - 기존 `enableAnyonPro` → `enableAnyonPro`로 리네이밍 (Phase 2)
   - 기존 `providerSettings.auto.apiKey` → ANYON Pro API 키 저장 위치
 
 ### 권장 접근법
@@ -89,13 +89,13 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
 > 난이도: 중간 | 공수: 2-4시간 | 의존성: 결제 포탈 (pay.any-on.dev)
 
-### 현재 Dyad Pro 플로우 (참고용)
+### 현재 Anyon Pro 플로우 (참고용)
 
 ```
 1. 유저가 "Get Pro" 클릭
-2. 브라우저에서 academy.dyad.sh/checkout 열림
+2. 브라우저에서 academy.anyon.sh/checkout 열림
 3. 결제 완료
-4. dyad://dyad-pro-return?key=<API_KEY> 딥링크로 앱에 전달
+4. anyon://anyon-pro-return?key=<API_KEY> 딥링크로 앱에 전달
 5. 앱이 키 저장 + Pro 활성화
 ```
 
@@ -112,15 +112,15 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
 ### 변경 파일
 
-- [ ] `src/main/pro.ts` — `handleDyadProReturn()` → `handleAnyonProReturn()`
-  - 딥링크 hostname: `"dyad-pro-return"` → `"pro-return"`
+- [ ] `src/main/pro.ts` — `handleAnyonProReturn()` → `handleAnyonProReturn()`
+  - 딥링크 hostname: `"anyon-pro-return"` → `"pro-return"`
   - API 키 저장 로직 유지
 
 - [ ] `src/main.ts` — 딥링크 라우팅 (라인 441+)
 
   ```typescript
   // 현재
-  if (parsed.hostname === "dyad-pro-return") { ... }
+  if (parsed.hostname === "anyon-pro-return") { ... }
 
   // 변경
   if (parsed.hostname === "pro-return") { ... }
@@ -136,7 +136,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
 > 난이도: 쉬움 | 공수: 1-2시간 | 의존성: 없음
 
-`dyad://` → `anyon://` 전체 교체.
+`anyon://` → `anyon://` 전체 교체.
 
 ### Electron 앱 (프로토콜 등록)
 
@@ -144,7 +144,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
   ```typescript
   // 현재
-  protocols: [{ name: "Dyad", schemes: ["dyad"] }];
+  protocols: [{ name: "Anyon", schemes: ["anyon"] }];
 
   // 변경
   protocols: [{ name: "ANYON", schemes: ["anyon"] }];
@@ -154,7 +154,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
   ```typescript
   // 현재
-  mimeType: ["x-scheme-handler/dyad"];
+  mimeType: ["x-scheme-handler/anyon"];
 
   // 변경
   mimeType: ["x-scheme-handler/anyon"];
@@ -164,7 +164,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
   ```typescript
   // 현재
-  app.setAsDefaultProtocolClient("dyad", ...)
+  app.setAsDefaultProtocolClient("anyon", ...)
 
   // 변경
   app.setAsDefaultProtocolClient("anyon", ...)
@@ -174,7 +174,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
   ```typescript
   // 현재
-  if (parsed.protocol !== "dyad:")
+  if (parsed.protocol !== "anyon:")
 
   // 변경
   if (parsed.protocol !== "anyon:")
@@ -186,7 +186,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
   ```typescript
   // 현재
-  redirect(`dyad://neon-oauth-return?...`);
+  redirect(`anyon://neon-oauth-return?...`);
 
   // 변경
   redirect(`anyon://neon-oauth-return?...`);
@@ -201,7 +201,7 @@ OpenCode에 "anyon" 또는 "slit" 프로바이더를 커스텀 추가:
 
 > 난이도: 낮음 | 공수: 1시간 | 의존성: api.any-on.dev 서버
 
-Dyad 오리지널에서 `api.dyad.sh`가 하던 역할:
+Anyon 오리지널에서 `api.anyon.sh`가 하던 역할:
 
 1. `/v1/user/info` — Pro 유저 크레딧/예산 조회
 2. `/health` — 서버 시간 (무료 쿼터 치트 방지)

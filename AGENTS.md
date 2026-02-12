@@ -14,10 +14,10 @@ npm run init-precommit
 
 RUN THE FOLLOWING CHECKS before you do a commit.
 
-If you have access to the `/dyad:lint` skill, use it to run all pre-commit checks automatically:
+If you have access to the `/anyon:lint` skill, use it to run all pre-commit checks automatically:
 
 ```
-/dyad:lint
+/anyon:lint
 ```
 
 Otherwise, run the following commands directly:
@@ -203,8 +203,8 @@ DEBUG=pw:browser PLAYWRIGHT_HTML_OPEN=never npm run e2e
 When pushing changes and creating PRs:
 
 1. If the branch already has an associated PR, push to whichever remote the branch is tracking.
-2. If the branch hasn't been pushed before, default to pushing to `origin` (the fork `wwwillchen/dyad`), then create a PR from the fork to the upstream repo (`dyad-sh/dyad`).
-3. If you cannot push to the fork due to permissions, push directly to `upstream` (`dyad-sh/dyad`) as a last resort.
+2. If the branch hasn't been pushed before, default to pushing to `origin` (the fork `wwwillchen/anyon`), then create a PR from the fork to the upstream repo (`anyon-sh/anyon`).
+3. If you cannot push to the fork due to permissions, push directly to `upstream` (`anyon-sh/anyon`) as a last resort.
 
 ### Skipping automated review
 

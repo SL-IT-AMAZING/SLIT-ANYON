@@ -33,9 +33,9 @@ export const writeFileTool: ToolDefinition<z.infer<typeof writeFileSchema>> = {
   buildXml: (args, isComplete) => {
     if (!args.path) return undefined;
 
-    let xml = `<dyad-write path="${escapeXmlAttr(args.path)}" description="${escapeXmlAttr(args.description ?? "")}">\n${args.content ?? ""}`;
+    let xml = `<anyon-write path="${escapeXmlAttr(args.path)}" description="${escapeXmlAttr(args.description ?? "")}">\n${args.content ?? ""}`;
     if (isComplete) {
-      xml += "\n</dyad-write>";
+      xml += "\n</anyon-write>";
     }
     return xml;
   },

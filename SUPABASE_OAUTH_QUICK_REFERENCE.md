@@ -1,4 +1,4 @@
-# Supabase OAuth in Dyad - Quick Reference
+# Supabase OAuth in Anyon - Quick Reference
 
 ## What Gets Enabled After OAuth
 

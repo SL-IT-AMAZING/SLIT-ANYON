@@ -1,25 +1,24 @@
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
 
-/**
- * Gets the base dyad-apps directory path (without a specific app subdirectory)
- */
-export function getDyadAppsBaseDirectory(): string {
+const DIR_NAME = "anyon-apps";
+
+export function getAnyonAppsBaseDirectory(): string {
   if (IS_TEST_BUILD) {
     const electron = getElectron();
-    return path.join(electron!.app.getPath("userData"), "dyad-apps");
+    return path.join(electron!.app.getPath("userData"), DIR_NAME);
   }
-  return path.join(os.homedir(), "dyad-apps");
+  return path.join(os.homedir(), DIR_NAME);
 }
 
-export function getDyadAppPath(appPath: string): string {
+export function getAnyonAppPath(appPath: string): string {
   // If appPath is already absolute, use it as-is
   if (path.isAbsolute(appPath)) {
     return appPath;
   }
   // Otherwise, use the default base path
-  return path.join(getDyadAppsBaseDirectory(), appPath);
+  return path.join(getAnyonAppsBaseDirectory(), appPath);
 }
 
 export function getTypeScriptCachePath(): string {

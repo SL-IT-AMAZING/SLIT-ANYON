@@ -49,7 +49,7 @@
 - button "Copy Request ID":
   - img
 - paragraph: "[dump]"
-- paragraph: "[[dyad-dump-path=*]]"
+- paragraph: "[[anyon-dump-path=*]]"
 - button "Copy":
   - img
 - img

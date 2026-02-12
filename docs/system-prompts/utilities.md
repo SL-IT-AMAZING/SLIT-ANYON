@@ -1,6 +1,6 @@
 # Utility System Prompts
 
-This document covers utility prompts used across Dyad for specific tasks.
+This document covers utility prompts used across Anyon for specific tasks.
 
 ## Thinking Prompt
 
@@ -107,9 +107,9 @@ Summarize AI coding chat sessions with focus on technical changes and file modif
 - `file1.ts` - Description of changes
 - `file2.py` - Description of changes
 
-<dyad-chat-summary>
+<anyon-chat-summary>
 [Concise summary - less than a sentence, more than a few words]
-</dyad-chat-summary>
+</anyon-chat-summary>
 ```
 
 ### Focus Areas
@@ -146,7 +146,7 @@ Your task is to analyze the conversation and provide:
 [Format shown above]
 
 **Reminder:**
-YOU MUST ALWAYS INCLUDE EXACTLY ONE <dyad-chat-summary> TAG AT THE END.
+YOU MUST ALWAYS INCLUDE EXACTLY ONE <anyon-chat-summary> TAG AT THE END.
 ```
 
 ---
@@ -174,12 +174,12 @@ Security expert identifying vulnerabilities that could lead to data breaches, le
 ### Output Format
 
 ```xml
-<dyad-security-finding title="Brief title" level="critical|high|medium|low">
+<anyon-security-finding title="Brief title" level="critical|high|medium|low">
 **What**: Plain-language explanation
 **Risk**: Data exposure impact (e.g., "All customer emails could be stolen")
 **Potential Solutions**: Options ranked by effectiveness
 **Relevant Files**: Relevant file paths
-</dyad-security-finding>
+</anyon-security-finding>
 ```
 
 ### Severity Levels
@@ -212,7 +212,7 @@ Security expert identifying vulnerabilities that could lead to data breaches, le
 [Format shown above]
 
 # Example:
-<dyad-security-finding title="SQL Injection in User Lookup" level="critical">
+<anyon-security-finding title="SQL Injection in User Lookup" level="critical">
 **What**: User input flows directly into database queries without validation, allowing attackers to execute arbitrary SQL commands
 
 **Risk**: An attacker could steal all customer data, delete your entire database, or take over admin accounts by manipulating the URL
@@ -223,7 +223,7 @@ Security expert identifying vulnerabilities that could lead to data breaches, le
 3. Implement an ORM like Prisma or TypeORM that prevents SQL injection by default
 
 **Relevant Files**: `src/api/users.ts`
-</dyad-security-finding>
+</anyon-security-finding>
 
 # Severity Levels
 [Levels defined above]

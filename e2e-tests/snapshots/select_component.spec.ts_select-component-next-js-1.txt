@@ -138,7 +138,7 @@ tell them that they need to add supabase to their app.
 
 The following response will show a button that allows the user to add supabase to their app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 # Examples
 
@@ -152,7 +152,7 @@ I want to use supabase in my app.
 
 You need to first add Supabase to your app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 ## Example 2: User wants to add auth to their app
 
@@ -164,13 +164,13 @@ I want to add auth to my app.
 
 You need to first add Supabase to your app and then we can add auth.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 
 ===
 role: user
-message: This is my codebase. <dyad-file path="src/app/page.tsx">
-import { MadeWithDyad } from "@/components/made-with-dyad";
+message: This is my codebase. <anyon-file path="src/app/page.tsx">
+import { MadeWithAnyon } from "@/components/made-with-anyon";
 
 export default function Home() {
   return (
@@ -178,12 +178,12 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-1 items-center sm:items-start">
         <h1>Blank page</h1>
       </main>
-      <MadeWithDyad />
+      <MadeWithAnyon />
     </div>
   );
 }
 
-</dyad-file>
+</anyon-file>
 
 
 
@@ -212,6 +212,6 @@ Snippet:
       <main className="flex flex-col gap-8 row-start-1 items-center sm:items-start">
         <h1>Blank page</h1> // <-- EDIT HERE
       </main>
-      <MadeWithDyad />
+      <MadeWithAnyon />
     </div>
 ```

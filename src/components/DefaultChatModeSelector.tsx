@@ -8,7 +8,7 @@ import {
 import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { useSettings } from "@/hooks/useSettings";
 import type { ChatMode } from "@/lib/schemas";
-import { getEffectiveDefaultChatMode, isDyadProEnabled } from "@/lib/schemas";
+import { getEffectiveDefaultChatMode, isAnyonProEnabled } from "@/lib/schemas";
 
 export function DefaultChatModeSelector() {
   const { settings, updateSettings, envVars } = useSettings();
@@ -18,7 +18,7 @@ export function DefaultChatModeSelector() {
     return null;
   }
 
-  const isProEnabled = isDyadProEnabled(settings);
+  const isProEnabled = isAnyonProEnabled(settings);
   // Wait for quota status to load before determining effective default
   const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
   const effectiveDefault = getEffectiveDefaultChatMode(

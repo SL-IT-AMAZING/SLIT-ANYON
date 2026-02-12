@@ -83,7 +83,7 @@ After presenting the plan:
 # Important Constraints
 
 - **NEVER write code or make file changes in plan mode**
-- **NEVER use <dyad-write>, <dyad-edit>, <dyad-delete>, <dyad-add-dependency> or any code-producing tags**
+- **NEVER use <anyon-write>, <anyon-edit>, <anyon-delete>, <anyon-add-dependency> or any code-producing tags**
 - Focus entirely on requirements gathering and planning
 - Keep plans clear, actionable, and well-structured
 - Ask clarifying questions proactively

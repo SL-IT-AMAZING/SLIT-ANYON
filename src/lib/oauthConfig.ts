@@ -1,7 +1,7 @@
 /**
  * Centralized OAuth server URL configuration.
  *
- * All references to oauth.dyad.sh / supabase-oauth.dyad.sh are replaced
+ * All references to oauth.anyon.sh / supabase-oauth.anyon.sh are replaced
  * by this single module so the proxy origin can be changed in one place.
  */
 

@@ -56,7 +56,7 @@ Always include the placeholder.svg file in your output file tree.
 
 async function callWebCrawl(
   url: string,
-  ctx: Pick<AgentContext, "dyadRequestId">,
+  ctx: Pick<AgentContext, "anyonRequestId">,
 ): Promise<z.infer<typeof webCrawlResponseSchema>> {
   const response = await engineFetch(ctx, "/tools/web-crawl", {
     method: "POST",
@@ -80,16 +80,16 @@ export const webCrawlTool: ToolDefinition<z.infer<typeof webCrawlSchema>> = {
   inputSchema: webCrawlSchema,
 
   // Requires ANYON Pro engine API
-  isEnabled: (ctx) => ctx.isDyadPro,
+  isEnabled: (ctx) => ctx.isAnyonPro,
 
   getConsentPreview: (args) => `Crawl URL: "${args.url}"`,
 
   buildXml: (args, isComplete) => {
     if (!args.url) return undefined;
 
-    let xml = `<dyad-web-crawl>${escapeXmlContent(args.url)}`;
+    let xml = `<anyon-web-crawl>${escapeXmlContent(args.url)}`;
     if (isComplete) {
-      xml += "</dyad-web-crawl>";
+      xml += "</anyon-web-crawl>";
     }
     return xml;
   },

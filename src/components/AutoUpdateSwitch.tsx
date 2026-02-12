@@ -25,7 +25,7 @@ export function AutoUpdateSwitch() {
             action: {
               label: "Restart ANYON",
               onClick: () => {
-                ipc.system.restartDyad();
+                ipc.system.restartAnyon();
               },
             },
           });

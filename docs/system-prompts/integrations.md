@@ -1,6 +1,6 @@
 # Integration System Prompts
 
-This document covers prompts for external service integrations in Dyad.
+This document covers prompts for external service integrations in Anyon.
 
 ## Supabase Integration
 
@@ -162,7 +162,7 @@ Prompt user to add Supabase integration when they request features requiring aut
 ### Integration Tag
 
 ```xml
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 ```
 
 ### Full Prompt
@@ -173,7 +173,7 @@ tell them that they need to add supabase to their app.
 
 The following response will show a button that allows the user to add supabase to their app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 # Examples
 
@@ -185,7 +185,7 @@ I want to use supabase in my app.
 ### Assistant response
 You need to first add Supabase to your app.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 
 ## Example 2: User wants to add auth to their app
 
@@ -195,5 +195,5 @@ I want to add auth to my app.
 ### Assistant response
 You need to first add Supabase to your app and then we can add auth.
 
-<dyad-add-integration provider="supabase"></dyad-add-integration>
+<anyon-add-integration provider="supabase"></anyon-add-integration>
 ```

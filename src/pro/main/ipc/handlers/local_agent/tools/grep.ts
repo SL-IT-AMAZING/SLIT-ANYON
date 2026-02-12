@@ -187,7 +187,7 @@ export const grepTool: ToolDefinition<z.infer<typeof grepSchema>> = {
 
     if (!args.query) return undefined;
     const attrs = buildGrepAttributes(args);
-    return `<dyad-grep ${attrs}>Searching...</dyad-grep>`;
+    return `<anyon-grep ${attrs}>Searching...</anyon-grep>`;
   },
 
   execute: async (args, ctx: AgentContext) => {
@@ -202,7 +202,7 @@ export const grepTool: ToolDefinition<z.infer<typeof grepSchema>> = {
     const attrs = buildGrepAttributes(args, matches.length);
 
     if (matches.length === 0) {
-      ctx.onXmlComplete(`<dyad-grep ${attrs}>No matches found.</dyad-grep>`);
+      ctx.onXmlComplete(`<anyon-grep ${attrs}>No matches found.</anyon-grep>`);
       return "No matches found.";
     }
 
@@ -213,7 +213,7 @@ export const grepTool: ToolDefinition<z.infer<typeof grepSchema>> = {
     const resultText = lines.join("\n");
 
     ctx.onXmlComplete(
-      `<dyad-grep ${attrs}>\n${escapeXmlContent(resultText)}\n</dyad-grep>`,
+      `<anyon-grep ${attrs}>\n${escapeXmlContent(resultText)}\n</anyon-grep>`,
     );
 
     return resultText;

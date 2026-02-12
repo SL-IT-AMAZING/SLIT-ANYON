@@ -27,8 +27,8 @@
 ## 기술 아키텍처
 
 ```
-현재 (Dyad 오리지널):
-  앱 → engine.dyad.sh → LLM 프로바이더
+현재 (Anyon 오리지널):
+  앱 → engine.anyon.sh → LLM 프로바이더
 
 ANYON 아키텍처:
   앱 (Electron)
@@ -66,7 +66,7 @@ ANYON 아키텍처:
 | Phase   | 내용                                 | 예상 공수 | 우선순위  |
 | ------- | ------------------------------------ | --------- | --------- |
 | Phase 1 | 인프라 연결 (OpenCode → SLIT 프록시) | 1-2일     | P0        |
-| Phase 2 | 브랜딩 교체 (Dyad → ANYON)           | 2-3일     | P1        |
+| Phase 2 | 브랜딩 교체 (Anyon → ANYON)          | 2-3일     | P1        |
 | Phase 3 | 빌드/배포 설정                       | 1일       | P1        |
 | Phase 4 | 선택적 정리                          | 선택      | P2-P3     |
 | 서버    | SLIT 프록시 서버 구축                | 3-5일     | P0 (병렬) |
@@ -83,11 +83,11 @@ ANYON 아키텍처:
 Phase 1 (인프라 연결)
   ├── 1A. OpenCode → SLIT 프록시 연결 설정 ──── 프록시 URL만 설정
   ├── 1B. ANYON Pro 활성화 플로우 ───────────── 결제 포탈 연동
-  └── 1C. 딥링크 프로토콜 변경 (dyad → anyon)
+  └── 1C. 딥링크 프로토콜 변경 (anyon → anyon)
 
 Phase 2 (브랜딩) ← Phase 1 완료 후
-  ├── 2A. UI 텍스트 교체 (Dyad → ANYON)
-  ├── 2B. URL 교체 (dyad.sh → any-on.dev)
+  ├── 2A. UI 텍스트 교체 (Anyon → ANYON)
+  ├── 2B. URL 교체 (anyon.sh → any-on.dev)
   ├── 2C. 시스템 프롬프트 변경
   └── 2D. GitHub/커뮤니티 링크 제거
 

@@ -1,4 +1,4 @@
-## What's New in Dyad v0.36.0
+## What's New in Anyon v0.36.0
 
 ### Highlights
 
@@ -13,10 +13,10 @@
 - **Chat Panel Toggle**: Show or hide the chat panel for more screen real estate (#2345)
 - **Chat Input History**: Recall previous messages using the Up Arrow key in chat input (#2343)
 - **Fuzzy Search in Settings**: Quickly find settings with a new fuzzy search sidebar (#2449)
-- **Native Notifications**: Get notified when a chat stream completes, even when Dyad is in the background (#2413)
+- **Native Notifications**: Get notified when a chat stream completes, even when Anyon is in the background (#2413)
 - **Streaming Loading Animation**: Delightful new animation while AI responses are loading (#2425)
 - **Preview Panel Auto-Expand Control**: New setting to disable automatic expansion of the preview panel (#2352)
-- **"Start New Chat" on Errors**: Dyad Pro users can now start a fresh chat directly from error messages (#2494)
+- **"Start New Chat" on Errors**: Anyon Pro users can now start a fresh chat directly from error messages (#2494)
 - **Kimi K2.5 Model**: Added Moonshot AI's Kimi K2.5 model to OpenRouter options (#2495)
 
 ### Changed
@@ -37,7 +37,7 @@
 - **Branch Handling**: New chats now correctly use the current branch instead of always defaulting to main (#2411)
 - **Attachment Upload Instructions**: Fixed incorrect file upload instructions shown in local agent mode (#2412)
 - **Preserved URL Clearing**: Fixed an issue where the preserved URL was not cleared when navigating to root or restarting the app (#2422)
-- **Missing Dyad Logo**: Restored the Dyad logo that was missing from certain views (#2404)
+- **Missing Anyon Logo**: Restored the Anyon logo that was missing from certain views (#2404)
 
 ### Performance
 
@@ -47,14 +47,14 @@
 
 ## Installation
 
-| Platform                  | Download                      |
-| ------------------------- | ----------------------------- |
-| **macOS (Apple Silicon)** | `dyad-0.36.0-arm64.dmg`       |
-| **macOS (Intel)**         | `dyad-0.36.0-x64.dmg`         |
-| **Windows**               | `dyad-0.36.0.Setup.exe`       |
-| **Linux (AppImage)**      | `dyad_0.36.0_x86_64.AppImage` |
-| **Linux (Debian/Ubuntu)** | `dyad_0.36.0_amd64.deb`       |
-| **Linux (Fedora/RHEL)**   | `dyad-0.36.0-1.x86_64.rpm`    |
+| Platform                  | Download                       |
+| ------------------------- | ------------------------------ |
+| **macOS (Apple Silicon)** | `anyon-0.36.0-arm64.dmg`       |
+| **macOS (Intel)**         | `anyon-0.36.0-x64.dmg`         |
+| **Windows**               | `anyon-0.36.0.Setup.exe`       |
+| **Linux (AppImage)**      | `anyon_0.36.0_x86_64.AppImage` |
+| **Linux (Debian/Ubuntu)** | `anyon_0.36.0_amd64.deb`       |
+| **Linux (Fedora/RHEL)**   | `anyon-0.36.0-1.x86_64.rpm`    |
 
 ## Auto-Update
 
@@ -62,4 +62,4 @@ Existing users will automatically receive this update. You can check for updates
 
 ## Full Changelog
 
-See [CHANGELOG.md](https://github.com/dyad-sh/dyad/blob/main/CHANGELOG.md) for the complete list of changes.
+See [CHANGELOG.md](https://github.com/SL-IT-AMAZING/SLIT-ANYON/blob/main/CHANGELOG.md) for the complete list of changes.

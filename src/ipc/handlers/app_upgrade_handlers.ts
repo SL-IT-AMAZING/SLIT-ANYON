@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
 import { apps } from "../../db/schema";
-import { getDyadAppPath } from "../../paths/paths";
+import { getAnyonAppPath } from "../../paths/paths";
 import { gitAddAll, gitCommit } from "../utils/git_utils";
 import { simpleSpawn } from "../utils/simpleSpawn";
 import { createLoggedHandler } from "./safe_handle";
@@ -19,7 +19,7 @@ const availableUpgrades: Omit<AppUpgrade, "isNeeded">[] = [
     id: "component-tagger",
     title: "Enable select component to edit",
     description:
-      "Installs the Dyad component tagger Vite plugin and its dependencies.",
+      "Installs the Anyon component tagger Vite plugin and its dependencies.",
     manualUpgradeUrl: "https://docs.any-on.dev/upgrades/select-component",
   },
   {
@@ -64,7 +64,7 @@ function isComponentTaggerUpgradeNeeded(appPath: string): boolean {
 
   try {
     const viteConfigContent = fs.readFileSync(viteConfigPath, "utf-8");
-    return !viteConfigContent.includes("@dyad-sh/react-vite-component-tagger");
+    return !viteConfigContent.includes("anyon-component-tagger");
   } catch (e) {
     logger.error("Error reading vite config", e);
     return false;
@@ -94,6 +94,58 @@ function isCapacitorUpgradeNeeded(appPath: string): boolean {
   return true;
 }
 
+const ANYON_TAGGER_PLUGIN_SOURCE = `import { parse } from "@babel/parser";
+import MagicString from "magic-string";
+import path from "node:path";
+import { walk } from "estree-walker";
+
+const VALID_EXTENSIONS = new Set([".jsx", ".tsx"]);
+
+export default function anyonTagger() {
+  return {
+    name: "vite-plugin-anyon-tagger",
+    apply: "serve",
+    enforce: "pre",
+    async transform(code, id) {
+      try {
+        if (!VALID_EXTENSIONS.has(path.extname(id)) || id.includes("node_modules"))
+          return null;
+        const ast = parse(code, { sourceType: "module", plugins: ["jsx", "typescript"] });
+        const ms = new MagicString(code);
+        const fileRelative = path.relative(process.cwd(), id);
+        walk(ast, {
+          enter(node) {
+            try {
+              if (node.type !== "JSXOpeningElement") return;
+              if (node.name?.type !== "JSXIdentifier") return;
+              const tagName = node.name.name;
+              if (!tagName) return;
+              const alreadyTagged = node.attributes?.some(
+                (attr) => attr.type === "JSXAttribute" && attr.name?.name === "data-anyon-id"
+              );
+              if (alreadyTagged) return;
+              const loc = node.loc?.start;
+              if (!loc) return;
+              const componentId = fileRelative + ":" + loc.line + ":" + loc.column;
+              if (node.name.end != null) {
+                ms.appendLeft(node.name.end, ' data-anyon-id="' + componentId + '" data-anyon-name="' + tagName + '"');
+              }
+            } catch (error) {
+              console.warn("[anyon-tagger] Warning: Failed to process JSX node in " + id + ":", error);
+            }
+          },
+        });
+        if (ms.toString() === code) return null;
+        return { code: ms.toString(), map: ms.generateMap({ hires: true }) };
+      } catch (error) {
+        console.warn("[anyon-tagger] Warning: Failed to transform " + id + ":", error);
+        return null;
+      }
+    },
+  };
+}
+`;
+
 async function applyComponentTagger(appPath: string) {
   const viteConfigPathJs = path.join(appPath, "vite.config.js");
   const viteConfigPathTs = path.join(appPath, "vite.config.ts");
@@ -107,15 +159,20 @@ async function applyComponentTagger(appPath: string) {
     throw new Error("Could not find vite.config.js or vite.config.ts");
   }
 
+  const pluginsDir = path.join(appPath, "plugins");
+  await fs.promises.mkdir(pluginsDir, { recursive: true });
+
+  const pluginExt = viteConfigPath.endsWith(".ts") ? ".ts" : ".js";
+  const pluginFilePath = path.join(
+    pluginsDir,
+    `anyon-component-tagger${pluginExt}`,
+  );
+  await fs.promises.writeFile(pluginFilePath, ANYON_TAGGER_PLUGIN_SOURCE);
+  logger.info("Created anyon-component-tagger plugin file");
+
   let content = await fs.promises.readFile(viteConfigPath, "utf-8");
 
-  // Add import statement if not present
-  if (
-    !content.includes(
-      "import dyadComponentTagger from '@dyad-sh/react-vite-component-tagger';",
-    )
-  ) {
-    // Add it after the last import statement
+  if (!content.includes("anyon-component-tagger")) {
     const lines = content.split("\n");
     let lastImportIndex = -1;
     for (let i = lines.length - 1; i >= 0; i--) {
@@ -127,17 +184,16 @@ async function applyComponentTagger(appPath: string) {
     lines.splice(
       lastImportIndex + 1,
       0,
-      "import dyadComponentTagger from '@dyad-sh/react-vite-component-tagger';",
+      'import anyonComponentTagger from "./plugins/anyon-component-tagger";',
     );
     content = lines.join("\n");
   }
 
-  // Add plugin to plugins array
   if (content.includes("plugins: [")) {
-    if (!content.includes("dyadComponentTagger()")) {
+    if (!content.includes("anyonComponentTagger()")) {
       content = content.replace(
         "plugins: [",
-        "plugins: [dyadComponentTagger(), ",
+        "plugins: [anyonComponentTagger(), ",
       );
     }
   } else {
@@ -148,11 +204,10 @@ async function applyComponentTagger(appPath: string) {
 
   await fs.promises.writeFile(viteConfigPath, content);
 
-  // Install the dependency
   await new Promise<void>((resolve, reject) => {
-    logger.info("Installing component-tagger dependency");
-    const process = spawn(
-      "pnpm add -D @dyad-sh/react-vite-component-tagger || npm install --save-dev --legacy-peer-deps @dyad-sh/react-vite-component-tagger",
+    logger.info("Installing anyon-component-tagger dependencies");
+    const child = spawn(
+      'pnpm add -D "@babel/parser" "estree-walker@^2.0.2" "magic-string" || npm install --save-dev --legacy-peer-deps "@babel/parser" "estree-walker@^2.0.2" "magic-string"',
       {
         cwd: appPath,
         shell: true,
@@ -160,32 +215,31 @@ async function applyComponentTagger(appPath: string) {
       },
     );
 
-    process.stdout?.on("data", (data) => logger.info(data.toString()));
-    process.stderr?.on("data", (data) => logger.error(data.toString()));
+    child.stdout?.on("data", (data) => logger.info(data.toString()));
+    child.stderr?.on("data", (data) => logger.error(data.toString()));
 
-    process.on("close", (code) => {
+    child.on("close", (code) => {
       if (code === 0) {
-        logger.info("component-tagger dependency installed successfully");
+        logger.info("Component tagger dependencies installed successfully");
         resolve();
       } else {
-        logger.error(`Failed to install dependency, exit code ${code}`);
-        reject(new Error("Failed to install dependency"));
+        logger.error(`Failed to install dependencies, exit code ${code}`);
+        reject(new Error("Failed to install component tagger dependencies"));
       }
     });
 
-    process.on("error", (err) => {
-      logger.error("Failed to spawn pnpm", err);
+    child.on("error", (err) => {
+      logger.error("Failed to spawn package manager", err);
       reject(err);
     });
   });
 
-  // Commit changes
   try {
     logger.info("Staging and committing changes");
     await gitAddAll({ path: appPath });
     await gitCommit({
       path: appPath,
-      message: "[dyad] add Dyad component tagger",
+      message: "[anyon] add Anyon component tagger",
     });
     logger.info("Successfully committed changes");
   } catch (err) {
@@ -234,7 +288,7 @@ async function applyCapacitor({
     await gitAddAll({ path: appPath });
     await gitCommit({
       path: appPath,
-      message: "[dyad] add Capacitor for mobile app support",
+      message: "[anyon] add Capacitor for mobile app support",
     });
     logger.info("Successfully committed Capacitor changes");
   } catch (err) {
@@ -254,7 +308,7 @@ export function registerAppUpgradeHandlers() {
     "get-app-upgrades",
     async (_, { appId }: { appId: number }): Promise<AppUpgrade[]> => {
       const app = await getApp(appId);
-      const appPath = getDyadAppPath(app.path);
+      const appPath = getAnyonAppPath(app.path);
 
       const upgradesWithStatus = availableUpgrades.map((upgrade) => {
         let isNeeded = false;
@@ -278,7 +332,7 @@ export function registerAppUpgradeHandlers() {
       }
 
       const app = await getApp(appId);
-      const appPath = getDyadAppPath(app.path);
+      const appPath = getAnyonAppPath(app.path);
 
       if (upgradeId === "component-tagger") {
         await applyComponentTagger(appPath);

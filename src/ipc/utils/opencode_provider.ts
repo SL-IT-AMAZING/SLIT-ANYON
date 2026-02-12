@@ -253,7 +253,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     request?: { body?: unknown };
     response?: { headers?: Record<string, string> };
   }> {
-    const conversationId = this.settings.conversationId ?? `dyad-${Date.now()}`;
+    const conversationId =
+      this.settings.conversationId ?? `anyon-${Date.now()}`;
     const session = await this.getOrCreateSession(conversationId);
     const userMessage = this.extractUserMessage(options);
     const systemPrompt = this.extractSystemPrompt(options);
