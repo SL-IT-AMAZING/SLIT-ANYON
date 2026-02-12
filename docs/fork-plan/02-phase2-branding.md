@@ -1,4 +1,4 @@
-# Phase 2: 브랜딩 교체 (Dyad → ANYON)
+# Phase 2: 브랜딩 교체 (Anyon → ANYON)
 
 > 우선순위: P1
 > 예상 공수: 2-3일
@@ -6,15 +6,15 @@
 
 ## 개요
 
-모든 "Dyad" 텍스트와 URL을 "ANYON"으로 교체한다.
+모든 "Anyon" 텍스트와 URL을 "ANYON"으로 교체한다.
 
-| 교체 대상       | 변경           |
-| --------------- | -------------- |
-| Dyad            | ANYON          |
-| Dyad Pro        | ANYON Pro      |
-| dyad.sh         | any-on.dev     |
-| academy.dyad.sh | pay.any-on.dev |
-| dyad://         | anyon://       |
+| 교체 대상        | 변경           |
+| ---------------- | -------------- |
+| Anyon            | ANYON          |
+| Anyon Pro        | ANYON Pro      |
+| anyon.sh         | any-on.dev     |
+| academy.anyon.sh | pay.any-on.dev |
+| anyon://         | anyon://       |
 
 ---
 
@@ -26,7 +26,7 @@
 
   ```html
   <!-- 현재 -->
-  <title>Dyad</title>
+  <title>Anyon</title>
 
   <!-- 변경 -->
   <title>ANYON</title>
@@ -37,14 +37,14 @@
 - [ ] `src/components/chat/ChatInput.tsx` (라인 562)
 
   ```
-  현재: "Ask Dyad to build..."
+  현재: "Ask Anyon to build..."
   변경: "Ask ANYON to build..."
   ```
 
 - [ ] `src/components/chat/HomeChatInput.tsx` (라인 41)
 
   ```
-  현재: "Ask Dyad to build ${typingText}"
+  현재: "Ask Anyon to build ${typingText}"
   변경: "Ask ANYON to build ${typingText}"
   ```
 
@@ -52,100 +52,100 @@
 
 ### 2A-3. Pro 관련 텍스트
 
-> "Dyad Pro" → "ANYON Pro" 전체 교체
+> "Anyon Pro" → "ANYON Pro" 전체 교체
 
 #### ProBanner.tsx
 
-- [ ] "Manage Dyad Pro" → "Manage ANYON Pro"
-- [ ] "Get Dyad Pro" → "Get ANYON Pro"
-- [ ] "Subscribe to Dyad Pro" → "Subscribe to ANYON Pro"
+- [ ] "Manage Anyon Pro" → "Manage ANYON Pro"
+- [ ] "Get Anyon Pro" → "Get ANYON Pro"
+- [ ] "Subscribe to Anyon Pro" → "Subscribe to ANYON Pro"
 
 #### ChatErrorBox.tsx
 
-- [ ] "Upgrade to Dyad Pro" (x4)
-- [ ] "Access with Dyad Pro"
-- [ ] "valid Dyad Pro key" → "valid ANYON Pro key"
-- [ ] "Dyad AI credits" → "ANYON credits"
+- [ ] "Upgrade to Anyon Pro" (x4)
+- [ ] "Access with Anyon Pro"
+- [ ] "valid Anyon Pro key" → "valid ANYON Pro key"
+- [ ] "Anyon AI credits" → "ANYON credits"
 
 #### 설정 페이지
 
 - [ ] `src/components/settings/ProviderSettingsPage.tsx`
-  - "Enable Dyad Pro" → "Enable ANYON Pro"
-  - "Toggle to enable Dyad Pro"
-  - "Error toggling Dyad Pro"
+  - "Enable Anyon Pro" → "Enable ANYON Pro"
+  - "Toggle to enable Anyon Pro"
+  - "Error toggling Anyon Pro"
 
 - [ ] `src/components/settings/ProviderSettingsHeader.tsx`
-  - "Manage Dyad Pro Subscription" → "Manage ANYON Pro Subscription"
+  - "Manage Anyon Pro Subscription" → "Manage ANYON Pro Subscription"
 
 #### ProModeSelector.tsx
 
-- [ ] "Dyad Pro" (x5)
-- [ ] "Configure Dyad Pro settings"
-- [ ] "Uses Dyad Pro AI credits..."
+- [ ] "Anyon Pro" (x5)
+- [ ] "Configure Anyon Pro settings"
+- [ ] "Uses Anyon Pro AI credits..."
 
 #### 기타 컴포넌트
 
-- [ ] `DyadProSuccessDialog.tsx` — "Welcome to Dyad Pro!" → "Welcome to ANYON Pro!"
-- [ ] `DyadProTrialDialog.tsx` — "Unlock Dyad Pro"
-- [ ] `FreeAgentQuotaBanner.tsx` — "Upgrade to Dyad Pro"
-- [ ] `PromoMessage.tsx` — "Get Dyad Pro", "Dyad Pro's Smart Context"
-- [ ] `AnnotatorOnlyForPro.tsx` — "with Dyad Pro", "Get Dyad Pro"
-- [ ] `SetupBanner.tsx` — "Start with Dyad Pro free trial"
-- [ ] `TokenBar.tsx` — "Dyad Pro's Smart Context"
+- [ ] `AnyonProSuccessDialog.tsx` — "Welcome to Anyon Pro!" → "Welcome to ANYON Pro!"
+- [ ] `AnyonProTrialDialog.tsx` — "Unlock Anyon Pro"
+- [ ] `FreeAgentQuotaBanner.tsx` — "Upgrade to Anyon Pro"
+- [ ] `PromoMessage.tsx` — "Get Anyon Pro", "Anyon Pro's Smart Context"
+- [ ] `AnnotatorOnlyForPro.tsx` — "with Anyon Pro", "Get Anyon Pro"
+- [ ] `SetupBanner.tsx` — "Start with Anyon Pro free trial"
+- [ ] `TokenBar.tsx` — "Anyon Pro's Smart Context"
 
 ### 2A-4. 일반 UI 텍스트
 
 - [ ] `src/components/HelpBotDialog.tsx`
-  - "Dyad Help Bot" → "ANYON Help Bot"
-  - "Ask a question about using Dyad" → "Ask a question about using ANYON"
+  - "Anyon Help Bot" → "ANYON Help Bot"
+  - "Ask a question about using Anyon" → "Ask a question about using ANYON"
 
 - [ ] `src/components/ErrorBoundary.tsx`
-  - "Try closing and re-opening Dyad" → "Try closing and re-opening ANYON"
+  - "Try closing and re-opening Anyon" → "Try closing and re-opening ANYON"
 
 - [ ] `src/components/SetupBanner.tsx`
-  - "Setup Dyad" → "Setup ANYON"
-  - `alt="Dyad Logo"` → `alt="ANYON Logo"`
+  - "Setup Anyon" → "Setup ANYON"
+  - `alt="Anyon Logo"` → `alt="ANYON Logo"`
 
 - [ ] `src/components/ReleaseChannelSelector.tsx`
-  - "Restart Dyad" → "Restart ANYON"
+  - "Restart Anyon" → "Restart ANYON"
 
 - [ ] `src/components/AutoUpdateSwitch.tsx`
-  - "Restart Dyad" → "Restart ANYON"
+  - "Restart Anyon" → "Restart ANYON"
 
 - [ ] `src/components/settings/AzureConfiguration.tsx`
-  - "Restart Dyad after changing..." → "Restart ANYON after changing..."
+  - "Restart Anyon after changing..." → "Restart ANYON after changing..."
 
 - [ ] `src/app/TitleBar.tsx`
-  - `alt="Dyad Logo"` → `alt="ANYON Logo"`
+  - `alt="Anyon Logo"` → `alt="ANYON Logo"`
 
 - [ ] `src/hooks/useStreamChat.ts`
-  - `app?.name ?? "Dyad"` → `app?.name ?? "ANYON"`
+  - `app?.name ?? "Anyon"` → `app?.name ?? "ANYON"`
 
 - [ ] `src/lib/toast.tsx`
-  - "Files changed outside of Dyad" → "Files changed outside of ANYON"
+  - "Files changed outside of Anyon" → "Files changed outside of ANYON"
 
 - [ ] `src/components/ContextFilesPicker.tsx`
-  - "Dyad uses Smart Context..." → "ANYON uses Smart Context..."
+  - "Anyon uses Smart Context..." → "ANYON uses Smart Context..."
 
 - [ ] `src/components/CommunityCodeConsentDialog.tsx`
-  - "created by a Dyad community member" → "created by an ANYON community member"
+  - "created by a Anyon community member" → "created by an ANYON community member"
 
 - [ ] `src/components/AppUpgrades.tsx`
-  - "has all Dyad capabilities enabled" → "has all ANYON capabilities enabled"
+  - "has all Anyon capabilities enabled" → "has all ANYON capabilities enabled"
 
 ### 2A-5. 에러 메시지 (백엔드)
 
 - [ ] `src/pro/main/ipc/handlers/local_agent/local_agent_handler.ts`
-  - "Agent v2 requires Dyad Pro..." → "Agent v2 requires ANYON Pro..."
+  - "Agent v2 requires Anyon Pro..." → "Agent v2 requires ANYON Pro..."
 
 - [ ] `src/pro/main/ipc/handlers/themes_handlers.ts`
-  - "Dyad Pro is required for AI theme generation..." (x2)
+  - "Anyon Pro is required for AI theme generation..." (x2)
 
 - [ ] `src/pro/main/ipc/handlers/local_agent/tools/engine_fetch.ts`
-  - "Dyad Pro API key is required" → "ANYON Pro API key is required"
+  - "Anyon Pro API key is required" → "ANYON Pro API key is required"
 
 - [ ] `src/ipc/handlers/pro_handlers.ts`
-  - "LLM Gateway API key (Dyad Pro) is not configured." → "ANYON Pro API key is not configured."
+  - "LLM Gateway API key (Anyon Pro) is not configured." → "ANYON Pro API key is not configured."
 
 ---
 
@@ -153,19 +153,19 @@
 
 ### 2B-1. Pro/구독 관련 URL
 
-> `dyad.sh/pro` → `any-on.dev/pro` 또는 `pay.any-on.dev`
+> `anyon.sh/pro` → `any-on.dev/pro` 또는 `pay.any-on.dev`
 
 - [ ] `src/components/ProBanner.tsx` (라인 51, 68, 83, 149, 190)
-  - `academy.dyad.sh/subscription` → `pay.any-on.dev/subscription`
-  - `academy.dyad.sh/settings` → `pay.any-on.dev/settings`
-  - `dyad.sh/pro` → `any-on.dev/pro`
+  - `academy.anyon.sh/subscription` → `pay.any-on.dev/subscription`
+  - `academy.anyon.sh/settings` → `pay.any-on.dev/settings`
+  - `anyon.sh/pro` → `any-on.dev/pro`
 
-- [ ] `src/components/DyadProTrialDialog.tsx` (라인 17, 24)
-  - `academy.dyad.sh/redirect-to-checkout` → `pay.any-on.dev/checkout`
+- [ ] `src/components/AnyonProTrialDialog.tsx` (라인 17, 24)
+  - `academy.anyon.sh/redirect-to-checkout` → `pay.any-on.dev/checkout`
 
 - [ ] `src/components/chat/ChatErrorBox.tsx` (라인 34, 62, 82, 98, 125, 143)
-  - `dyad.sh/pro` → `any-on.dev/pro`
-  - `academy.dyad.sh/subscription` → `pay.any-on.dev/subscription`
+  - `anyon.sh/pro` → `any-on.dev/pro`
+  - `academy.anyon.sh/subscription` → `pay.any-on.dev/subscription`
 
 - [ ] `src/components/ProModeSelector.tsx` (라인 90)
 - [ ] `src/components/chat/FreeAgentQuotaBanner.tsx` (라인 42)
@@ -176,7 +176,7 @@
 
 ### 2B-2. 문서 링크
 
-> `dyad.sh/docs/*` → `docs.any-on.dev/*` 또는 제거
+> `anyon.sh/docs/*` → `docs.any-on.dev/*` 또는 제거
 
 - [ ] `src/ipc/handlers/release_note_handlers.ts` (라인 24)
 - [ ] `src/ipc/handlers/app_upgrade_handlers.ts` (라인 23, 30)
@@ -207,9 +207,9 @@
 
 ### 2B-4. Scaffold 템플릿
 
-- [ ] `scaffold/src/components/made-with-dyad.tsx`
-  - "Made with Dyad" → "Made with ANYON"
-  - `https://www.dyad.sh/` → `https://any-on.com/`
+- [ ] `scaffold/src/components/made-with-anyon.tsx`
+  - "Made with Anyon" → "Made with ANYON"
+  - `https://www.anyon.sh/` → `https://any-on.com/`
 
 ---
 
@@ -218,23 +218,23 @@
 - [ ] `src/prompts/system_prompt.ts`
 
   ```
-  현재: "You are Dyad, an AI editor..."
+  현재: "You are Anyon, an AI editor..."
   변경: "You are ANYON, an AI editor..."
   ```
 
-  - "Dyad Environment" → "ANYON Environment"
-  - "You are working inside **Dyad**" → "You are working inside **ANYON**"
+  - "Anyon Environment" → "ANYON Environment"
+  - "You are working inside **Anyon**" → "You are working inside **ANYON**"
 
 - [ ] `src/prompts/local_agent_prompt.ts`
 
   ```
-  현재: "You are Dyad, an AI assistant..." (x2)
+  현재: "You are Anyon, an AI assistant..." (x2)
   변경: "You are ANYON, an AI assistant..."
   ```
 
 - [ ] `src/prompts/plan_mode_prompt.ts`
   ```
-  현재: "You are Dyad Plan Mode..."
+  현재: "You are Anyon Plan Mode..."
   변경: "You are ANYON Plan Mode..."
   ```
 
@@ -246,26 +246,26 @@
 
 - [ ] `src/ipc/utils/git_author.ts` (라인 12)
   ```
-  현재: name: "[dyad]", email: "git@dyad.sh"
+  현재: name: "[anyon]", email: "git@anyon.sh"
   변경: name: "[anyon]", email: "git@any-on.dev"
   ```
 
 ### HTTP 헤더 (선택)
 
-- [ ] `src/ipc/utils/llm_engine_provider.ts` — `X-Dyad-Request-Id` → `X-Anyon-Request-Id`
+- [ ] `src/ipc/utils/llm_engine_provider.ts` — `X-Anyon-Request-Id` → `X-Anyon-Request-Id`
 - [ ] `src/pro/main/ipc/handlers/local_agent/tools/engine_fetch.ts` — 동일
 - [ ] `src/pro/main/ipc/handlers/themes_handlers.ts` — 동일
-- [ ] `src/ipc/handlers/createFromTemplate.ts` — `"User-Agent": "Dyad"` → `"User-Agent": "ANYON"`
+- [ ] `src/ipc/handlers/createFromTemplate.ts` — `"User-Agent": "Anyon"` → `"User-Agent": "ANYON"`
 
 ### 로그 업로드 (비활성화 또는 대체)
 
 - [ ] `src/components/HelpDialog.tsx` (라인 163)
-  - `upload-logs.dyad.sh` → 제거 또는 자체 URL
+  - `upload-logs.anyon.sh` → 제거 또는 자체 URL
 
 ### 헬프봇 (비활성화 또는 대체)
 
 - [ ] `src/ipc/handlers/help_bot_handlers.ts` (라인 48)
-  - `helpchat.dyad.sh/v1` → 제거 또는 자체 URL
+  - `helpchat.anyon.sh/v1` → 제거 또는 자체 URL
 
 ---
 

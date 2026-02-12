@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to [Dyad](https://github.com/dyad-sh/dyad) will be documented in this file.
+All notable changes to [Anyon](https://github.com/SL-IT-AMAZING/SLIT-ANYON) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -16,10 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Chat Panel Toggle**: Show or hide the chat panel for more screen real estate (#2345)
 - **Chat Input History**: Recall previous messages using the Up Arrow key in chat input (#2343)
 - **Fuzzy Search in Settings**: Quickly find settings with a new fuzzy search sidebar (#2449)
-- **Native Notifications**: Get notified when a chat stream completes, even when Dyad is in the background (#2413)
+- **Native Notifications**: Get notified when a chat stream completes, even when Anyon is in the background (#2413)
 - **Streaming Loading Animation**: Delightful new animation while AI responses are loading (#2425)
 - **Preview Panel Auto-Expand Control**: New setting to disable automatic expansion of the preview panel (#2352)
-- **"Start New Chat" on Errors**: Dyad Pro users can now start a fresh chat directly from error messages (#2494)
+- **"Start New Chat" on Errors**: Anyon Pro users can now start a fresh chat directly from error messages (#2494)
 - **Kimi K2.5 Model**: Added Moonshot AI's Kimi K2.5 model to OpenRouter options (#2495)
 
 ### Changed
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Branch Handling**: New chats now correctly use the current branch instead of always defaulting to main (#2411)
 - **Attachment Upload Instructions**: Fixed incorrect file upload instructions shown in local agent mode (#2412)
 - **Preserved URL Clearing**: Fixed an issue where the preserved URL was not cleared when navigating to root or restarting the app (#2422)
-- **Missing Dyad Logo**: Restored the Dyad logo that was missing from certain views (#2404)
+- **Missing Anyon Logo**: Restored the Anyon logo that was missing from certain views (#2404)
 
 ### Performance
 
@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vercel Live URL**: Fixed the Live URL not updating after new Vercel deployments (#2283)
 - **Duplicate Server Logs**: Fixed duplicate log messages appearing in the developer console (#2359)
 - **Route Preservation on Refresh**: Refreshing the app now preserves your current route (#2336)
-- **HTML Escaping in Tags**: Fixed attribute and content escaping for dyad-tags (#2266)
+- **HTML Escaping in Tags**: Fixed attribute and content escaping for anyon-tags (#2266)
 - **Summarize to New Chat**: Fixed the "summarize to new chat" feature when using local agent mode (#2294)
 - **Uncommitted Banner During Streaming**: Hidden the uncommitted files banner while AI is actively streaming (#2289)
 - **Dark Mode Supabase Button**: Fixed visibility of the Supabase continue button in dark mode (#2241)
@@ -123,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Native Git Enabled by Default**: Switched from JS-based git to native git for better performance and reliability (#2095)
 - **Upgraded to AI SDK v6**: Updated to the latest AI SDK for improved model support (#2102)
 - **Home Page Refinement**: Improved the home page experience with better layout and interactions (#2110)
-- **Configurable App Storage Location**: Changed the default location for storing Dyad apps (#2000)
+- **Configurable App Storage Location**: Changed the default location for storing Anyon apps (#2000)
 
 ### Fixed
 
@@ -177,7 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Vercel API Compatibility**: Fixed issues caused by a breaking change in the Vercel API (#1883)
-- **Dyad Pro Error Messages**: Improved error messaging for Dyad Pro subscription issues (#1884)
+- **Anyon Pro Error Messages**: Improved error messaging for Anyon Pro subscription issues (#1884)
 - **Invalid App Names**: Prevented invalid characters in app names (#1839)
 - **Chat Input Clearing**: Fixed chat input not clearing when switching between apps (#1791)
 - **Import Dialog Responsiveness**: Fixed responsive layout issues in the import app dialog (#1786)
@@ -212,7 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **File Referencing**: Reference specific files in your chat messages for targeted AI assistance (#1648)
 - **Screen Size Toggle**: Preview your app at different screen sizes (#1582)
 - **Manual Node.js Path**: Configure a custom Node.js installation path (#1577)
-- **Deep Linking with Prompts**: Open Dyad with pre-filled prompts via deep links (#1669)
+- **Deep Linking with Prompts**: Open Anyon with pre-filled prompts via deep links (#1669)
 - **Text Size Accessibility**: Adjust text size throughout the app for better readability (#1624)
 
 ### Changed
@@ -241,7 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deep Linking for MCP**: Install MCP servers via deep links (#1550)
 - **GitHub Import**: Import existing repositories and projects directly from GitHub (#1454)
 - **Inline Code Editor**: Edit code directly within the chat interface (#1235)
-- **App Search**: Search across all your Dyad apps quickly (#1302)
+- **App Search**: Search across all your Anyon apps quickly (#1302)
 - **Chat Search**: Search through your chat history (#1224)
 - **Concurrent Chats**: Run multiple chat sessions simultaneously (#1478)
 - **Favorite Apps**: Star your most-used apps for quick access (#1410)
@@ -250,7 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Context Menu**: Right-click copy, paste, and other standard actions (#1492)
 - **Scroll to Bottom Button**: Quickly scroll to the bottom of long chat conversations (#1484)
 - **Spell Check**: Spell check suggestions in the context menu (#1509)
-- **Copy AI Responses**: Copy AI responses with proper Dyad tag formatting (#1315)
+- **Copy AI Responses**: Copy AI responses with proper Anyon tag formatting (#1315)
 
 ### Changed
 
@@ -262,7 +262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **MCP & Title Bar**: Fixed issues with MCP integration and title bar rendering (#1348)
 - **Supabase Prompt**: Fixed Supabase-related prompt issues (#1435)
-- **DyadThink Hook**: Fixed React hook usage in DyadThink component (#1467)
+- **AnyonThink Hook**: Fixed React hook usage in AnyonThink component (#1467)
 - **Send Button During Approval**: Disabled send button while code approval is pending (#1368)
 - **App Width**: Fixed app sidebar width to consistent 190px (#1465)
 
@@ -290,7 +290,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Component Selection Shortcut**: Fixed keyboard shortcut for component selection (#1139)
 - **Turbo Edit Click Behavior**: Prevented content clicks from toggling the turbo edit accordion (#1201)
-- **Dyad Command Tags**: Fixed display of dyad-command tags in generated text (#1162)
+- **Anyon Command Tags**: Fixed display of anyon-command tags in generated text (#1162)
 
 ### Security
 
@@ -302,11 +302,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Smart Context v3**: Third-generation context gathering with significantly improved relevance (#1022)
-- **Help Chat**: Built-in help chat for getting assistance with Dyad itself (#1007)
+- **Help Chat**: Built-in help chat for getting assistance with Anyon itself (#1007)
 - **Prompt Gallery**: Browse and use pre-made prompts to get started quickly (#957)
 - **Custom Install Commands**: Specify custom install and start commands for non-standard projects (#892)
 - **Copy Code Blocks**: One-click copy for code blocks in AI responses (#934)
-- **Docker Support**: Run Dyad apps in Docker containers (#674)
+- **Docker Support**: Run Anyon apps in Docker containers (#674)
 - **Next.js Route Support**: Proper handling of Next.js routes in the preview (#958)
 - **Timestamp in Prompts**: Added message timestamps for better context in AI conversations (#959)
 
@@ -327,7 +327,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **GPT 5 Support**: Added OpenAI's GPT-5 model (#902)
 - **Custom Models**: Add and manage custom AI models (#794)
-- **Cross-App References**: Reference other Dyad apps in your prompts (#692)
+- **Cross-App References**: Reference other Anyon apps in your prompts (#692)
 
 ### Fixed
 
@@ -387,7 +387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Beta Release Channel**: Opt-in to receive beta updates for early access to new features (#591)
-- **Automatic Backups**: Dyad now backs up your projects when updating to a new version (#595)
+- **Automatic Backups**: Anyon now backs up your projects when updating to a new version (#595)
 - **File Editing (Graduated)**: File editing is now a stable feature, no longer experimental (#599)
 - **Disable Auto-Update Setting**: Option to disable automatic updates (#590)
 
@@ -431,11 +431,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Engine for All Models**: All models now use the Dyad engine for consistent behavior (#434)
+- **Engine for All Models**: All models now use the Anyon engine for consistent behavior (#434)
 
 ### Fixed
 
-- **Nested Dyad Tags**: Fixed parsing of dyad tags containing nested angle brackets (#445)
+- **Nested Anyon Tags**: Fixed parsing of anyon tags containing nested angle brackets (#445)
 
 ## [0.8.0] - 2025-06-10
 
@@ -473,33 +473,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Dyad Tags in Thinking Blocks**: Fixed escaped dyad tags inside thinking blocks (#229)
+- **Anyon Tags in Thinking Blocks**: Fixed escaped anyon tags inside thinking blocks (#229)
 - **Git Checkout**: Removed force flag and properly handle checkout failures (#248)
 
 ---
 
-_For versions prior to 0.7.0, see the [commit history](https://github.com/dyad-sh/dyad/commits/main)._
+_For versions prior to 0.7.0, see the [commit history](https://github.com/SL-IT-AMAZING/SLIT-ANYON/commits/main)._
 
-[Unreleased]: https://github.com/dyad-sh/dyad/compare/v0.36.0...HEAD
-[0.36.0]: https://github.com/dyad-sh/dyad/compare/v0.35.0...v0.36.0
-[0.35.0]: https://github.com/dyad-sh/dyad/compare/v0.33.0...v0.35.0
-[0.34.0]: https://github.com/dyad-sh/dyad/compare/v0.33.0...v0.34.0
-[0.33.0]: https://github.com/dyad-sh/dyad/compare/v0.32.0...v0.33.0
-[0.32.0]: https://github.com/dyad-sh/dyad/compare/v0.31.0...v0.32.0
-[0.31.0]: https://github.com/dyad-sh/dyad/compare/v0.28.0...v0.31.0
-[0.28.0]: https://github.com/dyad-sh/dyad/compare/v0.27.0...v0.28.0
-[0.27.0]: https://github.com/dyad-sh/dyad/compare/v0.24.0...v0.27.0
-[0.24.0]: https://github.com/dyad-sh/dyad/compare/v0.20.0...v0.24.0
-[0.20.0]: https://github.com/dyad-sh/dyad/compare/v0.18.0...v0.20.0
-[0.18.0]: https://github.com/dyad-sh/dyad/compare/v0.17.0...v0.18.0
-[0.17.0]: https://github.com/dyad-sh/dyad/compare/v0.16.0...v0.17.0
-[0.16.0]: https://github.com/dyad-sh/dyad/compare/v0.15.0...v0.16.0
-[0.15.0]: https://github.com/dyad-sh/dyad/compare/v0.14.0...v0.15.0
-[0.14.0]: https://github.com/dyad-sh/dyad/compare/v0.13.0...v0.14.0
-[0.13.0]: https://github.com/dyad-sh/dyad/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/dyad-sh/dyad/compare/v0.11.0...v0.12.0
-[0.11.0]: https://github.com/dyad-sh/dyad/compare/v0.10.0...v0.11.0
-[0.10.0]: https://github.com/dyad-sh/dyad/compare/v0.9.0...v0.10.0
-[0.9.0]: https://github.com/dyad-sh/dyad/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/dyad-sh/dyad/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/dyad-sh/dyad/releases/tag/v0.7.0
+[Unreleased]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.35.0...v0.36.0
+[0.35.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.33.0...v0.35.0
+[0.34.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.33.0...v0.34.0
+[0.33.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.32.0...v0.33.0
+[0.32.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.31.0...v0.32.0
+[0.31.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.28.0...v0.31.0
+[0.28.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.27.0...v0.28.0
+[0.27.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.24.0...v0.27.0
+[0.24.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.20.0...v0.24.0
+[0.20.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.18.0...v0.20.0
+[0.18.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.15.0...v0.16.0
+[0.15.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/SL-IT-AMAZING/SLIT-ANYON/releases/tag/v0.7.0

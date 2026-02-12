@@ -87,7 +87,7 @@ function buildTestChat(
  */
 function buildTestSettings(
   overrides: {
-    enableDyadPro?: boolean;
+    enableAnyonPro?: boolean;
     hasApiKey?: boolean;
     selectedModel?: string;
   } = {},
@@ -96,10 +96,10 @@ function buildTestSettings(
     selectedModel: overrides.selectedModel ?? "gpt-4",
   };
 
-  if (overrides.enableDyadPro && overrides.hasApiKey !== false) {
+  if (overrides.enableAnyonPro && overrides.hasApiKey !== false) {
     return {
       ...baseSettings,
-      enableDyadPro: true,
+      enableAnyonPro: true,
       providerSettings: {
         auto: {
           apiKey: { value: "test-api-key" },
@@ -193,7 +193,7 @@ vi.mock("@/main/settings", () => ({
 }));
 
 vi.mock("@/paths/paths", () => ({
-  getDyadAppPath: vi.fn((appPath: string) => `/mock/apps/${appPath}`),
+  getAnyonAppPath: vi.fn((appPath: string) => `/mock/apps/${appPath}`),
 }));
 
 // Track IPC messages sent via safeSend
@@ -265,7 +265,7 @@ import { handleLocalAgentStream } from "@/pro/main/ipc/handlers/local_agent/loca
 // Tests
 // ============================================================================
 
-const dyadRequestId = "test-request-id";
+const anyonRequestId = "test-request-id";
 describe("handleLocalAgentStream", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -280,7 +280,7 @@ describe("handleLocalAgentStream", () => {
     it("should send error when ANYON Pro is not enabled", async () => {
       // Arrange
       const { event, getMessagesByChannel } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: false });
+      mockSettings = buildTestSettings({ enableAnyonPro: false });
 
       // Act
       await handleLocalAgentStream(
@@ -290,7 +290,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -307,7 +307,7 @@ describe("handleLocalAgentStream", () => {
       // Arrange
       const { event, getMessagesByChannel } = createFakeEvent();
       mockSettings = buildTestSettings({
-        enableDyadPro: true,
+        enableAnyonPro: true,
         hasApiKey: false,
       });
 
@@ -319,7 +319,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -333,7 +333,7 @@ describe("handleLocalAgentStream", () => {
     it("should throw error when chat is not found", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = null; // Chat not found
 
       // Act & Assert
@@ -345,7 +345,7 @@ describe("handleLocalAgentStream", () => {
           {
             placeholderMessageId: 10,
             systemPrompt: "You are helpful",
-            dyadRequestId,
+            anyonRequestId,
           },
         ),
       ).rejects.toThrow("Chat not found: 999");
@@ -354,7 +354,7 @@ describe("handleLocalAgentStream", () => {
     it("should throw error when chat has no associated app", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = { ...buildTestChat(), app: null } as any;
 
       // Act & Assert
@@ -366,7 +366,7 @@ describe("handleLocalAgentStream", () => {
           {
             placeholderMessageId: 10,
             systemPrompt: "You are helpful",
-            dyadRequestId,
+            anyonRequestId,
           },
         ),
       ).rejects.toThrow("Chat not found: 1");
@@ -377,7 +377,7 @@ describe("handleLocalAgentStream", () => {
     it("should accumulate text-delta parts and update database", async () => {
       // Arrange
       const { event, getMessagesByChannel } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat({
         messages: [{ id: 1, role: "user", content: "Hello" }],
       });
@@ -394,7 +394,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -426,7 +426,7 @@ describe("handleLocalAgentStream", () => {
     it("should wrap reasoning content in think tags", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
       mockStreamResult = createFakeStream([
         { type: "reasoning-start" },
@@ -443,7 +443,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -464,7 +464,7 @@ describe("handleLocalAgentStream", () => {
     it("should close thinking block when transitioning to text", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
       // Simulate reasoning-delta without explicit reasoning-end before text
       mockStreamResult = createFakeStream([
@@ -480,7 +480,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -506,7 +506,7 @@ describe("handleLocalAgentStream", () => {
     it("should stop processing stream chunks when abort signal is triggered", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
 
       const abortController = new AbortController();
@@ -533,7 +533,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -554,7 +554,7 @@ describe("handleLocalAgentStream", () => {
     it("should save partial response with cancellation note when aborted", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
 
       const abortController = new AbortController();
@@ -577,7 +577,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -596,7 +596,7 @@ describe("handleLocalAgentStream", () => {
     it("should save commit hash after successful stream", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
       mockStreamResult = createFakeStream([
         { type: "text-delta", text: "Done" },
@@ -610,7 +610,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 
@@ -625,7 +625,7 @@ describe("handleLocalAgentStream", () => {
     it("should set approval state to approved after completion", async () => {
       // Arrange
       const { event } = createFakeEvent();
-      mockSettings = buildTestSettings({ enableDyadPro: true });
+      mockSettings = buildTestSettings({ enableAnyonPro: true });
       mockChatData = buildTestChat();
       mockStreamResult = createFakeStream([
         { type: "text-delta", text: "Done" },
@@ -639,7 +639,7 @@ describe("handleLocalAgentStream", () => {
         {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
-          dyadRequestId,
+          anyonRequestId,
         },
       );
 

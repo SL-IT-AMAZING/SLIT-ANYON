@@ -99,7 +99,7 @@ async function callWebSearchSSE(
   query: string,
   ctx: AgentContext,
 ): Promise<string> {
-  ctx.onXmlStream(`<dyad-web-search query="${escapeXmlAttr(query)}">`);
+  ctx.onXmlStream(`<anyon-web-search query="${escapeXmlAttr(query)}">`);
 
   const response = await engineFetch(ctx, "/tools/web-search", {
     method: "POST",
@@ -135,9 +135,9 @@ async function callWebSearchSSE(
       // Parse SSE events and accumulate content
       buffer = parseSSEEvents(buffer, (content) => {
         accumulated += content;
-        // Stream intermediate results to UI with dyad-web-search prefix
+        // Stream intermediate results to UI with anyon-web-search prefix
         ctx.onXmlStream(
-          `<dyad-web-search query="${escapeXmlAttr(query)}">${escapeXmlContent(accumulated)}`,
+          `<anyon-web-search query="${escapeXmlAttr(query)}">${escapeXmlContent(accumulated)}`,
         );
       });
     }
@@ -161,7 +161,7 @@ export const webSearchTool: ToolDefinition<z.infer<typeof webSearchSchema>> = {
   inputSchema: webSearchSchema,
 
   // Requires ANYON Pro engine API
-  isEnabled: (ctx) => ctx.isDyadPro,
+  isEnabled: (ctx) => ctx.isAnyonPro,
 
   getConsentPreview: (args) => `Search the web: "${args.query}"`,
 
@@ -174,9 +174,9 @@ export const webSearchTool: ToolDefinition<z.infer<typeof webSearchSchema>> = {
       throw new Error("Web search returned no results");
     }
 
-    // Write final result to UI and DB with dyad-web-search wrapper
+    // Write final result to UI and DB with anyon-web-search wrapper
     ctx.onXmlComplete(
-      `<dyad-web-search query="${escapeXmlAttr(args.query)}">${escapeXmlContent(result)}</dyad-web-search>`,
+      `<anyon-web-search query="${escapeXmlAttr(args.query)}">${escapeXmlContent(result)}</anyon-web-search>`,
     );
 
     logger.log(`Web search completed for query: ${args.query}`);

@@ -62,7 +62,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@dyad-sh/react-vite-component-tagger": "^0.8.0",
+    "@babel/parser": "^7.23.0",
+    "estree-walker": "^2.0.2",
+    "magic-string": "^0.30.5",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",

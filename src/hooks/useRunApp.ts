@@ -31,12 +31,12 @@ export function useAppOutputSubscription() {
   const processProxyServerOutput = useCallback(
     (output: AppOutput) => {
       const matchesProxyServerStart = output.message.includes(
-        "[dyad-proxy-server]started=[",
+        "[anyon-proxy-server]started=[",
       );
       if (matchesProxyServerStart) {
         // Extract both proxy URL and original URL using regex
         const proxyUrlMatch = output.message.match(
-          /\[dyad-proxy-server\]started=\[(.*?)\]/,
+          /\[anyon-proxy-server\]started=\[(.*?)\]/,
         );
         const originalUrlMatch = output.message.match(/original=\[(.*?)\]/);
 
@@ -99,11 +99,11 @@ export function useAppOutputSubscription() {
       setConsoleEntries((prev) => [...prev, logEntry]);
 
       // Detect server exit to show error instead of infinite spinner
-      if (output.message.includes("[dyad-server-exit]")) {
+      if (output.message.includes("[anyon-server-exit]")) {
         setPreviewErrorMessage({
           message:
             "App server failed to start. Open System Messages below to see the error details, or try Restart.",
-          source: "dyad-app",
+          source: "anyon-app",
         });
       }
 
@@ -177,10 +177,10 @@ export function useRunApp() {
       console.error(`Error running app ${appId}:`, error);
       setPreviewErrorMessage(
         error instanceof Error
-          ? { message: error.message, source: "dyad-app" }
+          ? { message: error.message, source: "anyon-app" }
           : {
               message: error?.toString() || "Unknown error",
-              source: "dyad-app",
+              source: "anyon-app",
             },
       );
     } finally {
@@ -202,10 +202,10 @@ export function useRunApp() {
       console.error(`Error stopping app ${appId}:`, error);
       setPreviewErrorMessage(
         error instanceof Error
-          ? { message: error.message, source: "dyad-app" }
+          ? { message: error.message, source: "anyon-app" }
           : {
               message: error?.toString() || "Unknown error",
-              source: "dyad-app",
+              source: "anyon-app",
             },
       );
     } finally {
@@ -263,10 +263,10 @@ export function useRunApp() {
         console.error(`Error restarting app ${appId}:`, error);
         setPreviewErrorMessage(
           error instanceof Error
-            ? { message: error.message, source: "dyad-app" }
+            ? { message: error.message, source: "anyon-app" }
             : {
                 message: error?.toString() || "Unknown error",
-                source: "dyad-app",
+                source: "anyon-app",
               },
         );
       } finally {

@@ -38,7 +38,7 @@ export async function getModelClient(
   logger.info(`Using OpenCode for model: ${model.provider}/${model.name}`);
 
   const conversationId = options?.chatId
-    ? `dyad-chat-${options.chatId}`
+    ? `anyon-chat-${options.chatId}`
     : undefined;
 
   const provider = createOpenCodeProvider({

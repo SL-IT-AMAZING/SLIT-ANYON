@@ -45,7 +45,7 @@ export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
   const selectedChatId = useAtomValue(selectedChatIdAtom);
   const { settings } = useSettings();
   const { userBudget } = useUserBudgetInfo();
-  const isDyadProUser = settings?.providerSettings?.["auto"]?.apiKey?.value;
+  const isAnyonProUser = settings?.providerSettings?.["auto"]?.apiKey?.value;
 
   // Function to reset all dialog state
   const resetDialogState = () => {
@@ -86,7 +86,7 @@ export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
 <!-- Screenshot of the bug -->
 
 ## System Information
-- ANYON Version: ${debugInfo.dyadVersion}
+- ANYON Version: ${debugInfo.anyonVersion}
 - Platform: ${debugInfo.platform}
 - Architecture: ${debugInfo.architecture}
 - Node Version: ${debugInfo.nodeVersion || "n/a"}
@@ -106,17 +106,19 @@ ${debugInfo.logs.slice(-3_500) || "No logs available"}
       const encodedBody = encodeURIComponent(issueBody);
       const encodedTitle = encodeURIComponent("[bug] <WRITE TITLE HERE>");
       const labels = ["bug"];
-      if (isDyadProUser) {
+      if (isAnyonProUser) {
         labels.push("pro");
       }
-      const githubIssueUrl = `https://github.com/dyad-sh/dyad/issues/new?title=${encodedTitle}&labels=${labels}&body=${encodedBody}`;
+      const githubIssueUrl = `https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues/new?title=${encodedTitle}&labels=${labels}&body=${encodedBody}`;
 
       // Open the pre-filled GitHub issue page
       ipc.system.openExternalUrl(githubIssueUrl);
     } catch (error) {
       console.error("Failed to prepare bug report:", error);
       // Fallback to opening the regular GitHub issue page
-      ipc.system.openExternalUrl("https://github.com/dyad-sh/dyad/issues/new");
+      ipc.system.openExternalUrl(
+        "https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues/new",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -180,10 +182,10 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
     const encodedBody = encodeURIComponent(issueBody);
     const encodedTitle = encodeURIComponent("[session report] <add title>");
     const labels = ["support"];
-    if (isDyadProUser) {
+    if (isAnyonProUser) {
       labels.push("pro");
     }
-    const githubIssueUrl = `https://github.com/dyad-sh/dyad/issues/new?title=${encodedTitle}&labels=${labels}&body=${encodedBody}`;
+    const githubIssueUrl = `https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues/new?title=${encodedTitle}&labels=${labels}&body=${encodedBody}`;
 
     ipc.system.openExternalUrl(githubIssueUrl);
     handleClose();
@@ -285,7 +287,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
             <div className="border rounded-md p-3">
               <h3 className="font-medium mb-2">System Information</h3>
               <div className="text-sm bg-muted rounded p-2 max-h-32 overflow-y-auto">
-                <p>ANYON Version: {chatLogsData.debugInfo.dyadVersion}</p>
+                <p>ANYON Version: {chatLogsData.debugInfo.anyonVersion}</p>
                 <p>Platform: {chatLogsData.debugInfo.platform}</p>
                 <p>Architecture: {chatLogsData.debugInfo.architecture}</p>
                 <p>
@@ -333,7 +335,7 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
           If you need help or want to report an issue, here are some options:
         </DialogDescription>
         <div className="flex flex-col space-y-4 w-full">
-          {isDyadProUser ? (
+          {isAnyonProUser ? (
             <div className="flex flex-col space-y-2">
               <Button
                 variant="default"

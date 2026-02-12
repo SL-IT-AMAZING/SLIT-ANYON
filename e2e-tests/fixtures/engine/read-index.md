@@ -1,3 +1,3 @@
 Read the index page:
-<dyad-read path="src/pages/Index.tsx"></dyad-read>
+<anyon-read path="src/pages/Index.tsx"></anyon-read>
 Done.

@@ -1,6 +1,6 @@
-<dyad-rename from="src/App.tsx" to="src/Renamed.tsx">
-</dyad-rename>
+<anyon-rename from="src/App.tsx" to="src/Renamed.tsx">
+</anyon-rename>
 
-<dyad-write path="src/Renamed.tsx">
+<anyon-write path="src/Renamed.tsx">
 // newly added content to renamed file should exist
-</dyad-write>
+</anyon-write>

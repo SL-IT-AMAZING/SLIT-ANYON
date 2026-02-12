@@ -89,7 +89,7 @@ export const runTypeChecksTool: ToolDefinition<
         ? `Type checking: ${args.paths.join(", ")}`
         : "Type checking all files";
     ctx.onXmlStream(
-      `<dyad-status title="${escapeXmlAttr(title)}"></dyad-status>`,
+      `<anyon-status title="${escapeXmlAttr(title)}"></anyon-status>`,
     );
 
     // Run TypeScript type checking using existing infrastructure
@@ -115,7 +115,7 @@ export const runTypeChecksTool: ToolDefinition<
 
     // Complete XML with result
     ctx.onXmlComplete(
-      `<dyad-status title="${escapeXmlAttr(title)}">\n${escapeXmlContent(result)}\n</dyad-status>`,
+      `<anyon-status title="${escapeXmlAttr(title)}">\n${escapeXmlContent(result)}\n</anyon-status>`,
     );
 
     return result;

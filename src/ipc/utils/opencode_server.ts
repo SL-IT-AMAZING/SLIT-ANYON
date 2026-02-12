@@ -119,7 +119,7 @@ class OpenCodeServerManager {
     const password =
       options.password ||
       process.env.OPENCODE_PASSWORD ||
-      "dyad-opencode-default";
+      "anyon-opencode-default";
     const timeout = options.timeout || 30000;
     const opencodePath =
       options.opencodePath ||
@@ -184,7 +184,7 @@ class OpenCodeServerManager {
         );
       }
       this.process = null;
-      throw err;
+      logger.error(`OpenCode server process error: ${err.message}`);
     });
 
     this.process.stdout?.on("data", (data: Buffer) => {

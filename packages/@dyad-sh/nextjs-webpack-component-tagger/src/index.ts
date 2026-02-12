@@ -1,20 +1,15 @@
-import { parse } from "@babel/parser";
-import MagicString from "magic-string";
 import path from "node:path";
+import { parse } from "@babel/parser";
 import { walk } from "estree-walker";
+import MagicString from "magic-string";
 
 const VALID_EXTENSIONS = new Set([".jsx", ".tsx"]);
 
-/**
- * A webpack loader that adds `data-dyad-*` attributes to JSX elements.
- */
-export default function dyadTaggerLoader(this: any, code: string) {
-  // Signal that this is an async loader
+export default function anyonTaggerLoader(this: any, code: string) {
   const callback = this.async();
 
   const transform = async () => {
     try {
-      // Skip non-JSX files and node_modules
       if (
         !VALID_EXTENSIONS.has(path.extname(this.resourcePath)) ||
         this.resourcePath.includes("node_modules")
@@ -22,7 +17,6 @@ export default function dyadTaggerLoader(this: any, code: string) {
         return null;
       }
 
-      // Parse the AST
       const ast = parse(code, {
         sourceType: "module",
         plugins: ["jsx", "typescript"],
@@ -33,48 +27,42 @@ export default function dyadTaggerLoader(this: any, code: string) {
       const fileRelative = path.relative(this.rootContext, this.resourcePath);
       let transformCount = 0;
 
-      // Walk the AST and transform JSX elements
       walk(ast as any, {
         enter: (node: any) => {
           try {
             if (node.type !== "JSXOpeningElement") return;
 
-            // Extract the tag/component name
             if (node.name?.type !== "JSXIdentifier") return;
             const tagName = node.name.name;
             if (!tagName) return;
 
-            // Skip if already tagged
             const alreadyTagged = node.attributes?.some(
               (attr: any) =>
                 attr.type === "JSXAttribute" &&
-                attr.name?.name === "data-dyad-id",
+                attr.name?.name === "data-anyon-id",
             );
             if (alreadyTagged) return;
 
-            // Build the dyad ID
             const loc = node.loc?.start;
             if (!loc) return;
-            const dyadId = `${fileRelative}:${loc.line}:${loc.column}`;
+            const componentId = `${fileRelative}:${loc.line}:${loc.column}`;
 
-            // Inject the attributes
             if (node.name.end != null) {
               ms.appendLeft(
                 node.name.end,
-                ` data-dyad-id="${dyadId}" data-dyad-name="${tagName}"`,
+                ` data-anyon-id="${componentId}" data-anyon-name="${tagName}"`,
               );
               transformCount++;
             }
           } catch (error) {
             console.warn(
-              `[dyad-tagger] Warning: Failed to process JSX node in ${this.resourcePath}:`,
+              `[anyon-tagger] Warning: Failed to process JSX node in ${this.resourcePath}:`,
               error,
             );
           }
         },
       });
 
-      // Return null if no changes were made
       if (transformCount === 0) {
         return null;
       }
@@ -86,7 +74,7 @@ export default function dyadTaggerLoader(this: any, code: string) {
       };
     } catch (error) {
       console.warn(
-        `[dyad-tagger] Warning: Failed to transform ${this.resourcePath}:`,
+        `[anyon-tagger] Warning: Failed to transform ${this.resourcePath}:`,
         error,
       );
       return null;
@@ -102,8 +90,7 @@ export default function dyadTaggerLoader(this: any, code: string) {
       }
     })
     .catch((err) => {
-      console.error(`[dyad-tagger] ERROR in ${this.resourcePath}:`, err);
-      // Return original code instead of throwing
+      console.error(`[anyon-tagger] ERROR in ${this.resourcePath}:`, err);
       callback(null, code);
     });
 }

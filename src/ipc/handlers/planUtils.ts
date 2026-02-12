@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Ensures `.dyad/` is listed in the project's `.gitignore`.
+ * Ensures `.anyon/` is listed in the project's `.gitignore`.
  * Creates `.gitignore` if it doesn't exist.
  */
-export async function ensureDyadGitignored(appPath: string): Promise<void> {
+export async function ensureAnyonGitignored(appPath: string): Promise<void> {
   const gitignorePath = path.join(appPath, ".gitignore");
   let content = "";
   try {

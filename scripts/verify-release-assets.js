@@ -17,8 +17,8 @@ async function verifyReleaseAssets() {
     console.log(`🔍 Verifying release assets for version ${version}...`);
 
     // GitHub API configuration
-    const owner = "dyad-sh";
-    const repo = "dyad";
+    const owner = "anyon-sh";
+    const repo = "anyon";
     const token = process.env.GITHUB_TOKEN;
 
     if (!token) {
@@ -35,7 +35,7 @@ async function verifyReleaseAssets() {
       headers: {
         Authorization: `token ${token}`,
         Accept: "application/vnd.github.v3+json",
-        "User-Agent": "dyad-release-verifier",
+        "User-Agent": "anyon-release-verifier",
       },
     });
 
@@ -81,15 +81,15 @@ async function verifyReleaseAssets() {
 
     // Define expected assets with platform-specific version handling
     const expectedAssets = [
-      `dyad-${normalizeVersionForPlatform(version, "rpm")}-1.x86_64.rpm`,
-      `dyad-${normalizeVersionForPlatform(version, "nupkg")}-full.nupkg`,
-      `dyad-${version}.Setup.exe`,
-      `dyad-${version}-arm64.dmg`,
-      `dyad-${version}-x64.dmg`,
-      `dyad-darwin-arm64-${version}.zip`,
-      `dyad-darwin-x64-${version}.zip`,
-      `dyad_${normalizeVersionForPlatform(version, "deb")}_amd64.deb`,
-      `dyad_${version}_x86_64.AppImage`,
+      `anyon-${normalizeVersionForPlatform(version, "rpm")}-1.x86_64.rpm`,
+      `anyon-${normalizeVersionForPlatform(version, "nupkg")}-full.nupkg`,
+      `anyon-${version}.Setup.exe`,
+      `anyon-${version}-arm64.dmg`,
+      `anyon-${version}-x64.dmg`,
+      `anyon-darwin-arm64-${version}.zip`,
+      `anyon-darwin-x64-${version}.zip`,
+      `anyon_${normalizeVersionForPlatform(version, "deb")}_amd64.deb`,
+      `anyon_${version}_x86_64.AppImage`,
       "RELEASES",
     ];
 

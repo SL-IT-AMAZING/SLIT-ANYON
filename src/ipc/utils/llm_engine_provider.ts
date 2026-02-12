@@ -40,7 +40,7 @@ or to provide a custom fetch implementation for e.g. testing.
 */
   fetch?: FetchFunction;
 
-  dyadOptions: {
+  anyonOptions: {
     enableLazyEdits?: boolean;
     enableSmartFilesContext?: boolean;
     enableWebSearch?: boolean;
@@ -48,7 +48,7 @@ or to provide a custom fetch implementation for e.g. testing.
   settings: UserSettings;
 }
 
-export interface DyadEngineProvider {
+export interface AnyonEngineProvider {
   /**
 Creates a model for text generation.
 */
@@ -62,11 +62,11 @@ Creates a chat model for text generation.
   responses(modelId: ExampleChatModelId, chatParams: ChatParams): LanguageModel;
 }
 
-export function createDyadEngine(
+export function createAnyonEngine(
   options: ExampleProviderSettings,
-): DyadEngineProvider {
+): AnyonEngineProvider {
   const baseURL = withoutTrailingSlash(options.baseURL);
-  logger.info("creating dyad engine with baseURL", baseURL);
+  logger.info("creating anyon engine with baseURL", baseURL);
 
   // Track request ID attempts
   const requestIdAttempts = new Map<string, number>();
@@ -74,7 +74,7 @@ export function createDyadEngine(
   const getHeaders = () => ({
     Authorization: `Bearer ${loadApiKey({
       apiKey: options.apiKey,
-      environmentVariableName: "DYAD_PRO_API_KEY",
+      environmentVariableName: "ANYON_PRO_API_KEY",
       description: "Example API key",
     })}`,
     ...options.headers,
@@ -88,7 +88,7 @@ export function createDyadEngine(
   }
 
   const getCommonModelConfig = (): CommonModelConfig => ({
-    provider: `dyad-engine`,
+    provider: `anyon-engine`,
     url: ({ path }) => {
       const url = new URL(`${baseURL}${path}`);
       if (options.queryParams) {
@@ -100,8 +100,8 @@ export function createDyadEngine(
     fetch: options.fetch,
   });
 
-  // Custom fetch implementation that adds dyad-specific options to the request
-  const createDyadFetch = ({
+  // Custom fetch implementation that adds anyon-specific options to the request
+  const createAnyonFetch = ({
     providerId,
   }: {
     providerId: string;
@@ -118,33 +118,33 @@ export function createDyadEngine(
           ...JSON.parse(init.body),
           ...getExtraProviderOptions(providerId, options.settings),
         };
-        const dyadVersionedFiles = parsedBody.dyadVersionedFiles;
-        if ("dyadVersionedFiles" in parsedBody) {
-          delete parsedBody.dyadVersionedFiles;
+        const anyonVersionedFiles = parsedBody.anyonVersionedFiles;
+        if ("anyonVersionedFiles" in parsedBody) {
+          delete parsedBody.anyonVersionedFiles;
         }
-        const dyadFiles = parsedBody.dyadFiles;
-        if ("dyadFiles" in parsedBody) {
-          delete parsedBody.dyadFiles;
+        const anyonFiles = parsedBody.anyonFiles;
+        if ("anyonFiles" in parsedBody) {
+          delete parsedBody.anyonFiles;
         }
-        const requestId = parsedBody.dyadRequestId;
-        if ("dyadRequestId" in parsedBody) {
-          delete parsedBody.dyadRequestId;
+        const requestId = parsedBody.anyonRequestId;
+        if ("anyonRequestId" in parsedBody) {
+          delete parsedBody.anyonRequestId;
         }
-        const dyadAppId = parsedBody.dyadAppId;
-        if ("dyadAppId" in parsedBody) {
-          delete parsedBody.dyadAppId;
+        const anyonAppId = parsedBody.anyonAppId;
+        if ("anyonAppId" in parsedBody) {
+          delete parsedBody.anyonAppId;
         }
-        const dyadDisableFiles = parsedBody.dyadDisableFiles;
-        if ("dyadDisableFiles" in parsedBody) {
-          delete parsedBody.dyadDisableFiles;
+        const anyonDisableFiles = parsedBody.anyonDisableFiles;
+        if ("anyonDisableFiles" in parsedBody) {
+          delete parsedBody.anyonDisableFiles;
         }
-        const dyadMentionedApps = parsedBody.dyadMentionedApps;
-        if ("dyadMentionedApps" in parsedBody) {
-          delete parsedBody.dyadMentionedApps;
+        const anyonMentionedApps = parsedBody.anyonMentionedApps;
+        if ("anyonMentionedApps" in parsedBody) {
+          delete parsedBody.anyonMentionedApps;
         }
-        const dyadSmartContextMode = parsedBody.dyadSmartContextMode;
-        if ("dyadSmartContextMode" in parsedBody) {
-          delete parsedBody.dyadSmartContextMode;
+        const anyonSmartContextMode = parsedBody.anyonSmartContextMode;
+        if ("anyonSmartContextMode" in parsedBody) {
+          delete parsedBody.anyonSmartContextMode;
         }
 
         // Track and modify requestId with attempt number
@@ -156,19 +156,19 @@ export function createDyadEngine(
         }
 
         // Add files to the request if they exist
-        if (!dyadDisableFiles) {
-          parsedBody.dyad_options = {
-            files: dyadFiles,
-            versioned_files: dyadVersionedFiles,
-            enable_lazy_edits: options.dyadOptions.enableLazyEdits,
+        if (!anyonDisableFiles) {
+          parsedBody.anyon_options = {
+            files: anyonFiles,
+            versioned_files: anyonVersionedFiles,
+            enable_lazy_edits: options.anyonOptions.enableLazyEdits,
             enable_smart_files_context:
-              options.dyadOptions.enableSmartFilesContext,
-            smart_context_mode: dyadSmartContextMode,
-            enable_web_search: options.dyadOptions.enableWebSearch,
-            app_id: dyadAppId,
+              options.anyonOptions.enableSmartFilesContext,
+            smart_context_mode: anyonSmartContextMode,
+            enable_web_search: options.anyonOptions.enableWebSearch,
+            app_id: anyonAppId,
           };
-          if (dyadMentionedApps?.length) {
-            parsedBody.dyad_options.mentioned_apps = dyadMentionedApps;
+          if (anyonMentionedApps?.length) {
+            parsedBody.anyon_options.mentioned_apps = anyonMentionedApps;
           }
         }
 
@@ -178,7 +178,7 @@ export function createDyadEngine(
           headers: {
             ...init.headers,
             ...(modifiedRequestId && {
-              "X-Dyad-Request-Id": modifiedRequestId,
+              "X-Anyon-Request-Id": modifiedRequestId,
             }),
           },
           body: JSON.stringify(parsedBody),
@@ -200,7 +200,7 @@ export function createDyadEngine(
   ) => {
     const config = {
       ...getCommonModelConfig(),
-      fetch: createDyadFetch({ providerId: chatParams.providerId }),
+      fetch: createAnyonFetch({ providerId: chatParams.providerId }),
     };
 
     return new OpenAICompatibleChatLanguageModel(modelId, config);
@@ -212,7 +212,7 @@ export function createDyadEngine(
   ) => {
     const config = {
       ...getCommonModelConfig(),
-      fetch: createDyadFetch({ providerId: chatParams.providerId }),
+      fetch: createAnyonFetch({ providerId: chatParams.providerId }),
     };
 
     return new OpenAIResponsesLanguageModel(modelId, config);

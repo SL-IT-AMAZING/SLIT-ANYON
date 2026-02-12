@@ -1,4 +1,4 @@
-import { DyadProSuccessDialog } from "@/components/DyadProSuccessDialog";
+import { AnyonProSuccessDialog } from "@/components/AnyonProSuccessDialog";
 import { ActionHeader } from "@/components/preview_panel/ActionHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,31 +37,31 @@ export const TitleBar = () => {
     checkPlatform();
   }, []);
 
-  const showDyadProSuccessDialog = () => {
+  const showAnyonProSuccessDialog = () => {
     setIsSuccessDialogOpen(true);
   };
 
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
   useEffect(() => {
     const handleDeepLink = async () => {
-      if (lastDeepLink?.type === "dyad-pro-return") {
+      if (lastDeepLink?.type === "anyon-pro-return") {
         await refreshSettings();
-        showDyadProSuccessDialog();
+        showAnyonProSuccessDialog();
         clearLastDeepLink();
       }
     };
     handleDeepLink();
   }, [lastDeepLink?.timestamp]);
 
-  const isDyadPro = !!settings?.providerSettings?.auto?.apiKey?.value;
-  const isDyadProEnabled = Boolean(settings?.enableDyadPro);
+  const isAnyonPro = !!settings?.providerSettings?.auto?.apiKey?.value;
+  const isAnyonProEnabled = Boolean(settings?.enableAnyonPro);
 
   return (
     <>
       <div className="@container z-11 w-full h-11 bg-(--sidebar) absolute top-0 left-0 app-region-drag flex items-center">
         <div className={`${showWindowControls ? "pl-2" : "pl-18"}`}></div>
 
-        {isDyadPro && <DyadProButton isDyadProEnabled={isDyadProEnabled} />}
+        {isAnyonPro && <AnyonProButton isAnyonProEnabled={isAnyonProEnabled} />}
 
         {/* Preview Header */}
         {location.pathname === "/chat" && (
@@ -73,7 +73,7 @@ export const TitleBar = () => {
         {showWindowControls && <WindowsControls />}
       </div>
 
-      <DyadProSuccessDialog
+      <AnyonProSuccessDialog
         isOpen={isSuccessDialogOpen}
         onClose={() => setIsSuccessDialogOpen(false)}
       />
@@ -161,16 +161,16 @@ function WindowsControls() {
   );
 }
 
-export function DyadProButton({
-  isDyadProEnabled,
+export function AnyonProButton({
+  isAnyonProEnabled,
 }: {
-  isDyadProEnabled: boolean;
+  isAnyonProEnabled: boolean;
 }) {
   const { navigate } = useRouter();
   const { userBudget } = useUserBudgetInfo();
   return (
     <Button
-      data-testid="title-bar-dyad-pro-button"
+      data-testid="title-bar-anyon-pro-button"
       onClick={() => {
         navigate({
           to: providerSettingsRoute.id,
@@ -180,16 +180,16 @@ export function DyadProButton({
       variant="outline"
       className={cn(
         "hidden @2xl:block ml-1 no-app-region-drag h-7 bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white text-xs px-2 pt-1 pb-1",
-        !isDyadProEnabled && "bg-muted-foreground",
+        !isAnyonProEnabled && "bg-muted-foreground",
       )}
       size="sm"
     >
-      {isDyadProEnabled
+      {isAnyonProEnabled
         ? userBudget?.isTrial
           ? "Pro Trial"
           : "Pro"
         : "Pro (off)"}
-      {userBudget && isDyadProEnabled && (
+      {userBudget && isAnyonProEnabled && (
         <AICreditStatus userBudget={userBudget} />
       )}
     </Button>

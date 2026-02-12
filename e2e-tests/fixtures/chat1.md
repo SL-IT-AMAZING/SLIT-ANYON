@@ -1,3 +1,3 @@
 chat1
 
-<dyad-chat-summary>Chat 1</dyad-chat-summary>
+<anyon-chat-summary>Chat 1</anyon-chat-summary>

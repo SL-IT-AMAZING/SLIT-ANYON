@@ -1,8 +1,8 @@
-# Supabase OAuth Integration Analysis - Dyad App
+# Supabase OAuth Integration Analysis - Anyon App
 
 ## Overview
 
-The Dyad app (Electron-based) uses Supabase OAuth authentication to enable powerful backend integration capabilities. After users authenticate via OAuth, the access token is stored in settings and used to unlock database, edge function, and project management features.
+The Anyon app (Electron-based) uses Supabase OAuth authentication to enable powerful backend integration capabilities. After users authenticate via OAuth, the access token is stored in settings and used to unlock database, edge function, and project management features.
 
 ---
 
@@ -161,7 +161,7 @@ The schema is used to generate AI context via `getSupabaseContext()`:
 
 ### Association Model
 
-Each Dyad **app** can be linked to one Supabase **project**:
+Each Anyon **app** can be linked to one Supabase **project**:
 
 ```
 App {

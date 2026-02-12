@@ -45,7 +45,7 @@ export const listFilesTool: ToolDefinition<ListFilesArgs> = {
     if (isComplete) {
       return undefined;
     }
-    return `<dyad-list-files${getXmlAttributes(args)}></dyad-list-files>`;
+    return `<anyon-list-files${getXmlAttributes(args)}></anyon-list-files>`;
   },
 
   execute: async (args, ctx: AgentContext) => {
@@ -99,7 +99,7 @@ export const listFilesTool: ToolDefinition<ListFilesArgs> = {
 
     // Write abbreviated list to UI
     ctx.onXmlComplete(
-      `<dyad-list-files${getXmlAttributes(args)}>${escapeXmlContent(abbreviatedList + countInfo)}</dyad-list-files>`,
+      `<anyon-list-files${getXmlAttributes(args)}>${escapeXmlContent(abbreviatedList + countInfo)}</anyon-list-files>`,
     );
 
     // Return full file list for LLM

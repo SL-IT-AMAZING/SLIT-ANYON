@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Fetch vendor binaries for bundling with Dyad.
+ * Fetch vendor binaries for bundling with Anyon.
  * Downloads OpenCode CLI and Oh-My-OpenCode for the current platform.
  *
  * Usage:

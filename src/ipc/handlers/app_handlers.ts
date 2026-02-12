@@ -6,7 +6,7 @@ import { desc, eq, like } from "drizzle-orm";
 import { app, dialog, ipcMain } from "electron";
 import { db, getDatabasePath } from "../../db";
 import { apps, chats, messages } from "../../db/schema";
-import { getDyadAppPath, getUserDataPath } from "../../paths/paths";
+import { getAnyonAppPath, getUserDataPath } from "../../paths/paths";
 import { appContracts } from "../types/app";
 import type { AppFileSearchResult } from "../types/app";
 import { miscContracts } from "../types/misc";
@@ -324,7 +324,7 @@ function listenToProcess({
     // This is a hacky heuristic to pick up when drizzle is asking for user
     // to select from one of a few choices. We automatically pick the first
     // option because it's usually a good default choice. We guard this with
-    // isNeon because: 1) only Neon apps (for the official Dyad templates) should
+    // isNeon because: 1) only Neon apps (for the official Anyon templates) should
     // get this template and 2) it's safer to do this with Neon apps because
     // their databases have point in time restore built-in.
     if (isNeon && message.includes("created or renamed from another")) {
@@ -358,7 +358,7 @@ function listenToProcess({
           onStarted: (proxyUrl) => {
             safeSend(event.sender, "app:output", {
               type: "stdout",
-              message: `[dyad-proxy-server]started=[${proxyUrl}] original=[${urlMatch[1]}]`,
+              message: `[anyon-proxy-server]started=[${proxyUrl}] original=[${urlMatch[1]}]`,
               appId,
             });
           },
@@ -398,7 +398,7 @@ function listenToProcess({
     if (code !== null && code !== 0) {
       safeSend(event.sender, "app:output", {
         type: "stderr",
-        message: `[dyad-server-exit] App server exited with code ${code}`,
+        message: `[anyon-server-exit] App server exited with code ${code}`,
         appId,
       });
     }
@@ -430,7 +430,7 @@ async function executeAppInDocker({
   installCommand?: string | null;
   startCommand?: string | null;
 }): Promise<void> {
-  const containerName = `dyad-app-${appId}`;
+  const containerName = `anyon-app-${appId}`;
 
   // First, check if Docker is available
   try {
@@ -475,7 +475,7 @@ async function executeAppInDocker({
   }
 
   // Create a Dockerfile in the app directory if it doesn't exist
-  const dockerfilePath = path.join(appPath, "Dockerfile.dyad");
+  const dockerfilePath = path.join(appPath, "Dockerfile.anyon");
   if (!fs.existsSync(dockerfilePath)) {
     const dockerfileContent = `FROM node:22-alpine
 
@@ -494,7 +494,7 @@ RUN npm install -g pnpm
   // Build the Docker image
   const buildProcess = spawn(
     "docker",
-    ["build", "-f", "Dockerfile.dyad", "-t", `dyad-app-${appId}`, "."],
+    ["build", "-f", "Dockerfile.anyon", "-t", `anyon-app-${appId}`, "."],
     {
       cwd: appPath,
       stdio: "pipe",
@@ -533,12 +533,12 @@ RUN npm install -g pnpm
       "-v",
       `${appPath}:/app`,
       "-v",
-      `dyad-pnpm-${appId}:/app/.pnpm-store`,
+      `anyon-pnpm-${appId}:/app/.pnpm-store`,
       "-e",
       "PNPM_STORE_PATH=/app/.pnpm-store",
       "-w",
       "/app",
-      `dyad-app-${appId}`,
+      `anyon-app-${appId}`,
       "sh",
       "-c",
       getCommand({ appId, appPath, installCommand, startCommand }),
@@ -776,14 +776,14 @@ async function searchAppFilesWithRipgrep({
 }
 
 export function registerAppHandlers() {
-  createTypedHandler(systemContracts.restartDyad, async () => {
+  createTypedHandler(systemContracts.restartAnyon, async () => {
     app.relaunch();
     app.quit();
   });
 
   createTypedHandler(appContracts.createApp, async (_, params) => {
     const appPath = params.name;
-    const fullAppPath = getDyadAppPath(appPath);
+    const fullAppPath = getAnyonAppPath(appPath);
     if (fs.existsSync(fullAppPath)) {
       throw new Error(`App already exists at: ${fullAppPath}`);
     }
@@ -820,7 +820,7 @@ export function registerAppHandlers() {
     // Create initial commit
     const commitHash = await gitCommit({
       path: fullAppPath,
-      message: "Init Dyad app",
+      message: "Init Anyon app",
     });
 
     // Update chat with initial commit hash
@@ -858,8 +858,8 @@ export function registerAppHandlers() {
       throw new Error("Original app not found.");
     }
 
-    const originalAppPath = getDyadAppPath(originalApp.path);
-    const newAppPath = getDyadAppPath(newAppName);
+    const originalAppPath = getAnyonAppPath(originalApp.path);
+    const newAppPath = getAnyonAppPath(newAppName);
 
     // 3. Copy the app folder
     try {
@@ -889,7 +889,7 @@ export function registerAppHandlers() {
       // Create initial commit
       await gitCommit({
         path: newAppPath,
-        message: "Init Dyad app",
+        message: "Init Anyon app",
       });
     }
 
@@ -923,7 +923,7 @@ export function registerAppHandlers() {
     }
 
     // Get app files
-    const appPath = getDyadAppPath(app.path);
+    const appPath = getAnyonAppPath(app.path);
     let files: string[] = [];
 
     try {
@@ -971,7 +971,7 @@ export function registerAppHandlers() {
     });
     const appsWithResolvedPath = allApps.map((app) => ({
       ...app,
-      resolvedPath: getDyadAppPath(app.path),
+      resolvedPath: getAnyonAppPath(app.path),
     }));
     return {
       apps: appsWithResolvedPath,
@@ -988,7 +988,7 @@ export function registerAppHandlers() {
       throw new Error("App not found");
     }
 
-    const appPath = getDyadAppPath(app.path);
+    const appPath = getAnyonAppPath(app.path);
     const fullPath = path.join(appPath, filePath);
 
     // Check if the path is within the app directory (security check)
@@ -1040,7 +1040,7 @@ export function registerAppHandlers() {
 
       logger.debug(`Starting app ${appId} in path ${app.path}`);
 
-      const appPath = getDyadAppPath(app.path);
+      const appPath = getAnyonAppPath(app.path);
       try {
         // There may have been a previous run that left a process on this port.
         await cleanUpPort(getAppPort(appId));
@@ -1145,7 +1145,7 @@ export function registerAppHandlers() {
           throw new Error("App not found");
         }
 
-        const appPath = getDyadAppPath(app.path);
+        const appPath = getAnyonAppPath(app.path);
 
         // Remove node_modules if requested
         if (removeNodeModules) {
@@ -1169,12 +1169,12 @@ export function registerAppHandlers() {
           // If running in Docker mode, also remove container volumes so deps reinstall freshly
           if (runtimeMode === "docker") {
             logger.log(
-              `Docker mode detected for app ${appId}. Removing Docker volumes dyad-pnpm-${appId}...`,
+              `Docker mode detected for app ${appId}. Removing Docker volumes anyon-pnpm-${appId}...`,
             );
             try {
               await removeDockerVolumesForApp(appId);
               logger.log(
-                `Removed Docker volumes for app ${appId} (dyad-pnpm-${appId}).`,
+                `Removed Docker volumes for app ${appId} (anyon-pnpm-${appId}).`,
               );
             } catch (e) {
               // Best-effort cleanup; log and continue
@@ -1218,7 +1218,7 @@ export function registerAppHandlers() {
       throw new Error("App not found");
     }
 
-    const appPath = getDyadAppPath(app.path);
+    const appPath = getAnyonAppPath(app.path);
     const fullPath = path.join(appPath, filePath);
 
     // Check if the path is within the app directory (security check)
@@ -1349,7 +1349,7 @@ export function registerAppHandlers() {
       }
 
       // Delete app files
-      const appPath = getDyadAppPath(app.path);
+      const appPath = getAnyonAppPath(app.path);
       try {
         await fsPromises.rm(appPath, { recursive: true, force: true });
       } catch (error: any) {
@@ -1451,10 +1451,10 @@ export function registerAppHandlers() {
 
       // If the current path is absolute, preserve the directory and only change the folder name
       // Otherwise, resolve the new path using the default base path
-      const currentResolvedPath = getDyadAppPath(app.path);
+      const currentResolvedPath = getAnyonAppPath(app.path);
       const newAppPath = path.isAbsolute(app.path)
         ? path.join(path.dirname(app.path), appPath)
-        : getDyadAppPath(appPath);
+        : getAnyonAppPath(appPath);
 
       let hasPathConflict = false;
       if (pathChanged) {
@@ -1463,7 +1463,7 @@ export function registerAppHandlers() {
           if (existingApp.id === appId) {
             return false;
           }
-          return getDyadAppPath(existingApp.path) === newAppPath;
+          return getAnyonAppPath(existingApp.path) === newAppPath;
         });
       }
 
@@ -1617,11 +1617,11 @@ export function registerAppHandlers() {
     // Doing this last because it's the most time-consuming and the least important
     // in terms of resetting the app state.
     logger.log("removing all app files...");
-    const dyadAppPath = getDyadAppPath(".");
-    if (fs.existsSync(dyadAppPath)) {
-      await fsPromises.rm(dyadAppPath, { recursive: true, force: true });
+    const anyonAppPath = getAnyonAppPath(".");
+    if (fs.existsSync(anyonAppPath)) {
+      await fsPromises.rm(anyonAppPath, { recursive: true, force: true });
       // Recreate the base directory
-      await fsPromises.mkdir(dyadAppPath, { recursive: true });
+      await fsPromises.mkdir(anyonAppPath, { recursive: true });
     }
     logger.log("all app files removed.");
     logger.log("reset all complete.");
@@ -1644,7 +1644,7 @@ export function registerAppHandlers() {
       throw new Error("App not found");
     }
 
-    const appPath = getDyadAppPath(app.path);
+    const appPath = getAnyonAppPath(app.path);
 
     return withLock(appId, async () => {
       try {
@@ -1726,7 +1726,7 @@ export function registerAppHandlers() {
       throw new Error("App not found");
     }
 
-    const appPath = getDyadAppPath(appRecord.path);
+    const appPath = getAnyonAppPath(appRecord.path);
 
     // Search file contents with ripgrep
     const contentMatches = await searchAppFilesWithRipgrep({
@@ -1876,7 +1876,7 @@ export function registerAppHandlers() {
         throw new Error("App not found");
       }
 
-      const currentResolvedPath = getDyadAppPath(app.path);
+      const currentResolvedPath = getAnyonAppPath(app.path);
       // Extract app folder name from current path (works for both absolute and relative paths)
       const appFolderName = path.basename(
         path.isAbsolute(app.path) ? app.path : currentResolvedPath,
@@ -1900,7 +1900,7 @@ export function registerAppHandlers() {
       const conflict = allApps.some(
         (existingApp) =>
           existingApp.id !== appId &&
-          getDyadAppPath(existingApp.path) === nextResolvedPath,
+          getAnyonAppPath(existingApp.path) === nextResolvedPath,
       );
 
       if (conflict) {

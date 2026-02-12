@@ -6,7 +6,7 @@
 
 ---
 
-## TODO 4A: `<dyad-*>` XML 태그 리네이밍
+## TODO 4A: `<anyon-*>` XML 태그 리네이밍
 
 > 추천: 하지 마라 (리스크 대비 이득 없음)
 
@@ -19,13 +19,13 @@
 
 | 영역            | 파일 수 | 태그 예시                                        |
 | --------------- | ------- | ------------------------------------------------ |
-| 시스템 프롬프트 | 5+      | `<dyad-write>`, `<dyad-read>` 등 정의            |
-| 태그 파서       | 2+      | `dyad_tag_parser.ts` — 정규식 매칭               |
+| 시스템 프롬프트 | 5+      | `<anyon-write>`, `<anyon-read>` 등 정의          |
+| 태그 파서       | 2+      | `anyon_tag_parser.ts` — 정규식 매칭              |
 | 응답 프로세서   | 3+      | `response_processor.ts` — 태그 → 파일 오퍼레이션 |
-| 마크다운 파서   | 1       | `DyadMarkdownParser.tsx` — UI 렌더링             |
+| 마크다운 파서   | 1       | `AnyonMarkdownParser.tsx` — UI 렌더링            |
 | 도구 정의       | 10+     | `edit_file.ts`, `web_search.ts` 등               |
 | 테스트          | 20+     | 스냅샷, 픽스처 전부                              |
-| 컴포넌트 태거   | 2       | `data-dyad-id` DOM 속성                          |
+| 컴포넌트 태거   | 2       | `data-anyon-id` DOM 속성                         |
 
 ### 만약 정말 바꾸고 싶다면
 
@@ -37,36 +37,36 @@
 ### 현재 태그 전체 목록
 
 ```
-<dyad-write path="...">...</dyad-write>
-<dyad-read path="..." />
-<dyad-rename from="..." to="..." />
-<dyad-delete path="..." />
-<dyad-add-dependency>...</dyad-add-dependency>
-<dyad-search-replace path="...">...</dyad-search-replace>
-<dyad-chat-summary>...</dyad-chat-summary>
-<dyad-command>...</dyad-command>
-<dyad-output>...</dyad-output>
-<dyad-problem-report>...</dyad-problem-report>
-<dyad-security-finding>...</dyad-security-finding>
-<dyad-edit path="...">...</dyad-edit>
-<dyad-execute-sql>...</dyad-execute-sql>
-<dyad-web-search>...</dyad-web-search>
-<dyad-web-crawl>...</dyad-web-crawl>
-<dyad-code-search>...</dyad-code-search>
-<dyad-grep>...</dyad-grep>
-<dyad-read-logs />
-<dyad-status>...</dyad-status>
-<dyad-mcp-tool-call>...</dyad-mcp-tool-call>
-<dyad-mcp-tool-result>...</dyad-mcp-tool-result>
-<dyad-add-integration>...</dyad-add-integration>
-<dyad-file>...</dyad-file>
-<dyad-supabase-*>...</dyad-supabase-*>
-<dyad-write-plan>...</dyad-write-plan>
-<dyad-exit-plan>...</dyad-exit-plan>
-<dyad-text-attachment>...</dyad-text-attachment>
+<anyon-write path="...">...</anyon-write>
+<anyon-read path="..." />
+<anyon-rename from="..." to="..." />
+<anyon-delete path="..." />
+<anyon-add-dependency>...</anyon-add-dependency>
+<anyon-search-replace path="...">...</anyon-search-replace>
+<anyon-chat-summary>...</anyon-chat-summary>
+<anyon-command>...</anyon-command>
+<anyon-output>...</anyon-output>
+<anyon-problem-report>...</anyon-problem-report>
+<anyon-security-finding>...</anyon-security-finding>
+<anyon-edit path="...">...</anyon-edit>
+<anyon-execute-sql>...</anyon-execute-sql>
+<anyon-web-search>...</anyon-web-search>
+<anyon-web-crawl>...</anyon-web-crawl>
+<anyon-code-search>...</anyon-code-search>
+<anyon-grep>...</anyon-grep>
+<anyon-read-logs />
+<anyon-status>...</anyon-status>
+<anyon-mcp-tool-call>...</anyon-mcp-tool-call>
+<anyon-mcp-tool-result>...</anyon-mcp-tool-result>
+<anyon-add-integration>...</anyon-add-integration>
+<anyon-file>...</anyon-file>
+<anyon-supabase-*>...</anyon-supabase-*>
+<anyon-write-plan>...</anyon-write-plan>
+<anyon-exit-plan>...</anyon-exit-plan>
+<anyon-text-attachment>...</anyon-text-attachment>
 
 DOM 속성:
-data-dyad-id, data-dyad-name, data-dyad-runtime-id
+data-anyon-id, data-anyon-name, data-anyon-runtime-id
 ```
 
 ---
@@ -77,42 +77,42 @@ data-dyad-id, data-dyad-name, data-dyad-runtime-id
 
 ### 고빈도 패턴 (변경 시 영향 큼)
 
-| 패턴                       | 출현 수 | 위치                                 |
-| -------------------------- | ------- | ------------------------------------ |
-| `getDyadAppPath`           | ~80+    | 거의 모든 핸들러                     |
-| `getDyadAppsBaseDirectory` | ~3      | `paths.ts`, `main.ts`, `db/index.ts` |
-| `isDyadProEnabled`         | ~15     | `schemas.ts`, 컴포넌트들             |
-| `hasDyadProKey`            | ~10     | `schemas.ts`, 훅들                   |
-| `enableDyadPro`            | ~20     | `schemas.ts`, 핸들러, 컴포넌트       |
-| `isDyadPro`                | ~15     | `types.ts`, 도구들                   |
-| `dyadRequestId`            | ~20     | 스트림 핸들러, 에이전트              |
-| `createDyadEngine`         | ~10     | `llm_engine_provider.ts`             |
+| 패턴                        | 출현 수 | 위치                                 |
+| --------------------------- | ------- | ------------------------------------ |
+| `getAnyonAppPath`           | ~80+    | 거의 모든 핸들러                     |
+| `getAnyonAppsBaseDirectory` | ~3      | `paths.ts`, `main.ts`, `db/index.ts` |
+| `isAnyonProEnabled`         | ~15     | `schemas.ts`, 컴포넌트들             |
+| `hasAnyonProKey`            | ~10     | `schemas.ts`, 훅들                   |
+| `enableAnyonPro`            | ~20     | `schemas.ts`, 핸들러, 컴포넌트       |
+| `isAnyonPro`                | ~15     | `types.ts`, 도구들                   |
+| `anyonRequestId`            | ~20     | 스트림 핸들러, 에이전트              |
+| `createAnyonEngine`         | ~10     | `llm_engine_provider.ts`             |
 
 ### 저빈도 패턴 (비교적 안전)
 
-| 패턴                   | 출현 수 |
-| ---------------------- | ------- |
-| `DyadProSuccessDialog` | ~10     |
-| `DyadProTrialDialog`   | ~10     |
-| `DyadProButton`        | ~10     |
-| `ManageDyadProButton`  | ~5      |
-| `SetupDyadProButton`   | ~5      |
-| `DyadProblemSummary`   | ~5      |
-| `DyadMarkdownParser`   | ~10     |
-| `DyadProBudgetSchema`  | ~3      |
-| `handleDyadProReturn`  | ~3      |
-| `removeDyadTags`       | ~10     |
-| `hasUnclosedDyadWrite` | ~10     |
-| `escapeDyadTags`       | ~5      |
+| 패턴                    | 출현 수 |
+| ----------------------- | ------- |
+| `AnyonProSuccessDialog` | ~10     |
+| `AnyonProTrialDialog`   | ~10     |
+| `AnyonProButton`        | ~10     |
+| `ManageAnyonProButton`  | ~5      |
+| `SetupAnyonProButton`   | ~5      |
+| `AnyonProblemSummary`   | ~5      |
+| `AnyonMarkdownParser`   | ~10     |
+| `AnyonProBudgetSchema`  | ~3      |
+| `handleAnyonProReturn`  | ~3      |
+| `removeAnyonTags`       | ~10     |
+| `hasUnclosedAnyonWrite` | ~10     |
+| `escapeAnyonTags`       | ~5      |
 
 ### 환경 변수
 
-| 변수                   | 파일                                              |
-| ---------------------- | ------------------------------------------------- |
-| `DYAD_ENGINE_URL`      | 3곳 (Phase 1에서 처리)                            |
-| `DYAD_PRO_API_KEY`     | `llm_engine_provider.ts`                          |
-| `DYAD_ATTACHMENT_*`    | `chat_stream_handlers.ts`, `file_upload_utils.ts` |
-| `DYAD_DISABLE_DB_PUSH` | `app_env_var_utils.ts`                            |
+| 변수                    | 파일                                              |
+| ----------------------- | ------------------------------------------------- |
+| `ANYON_ENGINE_URL`      | 3곳 (Phase 1에서 처리)                            |
+| `ANYON_PRO_API_KEY`     | `llm_engine_provider.ts`                          |
+| `ANYON_ATTACHMENT_*`    | `chat_stream_handlers.ts`, `file_upload_utils.ts` |
+| `ANYON_DISABLE_DB_PUSH` | `app_env_var_utils.ts`                            |
 
 ### 접근 방법
 
@@ -131,7 +131,7 @@ LSP rename 기능을 사용하면 안전하게 변경 가능:
 
 ### 로그 업로드 서비스
 
-현재: `upload-logs.dyad.sh/generate-upload-url`
+현재: `upload-logs.anyon.sh/generate-upload-url`
 용도: 사용자가 "Report Bug" 시 진단 로그 업로드
 
 구현 (최소):
@@ -147,7 +147,7 @@ LSP rename 기능을 사용하면 안전하게 변경 가능:
 
 ### 헬프봇 서비스
 
-현재: `helpchat.dyad.sh/v1` (OpenAI 호환 API)
+현재: `helpchat.anyon.sh/v1` (OpenAI 호환 API)
 용도: 인앱 AI 헬프봇
 
 구현:
@@ -162,21 +162,21 @@ LSP rename 기능을 사용하면 안전하게 변경 가능:
 
 ## TODO 4D: npm 패키지 교체 (선택)
 
-### 현재 Dyad 발행 패키지
+### 현재 Anyon 발행 패키지
 
-| 패키지                                     | 용도                         |
-| ------------------------------------------ | ---------------------------- |
-| `@dyad-sh/react-vite-component-tagger`     | Vite 앱에서 컴포넌트 태깅    |
-| `@dyad-sh/nextjs-webpack-component-tagger` | Next.js 앱에서 컴포넌트 태깅 |
-| `@dyad-sh/supabase-management-js`          | Supabase 프로젝트 관리       |
+| 패키지                                      | 용도                         |
+| ------------------------------------------- | ---------------------------- |
+| `@anyon-sh/react-vite-component-tagger`     | Vite 앱에서 컴포넌트 태깅    |
+| `@anyon-sh/nextjs-webpack-component-tagger` | Next.js 앱에서 컴포넌트 태깅 |
+| `@anyon-sh/supabase-management-js`          | Supabase 프로젝트 관리       |
 
 ### 옵션
 
-1. **그대로 사용** — `@dyad-sh/` 패키지가 npm에 공개되어 있으므로 그냥 사용 가능
+1. **그대로 사용** — `@anyon-sh/` 패키지가 npm에 공개되어 있으므로 그냥 사용 가능
 2. **포크** — 너네 npm org로 발행 (`@yourorg/react-vite-component-tagger`)
 3. **인라인** — 패키지 코드를 모노레포 내로 이동
 
-컴포넌트 태거는 `data-dyad-id` DOM 속성을 사용하므로, 4A(XML 태그)를 변경하지 않는 한 그대로 써도 무방.
+컴포넌트 태거는 `data-anyon-id` DOM 속성을 사용하므로, 4A(XML 태그)를 변경하지 않는 한 그대로 써도 무방.
 
 ---
 
@@ -185,8 +185,8 @@ LSP rename 기능을 사용하면 안전하게 변경 가능:
 브랜딩 변경 후:
 
 - [ ] E2E 테스트 셀렉터 업데이트
-  - `e2e-tests/helpers/test_helper.ts:965` — "Ask Dyad to build" 셀렉터
-  - 기타 `data-testid`에 "dyad" 포함된 것들
+  - `e2e-tests/helpers/test_helper.ts:965` — "Ask Anyon to build" 셀렉터
+  - 기타 `data-testid`에 "anyon" 포함된 것들
 
 - [ ] 스냅샷 업데이트
   - `npm run test -- -u` (스냅샷 갱신)
@@ -194,4 +194,4 @@ LSP rename 기능을 사용하면 안전하게 변경 가능:
 
 - [ ] 단위 테스트
   - XML 태그 관련 테스트 (4A를 안 바꿨다면 그대로)
-  - 설정 관련 테스트 (`enableDyadPro` 등)
+  - 설정 관련 테스트 (`enableAnyonPro` 등)

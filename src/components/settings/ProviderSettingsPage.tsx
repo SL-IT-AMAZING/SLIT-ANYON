@@ -14,7 +14,7 @@ import {
   type AzureProviderSetting,
   type UserSettings,
   type VertexProviderSetting,
-  hasDyadProKey,
+  hasAnyonProKey,
 } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 
@@ -56,20 +56,20 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
   const supportsCustomModels =
     providerData?.type === "custom" || providerData?.type === "cloud";
 
-  const isDyad = provider === "auto";
+  const isAnyon = provider === "auto";
 
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Use fetched data (or defaults for Dyad)
-  const providerDisplayName = isDyad
-    ? "Dyad"
+  // Use fetched data (or defaults for Anyon)
+  const providerDisplayName = isAnyon
+    ? "Anyon"
     : (providerData?.name ?? "Unknown Provider");
   const providerWebsiteUrl = providerData?.websiteUrl;
-  const hasFreeTier = isDyad ? false : providerData?.hasFreeTier;
-  const envVarName = isDyad ? undefined : providerData?.envVarName;
+  const hasFreeTier = isAnyon ? false : providerData?.hasFreeTier;
+  const envVarName = isAnyon ? undefined : providerData?.envVarName;
 
   // Use provider ID (which is the 'provider' prop)
   const userApiKey = settings?.providerSettings?.[provider]?.apiKey?.value;
@@ -126,7 +126,8 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
     setSaveError(null);
     try {
       // Check if this is the first time user is setting up ANYON Pro
-      const isNewDyadProSetup = isDyad && settings && !hasDyadProKey(settings);
+      const isNewAnyonProSetup =
+        isAnyon && settings && !hasAnyonProKey(settings);
 
       const settingsUpdate: Partial<UserSettings> = {
         providerSettings: {
@@ -139,10 +140,10 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
           },
         },
       };
-      if (isDyad) {
-        settingsUpdate.enableDyadPro = true;
+      if (isAnyon) {
+        settingsUpdate.enableAnyonPro = true;
         // Set default chat mode to local-agent when user upgrades to pro
-        if (isNewDyadProSetup) {
+        if (isNewAnyonProSetup) {
           settingsUpdate.defaultChatMode = "local-agent";
         }
       }
@@ -181,11 +182,11 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
   };
 
   // --- Toggle ANYON Pro Handler ---
-  const handleToggleDyadPro = async (enabled: boolean) => {
+  const handleToggleAnyonPro = async (enabled: boolean) => {
     setIsSaving(true);
     try {
       await updateSettings({
-        enableDyadPro: enabled,
+        enableAnyonPro: enabled,
       });
     } catch (error: any) {
       showError(`Error toggling ANYON Pro: ${error}`);
@@ -247,7 +248,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
   }
 
   // Handle case where provider is not found (e.g., invalid ID in URL)
-  if (!providerData && !isDyad) {
+  if (!providerData && !isAnyon) {
     return (
       <div className="min-h-screen px-8 py-4">
         <div className="max-w-4xl mx-auto">
@@ -284,7 +285,7 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
           isLoading={settingsLoading}
           hasFreeTier={hasFreeTier}
           providerWebsiteUrl={providerWebsiteUrl}
-          isDyad={isDyad}
+          isAnyon={isAnyon}
           onBackClick={() => router.history.back()}
         />
 
@@ -312,12 +313,12 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             onApiKeyInputChange={setApiKeyInput}
             onSaveKey={handleSaveKey}
             onDeleteKey={handleDeleteKey}
-            isDyad={isDyad}
+            isAnyon={isAnyon}
             updateSettings={updateSettings}
           />
         )}
 
-        {isDyad && !settingsLoading && (
+        {isAnyon && !settingsLoading && (
           <div className="mt-6 flex items-center justify-between p-4 bg-(--background-lightest) rounded-lg border">
             <div>
               <h3 className="font-medium">Enable ANYON Pro</h3>
@@ -327,8 +328,8 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             </div>
             <Switch
               aria-label="Enable ANYON Pro"
-              checked={settings?.enableDyadPro}
-              onCheckedChange={handleToggleDyadPro}
+              checked={settings?.enableAnyonPro}
+              onCheckedChange={handleToggleAnyonPro}
               disabled={isSaving}
             />
           </div>

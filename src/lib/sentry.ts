@@ -43,7 +43,7 @@ export function initSentryMain(): void {
   SentryMain.init({
     dsn: process.env.SENTRY_DSN || "",
     enabled: app.isPackaged,
-    release: `dyad@${version}`,
+    release: `anyon@${version}`,
     environment: app.isPackaged ? "production" : "development",
     tracesSampleRate: 0.1,
     sendDefaultPii: false,
