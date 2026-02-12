@@ -1,10 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 
-/**
- * Ensures `.anyon/` is listed in the project's `.gitignore`.
- * Creates `.gitignore` if it doesn't exist.
- */
+const LEGACY_ANYON_DIR = ".dyad";
+const CURRENT_ANYON_DIR = ".anyon";
+
+export function migrateLegacyAnyonDir(appPath: string): void {
+  const legacyDir = path.join(appPath, LEGACY_ANYON_DIR);
+  const currentDir = path.join(appPath, CURRENT_ANYON_DIR);
+  if (!fs.existsSync(currentDir) && fs.existsSync(legacyDir)) {
+    fs.renameSync(legacyDir, currentDir);
+  }
+}
+
 export async function ensureAnyonGitignored(appPath: string): Promise<void> {
   const gitignorePath = path.join(appPath, ".gitignore");
   let content = "";
@@ -12,21 +19,22 @@ export async function ensureAnyonGitignored(appPath: string): Promise<void> {
     content = await fs.promises.readFile(gitignorePath, "utf-8");
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
-    // .gitignore doesn't exist yet — will be created below
   }
 
-  // Check if .dyad or .dyad/ is already ignored
   const lines = content.split(/\r?\n/);
   const alreadyIgnored = lines.some(
-    (line) => line.trim() === ".dyad" || line.trim() === ".dyad/",
+    (line) =>
+      line.trim() === CURRENT_ANYON_DIR ||
+      line.trim() === `${CURRENT_ANYON_DIR}/` ||
+      line.trim() === LEGACY_ANYON_DIR ||
+      line.trim() === `${LEGACY_ANYON_DIR}/`,
   );
   if (alreadyIgnored) return;
 
-  // Append .dyad/ to the end, ensuring a leading newline if file has content
   const suffix = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
   await fs.promises.writeFile(
     gitignorePath,
-    content + suffix + ".dyad/\n",
+    `${content}${suffix}${CURRENT_ANYON_DIR}/\n`,
     "utf-8",
   );
 }

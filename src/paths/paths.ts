@@ -1,16 +1,23 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
 
-/**
- * Gets the base anyon-apps directory path (without a specific app subdirectory)
- */
+const LEGACY_DIR_NAME = "dyad-apps";
+const CURRENT_DIR_NAME = "anyon-apps";
+
 export function getAnyonAppsBaseDirectory(): string {
   if (IS_TEST_BUILD) {
     const electron = getElectron();
-    return path.join(electron!.app.getPath("userData"), "dyad-apps");
+    return path.join(electron!.app.getPath("userData"), CURRENT_DIR_NAME);
   }
-  return path.join(os.homedir(), "dyad-apps");
+  const base = os.homedir();
+  const newDir = path.join(base, CURRENT_DIR_NAME);
+  const legacyDir = path.join(base, LEGACY_DIR_NAME);
+  if (!fs.existsSync(newDir) && fs.existsSync(legacyDir)) {
+    fs.renameSync(legacyDir, newDir);
+  }
+  return newDir;
 }
 
 export function getAnyonAppPath(appPath: string): string {

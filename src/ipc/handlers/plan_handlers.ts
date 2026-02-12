@@ -10,6 +10,7 @@ import { createTypedHandler } from "./base";
 import {
   buildFrontmatter,
   ensureAnyonGitignored,
+  migrateLegacyAnyonDir,
   parsePlanFile,
   slugify,
   validatePlanId,
@@ -21,7 +22,8 @@ async function getPlanDir(appId: number): Promise<string> {
   const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
   if (!app) throw new Error("App not found");
   const appPath = getAnyonAppPath(app.path);
-  const planDir = path.join(appPath, ".dyad", "plans");
+  migrateLegacyAnyonDir(appPath);
+  const planDir = path.join(appPath, ".anyon", "plans");
   await fs.promises.mkdir(planDir, { recursive: true });
   await ensureAnyonGitignored(appPath);
   return planDir;
