@@ -949,22 +949,67 @@ export async function listFilesWithStats(
   directory: string,
   prefix: string,
 ): Promise<FileStatEntry[]> {
+  const DEPLOY_IGNORE_PATTERNS = {
+    directories: new Set([
+      ".git",
+      "node_modules",
+      "__pycache__",
+      ".vscode",
+      ".idea",
+      "dist",
+      "build",
+      ".next",
+    ]),
+    files: new Set([".DS_Store"]),
+    filePrefixes: [".env"],
+  };
+
+  const shouldIgnoreEntry = (name: string, isDirectory: boolean): boolean => {
+    if (isDirectory) {
+      return DEPLOY_IGNORE_PATTERNS.directories.has(name);
+    }
+
+    if (DEPLOY_IGNORE_PATTERNS.files.has(name)) {
+      return true;
+    }
+
+    return DEPLOY_IGNORE_PATTERNS.filePrefixes.some((prefix) =>
+      name.startsWith(prefix),
+    );
+  };
+
   const dirents = await fsPromises.readdir(directory, { withFileTypes: true });
   dirents.sort((a, b) => a.name.localeCompare(b.name));
   const entries: FileStatEntry[] = [];
 
   for (const dirent of dirents) {
+    if (shouldIgnoreEntry(dirent.name, dirent.isDirectory())) {
+      continue;
+    }
+
     const absolutePath = path.join(directory, dirent.name);
     const relativePath = path.posix.join(prefix, dirent.name);
+    const stat = await fsPromises.lstat(absolutePath);
 
-    if (dirent.isDirectory()) {
+    if (stat.isSymbolicLink()) {
+      continue;
+    }
+
+    if (stat.isDirectory()) {
+      if (shouldIgnoreEntry(dirent.name, true)) {
+        continue;
+      }
+
       const nestedEntries = await listFilesWithStats(
         absolutePath,
         relativePath,
       );
       entries.push(...nestedEntries);
-    } else if (dirent.isFile() || dirent.isSymbolicLink()) {
-      const stat = await fsPromises.stat(absolutePath);
+    } else if (stat.isFile()) {
+      if (shouldIgnoreEntry(dirent.name, false)) {
+        continue;
+      }
+
       entries.push({
         absolutePath,
         relativePath,

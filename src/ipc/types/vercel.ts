@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineContract, createClient } from "../contracts/core";
+import { createClient, defineContract } from "../contracts/core";
 
 // =============================================================================
 // Vercel Schemas
@@ -83,6 +83,12 @@ export type DisconnectVercelProjectParams = z.infer<
   typeof DisconnectVercelProjectParamsSchema
 >;
 
+export const SyncSupabaseEnvParamsSchema = z.object({
+  appId: z.number(),
+});
+
+export type SyncSupabaseEnvParams = z.infer<typeof SyncSupabaseEnvParamsSchema>;
+
 // =============================================================================
 // Vercel Contracts
 // =============================================================================
@@ -127,6 +133,12 @@ export const vercelContracts = {
   disconnect: defineContract({
     channel: "vercel:disconnect",
     input: DisconnectVercelProjectParamsSchema,
+    output: z.void(),
+  }),
+
+  syncSupabaseEnv: defineContract({
+    channel: "vercel:sync-supabase-env",
+    input: SyncSupabaseEnvParamsSchema,
     output: z.void(),
   }),
 } as const;

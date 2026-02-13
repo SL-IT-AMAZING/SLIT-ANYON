@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import { z } from "zod";
 import log from "electron-log";
 import {
@@ -13,6 +12,7 @@ import { applySearchReplace } from "@/pro/main/ipc/processors/search_replace_pro
 import { escapeSearchReplaceMarkers } from "@/pro/shared/search_replace_markers";
 import { deploySupabaseFunction } from "@/supabase_admin/supabase_management_client";
 import {
+  extractFunctionNameFromPath,
   isServerFunction,
   isSharedServerModule,
 } from "@/supabase_admin/supabase_utils";
@@ -138,7 +138,7 @@ CRITICAL REQUIREMENTS FOR USING THIS TOOL:
       try {
         await deploySupabaseFunction({
           supabaseProjectId: ctx.supabaseProjectId,
-          functionName: path.basename(path.dirname(args.file_path)),
+          functionName: extractFunctionNameFromPath(args.file_path),
           appPath: ctx.appPath,
           organizationSlug: ctx.supabaseOrganizationSlug ?? null,
         });

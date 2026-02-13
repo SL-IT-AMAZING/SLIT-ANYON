@@ -1,20 +1,31 @@
 import fs from "node:fs";
-import path from "node:path";
 import { z } from "zod";
 import log from "electron-log";
 import { ToolDefinition, AgentContext, escapeXmlAttr } from "./types";
 import { safeJoin } from "@/ipc/utils/path_utils";
 import { gitRemove } from "@/ipc/utils/git_utils";
-import { deleteSupabaseFunction } from "../../../../../../supabase_admin/supabase_management_client";
 import {
+  deleteSupabaseFunction,
+  deploySupabaseFunction,
+} from "../../../../../../supabase_admin/supabase_management_client";
+import {
+  extractFunctionNameFromPath,
   isServerFunction,
   isSharedServerModule,
 } from "../../../../../../supabase_admin/supabase_utils";
 
 const logger = log.scope("delete_file");
 
-function getFunctionNameFromPath(input: string): string {
-  return path.basename(path.extname(input) ? path.dirname(input) : input);
+function normalizePath(input: string): string {
+  return input.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
+function isFunctionDirectoryPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+$/.test(normalizePath(input));
+}
+
+function isFunctionEntrypointPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+\/index\.ts$/.test(normalizePath(input));
 }
 
 const deleteFileSchema = z.object({
@@ -58,16 +69,31 @@ export const deleteFileTool: ToolDefinition<z.infer<typeof deleteFileSchema>> =
           logger.warn(`Failed to git remove deleted file ${args.path}:`, error);
         }
 
-        // Delete Supabase function if applicable
         if (ctx.supabaseProjectId && isServerFunction(args.path)) {
+          const functionName = extractFunctionNameFromPath(args.path);
+          const shouldDeleteFunction =
+            isFunctionDirectoryPath(args.path) ||
+            isFunctionEntrypointPath(args.path);
+
           try {
-            await deleteSupabaseFunction({
-              supabaseProjectId: ctx.supabaseProjectId,
-              functionName: getFunctionNameFromPath(args.path),
-              organizationSlug: ctx.supabaseOrganizationSlug ?? null,
-            });
+            if (shouldDeleteFunction) {
+              await deleteSupabaseFunction({
+                supabaseProjectId: ctx.supabaseProjectId,
+                functionName,
+                organizationSlug: ctx.supabaseOrganizationSlug ?? null,
+              });
+            } else {
+              await deploySupabaseFunction({
+                supabaseProjectId: ctx.supabaseProjectId,
+                functionName,
+                appPath: ctx.appPath,
+                organizationSlug: ctx.supabaseOrganizationSlug ?? null,
+              });
+            }
           } catch (error) {
-            return `File deleted, but failed to delete Supabase function: ${error}`;
+            return shouldDeleteFunction
+              ? `File deleted, but failed to delete Supabase function: ${error}`
+              : `File deleted, but failed to redeploy Supabase function: ${error}`;
           }
         }
       } else {

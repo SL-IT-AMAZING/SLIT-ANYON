@@ -263,6 +263,7 @@ function UnconnectedVercelConnector({
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "vercel-oauth-return") {
         await refreshSettings();
+        refreshApp();
         toast.success("Successfully connected to Vercel!");
         clearLastDeepLink();
       }

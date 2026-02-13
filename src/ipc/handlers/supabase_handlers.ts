@@ -1,22 +1,23 @@
+import { eq } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
-import { eq } from "drizzle-orm";
 import { apps } from "../../db/schema";
+import { oauthEndpoints } from "../../lib/oauthConfig";
+import { readSettings, writeSettings } from "../../main/settings";
 import {
-  getSupabaseClientForOrganization,
-  listSupabaseBranches,
-  getSupabaseProjectLogs,
+  type SupabaseProjectLog,
   getOrganizationDetails,
   getOrganizationMembers,
-  type SupabaseProjectLog,
+  getSupabaseClientForOrganization,
+  getSupabaseProjectLogs,
+  listSupabaseBranches,
 } from "../../supabase_admin/supabase_management_client";
 import { extractFunctionName } from "../../supabase_admin/supabase_utils";
+import { supabaseContracts } from "../types/supabase";
+import { safeSend } from "../utils/safe_sender";
 import { createTypedHandler } from "./base";
 import { createTestOnlyLoggedHandler } from "./safe_handle";
-import { safeSend } from "../utils/safe_sender";
-import { readSettings, writeSettings } from "../../main/settings";
-import { supabaseContracts } from "../types/supabase";
-import { oauthEndpoints } from "../../lib/oauthConfig";
+import { autoSyncSupabaseEnvVarsIfConnected } from "./vercel_handlers";
 
 const logger = log.scope("supabase_handlers");
 const testOnlyHandle = createTestOnlyLoggedHandler(logger);
@@ -202,6 +203,8 @@ export function registerSupabaseHandlers() {
     logger.info(
       `Associated app ${appId} with Supabase project ${projectId} (organization: ${organizationSlug})${parentProjectId ? ` and parent project ${parentProjectId}` : ""}`,
     );
+
+    await autoSyncSupabaseEnvVarsIfConnected(appId);
   });
 
   // Unset app project - removes the link between a Anyon app and a Supabase project

@@ -1,5 +1,5 @@
-import { readSettings } from "../../main/settings";
 import log from "electron-log";
+import { getVercelAccessToken } from "../../vercel_admin/vercel_management_client";
 import { IS_TEST_BUILD } from "./test_utils";
 
 const logger = log.scope("vercel_utils");
@@ -15,13 +15,7 @@ export async function getVercelTeamSlug(
   teamId: string,
 ): Promise<string | null> {
   try {
-    const settings = readSettings();
-    const accessToken = settings.vercelAccessToken?.value;
-
-    if (!accessToken) {
-      logger.warn("No Vercel access token found when trying to get team slug");
-      return null;
-    }
+    const accessToken = await getVercelAccessToken();
 
     const response = await fetch(`${VERCEL_API_BASE}/v2/teams/${teamId}`, {
       headers: {
