@@ -229,9 +229,10 @@ class OpenCodeServerManager {
         logger.error(
           "This is likely a build/packaging issue. The binary should be bundled with the app.",
         );
+      } else {
+        logger.error(`OpenCode server process error: ${err.message}`);
       }
       this.process = null;
-      logger.error(`OpenCode server process error: ${err.message}`);
     });
 
     this.process.stdout?.on("data", (data: Buffer) => {
@@ -372,6 +373,9 @@ class OpenCodeServerManager {
 
   private async _killExistingServer(port: number): Promise<void> {
     logger.info(`Attempting to kill process on port ${port}...`);
+    const currentPid = process.pid;
+    const parentPid = process.ppid;
+
     try {
       const result = execSync(`lsof -ti:${port}`, {
         encoding: "utf-8",
@@ -379,10 +383,20 @@ class OpenCodeServerManager {
       }).trim();
       logger.info(`Found PIDs on port ${port}: ${result}`);
       if (result) {
-        const pids = result.split("\n");
-        for (const pid of pids) {
+        const pids = result.split("\n").filter((p) => p.trim());
+        for (const pidStr of pids) {
+          const pid = Number.parseInt(pidStr.trim(), 10);
+          if (Number.isNaN(pid)) {
+            logger.warn(`Invalid PID: ${pidStr}`);
+            continue;
+          }
+          // Don't kill our own process or parent
+          if (pid === currentPid || pid === parentPid) {
+            logger.warn(`Skipping kill of own process: ${pid}`);
+            continue;
+          }
           try {
-            process.kill(Number.parseInt(pid, 10), "SIGKILL");
+            process.kill(pid, "SIGKILL");
             logger.info(`Killed process ${pid} on port ${port}`);
           } catch (killErr) {
             logger.warn(`Failed to kill process ${pid}: ${killErr}`);
