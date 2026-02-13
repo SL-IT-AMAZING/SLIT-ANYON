@@ -22,6 +22,8 @@ import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
 import { getUserRolloutBucket } from "./lib/rollout";
 import type { UserSettings } from "./lib/schemas";
 import { initSentryMain } from "./lib/sentry";
+import { handleAuthCallback } from "./main/auth";
+import { syncEntitlements } from "./main/entitlement";
 import { handleDyadProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
@@ -419,15 +421,24 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", (_event, commandLine, _workingDirectory) => {
-    // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    // the commandLine is array of strings in which last element is deep link url
     handleDeepLinkReturn(commandLine.pop()!);
   });
-  app.whenReady().then(onReady);
+  app.whenReady().then(() => {
+    onReady().then(() => {
+      if (process.platform !== "darwin") {
+        const deepLinkArg = process.argv.find((arg) =>
+          arg.startsWith("anyon://"),
+        );
+        if (deepLinkArg) {
+          handleDeepLinkReturn(deepLinkArg);
+        }
+      }
+    });
+  });
 }
 
 // Handle the protocol. In this case, we choose to show an Error Box.
@@ -507,6 +518,35 @@ async function handleDeepLinkReturn(url: string) {
       return;
     }
     handleVercelOAuthReturn({ token, refreshToken, expiresIn });
+    mainWindow?.webContents.send("deep-link-received", {
+      type: parsed.hostname,
+    });
+    return;
+  }
+  if (parsed.hostname === "auth-return") {
+    const code = parsed.searchParams.get("code");
+    if (!code) {
+      dialog.showErrorBox("Invalid URL", "Expected code parameter");
+      return;
+    }
+    try {
+      await handleAuthCallback(code);
+      mainWindow?.webContents.send("deep-link-received", {
+        type: parsed.hostname,
+      });
+    } catch (error) {
+      log.error("Auth callback failed:", error);
+      dialog.showErrorBox(
+        "Authentication Failed",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+    return;
+  }
+  if (parsed.hostname === "checkout-success") {
+    syncEntitlements().catch((err) => {
+      log.error("Failed to sync entitlements after checkout:", err);
+    });
     mainWindow?.webContents.send("deep-link-received", {
       type: parsed.hostname,
     });

@@ -16,6 +16,22 @@
 
 export const queryKeys = {
   // ─────────────────────────────────────────────────────────────────────────────
+  // Auth
+  // ─────────────────────────────────────────────────────────────────────────────
+  auth: {
+    state: ["auth", "state"] as const,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Entitlement
+  // ─────────────────────────────────────────────────────────────────────────────
+  entitlement: {
+    all: ["entitlement"] as const,
+    state: ["entitlement", "state"] as const,
+    usage: ["entitlement", "usage"] as const,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // Apps
   // ─────────────────────────────────────────────────────────────────────────────
   apps: {
@@ -269,6 +285,10 @@ export type QueryKeyOf<T> = T extends readonly unknown[]
 
 /** All possible query keys (useful for typing queryClient operations) */
 export type AppQueryKey =
+  | QueryKeyOf<(typeof queryKeys.auth)[keyof typeof queryKeys.auth]>
+  | QueryKeyOf<
+      (typeof queryKeys.entitlement)[keyof typeof queryKeys.entitlement]
+    >
   | QueryKeyOf<(typeof queryKeys.apps)[keyof typeof queryKeys.apps]>
   | QueryKeyOf<(typeof queryKeys.chats)[keyof typeof queryKeys.chats]>
   | QueryKeyOf<(typeof queryKeys.plans)[keyof typeof queryKeys.plans]>

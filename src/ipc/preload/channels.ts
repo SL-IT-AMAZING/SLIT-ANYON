@@ -15,9 +15,11 @@ import {
 
 import { agentEvents } from "../types/agent";
 import { appContracts } from "../types/app";
+import { authContracts } from "../types/auth";
 import { capacitorContracts } from "../types/capacitor";
 import { chatContracts, chatStreamContract } from "../types/chat";
 import { contextContracts } from "../types/context";
+import { entitlementContracts } from "../types/entitlement";
 import { freeAgentQuotaContracts } from "../types/free_agent_quota";
 import { gitContracts, githubContracts, githubEvents } from "../types/github";
 import { helpContracts, helpStreamContract } from "../types/help";
@@ -92,6 +94,8 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(miscContracts),
   ...getInvokeChannels(freeAgentQuotaContracts),
   ...getInvokeChannels(planContracts),
+  ...getInvokeChannels(authContracts),
+  ...getInvokeChannels(entitlementContracts),
 
   // Test-only channels
   ...TEST_INVOKE_CHANNELS,

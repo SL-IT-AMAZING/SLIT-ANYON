@@ -44,7 +44,9 @@
     "e2e": "playwright test",
     "e2e:shard": "playwright test --shard",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "edge:deploy": "supabase functions deploy --project-ref hboncsycgqhsdqpocpsb",
+    "edge:serve": "supabase functions serve --project-ref hboncsycgqhsdqpocpsb"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^4.0.46",
@@ -69,10 +71,12 @@
     "@neondatabase/serverless": "^1.0.1",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@sentry/electron": "^7.7.1",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.3",
     "@tanstack/react-query": "^5.75.5",
     "@tanstack/react-router": "^1.114.34",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/uuid": "^10.0.0",
     "@vercel/sdk": "^1.18.0",
     "@vitejs/plugin-react": "^4.3.4",
@@ -163,11 +167,11 @@
     "@vitest/ui": "^3.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "cross-env": "^7.0.3",
-    "drizzle-kit": "^0.30.6",
+    "drizzle-kit": "^0.31.9",
     "electron": "^40.0.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
-    "happy-dom": "^17.4.4",
+    "happy-dom": "^20.6.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "oxfmt": "^0.26.0",
@@ -175,7 +179,7 @@
     "rimraf": "^6.0.1",
     "storybook": "^8.6.15",
     "typescript": "^5.8.3",
-    "vite": "^5.4.17",
+    "vite": "^6.4.1",
     "vitest": "^3.1.1"
   },
   "overrides": {

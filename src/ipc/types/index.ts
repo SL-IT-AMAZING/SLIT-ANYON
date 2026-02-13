@@ -26,6 +26,8 @@
 // Contract Exports
 // =============================================================================
 
+export { authContracts } from "./auth";
+export { entitlementContracts } from "./entitlement";
 export { settingsContracts } from "./settings";
 export { appContracts } from "./app";
 export { chatContracts, chatStreamContract } from "./chat";
@@ -55,6 +57,8 @@ export { freeAgentQuotaContracts } from "./free_agent_quota";
 // Client Exports
 // =============================================================================
 
+export { authClient } from "./auth";
+export { entitlementClient } from "./entitlement";
 export { settingsClient } from "./settings";
 export { appClient } from "./app";
 export { chatClient, chatStreamClient } from "./chat";
@@ -83,6 +87,44 @@ export { freeAgentQuotaClient } from "./free_agent_quota";
 // =============================================================================
 // Type Exports
 // =============================================================================
+
+// Auth types
+export type {
+  AuthUser,
+  AuthState,
+  GetAuthStateInput,
+  GetAuthStateOutput,
+  LoginWithGoogleInput,
+  LoginWithGoogleOutput,
+  LoginWithEmailInput,
+  LoginWithEmailOutput,
+  SignUpWithEmailInput,
+  SignUpWithEmailOutput,
+  LogoutInput,
+  LogoutOutput,
+  RefreshSessionInput,
+  RefreshSessionOutput,
+} from "./auth";
+
+// Entitlement types
+export type {
+  SubscriptionPlan,
+  EntitlementState,
+  UsageInfo,
+  GetEntitlementsInput,
+  GetEntitlementsOutput,
+  SyncEntitlementsInput,
+  SyncEntitlementsOutput,
+  StartCheckoutInput,
+  StartCheckoutOutput,
+  OpenCustomerPortalInput,
+  OpenCustomerPortalOutput,
+  GetUsageInput,
+  GetUsageOutput,
+  CreditCheckResult,
+  CheckCreditsInput,
+  CheckCreditsOutput,
+} from "./entitlement";
 
 // Settings types
 export type {
@@ -300,6 +342,15 @@ export {
 
 export { AgentTodoSchema, AgentTodosUpdateSchema } from "./agent";
 
+export { AuthUserSchema, AuthStateSchema } from "./auth";
+
+export {
+  SubscriptionPlanSchema,
+  EntitlementStateSchema,
+  UsageInfoSchema,
+  CreditCheckResultSchema,
+} from "./entitlement";
+
 export { UserBudgetInfoSchema } from "./system";
 
 // =============================================================================
@@ -308,9 +359,11 @@ export { UserBudgetInfoSchema } from "./system";
 
 import { agentEventClient } from "./agent";
 import { appClient } from "./app";
+import { authClient } from "./auth";
 import { capacitorClient } from "./capacitor";
 import { chatClient, chatStreamClient } from "./chat";
 import { contextClient } from "./context";
+import { entitlementClient } from "./entitlement";
 import { freeAgentQuotaClient } from "./free_agent_quota";
 import { gitClient, githubClient, githubEventClient } from "./github";
 import { helpClient, helpStreamClient } from "./help";
@@ -355,6 +408,8 @@ export const ipc = {
   settings: settingsClient,
   app: appClient,
   chat: chatClient,
+  auth: authClient,
+  entitlement: entitlementClient,
 
   // Streaming clients
   chatStream: chatStreamClient,

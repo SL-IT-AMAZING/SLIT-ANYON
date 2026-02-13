@@ -1,9 +1,11 @@
+import { useAuth } from "@/hooks/useAuth";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BookOpen,
   HelpCircle,
   Home,
   Inbox,
+  LogIn,
   Plug,
   Settings,
   Store,
@@ -25,6 +27,9 @@ import {
 import logo from "../../img/logo3.svg";
 import { ChatList } from "./ChatList";
 import { HelpDialog } from "./HelpDialog";
+import { AccountMenu } from "./auth/AccountMenu";
+import { LoginDialog } from "./auth/LoginDialog";
+import { SubscriptionBanner } from "./subscription/SubscriptionBanner";
 
 // Menu items.
 const items = [
@@ -62,6 +67,8 @@ const items = [
 
 export function AppSidebar() {
   const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
   const { isHovering, state } = useSidebar();
 
   const routerState = useRouterState();
@@ -103,8 +110,25 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="space-y-1">
+        <SubscriptionBanner />
         <SidebarMenu>
+          <SidebarMenuItem>
+            {isAuthenticated ? (
+              <AccountMenu />
+            ) : (
+              <>
+                <SidebarMenuButton onClick={() => setIsLoginDialogOpen(true)}>
+                  <LogIn className="size-4" />
+                  <span>Sign In</span>
+                </SidebarMenuButton>
+                <LoginDialog
+                  isOpen={isLoginDialogOpen}
+                  onClose={() => setIsLoginDialogOpen(false)}
+                />
+              </>
+            )}
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => setIsHelpDialogOpen(true)}>
               <HelpCircle className="size-4" />

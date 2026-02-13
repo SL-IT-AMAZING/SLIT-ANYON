@@ -1,37 +1,51 @@
-import { v4 as uuidv4 } from "uuid";
-import { ipcMain, IpcMainInvokeEvent } from "electron";
-import { createTypedHandler } from "./base";
-import { chatContracts } from "../types/chat";
 import {
-  ModelMessage,
-  TextPart,
-  ImagePart,
-  streamText,
-  ToolSet,
-  TextStreamPart,
-  stepCountIs,
-  hasToolCall,
+  type ImagePart,
+  type ModelMessage,
+  type TextPart,
+  type TextStreamPart,
   type ToolExecutionOptions,
+  type ToolSet,
+  hasToolCall,
+  stepCountIs,
+  streamText,
 } from "ai";
+import { type IpcMainInvokeEvent, ipcMain } from "electron";
+import { v4 as uuidv4 } from "uuid";
+import { chatContracts } from "../types/chat";
+import { createTypedHandler } from "./base";
 
+import * as crypto from "crypto";
+import fs from "node:fs";
+import * as os from "os";
+import * as path from "path";
+import { MAX_CHAT_TURNS_IN_CONTEXT } from "@/constants/settings_constants";
+import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
+import { and, eq, isNull } from "drizzle-orm";
+import log from "electron-log";
+import { readFile, unlink, writeFile } from "fs/promises";
 import { db } from "../../db";
 import { chats, messages } from "../../db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { mcpServers } from "../../db/schema";
 import type { SmartContextMode } from "../../lib/schemas";
+import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
+import { readSettings } from "../../main/settings";
+import { getDyadAppPath } from "../../paths/paths";
+import { SECURITY_REVIEW_SYSTEM_PROMPT } from "../../prompts/security_review_prompt";
+import { SUMMARIZE_CHAT_SYSTEM_PROMPT } from "../../prompts/summarize_chat_system_prompt";
+import {
+  SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT,
+  getSupabaseAvailableSystemPrompt,
+} from "../../prompts/supabase_prompt";
 import {
   constructSystemPrompt,
   readAiRules,
 } from "../../prompts/system_prompt";
-import { getThemePromptById } from "../utils/theme_utils";
 import {
-  getSupabaseAvailableSystemPrompt,
-  SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT,
-} from "../../prompts/supabase_prompt";
-import { getDyadAppPath } from "../../paths/paths";
-import { readSettings } from "../../main/settings";
-import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
+  getSupabaseClientCode,
+  getSupabaseContext,
+} from "../../supabase_admin/supabase_context";
 import {
-  CodebaseFile,
+  type CodebaseFile,
   extractCodebase,
   readFileWithCache,
 } from "../../utils/codebase";
@@ -39,79 +53,74 @@ import {
   dryRunSearchReplace,
   processFullResponseActions,
 } from "../processors/response_processor";
+import { validateChatContext } from "../utils/context_paths_utils";
+import { type ModelClient, getModelClient } from "../utils/get_model_client";
+import { requireMcpToolConsent } from "../utils/mcp_consent";
+import { getAiHeaders, getProviderOptions } from "../utils/provider_options";
+import { sendTelemetryEvent } from "../utils/telemetry";
+import { getThemePromptById } from "../utils/theme_utils";
+import { getMaxTokens, getTemperature } from "../utils/token_utils";
 import { streamTestResponse } from "./testing_chat_handlers";
 import { getTestResponse } from "./testing_chat_handlers";
-import { getModelClient, ModelClient } from "../utils/get_model_client";
-import log from "electron-log";
-import { sendTelemetryEvent } from "../utils/telemetry";
-import {
-  getSupabaseContext,
-  getSupabaseClientCode,
-} from "../../supabase_admin/supabase_context";
-import { SUMMARIZE_CHAT_SYSTEM_PROMPT } from "../../prompts/summarize_chat_system_prompt";
-import { SECURITY_REVIEW_SYSTEM_PROMPT } from "../../prompts/security_review_prompt";
-import fs from "node:fs";
-import * as path from "path";
-import * as os from "os";
-import * as crypto from "crypto";
-import { readFile, writeFile, unlink } from "fs/promises";
-import { getMaxTokens, getTemperature } from "../utils/token_utils";
-import { MAX_CHAT_TURNS_IN_CONTEXT } from "@/constants/settings_constants";
-import { validateChatContext } from "../utils/context_paths_utils";
-import { getProviderOptions, getAiHeaders } from "../utils/provider_options";
-import { mcpServers } from "../../db/schema";
-import { requireMcpToolConsent } from "../utils/mcp_consent";
 
 import { handleLocalAgentStream } from "../../pro/main/ipc/handlers/local_agent/local_agent_handler";
 
-import { safeSend } from "../utils/safe_sender";
-import { cleanFullResponse } from "../utils/cleanFullResponse";
-import { generateProblemReport } from "../processors/tsc";
-import { createProblemFixPrompt } from "@/shared/problem_prompt";
-import { AsyncVirtualFileSystem } from "../../../shared/VirtualFilesystem";
-import { escapeXmlAttr, escapeXmlContent } from "../../../shared/xmlEscape";
-import {
-  getDyadAddDependencyTags,
-  getDyadWriteTags,
-  getDyadDeleteTags,
-  getDyadRenameTags,
-} from "../utils/dyad_tag_parser";
-import { fileExists } from "../utils/file_utils";
-import { FileUploadsState } from "../utils/file_uploads_state";
-import { extractMentionedAppsCodebases } from "../utils/mention_apps";
-import { parseAppMentions } from "@/shared/parse_mention_apps";
-import { prompts as promptsTable } from "../../db/schema";
-import { inArray } from "drizzle-orm";
-import { replacePromptReference } from "../utils/replacePromptReference";
-import { parsePlanFile, validatePlanId } from "./planUtils";
-import { mcpManager } from "../utils/mcp_manager";
-import z from "zod";
 import {
   isBasicAgentMode,
   isSupabaseConnected,
   isTurboEditsV2Enabled,
 } from "@/lib/schemas";
+import { parseAppMentions } from "@/shared/parse_mention_apps";
+import { createProblemFixPrompt } from "@/shared/problem_prompt";
+import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
+import { inArray } from "drizzle-orm";
+import z from "zod";
+import { AsyncVirtualFileSystem } from "../../../shared/VirtualFilesystem";
+import { escapeXmlAttr, escapeXmlContent } from "../../../shared/xmlEscape";
+import { prompts as promptsTable } from "../../db/schema";
+import { generateProblemReport } from "../processors/tsc";
+import { getLanguageModelProviders } from "../shared/language_model_helpers";
+import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
+import { cleanFullResponse } from "../utils/cleanFullResponse";
+import {
+  getDyadAddDependencyTags,
+  getDyadDeleteTags,
+  getDyadRenameTags,
+  getDyadWriteTags,
+} from "../utils/dyad_tag_parser";
+import { FileUploadsState } from "../utils/file_uploads_state";
+import { fileExists } from "../utils/file_utils";
+import {
+  getCurrentCommitHash,
+  getGitUncommittedFiles,
+  gitAddAll,
+  gitCommit,
+} from "../utils/git_utils";
+import { mcpManager } from "../utils/mcp_manager";
+import { extractMentionedAppsCodebases } from "../utils/mention_apps";
+import { replacePromptReference } from "../utils/replacePromptReference";
+import { safeSend } from "../utils/safe_sender";
+import {
+  type VersionedFiles,
+  processChatMessagesWithVersionedFiles as getVersionedFiles,
+} from "../utils/versioned_codebase_context";
 import {
   getFreeAgentQuotaStatus,
   markMessageAsUsingFreeAgentQuota,
   unmarkMessageAsUsingFreeAgentQuota,
 } from "./free_agent_quota_handlers";
-import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
-import {
-  getCurrentCommitHash,
-  gitAddAll,
-  gitCommit,
-  getGitUncommittedFiles,
-} from "../utils/git_utils";
-import {
-  processChatMessagesWithVersionedFiles as getVersionedFiles,
-  VersionedFiles,
-} from "../utils/versioned_codebase_context";
-import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
+import { parsePlanFile, validatePlanId } from "./planUtils";
 
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
 const logger = log.scope("chat_stream_handlers");
+
+async function isFreeTierProvider(providerId: string): Promise<boolean> {
+  const providers = await getLanguageModelProviders();
+  return providers.some((provider) => {
+    return provider.id === providerId && provider.hasFreeTier === true;
+  });
+}
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
@@ -235,7 +244,7 @@ async function processStreamChunks({
 
 export function registerChatStreamHandlers() {
   ipcMain.handle("chat:stream", async (event, req: ChatStreamParams) => {
-    let attachmentPaths: string[] = [];
+    const attachmentPaths: string[] = [];
     try {
       const fileUploadsState = FileUploadsState.getInstance();
       // Clear any stale state from previous requests for this chat
@@ -522,6 +531,15 @@ ${componentSnippet}
         );
       } else {
         // Normal AI processing for non-test prompts
+        if (!(await isFreeTierProvider(settings.selectedModel.provider))) {
+          const creditCheck = await checkCreditsForModel(
+            settings.selectedModel.name,
+          );
+          if (!creditCheck.allowed) {
+            throw new Error(creditCheck.reason ?? "Credits exhausted");
+          }
+        }
+
         const {
           modelClient,
           isEngineEnabled,
@@ -611,6 +629,11 @@ ${componentSnippet}
                         error,
                       );
                     });
+                  // Report token usage to Polar for credit metering
+                  void reportTokenUsage(
+                    totalTokens,
+                    settings.selectedModel.name,
+                  );
                 }
               },
               onError: (error: any) => {
@@ -1094,7 +1117,7 @@ This conversation includes one or more image attachments. When the user uploads 
 
         if (isSummarizeIntent) {
           const previousChat = await db.query.chats.findFirst({
-            where: eq(chats.id, parseInt(req.prompt.split("=")[1])),
+            where: eq(chats.id, Number.parseInt(req.prompt.split("=")[1])),
             with: {
               messages: {
                 orderBy: (messages, { asc }) => [asc(messages.createdAt)],
@@ -1192,6 +1215,8 @@ This conversation includes one or more image attachments. When the user uploads 
                 logger.log(
                   `Total tokens used (aggregated for message ${placeholderAssistantMessage.id}): ${maxTokensUsed}`,
                 );
+                // Report token usage to Polar for credit metering
+                void reportTokenUsage(totalTokens, settings.selectedModel.name);
               } else {
                 logger.log("Total tokens used: unknown");
               }
@@ -1646,6 +1671,17 @@ ${problemReport.problems
                     chatContext,
                     virtualFileSystem,
                   });
+                if (
+                  !(await isFreeTierProvider(settings.selectedModel.provider))
+                ) {
+                  const creditCheck = await checkCreditsForModel(
+                    settings.selectedModel.name,
+                  );
+                  if (!creditCheck.allowed) {
+                    throw new Error(creditCheck.reason ?? "Credits exhausted");
+                  }
+                }
+
                 const { modelClient } = await getModelClient(
                   settings.selectedModel,
                   settings,

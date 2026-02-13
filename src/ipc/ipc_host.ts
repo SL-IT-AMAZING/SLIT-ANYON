@@ -3,12 +3,15 @@ import { registerVisualEditingHandlers } from "../pro/main/ipc/handlers/visual_e
 import { registerAppEnvVarsHandlers } from "./handlers/app_env_vars_handlers";
 import { registerAppHandlers } from "./handlers/app_handlers";
 import { registerAppUpgradeHandlers } from "./handlers/app_upgrade_handlers";
+import { registerAuthHandlers } from "./handlers/auth_handlers";
 import { registerCapacitorHandlers } from "./handlers/capacitor_handlers";
 import { registerChatHandlers } from "./handlers/chat_handlers";
 import { registerChatStreamHandlers } from "./handlers/chat_stream_handlers";
 import { registerContextPathsHandlers } from "./handlers/context_paths_handlers";
 import { registerDebugHandlers } from "./handlers/debug_handlers";
 import { registerDependencyHandlers } from "./handlers/dependency_handlers";
+import { registerEntitlementHandlers } from "./handlers/entitlement_handlers";
+import { registerFreeAgentQuotaHandlers } from "./handlers/free_agent_quota_handlers";
 import { registerGithubBranchHandlers } from "./handlers/git_branch_handlers";
 import { registerGithubHandlers } from "./handlers/github_handlers";
 import { registerHelpBotHandlers } from "./handlers/help_bot_handlers";
@@ -18,6 +21,7 @@ import { registerLocalModelHandlers } from "./handlers/local_model_handlers";
 import { registerMcpHandlers } from "./handlers/mcp_handlers";
 import { registerNeonHandlers } from "./handlers/neon_handlers";
 import { registerNodeHandlers } from "./handlers/node_handlers";
+import { registerPlanHandlers } from "./handlers/plan_handlers";
 import { registerPortalHandlers } from "./handlers/portal_handlers";
 import { registerProHandlers } from "./handlers/pro_handlers";
 import { registerProblemsHandlers } from "./handlers/problems_handlers";
@@ -35,9 +39,6 @@ import { registerUploadHandlers } from "./handlers/upload_handlers";
 import { registerVercelHandlers } from "./handlers/vercel_handlers";
 import { registerVersionHandlers } from "./handlers/version_handlers";
 import { registerWindowHandlers } from "./handlers/window_handlers";
-
-import { registerFreeAgentQuotaHandlers } from "./handlers/free_agent_quota_handlers";
-import { registerPlanHandlers } from "./handlers/plan_handlers";
 
 export function registerIpcHandlers() {
   // Register all IPC handlers by category
@@ -80,4 +81,6 @@ export function registerIpcHandlers() {
   registerVisualEditingHandlers();
   registerFreeAgentQuotaHandlers();
   registerPlanHandlers();
+  registerAuthHandlers();
+  registerEntitlementHandlers();
 }
