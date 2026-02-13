@@ -1,5 +1,6 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import log from "electron-log";
+import { readSettings } from "../../main/settings";
 import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
 const logger = log.scope("opencode-server");
@@ -100,7 +101,7 @@ class OpenCodeServerManager {
 
         const port =
           options.port ||
-          Number.parseInt(process.env.OPENCODE_PORT || "4096", 10);
+          Number.parseInt(process.env.OPENCODE_PORT || "51962", 10);
         await this._killExistingServer(port);
         await this.sleep(2000);
 
@@ -115,7 +116,7 @@ class OpenCodeServerManager {
     const hostname =
       options.hostname || process.env.OPENCODE_HOSTNAME || "127.0.0.1";
     const port =
-      options.port || Number.parseInt(process.env.OPENCODE_PORT || "4096", 10);
+      options.port || Number.parseInt(process.env.OPENCODE_PORT || "51962", 10);
     const password =
       options.password ||
       process.env.OPENCODE_PASSWORD ||
@@ -159,18 +160,64 @@ class OpenCodeServerManager {
 
     this._cwd = options.cwd || null;
 
+    const settings = readSettings();
+    const useProxy = settings.openCodeConnectionMode !== "direct";
+
+    const anyonApiKey = settings.providerSettings?.auto?.apiKey?.value || "";
+
+    const proxyEnv: Record<string, string> = {};
+
+    if (useProxy && anyonApiKey) {
+      // OPENCODE_CONFIG_CONTENT overrides all other config sources (Antigravity auth, global, project)
+      const anthropicBaseUrl =
+        process.env.ANYON_PROXY_URL || "https://engine.any-on.dev/v1/anthropic";
+      const openaiBaseUrl = process.env.ANYON_PROXY_URL
+        ? `${process.env.ANYON_PROXY_URL}/openai`
+        : "https://engine.any-on.dev/v1/openai";
+
+      const opencodeConfig = {
+        provider: {
+          anthropic: {
+            options: {
+              apiKey: anyonApiKey,
+              baseURL: anthropicBaseUrl,
+            },
+          },
+          openai: {
+            options: {
+              apiKey: anyonApiKey,
+              baseURL: openaiBaseUrl,
+            },
+          },
+        },
+      };
+
+      proxyEnv.OPENCODE_CONFIG_CONTENT = JSON.stringify(opencodeConfig);
+
+      proxyEnv.ANTHROPIC_API_KEY = anyonApiKey;
+      proxyEnv.OPENAI_API_KEY = anyonApiKey;
+      proxyEnv.ANTHROPIC_BASE_URL = anthropicBaseUrl;
+      proxyEnv.OPENAI_BASE_URL = openaiBaseUrl;
+
+      // Disable Antigravity OAuth plugin so our proxy apiKey is used
+      // instead of the user's personal OAuth token (sk-ant-oat-...)
+      proxyEnv.OPENCODE_DISABLE_DEFAULT_PLUGINS = "true";
+
+      logger.info(
+        `Proxy config: anthropic → ${anthropicBaseUrl}, openai → ${openaiBaseUrl}`,
+      );
+    }
+
+    logger.info(
+      `OpenCode connection mode: ${useProxy ? "proxy" : "direct (user subscription)"}`,
+    );
+
     this.process = spawn(opencodePath, args, {
       env: {
         ...process.env,
         OPENCODE_SERVER_USERNAME: "opencode",
         OPENCODE_SERVER_PASSWORD: password,
-        // ANYON Pro: Route LLM requests through SLIT proxy
-        ANTHROPIC_BASE_URL:
-          process.env.ANYON_PROXY_URL ||
-          "https://engine.any-on.dev/v1/anthropic",
-        OPENAI_BASE_URL: process.env.ANYON_PROXY_URL
-          ? `${process.env.ANYON_PROXY_URL}/openai`
-          : "https://engine.any-on.dev/v1/openai",
+        ...proxyEnv,
       },
       stdio: ["ignore", "pipe", "pipe"],
       ...(options.cwd && { cwd: options.cwd }),
@@ -384,7 +431,7 @@ class OpenCodeServerManager {
         logger.info(
           `CWD change needed: ${this._cwd ?? "(none)"} → ${options.cwd}, killing external server...`,
         );
-        const port = this.port ?? 4096;
+        const port = this.port ?? 51962;
         await this._killExistingServer(port);
         this._externalServer = false;
         this.process = null;

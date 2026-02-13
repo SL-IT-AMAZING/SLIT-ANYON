@@ -26,6 +26,7 @@ import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { NeonIntegration } from "@/components/NeonIntegration";
 import { NodePathSelector } from "@/components/NodePathSelector";
+import { OpenCodeConnectionModeSelector } from "@/components/OpenCodeConnectionModeSelector";
 import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
 import { SettingsList } from "@/components/SettingsList";
@@ -362,6 +363,10 @@ export function AISettings() {
   return (
     <div id={SECTION_IDS.ai} className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-medium text-foreground mb-4">AI Settings</h2>
+
+      <div className="mt-4">
+        <OpenCodeConnectionModeSelector />
+      </div>
 
       <div id={SETTING_IDS.thinkingBudget} className="mt-4">
         <ThinkingBudgetSelector />

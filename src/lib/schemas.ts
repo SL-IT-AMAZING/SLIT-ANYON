@@ -255,6 +255,11 @@ export type Language = z.infer<typeof LanguageSchema>;
 export const DeviceModeSchema = z.enum(["desktop", "tablet", "mobile"]);
 export type DeviceMode = z.infer<typeof DeviceModeSchema>;
 
+export const OpenCodeConnectionModeSchema = z.enum(["proxy", "direct"]);
+export type OpenCodeConnectionMode = z.infer<
+  typeof OpenCodeConnectionModeSchema
+>;
+
 export const SmartContextModeSchema = z.enum([
   "balanced",
   "conservative",
@@ -320,6 +325,7 @@ export const UserSettingsSchema = z
     autoExpandPreviewPanel: z.boolean().optional(),
     enableChatCompletionNotifications: z.boolean().optional(),
     enableNativeGit: z.boolean().optional(),
+    openCodeConnectionMode: OpenCodeConnectionModeSchema.optional(),
     enableAutoUpdate: z.boolean(),
     releaseChannel: ReleaseChannelSchema,
     runtimeMode2: RuntimeMode2Schema.optional(),
