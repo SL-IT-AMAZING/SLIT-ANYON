@@ -8,12 +8,14 @@ import {
 import type { AddressInfo } from "node:net";
 import log from "electron-log";
 import { ALL_TOOLS } from "../agent/tools";
+import { zodToJsonSchema } from "../agent/tools/spec";
 
 const logger = log.scope("tool-gateway");
 
 type ToolSummary = {
   name: string;
   description: string;
+  inputSchema: Record<string, unknown>;
 };
 
 function jsonResponse(
@@ -85,6 +87,7 @@ class ToolGateway {
             const tools: ToolSummary[] = ALL_TOOLS.map((t) => ({
               name: t.name,
               description: t.description,
+              inputSchema: zodToJsonSchema(t.inputSchema),
             }));
             return jsonResponse(res, 200, { tools });
           }
