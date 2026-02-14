@@ -1,5 +1,10 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import log from "electron-log";
+import { toolGateway } from "@/opencode/tool_gateway";
+import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
 import { readSettings } from "../../main/settings";
 import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
@@ -128,6 +133,9 @@ class OpenCodeServerManager {
       getOpenCodeBinaryPath() ||
       "opencode";
 
+    const { port: gatewayPort, token: gatewayToken } =
+      await toolGateway.start();
+
     const existingServer = await this._checkExistingServer(
       hostname,
       port,
@@ -165,7 +173,22 @@ class OpenCodeServerManager {
 
     const anyonApiKey = settings.providerSettings?.auto?.apiKey?.value || "";
 
-    const proxyEnv: Record<string, string> = {};
+    const opencodeEnv: Record<string, string> = {};
+
+    const mcpServerPath = this._ensureMcpServerScript();
+
+    const opencodeConfig: Record<string, unknown> = {
+      mcp: {
+        "anyon-tools": {
+          type: "local",
+          command: ["node", mcpServerPath],
+          environment: {
+            ANYON_GATEWAY_URL: `http://127.0.0.1:${gatewayPort}`,
+            ANYON_GATEWAY_TOKEN: gatewayToken,
+          },
+        },
+      },
+    };
 
     if (useProxy && anyonApiKey) {
       // OPENCODE_CONFIG_CONTENT overrides all other config sources (Antigravity auth, global, project)
@@ -175,38 +198,36 @@ class OpenCodeServerManager {
         ? `${process.env.ANYON_PROXY_URL}/openai`
         : "https://engine.any-on.dev/v1/openai";
 
-      const opencodeConfig = {
-        provider: {
-          anthropic: {
-            options: {
-              apiKey: anyonApiKey,
-              baseURL: anthropicBaseUrl,
-            },
+      opencodeConfig["provider"] = {
+        anthropic: {
+          options: {
+            apiKey: anyonApiKey,
+            baseURL: anthropicBaseUrl,
           },
-          openai: {
-            options: {
-              apiKey: anyonApiKey,
-              baseURL: openaiBaseUrl,
-            },
+        },
+        openai: {
+          options: {
+            apiKey: anyonApiKey,
+            baseURL: openaiBaseUrl,
           },
         },
       };
 
-      proxyEnv.OPENCODE_CONFIG_CONTENT = JSON.stringify(opencodeConfig);
-
-      proxyEnv.ANTHROPIC_API_KEY = anyonApiKey;
-      proxyEnv.OPENAI_API_KEY = anyonApiKey;
-      proxyEnv.ANTHROPIC_BASE_URL = anthropicBaseUrl;
-      proxyEnv.OPENAI_BASE_URL = openaiBaseUrl;
+      opencodeEnv.ANTHROPIC_API_KEY = anyonApiKey;
+      opencodeEnv.OPENAI_API_KEY = anyonApiKey;
+      opencodeEnv.ANTHROPIC_BASE_URL = anthropicBaseUrl;
+      opencodeEnv.OPENAI_BASE_URL = openaiBaseUrl;
 
       // Disable Antigravity OAuth plugin so our proxy apiKey is used
       // instead of the user's personal OAuth token (sk-ant-oat-...)
-      proxyEnv.OPENCODE_DISABLE_DEFAULT_PLUGINS = "true";
+      opencodeEnv.OPENCODE_DISABLE_DEFAULT_PLUGINS = "true";
 
       logger.info(
         `Proxy config: anthropic → ${anthropicBaseUrl}, openai → ${openaiBaseUrl}`,
       );
     }
+
+    opencodeEnv.OPENCODE_CONFIG_CONTENT = JSON.stringify(opencodeConfig);
 
     logger.info(
       `OpenCode connection mode: ${useProxy ? "proxy" : "direct (user subscription)"}`,
@@ -217,7 +238,7 @@ class OpenCodeServerManager {
         ...process.env,
         OPENCODE_SERVER_USERNAME: "opencode",
         OPENCODE_SERVER_PASSWORD: password,
-        ...proxyEnv,
+        ...opencodeEnv,
       },
       stdio: ["ignore", "pipe", "pipe"],
       ...(options.cwd && { cwd: options.cwd }),
@@ -303,9 +324,13 @@ class OpenCodeServerManager {
   }
 
   async stop(): Promise<void> {
-    if (!this.process) {
-      return;
+    try {
+      await toolGateway.stop();
+    } catch (error) {
+      logger.warn("Failed to stop Tool Gateway:", error);
     }
+
+    if (!this.process) return;
 
     const pid = this.process.pid;
     logger.info(`Stopping server (PID: ${pid})...`);
@@ -369,6 +394,20 @@ class OpenCodeServerManager {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private _mcpScriptPath: string | null = null;
+
+  private _ensureMcpServerScript(): string {
+    if (this._mcpScriptPath && fs.existsSync(this._mcpScriptPath)) {
+      return this._mcpScriptPath;
+    }
+    const tmpDir = path.join(os.tmpdir(), "anyon-mcp");
+    fs.mkdirSync(tmpDir, { recursive: true });
+    const scriptPath = path.join(tmpDir, "anyon_mcp_server.mjs");
+    fs.writeFileSync(scriptPath, getMcpServerScript(), "utf-8");
+    this._mcpScriptPath = scriptPath;
+    return scriptPath;
   }
 
   private async _killExistingServer(port: number): Promise<void> {

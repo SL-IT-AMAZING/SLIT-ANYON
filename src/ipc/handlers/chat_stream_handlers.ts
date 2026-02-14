@@ -36,6 +36,7 @@ import {
   getSupabaseAvailableSystemPrompt,
 } from "../../prompts/supabase_prompt";
 import {
+  ANYON_MCP_TOOLS_PROMPT,
   constructSystemPrompt,
   readAiRules,
 } from "../../prompts/system_prompt";
@@ -539,7 +540,7 @@ ${componentSnippet}
           const aiRules = await readAiRules(
             getAnyonAppPath(updatedChat.app.path),
           );
-          const openCodeSystemPrompt = constructSystemPrompt({
+          let openCodeSystemPrompt = constructSystemPrompt({
             aiRules,
             chatMode:
               settings.selectedChatMode === "agent"
@@ -550,6 +551,30 @@ ${componentSnippet}
             basicAgentMode: false,
             openCodeMode: true,
           });
+
+          // Append Supabase context so OpenCode's AI knows about
+          // the connected project, tables, and client code.
+          if (
+            updatedChat.app?.supabaseProjectId &&
+            isSupabaseConnected(settings)
+          ) {
+            const supabaseClientCode = await getSupabaseClientCode({
+              projectId: updatedChat.app.supabaseProjectId,
+              organizationSlug:
+                updatedChat.app.supabaseOrganizationSlug ?? null,
+            });
+            openCodeSystemPrompt +=
+              "\n\n" +
+              getSupabaseAvailableSystemPrompt(supabaseClientCode) +
+              "\n\n" +
+              (await getSupabaseContext({
+                supabaseProjectId: updatedChat.app.supabaseProjectId,
+                organizationSlug:
+                  updatedChat.app.supabaseOrganizationSlug ?? null,
+              }));
+          }
+
+          openCodeSystemPrompt += "\n\n" + ANYON_MCP_TOOLS_PROMPT;
 
           // Send only the current user prompt — no codebase, no history.
           // OpenCode manages its own session history and reads files via tools.
