@@ -1,0 +1,346 @@
+================================================================================
+                    APP UPGRADE EXECUTION FLOW DIAGRAM
+================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+                              COMPONENT-TAGGER
+═══════════════════════════════════════════════════════════════════════════════
+
+USER INTERFACE (src/components/AppUpgrades.tsx)
+│
+├─ App.id: number (selected app)
+├─ upgrades: AppUpgrade[] (list of available upgrades)
+│   ├─ id: "component-tagger"
+│   ├─ title: "Enable select component to edit"
+│   ├─ isNeeded: boolean (detection result)
+│   └─ [other upgrade fields]
+│
+└─ User clicks "Upgrade" button
+   │
+   ├─ Call: ipc.upgrade.executeAppUpgrade({ appId, upgradeId: "component-tagger" })
+   │   │
+   │   └─ IPC Channel: "execute-app-upgrade"
+   │
+   └─ TanStack Query Mutation
+       ├─ Pending state: isUpgrading = true
+       ├─ Disabled state: Button disabled, spinner shown
+       │
+       └─ awaits Promise...
+
+
+MAIN PROCESS (src/ipc/handlers/app_upgrade_handlers.ts)
+│
+├─ Handler receives: { appId: number, upgradeId: "component-tagger" }
+│
+├─ VALIDATION
+│   ├─ Check upgradeId is not empty ✓
+│   └─ Query database: getApp(appId)
+│       ├─ If not found → THROW: "App with id {appId} not found"
+│       └─ If found → continue
+│
+├─ PATH RESOLUTION
+│   └─ appPath = getAnyonAppPath(app.path)
+│       ├─ If absolute → use as-is
+│       └─ If relative → ~/anyon-apps/{path}
+│
+├─ ROUTING: upgradeId === "component-tagger"
+│   │
+│   └─ Call: applyComponentTagger(appPath)
+│       │
+│       ├─ STEP 1: Find vite.config
+│       │   ├─ Check: vite.config.ts
+│       │   │   └─ If not exists → Check: vite.config.js
+│       │   │       └─ If not exists → THROW: "Could not find vite.config..."
+│       │   └─ Store viteConfigPath for use below
+│       │
+│       ├─ STEP 2: Create plugins directory
+│       │   └─ fs.promises.mkdir(appPath/plugins, { recursive: true })
+│       │       ✓ Created: {appPath}/plugins/
+│       │
+│       ├─ STEP 3: Write plugin file
+│       │   ├─ Determine extension (.ts if vite is TS, else .js)
+│       │   └─ Write ANYON_TAGGER_PLUGIN_SOURCE to:
+│       │       ✓ Created: {appPath}/plugins/anyon-component-tagger.ts|js
+│       │       │
+│       │       └─ Plugin code contents:
+│       │           ├─ export default function anyonTagger()
+│       │           ├─ name: "vite-plugin-anyon-tagger"
+│       │           ├─ apply: "serve" (dev mode only)
+│       │           ├─ enforce: "pre" (before other plugins)
+│       │           │
+│       │           └─ transform(code, id):
+│       │               ├─ Skip if not .jsx/.tsx
+│       │               ├─ Skip if in node_modules
+│       │               ├─ Parse code with @babel/parser
+│       │               ├─ Walk AST for JSXOpeningElement nodes
+│       │               ├─ For each JSX element:
+│       │               │   ├─ Skip if already has data-anyon-id
+│       │               │   ├─ Calculate componentId from file path + location
+│       │               │   │   └─ Format: "path/to/file.tsx:12:5"
+│       │               │   └─ Inject two attributes:
+│       │               │       ├─ data-anyon-id="{componentId}"
+│       │               │       └─ data-anyon-name="{tagName}"
+│       │               └─ Return modified code + sourcemap
+│       │
+│       ├─ STEP 4: Update vite.config imports
+│       │   ├─ Read vite.config content
+│       │   ├─ Find last "import " line (scan backwards)
+│       │   ├─ Insert after it:
+│       │   │   └─ 'import anyonComponentTagger from "./plugins/anyon-component-tagger";'
+│       │   └─ Write modified config back
+│       │
+│       ├─ STEP 5: Add plugin to plugins array
+│       │   ├─ Search for string "plugins: ["
+│       │   │   └─ If not found → THROW: "Could not find 'plugins: [' in vite.config..."
+│       │   │       (NOTE: This is a fragile string search!)
+│       │   ├─ Replace "plugins: [" with "plugins: [anyonComponentTagger(), "
+│       │   └─ Write modified config back
+│       │       ✓ Modified: {appPath}/vite.config.ts|js
+│       │
+│       ├─ STEP 6: Install dependencies
+│       │   ├─ Determine command:
+│       │   │   └─ pnpm add -D "@babel/parser" "estree-walker@^2.0.2" "magic-string"
+│       │   │       OR npm install --save-dev --legacy-peer-deps (if pnpm fails)
+│       │   │
+│       │   ├─ Spawn child process (shell: true)
+│       │   ├─ Log stdout/stderr in real-time
+│       │   │
+│       │   └─ Await completion:
+│       │       ├─ If exit code === 0:
+│       │       │   ├─ Log: "Component tagger dependencies installed successfully"
+│       │       │   └─ Continue to STEP 7
+│       │       └─ If exit code !== 0:
+│       │           └─ THROW: "Failed to install component tagger dependencies"
+│       │               (Upgrade FAILS here)
+│       │
+│       ├─ STEP 7: Git commit (TRY-CATCH, doesn't fail upgrade)
+│       │   ├─ TRY:
+│       │   │   ├─ gitAddAll({ path: appPath })
+│       │   │   │   └─ Runs: git add .
+│       │   │   │
+│       │   │   ├─ gitCommit({ path: appPath, message: "[anyon] add Anyon component tagger" })
+│       │   │   │   └─ Runs: git -c user.name= -c user.email= commit -m "..."
+│       │   │   │
+│       │   │   └─ Log: "Successfully committed changes"
+│       │   │
+│       │   └─ CATCH:
+│       │       └─ Log WARN (not error): "Failed to commit changes. This may happen if..."
+│       │           (Upgrade SUCCEEDS despite git failure)
+│       │
+│       └─ COMPLETE: Promise resolves
+
+
+RENDERER RESPONSE
+│
+├─ Mutation succeeds → onSuccess() callback
+│   │
+│   ├─ invalidateQueries: queryKeys.appUpgrades.byApp({ appId })
+│   ├─ invalidateQueries: queryKeys.versions.list({ appId })
+│   │
+│   └─ Triggers refetch: getAppUpgrades({ appId })
+│       │
+│       └─ Main Process: Detection check
+│           │
+│           ├─ Call: isComponentTaggerUpgradeNeeded(appPath)
+│           │   ├─ Find vite.config
+│           │   ├─ Read file content
+│           │   ├─ Search for "anyon-component-tagger"
+│           │   │   ├─ If found → return false (not needed)
+│           │   │   └─ If NOT found → return true (needed)
+│           │   │       (Now finds it because we just added it!)
+│           │   └─ Return: false
+│           │
+│           └─ UI updates: upgrade no longer in list
+│               └─ User sees "App is up-to-date and has all ANYON capabilities enabled"
+│
+└─ Button re-enables, loading spinner removed
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              CAPACITOR
+═══════════════════════════════════════════════════════════════════════════════
+
+USER INTERFACE (similar to component-tagger)
+│
+└─ User clicks "Upgrade" button for capacitor
+   │
+   └─ Call: ipc.upgrade.executeAppUpgrade({ appId, upgradeId: "capacitor" })
+
+
+MAIN PROCESS
+│
+├─ VALIDATION (same as component-tagger)
+│   ├─ Check upgradeId
+│   ├─ getApp(appId)
+│   └─ getAnyonAppPath(app.path)
+│
+├─ ROUTING: upgradeId === "capacitor"
+│   │
+│   └─ Call: applyCapacitor({ appName: app.name, appPath })
+│       │
+│       ├─ STEP 1: Install Capacitor packages
+│       │   ├─ Command:
+│       │   │   └─ pnpm add @capacitor/core@7.4.4 @capacitor/cli@7.4.4 @capacitor/ios@7.4.4 @capacitor/android@7.4.4
+│       │   │       OR npm install (with --legacy-peer-deps)
+│       │   │
+│       │   ├─ Function: simpleSpawn()
+│       │   │   ├─ Spawn child process
+│       │   │   ├─ Pipe stdout/stderr to logger
+│       │   │   └─ Await completion
+│       │   │
+│       │   └─ Result:
+│       │       ├─ If success → continue
+│       │       └─ If fail → THROW: "Failed to install Capacitor dependencies"
+│       │
+│       ├─ STEP 2: Initialize Capacitor
+│       │   ├─ Command:
+│       │   │   └─ npx cap init "{appName}" "com.example.{appNameNormalized}" --web-dir=dist
+│       │   │
+│       │   ├─ Creates: {appPath}/capacitor.config.json
+│       │   │   ├─ appId: "com.example.myapp"
+│       │   │   ├─ appName: "My App"
+│       │   │   └─ webDir: "dist"
+│       │   │
+│       │   └─ Result:
+│       │       ├─ If success → continue
+│       │       └─ If fail → THROW: "Failed to initialize Capacitor"
+│       │
+│       ├─ STEP 3: Add iOS and Android platforms
+│       │   ├─ Command:
+│       │   │   └─ npx cap add ios && npx cap add android
+│       │   │
+│       │   ├─ Creates:
+│       │   │   ├─ {appPath}/ios/
+│       │   │   │   ├─ Podfile
+│       │   │   │   ├─ App/
+│       │   │   │   └─ Pods/ (native iOS libraries)
+│       │   │   │
+│       │   │   └─ {appPath}/android/
+│       │   │       ├─ build.gradle
+│       │   │       ├─ app/
+│       │   │       └─ gradle/ (native Android libraries)
+│       │   │
+│       │   └─ Result:
+│       │       ├─ If success → continue
+│       │       └─ If fail → THROW: "Failed to add iOS and Android platforms"
+│       │
+│       ├─ STEP 4: Git commit (NOT wrapped in try-catch!)
+│       │   ├─ gitAddAll({ path: appPath })
+│       │   │   └─ git add .
+│       │   │
+│       │   ├─ gitCommit({ path: appPath, message: "[anyon] add Capacitor for mobile app support" })
+│       │   │   └─ git -c user.name= -c user.email= commit -m "..."
+│       │   │
+│       │   └─ Result:
+│       │       ├─ If success → COMPLETE: Promise resolves
+│       │       └─ If fail → THROW: "Failed to commit Capacitor changes. Please commit..."
+│       │           (Upgrade FAILS - unlike component-tagger!)
+│       │
+│       └─ COMPLETE: Promise resolves
+
+
+RENDERER RESPONSE
+│
+├─ If success:
+│   ├─ Mutation succeeds → onSuccess()
+│   ├─ Invalidate queries (same as component-tagger)
+│   ├─ Refetch getAppUpgrades
+│   │   └─ Call: isCapacitorUpgradeNeeded(appPath)
+│   │       ├─ Check: isViteApp() → true (we already added capacitor)
+│   │       ├─ Look for capacitor.config.{json,js,ts}
+│   │       │   └─ FOUND! (we just created it)
+│   │       └─ Return: false (not needed)
+│   │
+│   └─ UI updates: upgrade removed
+│
+└─ If git fails:
+    ├─ Mutation fails → onError()
+    ├─ Show error alert with:
+    │   ├─ Title: "Upgrade Failed"
+    │   ├─ Error message from git
+    │   └─ Link to manual upgrade documentation
+    └─ User can manually commit or try again
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              DETECTION LOGIC
+═══════════════════════════════════════════════════════════════════════════════
+
+isComponentTaggerUpgradeNeeded(appPath)
+│
+├─ Find vite.config.ts or vite.config.js
+│   ├─ If neither exists → return false (not a Vite app)
+│   └─ If found → continue
+│
+├─ Read file content (sync)
+│   ├─ Success → continue
+│   └─ Error → log error, return false (bail out gracefully)
+│
+└─ Search for "anyon-component-tagger" in content
+    ├─ If found → return false (upgrade not needed)
+    └─ If not found → return true (upgrade needed)
+
+
+isCapacitorUpgradeNeeded(appPath)
+│
+├─ Check: isViteApp(appPath)
+│   ├─ Vite app → continue
+│   └─ Not Vite → return false (Capacitor requires Vite)
+│
+└─ Look for capacitor config files
+    ├─ capacitor.config.js
+    ├─ capacitor.config.ts
+    └─ capacitor.config.json
+    
+    ├─ If any found → return false (already installed)
+    └─ If none found → return true (upgrade needed)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                          ERROR PROPAGATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Handler throws:
+│
+├─ createLoggedHandler wrapper catches error
+│   ├─ Logs: "[app_upgrade_handlers] Error in handler with args: ..."
+│   └─ Re-throws: "[execute-app-upgrade] {original error}"
+│
+├─ IPC system catches error
+│   └─ Sends rejection to renderer
+│
+└─ Renderer receives Promise rejection
+    ├─ Mutation fails → onError() callback
+    ├─ Component state: mutationError, isPending = false
+    └─ UI shows error alert with message
+
+
+================================================================================
+                              KEY DECISION POINTS
+================================================================================
+
+Component-Tagger Git Commit:
+  • Wrapped in try-catch
+  • Logs warning on failure
+  • UPGRADE SUCCEEDS even if git fails
+  • Rationale: Git is optional, upgrade is still valid
+
+Capacitor Git Commit:
+  • NOT wrapped in try-catch
+  • Throws error on failure
+  • UPGRADE FAILS if git fails
+  • Rationale: Capacitor requires committed changes to be valid
+
+Component-Tagger Plugin Injection:
+  • Uses string replacement: "plugins: [" → "plugins: [anyonComponentTagger(), "
+  • No validation of actual plugins array syntax
+  • FRAGILE: Will fail if formatting is different
+  • Risk: Advanced Vite configs may have different syntax
+
+Detection Resilience:
+  • Component-tagger detection returns false on read error
+  • Falls back gracefully if vite.config is unreadable
+  • Capacitor detection requires Vite first
+  • Both handle missing files gracefully (app may not have upgrade available)
+
+================================================================================

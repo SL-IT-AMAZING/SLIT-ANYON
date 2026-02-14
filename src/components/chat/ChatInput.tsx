@@ -11,7 +11,6 @@ import {
   FileText,
   FileX,
   Loader2,
-  Lock,
   Package,
   SendToBack,
   StopCircleIcon,
@@ -67,7 +66,6 @@ import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { useChats } from "@/hooks/useChats";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
 import { useCountTokens } from "@/hooks/useCountTokens";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { useVersions } from "@/hooks/useVersions";
 import { queryKeys } from "@/lib/queryKeys";
 import { showExtraFilesToast, showInfo } from "@/lib/toast";
@@ -173,7 +171,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       .reverse(); // Most recent first
   }, [chatId, messagesById]);
 
-  const { userBudget } = useUserBudgetInfo();
   const [needsFreshPlanChat, setNeedsFreshPlanChat] = useAtom(
     needsFreshPlanChatAtom,
   );
@@ -450,55 +447,29 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               />
             )}
 
-          {userBudget ? (
-            <VisualEditingChangesDialog
-              iframeRef={
-                previewIframeRef
-                  ? { current: previewIframeRef }
-                  : { current: null }
-              }
-              onReset={() => {
-                // Exit component selection mode and visual editing
-                setSelectedComponents([]);
-                setVisualEditingSelectedComponent(null);
-                setCurrentComponentCoordinates(null);
-                setPendingVisualChanges(new Map());
-                refreshAppIframe();
+          <VisualEditingChangesDialog
+            iframeRef={
+              previewIframeRef
+                ? { current: previewIframeRef }
+                : { current: null }
+            }
+            onReset={() => {
+              // Exit component selection mode and visual editing
+              setSelectedComponents([]);
+              setVisualEditingSelectedComponent(null);
+              setCurrentComponentCoordinates(null);
+              setPendingVisualChanges(new Map());
+              refreshAppIframe();
 
-                // Deactivate component selector in iframe
-                if (previewIframeRef?.contentWindow) {
-                  previewIframeRef.contentWindow.postMessage(
-                    { type: "deactivate-anyon-component-selector" },
-                    "*",
-                  );
-                }
-              }}
-            />
-          ) : (
-            selectedComponents.length > 0 && (
-              <div className="border-b border-border p-3 bg-muted/30">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        onClick={() => {
-                          ipc.system.openExternalUrl("https://any-on.dev/pro");
-                        }}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                      />
-                    }
-                  >
-                    <Lock size={16} />
-                    <span className="font-medium">Visual editor (Pro)</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Visual editing lets you make UI changes without AI and is a
-                    Pro-only feature
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            )
-          )}
+              // Deactivate component selector in iframe
+              if (previewIframeRef?.contentWindow) {
+                previewIframeRef.contentWindow.postMessage(
+                  { type: "deactivate-anyon-component-selector" },
+                  "*",
+                );
+              }
+            }}
+          />
 
           <SelectedComponentsDisplay />
 

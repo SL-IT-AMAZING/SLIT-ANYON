@@ -579,12 +579,6 @@ Modern dark theme with purple accents for testing.
         };
       }
 
-      if (!settings.enableAnyonPro) {
-        throw new Error(
-          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
-        );
-      }
-
       // Validate inputs - image paths are required
       if (params.imagePaths.length === 0) {
         throw new Error("Please upload at least one image to generate a theme");
@@ -705,12 +699,6 @@ Modern theme extracted from website for testing.
 
 </theme>`,
         };
-      }
-
-      if (!settings.enableAnyonPro) {
-        throw new Error(
-          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
-        );
       }
 
       // Validate URL format and protocol

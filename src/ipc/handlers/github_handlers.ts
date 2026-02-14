@@ -1,43 +1,43 @@
-import { BrowserWindow, IpcMainInvokeEvent } from "electron";
-import fetch from "node-fetch"; // Use node-fetch for making HTTP requests in main process
-import { writeSettings, readSettings } from "../../main/settings";
-import {
-  gitSetRemoteUrl,
-  gitPush,
-  gitClone,
-  gitPull,
-  gitRebaseAbort,
-  gitRebaseContinue,
-  gitRebase,
-  gitFetch,
-  gitCreateBranch,
-  gitCheckout,
-  gitGetMergeConflicts,
-  gitCurrentBranch,
-  gitListBranches,
-  gitListRemoteBranches,
-  isGitStatusClean,
-  gitAddAll,
-  gitCommit,
-  getCurrentCommitHash,
-  isGitMergeInProgress,
-  isGitRebaseInProgress,
-  GitConflictError,
-} from "../utils/git_utils";
-import * as schema from "../../db/schema";
 import fs from "node:fs";
-import { getAnyonAppPath } from "../../paths/paths";
-import { db } from "../../db";
-import { apps } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import { GithubUser } from "../../lib/schemas";
-import log from "electron-log";
-import { IS_TEST_BUILD } from "../utils/test_utils";
 import path from "node:path";
-import { withLock } from "../utils/lock_utils";
-import { createTypedHandler } from "./base";
+import { eq } from "drizzle-orm";
+import { BrowserWindow, type IpcMainInvokeEvent } from "electron";
+import log from "electron-log";
+import fetch from "node-fetch"; // Use node-fetch for making HTTP requests in main process
+import { db } from "../../db";
+import * as schema from "../../db/schema";
+import { apps } from "../../db/schema";
+import type { GithubUser } from "../../lib/schemas";
+import { readSettings, writeSettings } from "../../main/settings";
+import { getAnyonAppPath } from "../../paths/paths";
 import { githubContracts } from "../types/github";
 import type { CloneRepoParams, CloneRepoResult } from "../types/github";
+import {
+  GitConflictError,
+  getCurrentCommitHash,
+  gitAddAll,
+  gitCheckout,
+  gitClone,
+  gitCommit,
+  gitCreateBranch,
+  gitCurrentBranch,
+  gitFetch,
+  gitGetMergeConflicts,
+  gitListBranches,
+  gitListRemoteBranches,
+  gitPull,
+  gitPush,
+  gitRebase,
+  gitRebaseAbort,
+  gitRebaseContinue,
+  gitSetRemoteUrl,
+  isGitMergeInProgress,
+  isGitRebaseInProgress,
+  isGitStatusClean,
+} from "../utils/git_utils";
+import { withLock } from "../utils/lock_utils";
+import { IS_TEST_BUILD } from "../utils/test_utils";
+import { createTypedHandler } from "./base";
 
 const logger = log.scope("github_handlers");
 
@@ -1276,6 +1276,8 @@ async function handleCloneRepoFromUrl(
     }
     const aiRulesPath = path.join(appPath, "AI_RULES.md");
     const hasAiRules = fs.existsSync(aiRulesPath);
+    const hasCustomCommands =
+      !!installCommand?.trim() && !!startCommand?.trim();
     const [newApp] = await db
       .insert(schema.apps)
       .values({
@@ -1288,6 +1290,9 @@ async function handleCloneRepoFromUrl(
         githubBranch: "main",
         installCommand: installCommand || null,
         startCommand: startCommand || null,
+        ...(hasCustomCommands
+          ? { profileLearned: true, profileSource: "user" as const }
+          : {}),
       })
       .returning();
     logger.log(`Successfully cloned repo ${owner}/${repoName} to ${appPath}`);

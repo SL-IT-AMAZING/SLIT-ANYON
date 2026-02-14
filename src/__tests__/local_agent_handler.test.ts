@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { IpcMainInvokeEvent, WebContents } from "electron";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // Test Fakes & Builders
@@ -277,33 +277,31 @@ describe("handleLocalAgentStream", () => {
   });
 
   describe("Pro status validation", () => {
-    it("should send error when ANYON Pro is not enabled", async () => {
+    it("should continue even when ANYON Pro is disabled", async () => {
       // Arrange
       const { event, getMessagesByChannel } = createFakeEvent();
       mockSettings = buildTestSettings({ enableAnyonPro: false });
 
-      // Act
-      await handleLocalAgentStream(
-        event,
-        { chatId: 1, prompt: "test" },
-        new AbortController(),
-        {
-          placeholderMessageId: 10,
-          systemPrompt: "You are helpful",
-          anyonRequestId,
-        },
-      );
+      // Act & Assert
+      await expect(
+        handleLocalAgentStream(
+          event,
+          { chatId: 1, prompt: "test" },
+          new AbortController(),
+          {
+            placeholderMessageId: 10,
+            systemPrompt: "You are helpful",
+            anyonRequestId,
+          },
+        ),
+      ).rejects.toThrow("Chat not found: 1");
 
       // Assert
       const errorMessages = getMessagesByChannel("chat:response:error");
-      expect(errorMessages).toHaveLength(1);
-      expect(errorMessages[0].args[0]).toMatchObject({
-        chatId: 1,
-        error: expect.stringContaining("Agent v2 requires ANYON Pro"),
-      });
+      expect(errorMessages).toHaveLength(0);
     });
 
-    it("should send error when API key is missing even if Pro is enabled", async () => {
+    it("should continue when API key is missing", async () => {
       // Arrange
       const { event, getMessagesByChannel } = createFakeEvent();
       mockSettings = buildTestSettings({
@@ -311,21 +309,23 @@ describe("handleLocalAgentStream", () => {
         hasApiKey: false,
       });
 
-      // Act
-      await handleLocalAgentStream(
-        event,
-        { chatId: 1, prompt: "test" },
-        new AbortController(),
-        {
-          placeholderMessageId: 10,
-          systemPrompt: "You are helpful",
-          anyonRequestId,
-        },
-      );
+      // Act & Assert
+      await expect(
+        handleLocalAgentStream(
+          event,
+          { chatId: 1, prompt: "test" },
+          new AbortController(),
+          {
+            placeholderMessageId: 10,
+            systemPrompt: "You are helpful",
+            anyonRequestId,
+          },
+        ),
+      ).rejects.toThrow("Chat not found: 1");
 
       // Assert
       const errorMessages = getMessagesByChannel("chat:response:error");
-      expect(errorMessages).toHaveLength(1);
+      expect(errorMessages).toHaveLength(0);
     });
   });
 

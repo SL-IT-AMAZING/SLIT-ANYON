@@ -1,17 +1,17 @@
-import { dialog } from "electron";
-import fs from "fs/promises";
 import path from "path";
-import { createLoggedHandler } from "./safe_handle";
-import log from "electron-log";
-import { getAnyonAppPath } from "../../paths/paths";
-import { apps } from "@/db/schema";
 import { db } from "@/db";
+import { apps } from "@/db/schema";
 import { chats } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { dialog } from "electron";
+import log from "electron-log";
+import fs from "fs/promises";
+import { getAnyonAppPath } from "../../paths/paths";
+import { createLoggedHandler } from "./safe_handle";
 
-import { ImportAppParams, ImportAppResult } from "@/ipc/types";
+import type { ImportAppParams, ImportAppResult } from "@/ipc/types";
 import { copyDirectoryRecursive } from "../utils/file_utils";
-import { gitCommit, gitAdd, gitInit } from "../utils/git_utils";
+import { gitAdd, gitCommit, gitInit } from "../utils/git_utils";
 
 const logger = log.scope("import-handlers");
 const handle = createLoggedHandler(logger);
@@ -132,6 +132,8 @@ export function registerImportHandlers() {
 
       // Create a new app
       // Store the full absolute path when skipCopy is true, otherwise store appName
+      const hasCustomCommands =
+        !!installCommand?.trim() && !!startCommand?.trim();
       const [app] = await db
         .insert(apps)
         .values({
@@ -139,6 +141,9 @@ export function registerImportHandlers() {
           path: skipCopy ? sourcePath : appName,
           installCommand: installCommand ?? null,
           startCommand: startCommand ?? null,
+          ...(hasCustomCommands
+            ? { profileLearned: true, profileSource: "user" as const }
+            : {}),
         })
         .returning();
 

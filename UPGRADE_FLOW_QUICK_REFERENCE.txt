@@ -1,0 +1,178 @@
+================================================================================
+                     APP UPGRADE FLOW - QUICK REFERENCE
+================================================================================
+
+FILE LOCATIONS
+──────────────
+Renderer:    src/components/AppUpgrades.tsx
+Contracts:   src/ipc/types/upgrade.ts
+Handlers:    src/ipc/handlers/app_upgrade_handlers.ts
+Registration src/ipc/ipc_host.ts (line 70)
+Utilities:   src/ipc/utils/{git_utils.ts, simpleSpawn.ts}
+
+IPC CHANNELS
+────────────
+Channel: "get-app-upgrades"
+  Input:  { appId: number }
+  Output: AppUpgrade[] with isNeeded: boolean
+  
+Channel: "execute-app-upgrade"
+  Input:  { appId: number, upgradeId: string }
+  Output: void (just runs the upgrade)
+
+UPGRADE TYPES
+─────────────
+1. "component-tagger"  → Vite plugin for component selection
+2. "capacitor"         → Mobile app framework (iOS/Android)
+
+COMPONENT-TAGGER FLOW
+─────────────────────
+1. User clicks "Upgrade" button in AppUpgrades.tsx
+2. Component calls ipc.upgrade.executeAppUpgrade({ appId, upgradeId: "component-tagger" })
+3. Handler receives and validates inputs
+4. applyComponentTagger(appPath) is called:
+   a) Find vite.config.ts or vite.config.js
+   b) Create plugins/ directory
+   c) Write anyon-component-tagger.ts|js plugin file
+      - Plugin is a Babel-based AST transformer
+      - Adds data-anyon-id and data-anyon-name to JSX elements
+      - Only runs in serve mode, before other plugins
+   d) Update vite.config file:
+      - Add import statement for the plugin
+      - Add anyonComponentTagger() to plugins array
+   e) Install dependencies:
+      - @babel/parser
+      - estree-walker@^2.0.2
+      - magic-string
+      (Uses pnpm if available, falls back to npm)
+   f) Stage and commit changes (wraps in try-catch, warns on failure but doesn't throw)
+5. Handler resolves or throws on error
+6. Renderer invalidates queries to refresh upgrade list
+7. getAppUpgrades is called again:
+   - Runs isComponentTaggerUpgradeNeeded()
+   - Reads vite.config, searches for "anyon-component-tagger"
+   - Now finds it → isNeeded: false
+8. Component re-renders, upgrade no longer appears
+
+COMPONENT-TAGGER DETECTION
+──────────────────────────
+Function: isComponentTaggerUpgradeNeeded(appPath)
+1. Look for vite.config.ts (preferred) or vite.config.js
+2. If found, read file content
+3. Search for string "anyon-component-tagger"
+4. Return true if NOT found (upgrade needed), false if found
+5. Return false if read error or no vite config (not a Vite app)
+
+CAPACITOR FLOW
+──────────────
+1. Similar to component-tagger setup
+2. applyCapacitor({ appName, appPath }) is called:
+   a) Install dependencies (@capacitor/*@7.4.4 packages)
+   b) Run: npx cap init "{appName}" "com.example.{appName}" --web-dir=dist
+   c) Run: npx cap add ios && npx cap add android
+   d) Stage and commit (NOT in try-catch, throws on git failure)
+3. Creates capacitor.config.json, ios/, android/ directories
+4. Requires git and will fail if git commit fails
+
+CAPACITOR DETECTION
+───────────────────
+Function: isCapacitorUpgradeNeeded(appPath)
+1. Check if it's a Vite app first (Capacitor requires Vite)
+2. Look for capacitor.config.js/ts/json
+3. Return false if any config found (already installed)
+4. Return true if no config found (upgrade needed)
+
+ERROR HANDLING
+──────────────
+THROWS (Upgrade Fails):
+  - App not found in database
+  - upgradeId is missing or unknown
+  - vite.config not found (component-tagger)
+  - plugins array not found in vite.config (component-tagger)
+  - Dependency installation exits with non-zero code
+  - Capacitor commands fail
+  - Git commit fails for Capacitor (NOT for component-tagger)
+
+LOGS BUT DOESN'T THROW:
+  - vite.config file read error during detection
+  - Component-tagger git commit failure (logs warning)
+
+FILESYSTEM CHANGES
+──────────────────
+Component-Tagger:
+  ✓ Create: {appPath}/plugins/anyon-component-tagger.ts|js
+  ✓ Modify: {appPath}/vite.config.ts|js
+  ✓ Modify: package.json (add 3 dev dependencies)
+  ✓ Create: Git commit (if available)
+
+Capacitor:
+  ✓ Create: {appPath}/capacitor.config.json
+  ✓ Create: {appPath}/ios/ directory
+  ✓ Create: {appPath}/android/ directory
+  ✓ Modify: package.json (add 4 dependencies)
+  ✓ Create: Git commit (required, fails if unavailable)
+
+TIMING ESTIMATES
+────────────────
+Component-Tagger: 5-30 seconds
+  - Config update: <100ms
+  - Dependency install: 5-30s (depends on package manager)
+  - Git commit: <1s
+
+Capacitor: 20-60 seconds
+  - Dependencies: 10-30s
+  - Init: 2-5s
+  - Add platforms: 5-20s (includes SDK downloads)
+  - Git commit: <1s
+
+LOGGING
+───────
+Scope: "app_upgrade_handlers" (electron-log)
+
+Component-Tagger logs:
+  - Created anyon-component-tagger plugin file
+  - Installing anyon-component-tagger dependencies
+  - [Package manager output]
+  - Component tagger dependencies installed successfully
+  - Staging and committing changes
+  - Successfully committed changes (or warning if git fails)
+
+Capacitor logs:
+  - [simpleSpawn logs for each step]
+  - Staging and committing Capacitor changes
+  - Successfully committed Capacitor changes
+
+QUERY INVALIDATION (After Success)
+──────────────────────────────────
+1. queryKeys.appUpgrades.byApp({ appId })     → Refetch upgrade list
+2. queryKeys.appUpgrades.isCapacitor({ appId }) → (if capacitor upgrade)
+3. queryKeys.versions.list({ appId })          → Refetch app versions
+
+FRAGILE AREAS
+─────────────
+⚠️  Component-Tagger Plugin Injection
+    - Uses string replacement to find "plugins: ["
+    - Will fail if plugins array is not exactly "plugins: ["
+    - Example fails:  "plugins: [ " (trailing space)
+    - Could fail if plugins is spread across lines
+
+⚠️  Vite Config Path Resolution
+    - Expects vite.config.ts or vite.config.js in app root
+    - Does not handle other vite config locations
+    - Does not handle vite.config with .mjs, .mts extensions
+
+⚠️  Capacitor Bundle ID Generation
+    - Normalizes app name with regex: /[^a-z0-9]/g
+    - Example: "My App" → "myapp"
+    - Could create conflicts if multiple apps normalize to same ID
+
+FUTURE IMPROVEMENTS
+───────────────────
+1. Add locking to prevent concurrent upgrade executions
+2. Validate plugins array exists before modification (not just string search)
+3. Support more vite config file extensions
+4. Make Capacitor git commit optional (like component-tagger)
+5. Add rollback capability on partial failure
+6. Improve error messages with links to docs
+
+================================================================================

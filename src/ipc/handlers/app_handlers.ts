@@ -27,6 +27,7 @@ import {
 } from "../utils/process_manager";
 import { getEnvVar } from "../utils/read_env";
 
+import { learnAppProfile } from "@/ipc/services/profileLearning";
 import fixPath from "fix-path";
 
 import util from "util";
@@ -123,22 +124,6 @@ function buildSnippetFromMatch({
   };
 }
 
-function getDefaultCommand(appId: number, appPath: string): string {
-  const port = getAppPort(appId);
-
-  // Detect package manager from lock files
-  if (fs.existsSync(path.join(appPath, "yarn.lock"))) {
-    return `(yarn --version || corepack enable yarn) && yarn install && yarn dev --port ${port}`;
-  }
-  if (
-    fs.existsSync(path.join(appPath, "bun.lock")) ||
-    fs.existsSync(path.join(appPath, "bun.lockb"))
-  ) {
-    return `bun install && bun run dev --port ${port}`;
-  }
-  // Default: try pnpm first, then npm
-  return `(pnpm install && pnpm run dev --port ${port}) || (npm install --legacy-peer-deps && npm run dev -- --port ${port})`;
-}
 async function copyDir(
   source: string,
   destination: string,
@@ -180,8 +165,8 @@ async function executeApp({
   appId: number;
   event: Electron.IpcMainInvokeEvent;
   isNeon: boolean;
-  installCommand?: string | null;
-  startCommand?: string | null;
+  installCommand: string;
+  startCommand: string;
 }): Promise<void> {
   if (proxyWorker) {
     proxyWorker.terminate();
@@ -223,10 +208,10 @@ async function executeAppLocalNode({
   appId: number;
   event: Electron.IpcMainInvokeEvent;
   isNeon: boolean;
-  installCommand?: string | null;
-  startCommand?: string | null;
+  installCommand: string;
+  startCommand: string;
 }): Promise<void> {
-  const command = getCommand({ appId, appPath, installCommand, startCommand });
+  const command = getCommand({ appId, installCommand, startCommand });
   const spawnedProcess = spawn(command, [], {
     cwd: appPath,
     shell: true,
@@ -427,8 +412,8 @@ async function executeAppInDocker({
   appId: number;
   event: Electron.IpcMainInvokeEvent;
   isNeon: boolean;
-  installCommand?: string | null;
-  startCommand?: string | null;
+  installCommand: string;
+  startCommand: string;
 }): Promise<void> {
   const containerName = `anyon-app-${appId}`;
 
@@ -541,7 +526,7 @@ RUN npm install -g pnpm
       `anyon-app-${appId}`,
       "sh",
       "-c",
-      getCommand({ appId, appPath, installCommand, startCommand }),
+      getCommand({ appId, installCommand, startCommand }),
     ],
     {
       stdio: "pipe",
@@ -1041,6 +1026,35 @@ export function registerAppHandlers() {
       logger.debug(`Starting app ${appId} in path ${app.path}`);
 
       const appPath = getAnyonAppPath(app.path);
+
+      let installCommand = app.installCommand;
+      let startCommand = app.startCommand;
+
+      if (!app.profileLearned) {
+        if (installCommand && startCommand) {
+          await db
+            .update(apps)
+            .set({ profileLearned: true, profileSource: "user" })
+            .where(eq(apps.id, appId));
+        } else {
+          const learned = await learnAppProfile(appPath, appId);
+          installCommand = learned.installCommand;
+          startCommand = learned.startCommand;
+        }
+      }
+
+      if (!installCommand || !startCommand) {
+        throw new Error(
+          "Could not determine how to start this app. Try importing it again.",
+        );
+      }
+
+      startCommand = await maybeUpgradeNextStartCommandToWebpack({
+        appId,
+        appPath,
+        startCommand,
+      });
+
       try {
         // There may have been a previous run that left a process on this port.
         await cleanUpPort(getAppPort(appId));
@@ -1049,8 +1063,8 @@ export function registerAppHandlers() {
           appId,
           event,
           isNeon: !!app.neonProjectId,
-          installCommand: app.installCommand,
-          startCommand: app.startCommand,
+          installCommand,
+          startCommand,
         });
 
         return;
@@ -1185,18 +1199,46 @@ export function registerAppHandlers() {
           }
         }
 
+        let installCommand = app.installCommand;
+        let startCommand = app.startCommand;
+
+        if (!app.profileLearned) {
+          if (installCommand && startCommand) {
+            await db
+              .update(apps)
+              .set({ profileLearned: true, profileSource: "user" })
+              .where(eq(apps.id, appId));
+          } else {
+            const learned = await learnAppProfile(appPath, appId);
+            installCommand = learned.installCommand;
+            startCommand = learned.startCommand;
+          }
+        }
+
+        if (!installCommand || !startCommand) {
+          throw new Error(
+            "Could not determine how to start this app. Try importing it again.",
+          );
+        }
+
+        startCommand = await maybeUpgradeNextStartCommandToWebpack({
+          appId,
+          appPath,
+          startCommand,
+        });
+
         logger.debug(
           `Executing app ${appId} in path ${app.path} after restart request`,
-        ); // Adjusted log
+        );
 
         await executeApp({
           appPath,
           appId,
           event,
           isNeon: !!app.neonProjectId,
-          installCommand: app.installCommand,
-          startCommand: app.startCommand,
-        }); // This will handle starting either mode
+          installCommand,
+          startCommand,
+        });
 
         return;
       } catch (error) {
@@ -1996,19 +2038,76 @@ export function registerAppHandlers() {
 
 function getCommand({
   appId,
-  appPath,
   installCommand,
   startCommand,
 }: {
   appId: number;
-  appPath: string;
-  installCommand?: string | null;
-  startCommand?: string | null;
+  installCommand: string;
+  startCommand: string;
 }) {
-  const hasCustomCommands = !!installCommand?.trim() && !!startCommand?.trim();
-  return hasCustomCommands
-    ? `${installCommand!.trim()} && ${startCommand!.trim()}`
-    : getDefaultCommand(appId, appPath);
+  const port = String(getAppPort(appId));
+  const resolvedStart = startCommand.trim().replace("{port}", port);
+  return `${installCommand.trim()} && ${resolvedStart}`;
+}
+
+async function maybeUpgradeNextStartCommandToWebpack({
+  appId,
+  appPath,
+  startCommand,
+}: {
+  appId: number;
+  appPath: string;
+  startCommand: string;
+}): Promise<string> {
+  const normalizedStart = startCommand.trim();
+
+  if (normalizedStart.includes("--webpack")) {
+    return normalizedStart;
+  }
+
+  if (!isNextJsProject(appPath)) {
+    return normalizedStart;
+  }
+
+  const isDevCommand =
+    /\bnext\s+dev\b/.test(normalizedStart) ||
+    /\b(?:npm|pnpm|yarn|bun)\s+run\s+dev\b/.test(normalizedStart);
+  if (!isDevCommand) {
+    return normalizedStart;
+  }
+
+  const upgradedStart = normalizedStart
+    .replace(/\s--turbopack\b/g, "")
+    .replace(/\s--turbo\b/g, "")
+    .trim();
+  const finalStart = `${upgradedStart} --webpack`;
+
+  await db
+    .update(apps)
+    .set({ startCommand: finalStart })
+    .where(eq(apps.id, appId));
+
+  return finalStart;
+}
+
+function isNextJsProject(appPath: string): boolean {
+  const packageJsonPath = path.join(appPath, "package.json");
+  if (!fs.existsSync(packageJsonPath)) {
+    return false;
+  }
+
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    return Boolean(
+      packageJson.dependencies?.next || packageJson.devDependencies?.next,
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function cleanUpPort(port: number) {

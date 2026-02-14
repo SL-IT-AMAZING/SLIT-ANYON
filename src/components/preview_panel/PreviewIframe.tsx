@@ -1,6 +1,7 @@
 import {
   appConsoleEntriesAtom,
   appUrlAtom,
+  currentAppAtom,
   previewCurrentUrlAtom,
   previewErrorMessageAtom,
   selectedAppIdAtom,
@@ -65,14 +66,12 @@ import { useRunApp } from "@/hooks/useRunApp";
 import { useSettings } from "@/hooks/useSettings";
 import { useShortcut } from "@/hooks/useShortcut";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import type { ComponentSelection } from "@/ipc/types";
 import type { DeviceMode } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Annotator } from "@/pro/ui/components/Annotator/Annotator";
 import { normalizePath } from "../../../shared/normalizePath";
-import { AnnotatorOnlyForPro } from "./AnnotatorOnlyForPro";
 import { VisualEditingToolbar } from "./VisualEditingToolbar";
 
 interface ErrorBannerProps {
@@ -174,6 +173,7 @@ const ErrorBanner = ({ error, onDismiss, onAIFix }: ErrorBannerProps) => {
 // Preview iframe component
 export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const currentApp = useAtomValue(currentAppAtom);
   const { appUrl, originalUrl } = useAtomValue(appUrlAtom);
   const setConsoleEntries = useSetAtom(appConsoleEntriesAtom);
   // State to trigger iframe reload
@@ -184,8 +184,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   const { routes: availableRoutes } = useParseRouter(selectedAppId);
   const { restartApp } = useRunApp();
   const { settings, updateSettings } = useSettings();
-  const { userBudget } = useUserBudgetInfo();
-  const isProMode = !!userBudget;
+  const isProMode = true;
 
   // Preserved URL state (persists across HMR-induced remounts)
   const [preservedUrls, setPreservedUrls] = useAtom(previewCurrentUrlAtom);
@@ -743,6 +742,24 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
 
   // Function to activate component selector in the iframe
   const handleActivateComponentSelector = () => {
+    if (!isComponentSelectorInitialized) {
+      const startCommand = currentApp?.startCommand ?? "";
+      const isNextByCommand =
+        /\bnext\s+dev\b/.test(startCommand) || /\s-p\s*\{port\}/.test(startCommand);
+      const isNextByFiles =
+        currentApp?.files?.some((file) =>
+          /(^|\/)next\.config\.(js|mjs|ts)$/.test(file),
+        ) ?? false;
+      const isNextApp = isNextByCommand || isNextByFiles;
+
+      showError(
+        isNextApp
+          ? "Component selection is not available for this Next.js app yet."
+          : "Component selection is not available on this page yet.",
+      );
+      return;
+    }
+
     if (iframeRef.current?.contentWindow) {
       const newIsPicking = !isPicking;
       if (!newIsPicking) {
@@ -1024,8 +1041,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                     }`}
                     disabled={
                       loading ||
-                      !selectedAppId ||
-                      !isComponentSelectorInitialized
+                      !selectedAppId
                     }
                     data-testid="preview-pick-element-button"
                   />
@@ -1277,17 +1293,11 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                     : { width: `${deviceWidthConfig[deviceMode]}px` }
                 }
               >
-                {userBudget ? (
-                  <Annotator
-                    screenshotUrl={screenshotDataUrl}
-                    onSubmit={addAttachments}
-                    handleAnnotatorClick={handleAnnotatorClick}
-                  />
-                ) : (
-                  <AnnotatorOnlyForPro
-                    onGoBack={() => setAnnotatorMode(false)}
-                  />
-                )}
+                <Annotator
+                  screenshotUrl={screenshotDataUrl}
+                  onSubmit={addAttachments}
+                  handleAnnotatorClick={handleAnnotatorClick}
+                />
               </div>
             ) : (
               <>
@@ -1312,8 +1322,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   allow="clipboard-read; clipboard-write; fullscreen; microphone; camera; display-capture; geolocation; autoplay; picture-in-picture"
                 />
                 {/* Visual Editing Toolbar */}
-                {isProMode &&
-                  visualEditingSelectedComponent &&
+                {visualEditingSelectedComponent &&
                   selectedAppId && (
                     <VisualEditingToolbar
                       selectedComponent={visualEditingSelectedComponent}
