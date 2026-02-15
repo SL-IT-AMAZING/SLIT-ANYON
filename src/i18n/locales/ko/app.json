@@ -25,5 +25,45 @@
   "welcome": {
     "title": "새 앱 만들기",
     "subtitle": "오늘 무엇을 만들어 볼까요?"
+  },
+  "billing": {
+    "choosePlanTitle": "요금제를 선택하세요",
+    "choosePlanDescription": "등급을 선택한 뒤 안전한 Polar 결제로 이동합니다.",
+    "plans": {
+      "free": {
+        "name": "무료"
+      },
+      "starter": {
+        "name": "Starter",
+        "price": "$19/월",
+        "summary": "조정 토큰 5M"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$49/월",
+        "summary": "조정 토큰 15M"
+      },
+      "power": {
+        "name": "Power",
+        "price": "$99/월",
+        "summary": "조정 토큰 35M + 초과 사용"
+      }
+    },
+    "currentPlan": {
+      "free": "무료 플랜",
+      "starter": "Starter 플랜",
+      "pro": "Pro 플랜",
+      "power": "Power 플랜"
+    },
+    "actions": {
+      "billingAndRefunds": "결제 및 환불",
+      "upgrade": "업그레이드",
+      "signOut": "로그아웃"
+    },
+    "account": "계정",
+    "credits": "크레딧",
+    "usage": "{{used}} / {{limit}} 크레딧",
+    "overageActive": "초과 사용 과금 중",
+    "upgradeTo": "{{plan}}로 업그레이드"
   }
 }

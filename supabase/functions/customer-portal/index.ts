@@ -2,6 +2,12 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { polar } from "../_shared/polar.ts";
 import { getServiceClient, verifyAuth } from "../_shared/supabase.ts";
 
+function isNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("404") || message.includes("not found");
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -23,20 +29,65 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (dbError || !subscription?.polar_customer_id) {
+    if (dbError) {
       return new Response(
-        JSON.stringify({ error: "No active subscription found" }),
+        JSON.stringify({ error: "Failed to load subscription" }),
         {
-          status: 404,
+          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         },
       );
     }
 
+    let customerId = subscription?.polar_customer_id ?? null;
+
+    if (!customerId) {
+      try {
+        const customer = await polar.customers.getExternal({
+          externalId: user.id,
+        });
+        customerId = customer.id;
+      } catch (error) {
+        if (!isNotFoundError(error)) {
+          throw error;
+        }
+
+        if (!user.email) {
+          return new Response(
+            JSON.stringify({ error: "No active subscription found" }),
+            {
+              status: 404,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            },
+          );
+        }
+
+        const customer = await polar.customers.create({
+          externalId: user.id,
+          email: user.email,
+        });
+        customerId = customer.id;
+      }
+    }
+
+    if (
+      subscription?.id &&
+      customerId &&
+      customerId !== subscription.polar_customer_id
+    ) {
+      await supabase
+        .from("subscriptions")
+        .update({
+          polar_customer_id: customerId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", subscription.id);
+    }
+
     const session = await polar.customerSessions.create({
-      customerId: subscription.polar_customer_id,
+      customerId,
     });
 
     return new Response(

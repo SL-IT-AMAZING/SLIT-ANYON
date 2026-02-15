@@ -86,5 +86,6 @@ export function useEntitlement() {
     startCheckout,
     openCustomerPortal,
     checkCredits,
+    isCheckoutPending: checkoutMutation.isPending,
   };
 }

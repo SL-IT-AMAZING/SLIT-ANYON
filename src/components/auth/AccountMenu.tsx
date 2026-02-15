@@ -1,3 +1,4 @@
+import { CheckoutPlanDialog } from "@/components/subscription/CheckoutPlanDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,18 +10,27 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlement } from "@/hooks/useEntitlement";
 import { CreditCard, LogOut, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const PLAN_LABELS: Record<string, string> = {
-  free: "Free Plan",
-  starter: "Starter Plan",
-  pro: "Pro Plan",
-  power: "Power Plan",
-};
+function getCurrentPlanLabelKey(plan: string) {
+  switch (plan) {
+    case "starter":
+      return "billing.currentPlan.starter" as const;
+    case "pro":
+      return "billing.currentPlan.pro" as const;
+    case "power":
+      return "billing.currentPlan.power" as const;
+    default:
+      return "billing.currentPlan.free" as const;
+  }
+}
 
 export function AccountMenu() {
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+  const { t } = useTranslation("app");
   const { user, logout, isLogoutPending } = useAuth();
-  const { isPaid, plan, usage, openCustomerPortal, startCheckout } =
-    useEntitlement();
+  const { isPaid, plan, usage, openCustomerPortal } = useEntitlement();
 
   if (!user) return null;
 
@@ -43,22 +53,26 @@ export function AccountMenu() {
           )}
         </div>
         <span className="truncate text-sm">
-          {user.displayName ?? user.email ?? "Account"}
+          {user.displayName ?? user.email ?? t("billing.account")}
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <div className="px-2 py-1.5">
-          <p className="text-sm font-medium">{user.displayName ?? "Account"}</p>
+          <p className="text-sm font-medium">
+            {user.displayName ?? t("billing.account")}
+          </p>
           {user.email && (
             <p className="text-xs text-muted-foreground">{user.email}</p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
-            {PLAN_LABELS[plan] ?? "Free Plan"}
+            {t(getCurrentPlanLabelKey(plan))}
           </p>
           {isPaid && usage && (
             <p className="text-xs text-muted-foreground">
-              {usage.creditsUsed.toLocaleString()} /{" "}
-              {usage.creditsLimit.toLocaleString()} credits
+              {t("billing.usage", {
+                used: usage.creditsUsed.toLocaleString(),
+                limit: usage.creditsLimit.toLocaleString(),
+              })}
             </p>
           )}
         </div>
@@ -66,20 +80,24 @@ export function AccountMenu() {
         {isPaid && (
           <DropdownMenuItem onClick={() => openCustomerPortal()}>
             <CreditCard className="mr-2 size-4" />
-            Manage Subscription
+            {t("billing.actions.billingAndRefunds")}
           </DropdownMenuItem>
         )}
         {!isPaid && (
-          <DropdownMenuItem onClick={() => startCheckout("starter")}>
+          <DropdownMenuItem onClick={() => setIsPlanDialogOpen(true)}>
             <Sparkles className="mr-2 size-4" />
-            Upgrade
+            {t("billing.actions.upgrade")}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => logout()} disabled={isLogoutPending}>
           <LogOut className="mr-2 size-4" />
-          Sign Out
+          {t("billing.actions.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <CheckoutPlanDialog
+        isOpen={isPlanDialogOpen}
+        onClose={() => setIsPlanDialogOpen(false)}
+      />
     </DropdownMenu>
   );
 }

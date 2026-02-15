@@ -1,6 +1,7 @@
 import { shell } from "electron";
 import log from "electron-log";
 import { oauthEndpoints } from "../lib/oauthConfig";
+import { refreshSession } from "./auth";
 import { readSettings, writeSettings } from "./settings";
 
 const logger = log.scope("entitlement");
@@ -134,15 +135,30 @@ export async function startCheckout(
     throw new Error("You must be logged in to subscribe");
   }
 
-  const response = await fetch(oauthEndpoints.auth.checkout, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      apikey: getAnonKey(),
-    },
-    body: JSON.stringify({ planId }),
-  });
+  const requestCheckout = async (token: string) => {
+    return fetch(oauthEndpoints.auth.checkout, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        apikey: getAnonKey(),
+      },
+      body: JSON.stringify({ planId }),
+    });
+  };
+
+  let response = await requestCheckout(accessToken);
+
+  if (response.status === 401) {
+    try {
+      const refreshed = await refreshSession();
+      if (refreshed.accessToken) {
+        response = await requestCheckout(refreshed.accessToken);
+      }
+    } catch (error) {
+      logger.warn("Failed to refresh session before checkout", error);
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -164,13 +180,31 @@ export async function openCustomerPortal(): Promise<{ portalUrl: string }> {
     throw new Error("You must be logged in to manage your subscription");
   }
 
-  const response = await fetch(oauthEndpoints.auth.customerPortal, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      apikey: getAnonKey(),
-    },
-  });
+  const requestPortal = async (token: string) => {
+    return fetch(oauthEndpoints.auth.customerPortal, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: getAnonKey(),
+      },
+    });
+  };
+
+  let response = await requestPortal(accessToken);
+
+  if (response.status === 401) {
+    try {
+      const refreshed = await refreshSession();
+      if (refreshed.accessToken) {
+        response = await requestPortal(refreshed.accessToken);
+      }
+    } catch (error) {
+      logger.warn(
+        "Failed to refresh session before opening customer portal",
+        error,
+      );
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
