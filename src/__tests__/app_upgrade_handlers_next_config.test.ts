@@ -5,7 +5,8 @@ import {
 import { describe, expect, it } from "vitest";
 
 describe("next component tagger config helpers", () => {
-  const useExpression = 'require.resolve("./plugins/anyon-component-tagger.mjs")';
+  const useExpression =
+    'require.resolve("./plugins/anyon-component-tagger.mjs")';
 
   it("detects existing Next component tagger references", () => {
     const content = `const nextConfig = {\n  webpack: (config) => {\n    config.module.rules.push({ use: "@anyon/nextjs-webpack-component-tagger" });\n    return config;\n  },\n};`;

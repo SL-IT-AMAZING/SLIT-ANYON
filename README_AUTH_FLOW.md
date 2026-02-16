@@ -5,7 +5,9 @@ This directory contains comprehensive documentation of the Anyon Electron app's 
 ## 📚 Documentation Files
 
 ### 1. **AUTH_FLOW_MAP.md** (Complete Reference)
+
 The most detailed, comprehensive reference guide containing:
+
 - Complete OAuth flow entry points with line numbers and code snippets
 - Deep link callback handlers and processing flow
 - Full token storage mechanism with encryption details
@@ -17,7 +19,9 @@ The most detailed, comprehensive reference guide containing:
 **Best for:** Understanding the complete system, implementation details, security measures
 
 ### 2. **AUTH_QUICK_REFERENCE.md** (Quick Lookup)
+
 Fast-access guide for developers containing:
+
 - Visual flow overview
 - Key files map (entry points, handlers, storage, refresh, clients, proxy)
 - Token storage format (JSON structure)
@@ -30,7 +34,9 @@ Fast-access guide for developers containing:
 **Best for:** Quick lookups, troubleshooting, development reference
 
 ### 3. **AUTH_FLOW_DIAGRAMS.md** (Visual Reference)
+
 ASCII diagrams and flowcharts including:
+
 - Complete OAuth flow diagram (end-to-end)
 - Token refresh flow
 - Data flow for OAuth return handling
@@ -56,6 +62,7 @@ ASCII diagrams and flowcharts including:
 ## 🔑 Key Findings Summary
 
 ### Current Architecture
+
 - **OAuth 2.0 flows** for both Supabase and Vercel
 - **No username/password authentication** exists
 - Tokens encrypted with Electron's **safeStorage** (OS-level encryption)
@@ -63,17 +70,20 @@ ASCII diagrams and flowcharts including:
 - **OAuth proxy server** handles sensitive exchanges (https://server-green-seven.vercel.app)
 
 ### Token Storage
+
 - **Location:** `~/.config/anyon/user-settings.json` (platform-specific path)
 - **Encryption:** Electron safeStorage + Base64 encoding
 - **Multi-org support:** Supabase tokens stored per-organization
 - **Format:** `{ value: "encrypted_string", encryptionType: "electron-safe-storage" }`
 
 ### Deep Link Protocol
+
 - **Format:** `anyon://{provider}-oauth-return?token=...&refreshToken=...&expiresIn=...`
 - **Handlers:** `src/main.ts:438` (main) and handler files
 - **React Listener:** `src/contexts/DeepLinkContext.tsx`
 
 ### Security
+
 1. **CSRF Protection:** State parameter validated on callback
 2. **PKCE Protection (Vercel):** Code verifier validation
 3. **Encryption:** OS-level credential storage
@@ -83,11 +93,11 @@ ASCII diagrams and flowcharts including:
 
 ## 📊 File Statistics
 
-| File | Lines | Sections | Focus |
-|------|-------|----------|-------|
-| AUTH_FLOW_MAP.md | 900+ | 8 major | Complete reference, implementation |
-| AUTH_QUICK_REFERENCE.md | 350+ | 6 major | Quick lookup, troubleshooting |
-| AUTH_FLOW_DIAGRAMS.md | 800+ | 6 diagrams | Visual architecture, flows |
+| File                    | Lines | Sections   | Focus                              |
+| ----------------------- | ----- | ---------- | ---------------------------------- |
+| AUTH_FLOW_MAP.md        | 900+  | 8 major    | Complete reference, implementation |
+| AUTH_QUICK_REFERENCE.md | 350+  | 6 major    | Quick lookup, troubleshooting      |
+| AUTH_FLOW_DIAGRAMS.md   | 800+  | 6 diagrams | Visual architecture, flows         |
 
 ---
 
@@ -96,18 +106,21 @@ ASCII diagrams and flowcharts including:
 To implement credential-based authentication for the AI agent:
 
 **1. OAuth Proxy Endpoints (server/)**
+
 ```
 POST /api/oauth/supabase/login-with-credentials
 POST /api/oauth/vercel/login-with-credentials
 ```
 
 **2. IPC Handlers (src/ipc/handlers/)**
+
 ```
 ipc.supabase.loginWithCredentials({ email, password })
 ipc.vercel.loginWithCredentials({ apiToken })
 ```
 
 **3. Reuse Existing Infrastructure**
+
 - Same token storage mechanism (encryption, settings file)
 - Same token refresh logic
 - Same API clients
@@ -120,6 +133,7 @@ ipc.vercel.loginWithCredentials({ apiToken })
 ## 🔗 Cross-References
 
 ### Main Code Files Referenced
+
 - `src/components/SupabaseConnector.tsx` - UI entry point
 - `src/components/VercelConnector.tsx` - UI entry point
 - `src/main.ts` - Deep link protocol handler
@@ -133,6 +147,7 @@ ipc.vercel.loginWithCredentials({ apiToken })
 - `server/app/api/oauth/*/` - OAuth proxy server endpoints
 
 ### Related Documentation
+
 - `AGENTS.md` - Repository agent guidelines
 - `CONTRIBUTING.md` - Contribution guidelines
 
@@ -170,6 +185,7 @@ When modifying authentication flows:
 ## 📝 Document Maintenance
 
 These documents were generated from a complete codebase analysis:
+
 - All line numbers are accurate as of analysis date
 - Code snippets are verbatim from source files
 - Architecture reflects current implementation
@@ -191,4 +207,3 @@ These documents were generated from a complete codebase analysis:
 Generated: 2026-02-15
 Analysis Tool: Codebase Exploration Specialist
 Repository: anyon-ui/SLIT-ANYON
-

@@ -296,7 +296,7 @@
 └──────────────────────────────────────────────────────────────────────┘
 
   When IPC handler needs Supabase client:
-  
+
   getSupabaseClient({ organizationSlug })
            ↓
   ┌─────────────────────────────────────────┐
@@ -788,4 +788,3 @@ NO URL LOGGING:
 │ ✅ Prevents token leakage in logs       │
 └─────────────────────────────────────────┘
 ```
-

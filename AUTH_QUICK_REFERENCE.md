@@ -40,11 +40,13 @@ Components refresh and refetch data with new tokens
 ## 📁 KEY FILES MAP
 
 ### Entry Points (User Interaction)
+
 - **Supabase UI:** `src/components/SupabaseConnector.tsx:295` (Add Organization button)
 - **Vercel UI:** `src/components/VercelConnector.tsx:400` (Connect button)
 - **Vercel Manual:** `src/components/VercelConnector.tsx:301` (Manual token form)
 
 ### Deep Link Processing
+
 - **Protocol Handler:** `src/main.ts:434` (app.on("open-url"))
 - **Route Dispatcher:** `src/main.ts:438` (handleDeepLinkReturn function)
 - **Supabase Handler:** `src/supabase_admin/supabase_return_handler.ts:18`
@@ -52,22 +54,26 @@ Components refresh and refetch data with new tokens
 - **React Listener:** `src/contexts/DeepLinkContext.tsx:27`
 
 ### Token Storage & Encryption
+
 - **Read/Write:** `src/main/settings.ts:53` (readSettings) & `src/main/settings.ts:210` (writeSettings)
 - **Encrypt:** `src/main/settings.ts:293` (Uses Electron safeStorage)
 - **Decrypt:** `src/main/settings.ts:306` (Reverses encryption)
 - **Storage Location:** `~/.config/anyon/user-settings.json`
 
 ### Token Refresh
+
 - **Supabase Refresh:** `src/supabase_admin/supabase_management_client.ts:109`
 - **Vercel Refresh:** `server/app/api/oauth/vercel/refresh/route.ts`
 - **Expiration Check:** `src/supabase_admin/supabase_management_client.ts:93`
 - **Auto-refresh:** `src/supabase_admin/supabase_management_client.ts:187`
 
 ### API Clients
+
 - **Supabase:** `src/supabase_admin/supabase_management_client.ts:165` (getSupabaseClient)
 - **Vercel:** `src/ipc/handlers/vercel_handlers.ts:38` (createVercelClient)
 
 ### OAuth Proxy Server
+
 - **Supabase Login:** `server/app/api/oauth/supabase/login/route.ts`
 - **Supabase Callback:** `server/app/api/oauth/supabase/callback/route.ts`
 - **Supabase Refresh:** `server/app/api/oauth/supabase/refresh/route.ts`
@@ -76,6 +82,7 @@ Components refresh and refetch data with new tokens
 - **Vercel Refresh:** `server/app/api/oauth/vercel/refresh/route.ts`
 
 ### Configuration
+
 - **OAuth URLs:** `src/lib/oauthConfig.ts` (Centralized endpoint config)
 
 ---
@@ -148,8 +155,9 @@ Components refresh and refetch data with new tokens
 ## 🛡️ Security Features
 
 ### Encryption
+
 - **Method:** Electron `safeStorage` API
-- **Backend:** 
+- **Backend:**
   - macOS: Keychain
   - Windows: DPAPI (Data Protection API)
   - Linux: Secret Service
@@ -157,16 +165,19 @@ Components refresh and refetch data with new tokens
 - **Implementation:** Tokens encrypted on write, auto-decrypted on read
 
 ### OAuth CSRF Protection
+
 - **State Parameter:** Random UUID generated for each login attempt
 - **Validation:** State verified on callback before token exchange
 - **Storage:** httpOnly cookies (not accessible to JavaScript)
 
 ### PKCE Protection (Vercel)
+
 - **Code Verifier:** 32-byte random value
 - **Code Challenge:** SHA256 hash of verifier
 - **Purpose:** Prevents authorization code interception
 
 ### No Password Storage
+
 - **Status:** No password-based authentication implemented
 - **Manual Token:** Only Vercel supports manual token entry (API key)
 
@@ -177,6 +188,7 @@ Components refresh and refetch data with new tokens
 To allow AI agent to login on behalf of user:
 
 ### 1. New OAuth Proxy Endpoints
+
 ```
 POST /api/oauth/supabase/login-with-credentials
   Body: { email, password }
@@ -188,32 +200,42 @@ POST /api/oauth/vercel/login-with-credentials
 ```
 
 ### 2. New IPC Handlers
+
 ```typescript
 // In src/ipc/handlers/supabase_handlers.ts
-createTypedHandler(supabaseContracts.loginWithCredentials, async (event, params) => {
-  const { email, password } = params;
-  // Call new OAuth proxy endpoint
-  // Store tokens like normal OAuth flow
-});
+createTypedHandler(
+  supabaseContracts.loginWithCredentials,
+  async (event, params) => {
+    const { email, password } = params;
+    // Call new OAuth proxy endpoint
+    // Store tokens like normal OAuth flow
+  },
+);
 
 // In src/ipc/handlers/vercel_handlers.ts
-createTypedHandler(vercelContracts.loginWithCredentials, async (event, params) => {
-  const { apiToken } = params;
-  // Same as manual token entry but from agent
-});
+createTypedHandler(
+  vercelContracts.loginWithCredentials,
+  async (event, params) => {
+    const { apiToken } = params;
+    // Same as manual token entry but from agent
+  },
+);
 ```
 
 ### 3. Agent Integration
+
 - Agent can call: `ipc.supabase.loginWithCredentials({ email, password })`
 - Tokens stored in same encrypted settings file
 - Rest of flow unchanged (token refresh, API calls, etc.)
 
 ### 4. Permission Prompt
+
 - Show user dialog when agent requests credential-based login
 - Allow user to grant/deny permission
 - Store permission decision in settings
 
 ### 5. Token Revocation
+
 - Add mechanism to revoke agent-created tokens
 - User can see which agent tokens are active
 - Simple "Revoke" button in settings
@@ -222,35 +244,39 @@ createTypedHandler(vercelContracts.loginWithCredentials, async (event, params) =
 
 ## 📊 Differences Between Supabase & Vercel
 
-| Feature | Supabase | Vercel |
-|---------|----------|--------|
-| **Multi-Org** | ✅ Yes (org detection) | ❌ No (single account) |
-| **Token Storage** | Per-organization | Global |
-| **Token Refresh** | ✅ Auto-implemented | ❌ Not implemented |
-| **Manual Entry** | ❌ No | ✅ Yes (API token) |
-| **PKCE** | ❌ No | ✅ Yes |
-| **State CSRF** | ✅ Yes | ✅ Yes |
+| Feature           | Supabase               | Vercel                 |
+| ----------------- | ---------------------- | ---------------------- |
+| **Multi-Org**     | ✅ Yes (org detection) | ❌ No (single account) |
+| **Token Storage** | Per-organization       | Global                 |
+| **Token Refresh** | ✅ Auto-implemented    | ❌ Not implemented     |
+| **Manual Entry**  | ❌ No                  | ✅ Yes (API token)     |
+| **PKCE**          | ❌ No                  | ✅ Yes                 |
+| **State CSRF**    | ✅ Yes                 | ✅ Yes                 |
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Tokens not persisting
+
 - Check: Is `safeStorage.isEncryptionAvailable()` returning true?
 - Check: Is settings file being written to correct path?
 - Check: Is encryption/decryption working?
 
 ### Token refresh failing
+
 - Check: Is refresh token valid?
 - Check: Is OAuth proxy server running?
 - Check: Is OAUTH_SERVER_URL correct?
 
 ### Deep link not received
+
 - Check: Is protocol handler registered? (src/main.ts:79-87)
 - Check: Is URL parsing correct? (src/main.ts:438-445)
 - Check: Are all required URL params present? (token, refreshToken, expiresIn)
 
 ### Organization token not storing
+
 - Check: Is listSupabaseOrganizations() returning org details?
 - Check: Is organizationSlug being extracted correctly?
 - Check: Is organizations map being created properly?
@@ -264,4 +290,3 @@ createTypedHandler(vercelContracts.loginWithCredentials, async (event, params) =
 3. **Locking:** Use `withLock()` when refreshing shared tokens to prevent race conditions
 4. **Rate Limiting:** Supabase client has built-in retry logic with exponential backoff
 5. **Organization Migration:** Legacy single-account tokens can fallback to organization format
-

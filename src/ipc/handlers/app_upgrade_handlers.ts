@@ -111,7 +111,10 @@ export function hasNextComponentTaggerConfig(content: string): boolean {
   return /anyon-component-tagger|nextjs-webpack-component-tagger/.test(content);
 }
 
-function buildNextWebpackRuleBlock(configVar: string, useExpression: string): string {
+function buildNextWebpackRuleBlock(
+  configVar: string,
+  useExpression: string,
+): string {
   return `
     if (process.env.NODE_ENV === "development") {
       ${configVar}.module = ${configVar}.module || {};
@@ -190,9 +193,7 @@ export function injectNextComponentTaggerToConfig(
 
     const insertPos = match.index + match[0].length;
     return (
-      content.slice(0, insertPos) +
-      standaloneConfig +
-      content.slice(insertPos)
+      content.slice(0, insertPos) + standaloneConfig + content.slice(insertPos)
     );
   }
 
@@ -382,7 +383,9 @@ function getNextLoaderUseExpression(nextConfigPath: string): string {
   return 'require.resolve("./plugins/anyon-component-tagger.mjs")';
 }
 
-async function installComponentTaggerDependencies(appPath: string): Promise<void> {
+async function installComponentTaggerDependencies(
+  appPath: string,
+): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     logger.info("Installing anyon-component-tagger dependencies");
     const child = spawn(

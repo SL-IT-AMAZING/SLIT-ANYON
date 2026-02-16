@@ -16,8 +16,249 @@
   // { type: 'selected', element: HTMLElement }
   let state = { type: "inactive" };
 
+  let anyonAppRoot = null;
+
   /* ---------- helpers --------------------------------------------------- */
   const css = (el, obj) => Object.assign(el.style, obj);
+
+  function normalizeSlashes(value) {
+    return typeof value === "string" ? value.replace(/\\/g, "/") : "";
+  }
+
+  function setAnyonAppRoot(rootPath) {
+    const normalized = normalizeSlashes(rootPath).replace(/\/+$/, "");
+    anyonAppRoot = normalized || null;
+  }
+
+  function getEventTargetElement(target) {
+    if (!target) return null;
+    if (target.nodeType === Node.TEXT_NODE) {
+      return target.parentElement;
+    }
+    if (target.nodeType === Node.ELEMENT_NODE) {
+      return target;
+    }
+    return null;
+  }
+
+  function findClosestTaggedElement(el) {
+    let cur = el;
+    while (cur) {
+      if (cur.dataset?.anyonId) return cur;
+      cur = cur.parentElement;
+    }
+    return null;
+  }
+
+  function getReactFiberFromElement(el) {
+    if (!el) return null;
+    const keys = Object.keys(el);
+    for (const key of keys) {
+      if (
+        key.startsWith("__reactFiber$") ||
+        key.startsWith("__reactInternalInstance$")
+      ) {
+        return el[key];
+      }
+    }
+    return null;
+  }
+
+  function findReactFiberFromElementOrParents(el, maxSteps = 25) {
+    let cur = el;
+    let steps = 0;
+    while (cur && steps < maxSteps) {
+      const fiber = getReactFiberFromElement(cur);
+      if (fiber) return fiber;
+      cur = cur.parentElement;
+      steps++;
+    }
+    return null;
+  }
+
+  function findDebugSourceFiber(fiber, maxSteps = 80) {
+    let cur = fiber;
+    let steps = 0;
+    let firstWithSource = null;
+    while (cur && steps < maxSteps) {
+      const candidates = [];
+      if (cur._debugSource || cur.__source) {
+        candidates.push(cur);
+      }
+      if (
+        cur._debugOwner &&
+        (cur._debugOwner._debugSource || cur._debugOwner.__source)
+      ) {
+        candidates.push(cur._debugOwner);
+      }
+
+      for (const candidate of candidates) {
+        const src = candidate._debugSource || candidate.__source;
+        if (!src || typeof src.fileName !== "string") {
+          continue;
+        }
+
+        const relativePath = getRelativePathFromDebugFileName(src.fileName);
+        if (!relativePath) {
+          continue;
+        }
+
+        if (!firstWithSource) {
+          firstWithSource = candidate;
+        }
+
+        if (!isExcludedRelativePath(relativePath)) {
+          return candidate;
+        }
+      }
+
+      cur = cur.return;
+      steps++;
+    }
+    return firstWithSource;
+  }
+
+  function getFiberComponentName(fiber) {
+    if (!fiber) return null;
+    const t = fiber.elementType || fiber.type;
+    if (!t) return null;
+    if (typeof t === "string") return t;
+    return t.displayName || t.name || null;
+  }
+
+  function normalizeDebugFileName(fileName) {
+    if (typeof fileName !== "string" || !fileName) return null;
+
+    let n = normalizeSlashes(fileName);
+
+    const hashIndex = n.indexOf("#");
+    if (hashIndex !== -1) {
+      n = n.slice(0, hashIndex);
+    }
+    const queryIndex = n.indexOf("?");
+    if (queryIndex !== -1) {
+      n = n.slice(0, queryIndex);
+    }
+
+    if (n.startsWith("http://") || n.startsWith("https://")) {
+      try {
+        const url = new URL(n);
+        n = url.pathname;
+      } catch {}
+    }
+
+    if (n.startsWith("file://")) {
+      try {
+        n = new URL(n).pathname;
+      } catch {}
+    }
+
+    if (n.startsWith("/")) {
+      try {
+        n = decodeURIComponent(n);
+      } catch {}
+    }
+
+    if (n.startsWith("/@fs/")) {
+      n = n.replace(/^\/@fs\//, "/");
+    }
+
+    if (n.startsWith("webpack-internal://") || n.startsWith("webpack://")) {
+      const idx = n.indexOf("/./");
+      if (idx !== -1) {
+        n = n.slice(idx + 3);
+      } else {
+        n = n.replace(/^webpack-internal:\/\/\//, "");
+        n = n.replace(/^webpack:\/\//, "");
+      }
+    }
+
+    return n;
+  }
+
+  function getRelativePathFromDebugFileName(fileName) {
+    const normalized = normalizeDebugFileName(fileName);
+    if (!normalized) return null;
+
+    if (anyonAppRoot) {
+      const root = anyonAppRoot;
+      if (normalized === root) return null;
+      if (normalized.startsWith(`${root}/`)) {
+        return normalized.slice(root.length + 1);
+      }
+
+      const idx = normalized.indexOf(root);
+      if (idx !== -1) {
+        const endIdx = idx + root.length;
+        const boundaryStartOk = idx === 0 || normalized[idx - 1] === "/";
+        const boundaryEndOk =
+          endIdx === normalized.length || normalized[endIdx] === "/";
+        if (boundaryStartOk && boundaryEndOk) {
+          const candidate = normalized.slice(endIdx).replace(/^\/+/, "");
+          if (candidate) {
+            return candidate;
+          }
+        }
+      }
+    }
+
+    return normalized.replace(/^\.?\/+/, "");
+  }
+
+  function isExcludedRelativePath(relativePath) {
+    if (typeof relativePath !== "string" || !relativePath) return true;
+    const p = normalizeSlashes(relativePath).replace(/^\/+/, "");
+    return (
+      p === "node_modules" ||
+      p.startsWith("node_modules/") ||
+      p.includes("/node_modules/") ||
+      p === ".next" ||
+      p.startsWith(".next/") ||
+      p.includes("/.next/")
+    );
+  }
+
+  function ensureTaggedFromReactDebugSource(el) {
+    const fiber = findReactFiberFromElementOrParents(el);
+    if (!fiber) return null;
+
+    const sourceFiber = findDebugSourceFiber(fiber);
+    if (!sourceFiber) return null;
+
+    const src = sourceFiber._debugSource || sourceFiber.__source;
+    if (
+      !src ||
+      typeof src.fileName !== "string" ||
+      typeof src.lineNumber !== "number"
+    ) {
+      return null;
+    }
+
+    const relativePath = getRelativePathFromDebugFileName(src.fileName);
+    if (!relativePath) return null;
+
+    const lineNumber = src.lineNumber;
+    const columnNumber =
+      typeof src.columnNumber === "number" ? src.columnNumber : 0;
+    const name =
+      getFiberComponentName(sourceFiber) || `<${el.tagName.toLowerCase()}>`;
+    const id = `${relativePath}:${lineNumber}:${columnNumber}`;
+
+    el.dataset.anyonId = id;
+    if (!el.dataset.anyonName) {
+      el.dataset.anyonName = name;
+    }
+
+    return {
+      id,
+      name: el.dataset.anyonName,
+      source: {
+        fileName: src.fileName,
+        lineNumber,
+        columnNumber,
+      },
+    };
+  }
 
   function makeOverlay() {
     const overlay = document.createElement("div");
@@ -109,7 +350,7 @@
     });
     css(hoverLabel, { background: "#7f22fe" });
     while (hoverLabel.firstChild) hoverLabel.removeChild(hoverLabel.firstChild);
-    const name = el.dataset.anyonName || "<unknown>";
+    const name = el.dataset.anyonName || `<${el.tagName.toLowerCase()}>`;
     const file = (el.dataset.anyonId || "").split(":")[0];
     const nameEl = document.createElement("div");
     nameEl.textContent = name;
@@ -294,7 +535,7 @@
     label.appendChild(editLine);
 
     // Add component name and file
-    const name = el.dataset.anyonName || "<unknown>";
+    const name = el.dataset.anyonName || `<${el.tagName.toLowerCase()}>`;
     const file = (el.dataset.anyonId || "").split(":")[0];
     const nameEl = document.createElement("div");
     nameEl.textContent = name;
@@ -326,8 +567,12 @@
       return;
     }
 
-    let el = e.target;
-    while (el && !el.dataset.anyonId) el = el.parentElement;
+    const targetEl = getEventTargetElement(e.target);
+    let el = targetEl;
+    const taggedEl = el ? findClosestTaggedElement(el) : null;
+    if (taggedEl) {
+      el = taggedEl;
+    }
 
     const hoveredItem = overlays.find((item) => item.el === el);
 
@@ -394,10 +639,36 @@
 
   function onClick(e) {
     if (state.type !== "inspecting" || !state.element) return;
+
+    const clickTarget = getEventTargetElement(e.target);
+    if (state.element.isContentEditable || clickTarget?.isContentEditable) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
-    const clickedComponentId = state.element.dataset.anyonId;
+    // Assign a unique runtime ID to this element if it doesn't have one
+    if (!state.element.dataset.anyonRuntimeId) {
+      state.element.dataset.anyonRuntimeId = `anyon-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    }
+
+    let selection = null;
+    let clickedComponentId = state.element.dataset.anyonId;
+    if (!clickedComponentId) {
+      selection = ensureTaggedFromReactDebugSource(state.element);
+      clickedComponentId = state.element.dataset.anyonId;
+    }
+
+    if (!clickedComponentId) {
+      clickedComponentId = `__unmapped__/${state.element.dataset.anyonRuntimeId}:0:0`;
+      state.element.dataset.anyonId = clickedComponentId;
+    }
+
+    if (!state.element.dataset.anyonName) {
+      state.element.dataset.anyonName = `<${state.element.tagName.toLowerCase()}>`;
+    }
+
     const selectedItem = overlays.find((item) => item.el === state.element);
 
     // If clicking on the currently highlighted component, deselect it
@@ -428,7 +699,7 @@
       );
       if (previousItem) {
         css(previousItem.overlay, {
-          border: `3px solid #7f22fe`,
+          border: "3px solid #7f22fe",
           background: "rgba(127, 34, 254, 0.05)",
         });
       }
@@ -438,7 +709,7 @@
 
     if (selectedItem && isProMode) {
       css(selectedItem.overlay, {
-        border: `3px solid #00ff00`,
+        border: "3px solid #00ff00",
         background: "rgba(0, 255, 0, 0.05)",
       });
     }
@@ -448,12 +719,10 @@
       requestAnimationFrame(updateAllOverlayPositions);
     }
 
-    // Assign a unique runtime ID to this element if it doesn't have one
-    if (!state.element.dataset.anyonRuntimeId) {
-      state.element.dataset.anyonRuntimeId = `anyon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
-
     const rect = state.element.getBoundingClientRect();
+    const rawText = state.element.textContent;
+    const isTextEditableCandidate =
+      typeof rawText === "string" && rawText.trim().length > 0;
     window.parent.postMessage(
       {
         type: "anyon-component-selected",
@@ -461,6 +730,8 @@
           id: clickedComponentId,
           name: state.element.dataset.anyonName,
           runtimeId: state.element.dataset.anyonRuntimeId,
+          source: selection ? selection.source : null,
+          isTextEditableCandidate,
         },
         coordinates: {
           top: rect.top,
@@ -526,6 +797,9 @@
   /* ---------- message bridge -------------------------------------------- */
   window.addEventListener("message", (e) => {
     if (e.source !== window.parent) return;
+    if (e.data.type === "anyon-app-root") {
+      setAnyonAppRoot(e.data.path);
+    }
     if (e.data.type === "anyon-pro-mode") {
       isProMode = e.data.enabled;
     }
@@ -576,99 +850,13 @@
       return;
     }
 
-    // Usually the tagged elements are added right away, but in some cases (e.g.
-    // supabase auth loading), it can take a while and thus we use a timeout/observer
-    // to wait for tagged elements to appear.
-    //
-    // see: https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues/2231
-    const INIT_TIMEOUT_MS = 60_000; // Wait up to 60 seconds for tagged elements
-    let observer = null;
-    let timeoutId = null;
-
-    function checkForTaggedElements() {
-      if (document.body.querySelector("[data-anyon-id]")) {
-        // Clean up observer and timeout
-        if (observer) {
-          observer.disconnect();
-          observer = null;
-        }
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-
-        window.parent.postMessage(
-          {
-            type: "anyon-component-selector-initialized",
-          },
-          "*",
-        );
-        console.debug("Anyon component selector initialized");
-        return true;
-      }
-      return false;
-    }
-
-    // First, try immediately
-    setTimeout(() => {
-      if (checkForTaggedElements()) {
-        return;
-      }
-
-      // If not found, set up MutationObserver to watch for tagged elements
-      console.debug(
-        "Anyon component selector waiting for tagged elements to appear...",
-      );
-
-      observer = new MutationObserver((mutations) => {
-        // Filter mutations to only process relevant changes
-        const hasRelevantMutation = mutations.some((mutation) => {
-          // Attribute mutation on data-anyon-id (already filtered by attributeFilter)
-          if (mutation.type === "attributes") {
-            return true;
-          }
-          // Check if any added nodes have data-anyon-id
-          if (mutation.type === "childList") {
-            for (const node of mutation.addedNodes) {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                if (
-                  node.hasAttribute("data-anyon-id") ||
-                  node.querySelector("[data-anyon-id]")
-                ) {
-                  return true;
-                }
-              }
-            }
-          }
-          return false;
-        });
-
-        if (hasRelevantMutation) {
-          checkForTaggedElements();
-        }
-      });
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ["data-anyon-id"],
-      });
-
-      // Set a timeout to give up after INIT_TIMEOUT_MS
-      timeoutId = setTimeout(() => {
-        if (observer) {
-          observer.disconnect();
-          observer = null;
-        }
-        // Only warn if we never found tagged elements
-        if (!document.body.querySelector("[data-anyon-id]")) {
-          console.warn(
-            "Anyon component selector not initialized because no DOM elements were tagged",
-          );
-        }
-      }, INIT_TIMEOUT_MS);
-    }, 0);
+    window.parent.postMessage(
+      {
+        type: "anyon-component-selector-initialized",
+      },
+      "*",
+    );
+    console.debug("Anyon component selector initialized");
   }
 
   if (document.readyState === "loading") {

@@ -2097,7 +2097,9 @@ function isNextJsProject(appPath: string): boolean {
   }
 
   try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+    const packageJson = JSON.parse(
+      fs.readFileSync(packageJsonPath, "utf8"),
+    ) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };

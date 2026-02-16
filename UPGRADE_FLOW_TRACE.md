@@ -1,6 +1,7 @@
 # App Upgrade Flow Trace: Main Process Execution
 
 ## Overview
+
 This document traces the complete flow from user clicking "Upgrade" in the UI through main process execution, including component-tagger detection and dependency installation logic.
 
 ---
@@ -10,6 +11,7 @@ This document traces the complete flow from user clicking "Upgrade" in the UI th
 ### Renderer Component: `AppUpgrades.tsx` (src/components/AppUpgrades.tsx)
 
 **Lines 27-61: Upgrade Mutation Definition**
+
 - **Component Purpose**: React component displaying available upgrades for the selected app
 - **User Action**: Clicks "Upgrade" button (line 148)
 - **Handler**: `handleUpgrade(upgradeId: string)` → calls `executeUpgrade(upgradeId)`
@@ -26,10 +28,11 @@ This document traces the complete flow from user clicking "Upgrade" in the UI th
   - Invalidates app versions list to reflect changes
 
 **Lines 12-25: Get Upgrades Query Definition**
+
 - **Query Key**: `queryKeys.appUpgrades.byApp({ appId })`
 - **IPC Call** (line 22):
   ```typescript
-  ipc.upgrade.getAppUpgrades({ appId })
+  ipc.upgrade.getAppUpgrades({ appId });
   ```
 - **Trigger**: Whenever appId changes (enabled: !!appId)
 - **Purpose**: Fetch list of available upgrades with `isNeeded` status
@@ -41,23 +44,26 @@ This document traces the complete flow from user clicking "Upgrade" in the UI th
 ### File: `src/ipc/types/upgrade.ts`
 
 **Lines 8-14: AppUpgrade Data Schema**
+
 ```typescript
 {
-  id: string;                 // "component-tagger" | "capacitor"
-  title: string;              // Display name
-  description: string;        // What it does
-  manualUpgradeUrl: string;   // Fallback docs link
-  isNeeded: boolean;          // Detection result: true = upgrade available
+  id: string; // "component-tagger" | "capacitor"
+  title: string; // Display name
+  description: string; // What it does
+  manualUpgradeUrl: string; // Fallback docs link
+  isNeeded: boolean; // Detection result: true = upgrade available
 }
 ```
 
 **Lines 31-36: getAppUpgrades Contract**
+
 - **Channel**: `"get-app-upgrades"`
 - **Input**: `{ appId: number }`
 - **Output**: `AppUpgrade[]` (array of upgrades with isNeeded status)
 - **Client Export**: `upgradeClient.getAppUpgrades(params)`
 
 **Lines 38-42: executeAppUpgrade Contract**
+
 - **Channel**: `"execute-app-upgrade"`
 - **Input**: `{ appId: number; upgradeId: string }`
 - **Output**: `void` (no return value, promise resolves when complete)
@@ -68,6 +74,7 @@ This document traces the complete flow from user clicking "Upgrade" in the UI th
 ## HANDLER REGISTRATION
 
 ### File: `src/ipc/ipc_host.ts`
+
 - **Line 5**: Imports `registerAppUpgradeHandlers`
 - **Line 70**: Calls `registerAppUpgradeHandlers()` during IPC initialization
 - **Effect**: All upgrade handlers become available to renderer process
@@ -81,6 +88,7 @@ This document traces the complete flow from user clicking "Upgrade" in the UI th
 #### HANDLER 1: GET-APP-UPGRADES (Lines 307-325)
 
 **Handler Signature**:
+
 ```typescript
 handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppUpgrade[]> => {
 ```
@@ -92,12 +100,13 @@ handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppU
    - **Throws** if app not found: `"App with id {appId} not found"`
 
 2. **Line 311**: Resolve full app path
-   - `getAnyonAppPath(app.path)` 
-   - **Behavior**: 
+   - `getAnyonAppPath(app.path)`
+   - **Behavior**:
      - If `app.path` is absolute → use as-is
      - If relative → append to `~/.anyon-apps` base directory (or test userData)
 
 3. **Lines 313-321**: Iterate through available upgrades and check status
+
    ```typescript
    availableUpgrades.map((upgrade) => {
      let isNeeded = false;
@@ -119,6 +128,7 @@ handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppU
 **Purpose**: Check if component-tagger Vite plugin is already installed
 
 **Logic**:
+
 1. **Lines 56-63**: Find vite.config file (TypeScript preferred over JavaScript)
    - Check `vite.config.ts` first
    - Fall back to `vite.config.js`
@@ -130,6 +140,7 @@ handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppU
    - **Return**: `true` if NOT found (upgrade needed), `false` if found or read error
 
 **Side Effects**:
+
 - Logs errors if file read fails (does not throw, returns false)
 - Uses synchronous `fs.readFileSync` (blocking, safe in main process)
 
@@ -140,6 +151,7 @@ handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppU
 **Purpose**: Check if Capacitor is already installed in the project
 
 **Logic**:
+
 1. **Line 76**: Verify it's a Vite app first (calls `isViteApp()`)
    - If not Vite → return `false` (Capacitor needs Vite)
 
@@ -153,11 +165,13 @@ handle("get-app-upgrades", async (_, { appId }: { appId: number }): Promise<AppU
 #### HANDLER 2: EXECUTE-APP-UPGRADE (Lines 327-345)
 
 **Handler Signature**:
+
 ```typescript
 handle("execute-app-upgrade", async (_, { appId, upgradeId }: { appId: number; upgradeId: string }) => {
 ```
 
 **Validation & Setup** (Lines 330-335):
+
 1. **Line 330-332**: Validate upgradeId
    - **Throws**: `"upgradeId is required"` if empty/missing
 
@@ -167,6 +181,7 @@ handle("execute-app-upgrade", async (_, { appId, upgradeId }: { appId: number; u
 3. **Line 335**: Resolve full app path
 
 **Execution Dispatch** (Lines 337-344):
+
 ```typescript
 if (upgradeId === "component-tagger") {
   await applyComponentTagger(appPath);
@@ -176,6 +191,7 @@ if (upgradeId === "component-tagger") {
   throw new Error(`Unknown upgrade id: ${upgradeId}`);
 }
 ```
+
 - Routes to appropriate upgrade function
 - **Throws** if upgradeId not recognized
 
@@ -188,18 +204,22 @@ if (upgradeId === "component-tagger") {
 **Purpose**: Install Vite plugin, dependencies, and update vite.config
 
 **Step 1: Locate & Validate Vite Config (Lines 150-160)**
+
 - Find vite.config.ts or vite.config.js
 - **Throws**: `"Could not find vite.config.js or vite.config.ts"` if missing
 - Store full path for later edits
 
 **Step 2: Create Plugin Directory (Lines 162-163)**
+
 ```typescript
 const pluginsDir = path.join(appPath, "plugins");
 await fs.promises.mkdir(pluginsDir, { recursive: true });
 ```
+
 - Creates `{appPath}/plugins/` directory
 
 **Step 3: Write Plugin File (Lines 165-171)**
+
 - Determine file extension (`.ts` if vite.config is TypeScript, else `.js`)
 - Write plugin code to `{appPath}/plugins/anyon-component-tagger.ts|js`
 - Plugin code (lines 97-147): Babel-based AST transformer that:
@@ -211,6 +231,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
   - Gracefully handles parse errors (logs warnings, doesn't fail)
 
 **Step 4: Update Vite Config with Import (Lines 173-190)**
+
 - Read existing vite.config content
 - Find last `import` statement (works backwards from end)
 - Insert new line after imports:
@@ -220,15 +241,18 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 - Handles both `"anyon-component-tagger"` being present/absent
 
 **Step 5: Add Plugin to plugins Array (Lines 192-203)**
+
 - Find `plugins: [` in config
 - Replace with `plugins: [anyonComponentTagger(), `
 - **Throws**: `"Could not find 'plugins: [' in vite.config.ts. Manual installation required."` if not found
 - This is a fragile check that requires exact `plugins: [` string
 
 **Step 6: Write Updated Config (Line 205)**
+
 - Write modified vite.config back to file
 
 **Step 7: Install Dependencies (Lines 207-235)**
+
 - **Command Decision Tree**:
   ```
   Try: pnpm add -D "@babel/parser" "estree-walker@^2.0.2" "magic-string"
@@ -249,6 +273,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
     - Reject with spawn error
 
 **Step 8: Optional Git Commit (Lines 237-250)**
+
 - **Wrapped in try-catch** (does not throw, only logs warnings on failure)
 - **If git available**:
   1. Stage all files: `gitAddAll({ path: appPath })`
@@ -268,6 +293,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 **Purpose**: Install Capacitor framework for mobile app support
 
 **Step 1: Install Capacitor Dependencies (Lines 261-267)**
+
 - **Command**:
   ```
   pnpm add @capacitor/{core,cli,ios,android}@7.4.4
@@ -278,16 +304,19 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
   - Error prefix: `"Failed to install Capacitor dependencies"`
 
 **Step 2: Initialize Capacitor (Lines 270-275)**
+
 - **Command**: `npx cap init "{appName}" "com.example.{appNameNormalized}" --web-dir=dist`
 - Creates `capacitor.config.json` with:
   - App name and bundle ID
   - Web directory set to `dist/`
 
 **Step 3: Add Mobile Platforms (Lines 278-283)**
+
 - **Command**: `npx cap add ios && npx cap add android`
 - Creates platform-specific directories for iOS and Android native code
 
 **Step 4: Optional Git Commit (Lines 286-303)**
+
 - **NOT wrapped in try-catch** (throws on git failure)
 - **If git available**:
   1. Stage all files
@@ -303,6 +332,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 ### Git Operations (src/ipc/utils/git_utils.ts)
 
 **gitAddAll (Lines 409-417)**
+
 - **Input**: `{ path: string }`
 - **Action**: Stage all changes in working directory
 - **Native Git**: `git add .`
@@ -310,6 +340,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 - **Throws**: Error message on failure
 
 **gitCommit (Lines 262-293)**
+
 - **Input**: `{ path, message, amend? }`
 - **Action**: Create commit with author credentials
 - **Native Git**: `git -c user.name= -c user.email= commit -m "{message}"`
@@ -322,6 +353,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 ### Process Spawning (src/ipc/utils/simpleSpawn.ts)
 
 **simpleSpawn (Lines 6-60)**
+
 - **Spawns child process** with `shell: true` (enables piping, command chains)
 - **Pipes stdout/stderr** to logger (lines 31-41)
 - **Returns Promise**:
@@ -335,6 +367,7 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 ### Handler Wrapper (src/ipc/handlers/safe_handle.ts)
 
 **createLoggedHandler (Lines 5-30)**
+
 - **Wraps IPC handler** with error catching and logging
 - **Logs**: Channel name, input args, output (first 100 chars)
 - **Error Handling**:
@@ -349,25 +382,25 @@ await fs.promises.mkdir(pluginsDir, { recursive: true });
 
 ### Errors That Throw (Handler Fails Upgrade):
 
-| Condition | Error Message | Handler | Component |
-|-----------|---------------|---------|-----------|
-| App not found | `"App with id {appId} not found"` | get-app-upgrades, execute-app-upgrade | getApp() |
-| upgradeId missing | `"upgradeId is required"` | execute-app-upgrade | Line 330 |
-| Unknown upgradeId | `"Unknown upgrade id: {upgradeId}"` | execute-app-upgrade | Line 342 |
-| No vite.config found | `"Could not find vite.config.js or vite.config.ts"` | applyComponentTagger | Line 159 |
-| No plugins array | `"Could not find 'plugins: [' in vite.config.ts. Manual installation required."` | applyComponentTagger | Line 200 |
-| Dependency install fails | `"Failed to install component tagger dependencies"` | applyComponentTagger | Line 227 |
-| Capacitor dependency install fails | `"Failed to install Capacitor dependencies (exit code {code})"` | applyCapacitor | simpleSpawn |
-| Capacitor init fails | `"Failed to initialize Capacitor"` | applyCapacitor | simpleSpawn |
-| Capacitor add platforms fails | `"Failed to add iOS and Android platforms"` | applyCapacitor | simpleSpawn |
-| Capacitor git commit fails | `"Failed to commit Capacitor changes. Please commit them manually. Error: {err}"` | applyCapacitor | Line 299 |
+| Condition                          | Error Message                                                                     | Handler                               | Component   |
+| ---------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------- | ----------- |
+| App not found                      | `"App with id {appId} not found"`                                                 | get-app-upgrades, execute-app-upgrade | getApp()    |
+| upgradeId missing                  | `"upgradeId is required"`                                                         | execute-app-upgrade                   | Line 330    |
+| Unknown upgradeId                  | `"Unknown upgrade id: {upgradeId}"`                                               | execute-app-upgrade                   | Line 342    |
+| No vite.config found               | `"Could not find vite.config.js or vite.config.ts"`                               | applyComponentTagger                  | Line 159    |
+| No plugins array                   | `"Could not find 'plugins: [' in vite.config.ts. Manual installation required."`  | applyComponentTagger                  | Line 200    |
+| Dependency install fails           | `"Failed to install component tagger dependencies"`                               | applyComponentTagger                  | Line 227    |
+| Capacitor dependency install fails | `"Failed to install Capacitor dependencies (exit code {code})"`                   | applyCapacitor                        | simpleSpawn |
+| Capacitor init fails               | `"Failed to initialize Capacitor"`                                                | applyCapacitor                        | simpleSpawn |
+| Capacitor add platforms fails      | `"Failed to add iOS and Android platforms"`                                       | applyCapacitor                        | simpleSpawn |
+| Capacitor git commit fails         | `"Failed to commit Capacitor changes. Please commit them manually. Error: {err}"` | applyCapacitor                        | Line 299    |
 
 ### Errors That Are Logged But Don't Fail:
 
-| Condition | Log Level | Component | Behavior |
-|-----------|-----------|-----------|----------|
-| Git config read error | error | isComponentTaggerUpgradeNeeded | Returns false (not needed) |
-| Component-tagger git commit fails | warn | applyComponentTagger | Upgrade succeeds despite git failure |
+| Condition                         | Log Level | Component                      | Behavior                             |
+| --------------------------------- | --------- | ------------------------------ | ------------------------------------ |
+| Git config read error             | error     | isComponentTaggerUpgradeNeeded | Returns false (not needed)           |
+| Component-tagger git commit fails | warn      | applyComponentTagger           | Upgrade succeeds despite git failure |
 
 ---
 
@@ -436,19 +469,19 @@ After successful upgrade execution:
 ```typescript
 // Line 43-45
 queryClient.invalidateQueries({
-  queryKey: queryKeys.appUpgrades.byApp({ appId })
+  queryKey: queryKeys.appUpgrades.byApp({ appId }),
 });
 
 // Line 46-51 (Capacitor-specific)
 if (upgradeId === "capacitor") {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.appUpgrades.isCapacitor({ appId })
+    queryKey: queryKeys.appUpgrades.isCapacitor({ appId }),
   });
 }
 
 // Line 53-55 (General)
 queryClient.invalidateQueries({
-  queryKey: queryKeys.versions.list({ appId })
+  queryKey: queryKeys.versions.list({ appId }),
 });
 ```
 
@@ -462,7 +495,6 @@ queryClient.invalidateQueries({
   - Vite config update: synchronous, <100ms
   - Dependency install: 5-30 seconds
   - Git commit: <1 second
-  
 - **Capacitor**: ~20-60 seconds (more complex setup)
   - Dependency install: 10-30 seconds
   - Capacitor init: 2-5 seconds
@@ -480,6 +512,7 @@ queryClient.invalidateQueries({
 **Logger Scope**: `"app_upgrade_handlers"` (electron-log)
 
 **Component-Tagger Logs**:
+
 - `"Created anyon-component-tagger plugin file"` (info)
 - `"Installing anyon-component-tagger dependencies"` (info)
 - Dependency install stdout/stderr (info/error)
@@ -489,6 +522,7 @@ queryClient.invalidateQueries({
 - Git failure warnings (warn)
 
 **Capacitor Logs**:
+
 - simpleSpawn logs for each step (info)
 - `"Staging and committing Capacitor changes"` (info)
 - `"Successfully committed Capacitor changes"` (info)
@@ -524,7 +558,7 @@ Route by upgradeId:
       ├─ Run cap add ios && cap add android
       ├─ Stage and commit (required, throws if git fails)
       └─ Resolve or throw
-  
+
   ↓
 Handler returns → Promise resolves/rejects
   ↓
@@ -536,4 +570,3 @@ Detection functions run → component-tagger now found, isNeeded: false
   ↓
 Component re-renders → upgrade no longer appears in list
 ```
-

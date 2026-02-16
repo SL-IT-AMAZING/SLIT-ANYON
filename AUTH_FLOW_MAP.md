@@ -5,6 +5,7 @@
 The Anyon app uses **OAuth 2.0 flows** for both Supabase and Vercel. Users initiate login through UI buttons, which open the OAuth proxy server (`https://server-green-seven.vercel.app`). After OAuth completion, tokens are passed back via deep links (`anyon://`) and stored encrypted in the settings file.
 
 **Current architecture:**
+
 - No username/password login exists
 - Tokens are encrypted using Electron's `safeStorage` (OS credential store)
 - Token refresh is automatic and transparent
@@ -19,6 +20,7 @@ The Anyon app uses **OAuth 2.0 flows** for both Supabase and Vercel. Users initi
 #### File: `src/components/SupabaseConnector.tsx`
 
 **Lines 138-147: Add Account Button Handler**
+
 ```typescript
 const handleAddAccount = async () => {
   if (settings?.isTestMode) {
@@ -34,10 +36,12 @@ const handleAddAccount = async () => {
 ```
 
 **Where it's triggered:**
+
 - **Line 295-300**: "Add Organization" button in project selector
 - **Line 416-421**: "Connect to Supabase" image button when no accounts connected
 
 **OAuth Endpoint URL:**
+
 ```
 https://server-green-seven.vercel.app/api/oauth/supabase/login
 ```
@@ -49,6 +53,7 @@ https://server-green-seven.vercel.app/api/oauth/supabase/login
 #### File: `src/components/VercelConnector.tsx`
 
 **Lines 399-408: OAuth Login Button**
+
 ```typescript
 <Button
   onClick={async () => {
@@ -63,6 +68,7 @@ https://server-green-seven.vercel.app/api/oauth/supabase/login
 ```
 
 **Alternative: Manual Token Entry (Lines 301-321)**
+
 ```typescript
 const handleSaveAccessToken = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -87,6 +93,7 @@ const handleSaveAccessToken = async (e: React.FormEvent) => {
 ```
 
 **OAuth Endpoint URL:**
+
 ```
 https://server-green-seven.vercel.app/api/oauth/vercel/login
 ```
@@ -109,7 +116,7 @@ async function handleDeepLinkReturn(url: string) {
     log.info("Invalid deep link URL", url);
     return;
   }
-  
+
   // Route to appropriate handler based on hostname
   if (parsed.hostname === "supabase-oauth-return") {
     const token = parsed.searchParams.get("token");
@@ -122,7 +129,7 @@ async function handleDeepLinkReturn(url: string) {
     });
     return;
   }
-  
+
   if (parsed.hostname === "vercel-oauth-return") {
     const token = parsed.searchParams.get("token");
     const refreshToken = parsed.searchParams.get("refreshToken");
@@ -138,6 +145,7 @@ async function handleDeepLinkReturn(url: string) {
 ```
 
 **Deep Link Registration (Lines 79-87):**
+
 ```typescript
 // Register anyon:// protocol handler
 if (process.defaultApp) {
@@ -152,6 +160,7 @@ if (process.defaultApp) {
 ```
 
 **Deep Link Entry Points (Lines 421-436):**
+
 1. **Second Instance (Line 428):** When user clicks OAuth redirect with app already running
 2. **open-url Event (Lines 434-436):** Direct protocol handler for all `anyon://` URLs
 
@@ -193,8 +202,8 @@ export async function handleSupabaseOAuthReturn({
         organizations: {
           ...existingOrgs,
           [organizationSlug]: {
-            accessToken: { value: token },           // ENCRYPTED on write
-            refreshToken: { value: refreshToken },   // ENCRYPTED on write
+            accessToken: { value: token }, // ENCRYPTED on write
+            refreshToken: { value: refreshToken }, // ENCRYPTED on write
             expiresIn,
             tokenTimestamp: Math.floor(Date.now() / 1000),
           },
@@ -206,8 +215,8 @@ export async function handleSupabaseOAuthReturn({
     writeSettings({
       supabase: {
         ...settings.supabase,
-        accessToken: { value: token },              // ENCRYPTED on write
-        refreshToken: { value: refreshToken },      // ENCRYPTED on write
+        accessToken: { value: token }, // ENCRYPTED on write
+        refreshToken: { value: refreshToken }, // ENCRYPTED on write
         expiresIn,
         tokenTimestamp: Math.floor(Date.now() / 1000),
       },
@@ -217,6 +226,7 @@ export async function handleSupabaseOAuthReturn({
 ```
 
 **Key Points:**
+
 - Automatically detects organization(s) user belongs to
 - Stores credentials per-organization in `settings.supabase.organizations[organizationSlug]`
 - Falls back to legacy format if organization detection fails
@@ -240,7 +250,7 @@ export function handleVercelOAuthReturn({
 }) {
   writeSettings({
     vercel: {
-      accessToken: { value: token },        // ENCRYPTED on write
+      accessToken: { value: token }, // ENCRYPTED on write
       refreshToken: { value: refreshToken }, // ENCRYPTED on write
       expiresIn,
       tokenTimestamp: Math.floor(Date.now() / 1000),
@@ -267,7 +277,7 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = ipc.events.misc.onDeepLinkReceived((data) => {
       // Update with timestamp to ensure re-render even if same type twice
       setLastDeepLink({ ...data, timestamp: Date.now() });
-      
+
       // Route to appropriate page if needed
       if (data.type === "add-mcp-server") {
         scrollAndNavigateTo(SECTION_IDS.toolsMcp);
@@ -290,6 +300,7 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
 **Component Usage in Connectors:**
 
 - **SupabaseConnector (Lines 81-92):**
+
   ```typescript
   useEffect(() => {
     const handleDeepLink = async () => {
@@ -328,6 +339,7 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
 **File:** `~/.config/anyon/user-settings.json` (or platform equivalent)
 
 **Settings File Structure:**
+
 ```json
 {
   "supabase": {
@@ -378,6 +390,7 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
 #### File: `src/main/settings.ts`
 
 **Encryption Function (Lines 293-304):**
+
 ```typescript
 export function encrypt(data: string): Secret {
   if (safeStorage.isEncryptionAvailable() && !IS_TEST_BUILD) {
@@ -394,6 +407,7 @@ export function encrypt(data: string): Secret {
 ```
 
 **Decryption Function (Lines 306-311):**
+
 ```typescript
 export function decrypt(data: Secret): string {
   if (data.encryptionType === "electron-safe-storage") {
@@ -404,18 +418,20 @@ export function decrypt(data: Secret): string {
 ```
 
 **Key Features:**
+
 - Uses Electron's `safeStorage` API (OS credential store - macOS Keychain, Windows DPAPI, Linux Secret Service)
 - Falls back to plaintext in test builds (`IS_TEST_BUILD`)
 - Tokens encrypted on **write** (in `writeSettings()`)
 - Tokens decrypted on **read** (in `readSettings()`)
 
 **Write Flow (Lines 210-291):**
+
 ```typescript
 export function writeSettings(settings: Partial<UserSettings>): void {
   const filePath = getSettingsFilePath();
   const currentSettings = readSettings();
   const newSettings = { ...currentSettings, ...settings };
-  
+
   // Encrypt all tokens before writing
   if (newSettings.vercelAccessToken) {
     newSettings.vercelAccessToken = encrypt(
@@ -446,12 +462,13 @@ export function writeSettings(settings: Partial<UserSettings>): void {
     }
   }
   // Similar for vercel, neon, etc.
-  
+
   fs.writeFileSync(filePath, JSON.stringify(validatedSettings, null, 2));
 }
 ```
 
 **Read Flow (Lines 53-207):**
+
 - When settings are loaded, encrypted tokens are automatically decrypted
 - Decryption happens per-field before validation
 - Example (Supabase organization decryption, Lines 95-117):
@@ -490,6 +507,7 @@ export function writeSettings(settings: Partial<UserSettings>): void {
 #### File: `src/supabase_admin/supabase_management_client.ts`
 
 **Expiration Check (Lines 93-103):**
+
 ```typescript
 function isTokenExpired(expiresIn?: number): boolean {
   if (!expiresIn) return true;
@@ -497,13 +515,14 @@ function isTokenExpired(expiresIn?: number): boolean {
   const settings = readSettings();
   const tokenTimestamp = settings.supabase?.tokenTimestamp || 0;
   const currentTime = Math.floor(Date.now() / 1000);
-  
+
   // Refresh if expired or within 5 minutes of expiration
   return currentTime >= tokenTimestamp + expiresIn - 300;
 }
 ```
 
 **Refresh Function (Lines 109-162):**
+
 ```typescript
 export async function refreshSupabaseToken(): Promise<void> {
   const settings = readSettings();
@@ -554,6 +573,7 @@ export async function refreshSupabaseToken(): Promise<void> {
 ```
 
 **Organization-Specific Refresh (Lines 227-249):**
+
 ```typescript
 async function refreshSupabaseTokenForOrganization(
   organizationSlug: string,
@@ -615,6 +635,7 @@ async function refreshSupabaseTokenForOrganization(
 ```
 
 **Automatic Refresh in Client Creation (Lines 165-205):**
+
 ```typescript
 export async function getSupabaseClient({
   organizationSlug,
@@ -659,6 +680,7 @@ export async function getSupabaseClient({
 **OAuth Proxy Endpoint:** `POST https://server-green-seven.vercel.app/api/oauth/vercel/refresh`
 
 **Handler (Server): `server/app/api/oauth/vercel/refresh/route.ts`**
+
 ```typescript
 // Similar pattern to Supabase - accepts refreshToken, returns new access token
 ```
@@ -674,17 +696,20 @@ export async function getSupabaseClient({
 #### File: `src/supabase_admin/supabase_management_client.ts` (Lines 165-205)
 
 **Pattern:**
+
 1. Call `getSupabaseClient()` or `getSupabaseClientForOrganization()`
 2. These automatically refresh token if expired
 3. SDK uses token in all subsequent API calls
 
 **Usage Example:**
+
 ```typescript
 const client = await getSupabaseClient({ organizationSlug });
 const projects = await client.getProjects();
 ```
 
 **Under the hood:**
+
 ```typescript
 return new SupabaseManagementAPI({
   accessToken: accessToken, // Token passed to SDK
@@ -700,6 +725,7 @@ return new SupabaseManagementAPI({
 #### File: `src/ipc/handlers/vercel_handlers.ts`
 
 **Manual Token Passing Pattern (Lines 38-43):**
+
 ```typescript
 function createVercelClient(token: string): Vercel {
   return new Vercel({
@@ -710,6 +736,7 @@ function createVercelClient(token: string): Vercel {
 ```
 
 **In Handler Functions:**
+
 ```typescript
 async function handleListVercelProjects(): Promise<VercelProject[]> {
   try {
@@ -729,6 +756,7 @@ async function handleListVercelProjects(): Promise<VercelProject[]> {
 ```
 
 **Direct HTTP Requests (Lines 64-91):**
+
 ```typescript
 async function getVercelProjects(
   token: string,
@@ -767,6 +795,7 @@ async function getVercelProjects(
 - Only OAuth and manual token entry (Vercel manual token form)
 
 **References to "password" field in codebase (non-auth):**
+
 - `src/components/NeonConnector.tsx`: Input field for manual API key (type="password")
 - `src/components/VercelConnector.tsx`: Input field for manual access token (type="password")
 - `src/components/OpenCodeConnectionModeSelector.tsx`: Database password field
@@ -821,6 +850,7 @@ export const oauthEndpoints = {
 #### Supabase OAuth Flow
 
 **1. Login Endpoint: `server/app/api/oauth/supabase/login/route.ts`**
+
 ```typescript
 export async function GET() {
   const state = generateState();
@@ -848,11 +878,13 @@ export async function GET() {
 ```
 
 **Flow:**
+
 1. Generates random state for CSRF protection
 2. Redirects user to Supabase OAuth authorization URL
 3. Stores state in httpOnly cookie
 
 **2. Callback Endpoint: `server/app/api/oauth/supabase/callback/route.ts`**
+
 ```typescript
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -894,12 +926,14 @@ export async function GET(request: NextRequest) {
 ```
 
 **Flow:**
+
 1. Receives authorization code from Supabase
 2. Validates CSRF token (state)
 3. Exchanges code for access/refresh tokens
 4. Redirects to `anyon://supabase-oauth-return?token=...` deep link
 
 **3. Refresh Endpoint: `server/app/api/oauth/supabase/refresh/route.ts`**
+
 ```typescript
 export async function POST(request: NextRequest) {
   const { refreshToken } = await request.json();
@@ -941,6 +975,7 @@ export async function POST(request: NextRequest) {
 #### Vercel OAuth Flow (with PKCE)
 
 **1. Login Endpoint: `server/app/api/oauth/vercel/login/route.ts`**
+
 ```typescript
 export async function GET() {
   const state = generateState();
@@ -958,7 +993,7 @@ export async function GET() {
   authUrl.searchParams.set("code_challenge_method", "S256");
 
   const response = NextResponse.redirect(authUrl.toString());
-  
+
   // Store state and code verifier in httpOnly cookies
   response.cookies.set("vercel_oauth_state", state, {
     httpOnly: true,
@@ -978,11 +1013,13 @@ export async function GET() {
 ```
 
 **PKCE Details:**
+
 - `codeVerifier`: Random 32-byte value (base64url encoded)
 - `codeChallenge`: SHA256 hash of verifier
 - Prevents authorization code interception attacks
 
 **2. Callback Endpoint: `server/app/api/oauth/vercel/callback/route.ts`**
+
 ```typescript
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -1060,6 +1097,7 @@ NEON_CLIENT_SECRET=<from Neon OAuth app>
 ## 8. SECURITY ANALYSIS & IMPLICATIONS FOR CREDENTIAL-BASED FLOW
 
 ### Current Security Measures
+
 1. **Token Encryption:** OS-level encryption (Keychain/DPAPI/Secret Service)
 2. **CSRF Protection:** State parameter validated on callback
 3. **PKCE Protection:** Vercel uses PKCE for additional security
@@ -1080,7 +1118,7 @@ NEON_CLIENT_SECRET=<from Neon OAuth app>
    - Encrypted via `safeStorage` before writing
 
 3. **OAuth Proxy Modification:** Add new endpoints for credential-based exchange
-   - `POST /api/oauth/supabase/login-with-credentials` 
+   - `POST /api/oauth/supabase/login-with-credentials`
    - `POST /api/oauth/vercel/login-with-credentials`
    - Return same token format
 
@@ -1088,7 +1126,7 @@ NEON_CLIENT_SECRET=<from Neon OAuth app>
    - `ipc.supabase.loginWithCredentials({ email, password })`
    - `ipc.vercel.loginWithToken({ token })`
 
-5. **Permission Model:** 
+5. **Permission Model:**
    - User explicitly grants agent permission to manage credentials
    - Consider storing agent-specific scoped tokens with limited permissions
    - Implement token revocation mechanism
@@ -1097,27 +1135,26 @@ NEON_CLIENT_SECRET=<from Neon OAuth app>
 
 ## SUMMARY TABLE
 
-| Component | Location | Type | Details |
-|-----------|----------|------|---------|
-| **Supabase Entry Point** | `src/components/SupabaseConnector.tsx:145` | UI Button | Opens OAuth proxy login endpoint |
-| **Vercel Entry Point** | `src/components/VercelConnector.tsx:400` | UI Button | Opens OAuth proxy login endpoint |
-| **Vercel Manual Token** | `src/components/VercelConnector.tsx:301` | UI Form | Direct token entry via IPC |
-| **Deep Link Handler** | `src/main.ts:438` | Main Process | Routes OAuth return URLs to handlers |
-| **Deep Link Context** | `src/contexts/DeepLinkContext.tsx:27` | React Context | Notifies components of auth completion |
-| **Supabase OAuth Return** | `src/supabase_admin/supabase_return_handler.ts:18` | Handler | Stores org-specific tokens |
-| **Vercel OAuth Return** | `src/vercel_admin/vercel_return_handler.ts:3` | Handler | Stores global Vercel token |
-| **Token Encryption** | `src/main/settings.ts:293` | Function | Uses Electron safeStorage + Base64 |
-| **Token Decryption** | `src/main/settings.ts:306` | Function | Reverses encryption on read |
-| **Supabase Refresh** | `src/supabase_admin/supabase_management_client.ts:109` | Function | Auto-refreshes expired tokens |
-| **Supabase Client** | `src/supabase_admin/supabase_management_client.ts:165` | Factory | Creates authenticated API client |
-| **Vercel Client** | `src/ipc/handlers/vercel_handlers.ts:38` | Factory | Creates authenticated API client |
-| **Vercel IPC Handlers** | `src/ipc/handlers/vercel_handlers.ts:194+` | Handlers | Async operations (list, create, connect projects) |
-| **OAuth Proxy - Supabase Login** | `server/app/api/oauth/supabase/login/route.ts` | Endpoint | Generates state, redirects to Supabase |
-| **OAuth Proxy - Supabase Callback** | `server/app/api/oauth/supabase/callback/route.ts` | Endpoint | Exchanges code for tokens, deep links back |
-| **OAuth Proxy - Supabase Refresh** | `server/app/api/oauth/supabase/refresh/route.ts` | Endpoint | Refreshes access token via POST |
-| **OAuth Proxy - Vercel Login** | `server/app/api/oauth/vercel/login/route.ts` | Endpoint | Generates PKCE, redirects to Vercel |
-| **OAuth Proxy - Vercel Callback** | `server/app/api/oauth/vercel/callback/route.ts` | Endpoint | PKCE validation, exchanges code, deep links back |
-| **OAuth Config** | `src/lib/oauthConfig.ts` | Config | Centralized proxy server URL |
+| Component                           | Location                                               | Type          | Details                                           |
+| ----------------------------------- | ------------------------------------------------------ | ------------- | ------------------------------------------------- |
+| **Supabase Entry Point**            | `src/components/SupabaseConnector.tsx:145`             | UI Button     | Opens OAuth proxy login endpoint                  |
+| **Vercel Entry Point**              | `src/components/VercelConnector.tsx:400`               | UI Button     | Opens OAuth proxy login endpoint                  |
+| **Vercel Manual Token**             | `src/components/VercelConnector.tsx:301`               | UI Form       | Direct token entry via IPC                        |
+| **Deep Link Handler**               | `src/main.ts:438`                                      | Main Process  | Routes OAuth return URLs to handlers              |
+| **Deep Link Context**               | `src/contexts/DeepLinkContext.tsx:27`                  | React Context | Notifies components of auth completion            |
+| **Supabase OAuth Return**           | `src/supabase_admin/supabase_return_handler.ts:18`     | Handler       | Stores org-specific tokens                        |
+| **Vercel OAuth Return**             | `src/vercel_admin/vercel_return_handler.ts:3`          | Handler       | Stores global Vercel token                        |
+| **Token Encryption**                | `src/main/settings.ts:293`                             | Function      | Uses Electron safeStorage + Base64                |
+| **Token Decryption**                | `src/main/settings.ts:306`                             | Function      | Reverses encryption on read                       |
+| **Supabase Refresh**                | `src/supabase_admin/supabase_management_client.ts:109` | Function      | Auto-refreshes expired tokens                     |
+| **Supabase Client**                 | `src/supabase_admin/supabase_management_client.ts:165` | Factory       | Creates authenticated API client                  |
+| **Vercel Client**                   | `src/ipc/handlers/vercel_handlers.ts:38`               | Factory       | Creates authenticated API client                  |
+| **Vercel IPC Handlers**             | `src/ipc/handlers/vercel_handlers.ts:194+`             | Handlers      | Async operations (list, create, connect projects) |
+| **OAuth Proxy - Supabase Login**    | `server/app/api/oauth/supabase/login/route.ts`         | Endpoint      | Generates state, redirects to Supabase            |
+| **OAuth Proxy - Supabase Callback** | `server/app/api/oauth/supabase/callback/route.ts`      | Endpoint      | Exchanges code for tokens, deep links back        |
+| **OAuth Proxy - Supabase Refresh**  | `server/app/api/oauth/supabase/refresh/route.ts`       | Endpoint      | Refreshes access token via POST                   |
+| **OAuth Proxy - Vercel Login**      | `server/app/api/oauth/vercel/login/route.ts`           | Endpoint      | Generates PKCE, redirects to Vercel               |
+| **OAuth Proxy - Vercel Callback**   | `server/app/api/oauth/vercel/callback/route.ts`        | Endpoint      | PKCE validation, exchanges code, deep links back  |
+| **OAuth Config**                    | `src/lib/oauthConfig.ts`                               | Config        | Centralized proxy server URL                      |
 
 ---
-
