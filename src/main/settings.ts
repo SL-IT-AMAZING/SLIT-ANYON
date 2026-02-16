@@ -28,6 +28,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   telemetryUserId: uuidv4(),
   hasRunBefore: false,
   experiments: {},
+  enableAnyonPro: true,
   enableProLazyEditsMode: true,
   enableProSmartFilesContextMode: true,
   selectedChatMode: "build",

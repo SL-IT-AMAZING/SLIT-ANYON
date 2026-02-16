@@ -1,6 +1,7 @@
 import {
   appConsoleEntriesAtom,
   appUrlAtom,
+  currentAppAtom,
   previewCurrentUrlAtom,
   previewErrorMessageAtom,
   selectedAppIdAtom,
@@ -30,7 +31,7 @@ import {
   Tablet,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   annotatorModeAtom,
@@ -65,14 +66,12 @@ import { useRunApp } from "@/hooks/useRunApp";
 import { useSettings } from "@/hooks/useSettings";
 import { useShortcut } from "@/hooks/useShortcut";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import type { ComponentSelection } from "@/ipc/types";
 import type { DeviceMode } from "@/lib/schemas";
-import { showError } from "@/lib/toast";
+import { showError, showWarning } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Annotator } from "@/pro/ui/components/Annotator/Annotator";
 import { normalizePath } from "../../../shared/normalizePath";
-import { AnnotatorOnlyForPro } from "./AnnotatorOnlyForPro";
 import { VisualEditingToolbar } from "./VisualEditingToolbar";
 
 interface ErrorBannerProps {
@@ -123,8 +122,9 @@ const ErrorBanner = ({ error, onDismiss, onAIFix }: ErrorBannerProps) => {
           error.source === "anyon-app" && "pt-6",
         )}
       >
-        <div
-          className="text-red-700 dark:text-red-300 text-wrap font-mono whitespace-pre-wrap break-words text-xs cursor-pointer flex gap-1 items-start"
+        <button
+          type="button"
+          className="text-red-700 dark:text-red-300 text-wrap font-mono whitespace-pre-wrap break-words text-xs cursor-pointer flex gap-1 items-start text-left w-full"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           <ChevronRight
@@ -133,7 +133,7 @@ const ErrorBanner = ({ error, onDismiss, onAIFix }: ErrorBannerProps) => {
           />
 
           {isCollapsed ? getTruncatedError() : error.message}
-        </div>
+        </button>
       </div>
 
       {/* Tip message */}
@@ -174,6 +174,7 @@ const ErrorBanner = ({ error, onDismiss, onAIFix }: ErrorBannerProps) => {
 // Preview iframe component
 export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const currentApp = useAtomValue(currentAppAtom);
   const { appUrl, originalUrl } = useAtomValue(appUrlAtom);
   const setConsoleEntries = useSetAtom(appConsoleEntriesAtom);
   // State to trigger iframe reload
@@ -184,8 +185,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   const { routes: availableRoutes } = useParseRouter(selectedAppId);
   const { restartApp } = useRunApp();
   const { settings, updateSettings } = useSettings();
-  const { userBudget } = useUserBudgetInfo();
-  const isProMode = !!userBudget;
+  const isProMode = true;
 
   // Preserved URL state (persists across HMR-induced remounts)
   const [preservedUrls, setPreservedUrls] = useAtom(previewCurrentUrlAtom);
@@ -249,74 +249,118 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
     mobile: 375,
   };
 
+  const appRootPath = currentApp?.resolvedPath ?? null;
+
   //detect if the user is using Mac
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
-  const analyzeComponent = async (componentId: string) => {
-    if (!componentId || !selectedAppId) return;
+  const analyzeComponent = useCallback(
+    async (componentId: string, runtimeId?: string) => {
+      if (!componentId || !selectedAppId) return;
 
-    try {
-      const result = await ipc.visualEditing.analyzeComponent({
-        appId: selectedAppId,
-        componentId,
-      });
-      setIsDynamicComponent(result.isDynamic);
-      setHasStaticText(result.hasStaticText);
+      try {
+        const result = await ipc.visualEditing.analyzeComponent({
+          appId: selectedAppId,
+          componentId,
+        });
+        setIsDynamicComponent(result.isDynamic);
+        setHasStaticText(result.hasStaticText);
 
-      // Automatically enable text editing if component has static text
-      if (result.hasStaticText && iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          {
-            type: "enable-anyon-text-editing",
-            data: {
-              componentId: componentId,
-              runtimeId: visualEditingSelectedComponent?.runtimeId,
+        // Automatically enable text editing if component has static text
+        if (result.hasStaticText && iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            {
+              type: "enable-anyon-text-editing",
+              data: {
+                componentId: componentId,
+                runtimeId: runtimeId,
+              },
             },
-          },
-          "*",
-        );
+            "*",
+          );
+        }
+      } catch (err) {
+        console.error("Failed to analyze component", err);
+        setIsDynamicComponent(false);
+        setHasStaticText(false);
       }
-    } catch (err) {
-      console.error("Failed to analyze component", err);
-      setIsDynamicComponent(false);
-      setHasStaticText(false);
-    }
-  };
+    },
+    [selectedAppId],
+  );
 
-  const handleTextUpdated = async (data: any) => {
-    const { componentId, text } = data;
-    if (!componentId || !selectedAppId) return;
+  const handleTextUpdated = useCallback(
+    async (data: any) => {
+      const { componentId, text } = data;
+      if (!componentId || !selectedAppId) return;
 
-    // Parse componentId to extract file path and line number
-    const [filePath, lineStr] = componentId.split(":");
-    const lineNumber = Number.parseInt(lineStr, 10);
+      // Parse componentId to extract file path and line number
+      const parts = componentId.split(":");
+      if (parts.length < 2) {
+        console.error("Invalid componentId format:", componentId);
+        return;
+      }
 
-    if (!filePath || isNaN(lineNumber)) {
-      console.error("Invalid componentId format:", componentId);
-      return;
-    }
+      if (parts.length >= 3) {
+        parts.pop();
+      }
 
-    // Store text change in pending changes
-    setPendingChanges((prev) => {
-      const updated = new Map(prev);
-      const existing = updated.get(componentId);
+      const lineStr = parts.pop();
+      const filePath = parts.join(":");
+      const lineNumber = Number.parseInt(lineStr ?? "", 10);
 
-      updated.set(componentId, {
-        componentId: componentId,
-        componentName:
-          existing?.componentName || visualEditingSelectedComponent?.name || "",
-        relativePath: filePath,
-        lineNumber: lineNumber,
-        styles: existing?.styles || {},
-        textContent: text,
+      if (!filePath || Number.isNaN(lineNumber)) {
+        console.error("Invalid componentId format:", componentId);
+        return;
+      }
+
+      const normalizedRelativePath = normalizePath(filePath).replace(
+        /^\/+/,
+        "",
+      );
+      let resolvedRelativePath = normalizedRelativePath;
+      const appFiles = currentApp?.files;
+      if (appFiles?.length && !appFiles.includes(resolvedRelativePath)) {
+        const matches = appFiles.filter(
+          (file) =>
+            resolvedRelativePath === file ||
+            resolvedRelativePath.endsWith(`/${file}`) ||
+            resolvedRelativePath.endsWith(file),
+        );
+        if (matches.length === 1) {
+          resolvedRelativePath = matches[0] ?? resolvedRelativePath;
+        }
+      }
+
+      // Store text change in pending changes
+      setPendingChanges((prev) => {
+        const updated = new Map(prev);
+        const existing = updated.get(componentId);
+
+        updated.set(componentId, {
+          componentId: componentId,
+          componentName:
+            existing?.componentName ||
+            visualEditingSelectedComponent?.name ||
+            "",
+          relativePath: resolvedRelativePath,
+          lineNumber: lineNumber,
+          styles: existing?.styles || {},
+          textContent: text,
+        });
+
+        return updated;
       });
-
-      return updated;
-    });
-  };
+    },
+    [
+      currentApp?.files,
+      selectedAppId,
+      setPendingChanges,
+      visualEditingSelectedComponent?.name,
+    ],
+  );
 
   // Function to get current styles from selected element
-  const getCurrentElementStyles = () => {
+  const getCurrentElementStyles = useCallback(() => {
     if (!iframeRef.current?.contentWindow || !visualEditingSelectedComponent)
       return;
 
@@ -335,24 +379,37 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
     } catch (error) {
       console.error("Failed to get element styles:", error);
     }
-  };
+  }, [visualEditingSelectedComponent]);
   useEffect(() => {
     setAnnotatorMode(false);
-  }, []);
+  }, [setAnnotatorMode]);
   // Reset visual editing state when app changes or component unmounts
   useEffect(() => {
-    return () => {
-      // Cleanup on unmount or when app changes
+    if (selectedAppId === null) {
+      setIsComponentSelectorInitialized(false);
+      setIsPicking(false);
       setVisualEditingSelectedComponent(null);
       setPendingChanges(new Map());
       setCurrentComponentCoordinates(null);
-    };
-  }, [selectedAppId]);
+      return;
+    }
+
+    setIsComponentSelectorInitialized(false);
+    setIsPicking(false);
+    setVisualEditingSelectedComponent(null);
+    setPendingChanges(new Map());
+    setCurrentComponentCoordinates(null);
+  }, [
+    selectedAppId,
+    setCurrentComponentCoordinates,
+    setPendingChanges,
+    setVisualEditingSelectedComponent,
+  ]);
 
   // Update iframe ref atom
   useEffect(() => {
     setPreviewIframeRef(iframeRef.current);
-  }, [iframeRef.current, setPreviewIframeRef]);
+  }, [setPreviewIframeRef]);
 
   // Send pro mode status to iframe
   useEffect(() => {
@@ -362,7 +419,18 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
         "*",
       );
     }
-  }, [isProMode, isComponentSelectorInitialized]);
+  }, [isComponentSelectorInitialized]);
+
+  useEffect(() => {
+    const contentWindow = iframeRef.current?.contentWindow;
+    if (!contentWindow || !isComponentSelectorInitialized || !appRootPath) {
+      return;
+    }
+    contentWindow.postMessage(
+      { type: "anyon-app-root", path: appRootPath },
+      "*",
+    );
+  }, [appRootPath, isComponentSelectorInitialized]);
 
   // Add message listener for iframe errors and navigation events
   useEffect(() => {
@@ -459,10 +527,17 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
 
       if (event.data?.type === "anyon-component-selector-initialized") {
         setIsComponentSelectorInitialized(true);
-        iframeRef.current?.contentWindow?.postMessage(
+        const contentWindow = iframeRef.current?.contentWindow;
+        contentWindow?.postMessage(
           { type: "anyon-pro-mode", enabled: isProMode },
           "*",
         );
+        if (appRootPath) {
+          contentWindow?.postMessage(
+            { type: "anyon-app-root", path: appRootPath },
+            "*",
+          );
+        }
         return;
       }
 
@@ -481,7 +556,74 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
 
         const component = parseComponentSelection(event.data);
 
-        if (!component) return;
+        if (!component) {
+          showWarning(
+            "Couldn't map that element to source code. Try selecting a parent component.",
+          );
+          return;
+        }
+
+        const safeRelativePath = normalizePath(component.relativePath).replace(
+          /^\/+/,
+          "",
+        );
+        const isUnmappedSelection =
+          safeRelativePath.startsWith("__unmapped__/");
+        const isPathTraversal =
+          safeRelativePath === ".." ||
+          safeRelativePath.startsWith("../") ||
+          safeRelativePath.includes("/../");
+        if (isPathTraversal) {
+          showWarning(
+            "Couldn't map that element to source code. Try selecting a parent component.",
+          );
+          return;
+        }
+
+        let resolvedRelativePath = safeRelativePath;
+        if (!isUnmappedSelection && currentApp?.files?.length) {
+          const isKnownFile = currentApp.files.includes(resolvedRelativePath);
+          if (!isKnownFile) {
+            const matches = currentApp.files.filter(
+              (file) =>
+                resolvedRelativePath === file ||
+                resolvedRelativePath.endsWith(`/${file}`) ||
+                resolvedRelativePath.endsWith(file),
+            );
+            if (matches.length === 1) {
+              resolvedRelativePath = matches[0] ?? resolvedRelativePath;
+            } else {
+              showWarning(
+                "Couldn't map that element to source code. Try selecting a parent component.",
+              );
+              return;
+            }
+          }
+        }
+
+        const resolvedComponent = {
+          ...component,
+          relativePath: resolvedRelativePath,
+        };
+
+        const isTextEditableCandidate =
+          !!event.data?.component?.isTextEditableCandidate;
+        if (
+          isTextEditableCandidate &&
+          iframeRef.current?.contentWindow &&
+          component.runtimeId
+        ) {
+          iframeRef.current.contentWindow.postMessage(
+            {
+              type: "enable-anyon-text-editing",
+              data: {
+                componentId: component.id,
+                runtimeId: component.runtimeId,
+              },
+            },
+            "*",
+          );
+        }
 
         // Store the coordinates
         if (event.data.coordinates && isProMode) {
@@ -501,14 +643,15 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
           if (exists) {
             return prev;
           }
-          return [...prev, component];
+          return [...prev, resolvedComponent];
         });
 
-        if (isProMode) {
+        if (isProMode && !isUnmappedSelection && component.lineNumber > 0) {
           // Set as the highlighted component for visual editing
-          setVisualEditingSelectedComponent(component);
+          setVisualEditingSelectedComponent(resolvedComponent);
           // Trigger AST analysis
-          analyzeComponent(component.id);
+          const componentIdForAnalysis = `${resolvedRelativePath}:${component.lineNumber}:${component.columnNumber}`;
+          analyzeComponent(componentIdForAnalysis, component.runtimeId);
         }
 
         return;
@@ -706,10 +849,16 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
     currentHistoryPosition,
     selectedAppId,
     appUrl,
-    errorMessage,
+    currentApp,
+    appRootPath,
+    analyzeComponent,
+    handleTextUpdated,
     setErrorMessage,
-    setIsComponentSelectorInitialized,
+    setAnnotatorMode,
+    setConsoleEntries,
+    setCurrentComponentCoordinates,
     setSelectedComponentsPreview,
+    setScreenshotDataUrl,
     setVisualEditingSelectedComponent,
     setPreservedUrls,
   ]);
@@ -725,6 +874,8 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   useEffect(() => {
     if (appUrl && appUrl !== prevAppUrlRef.current) {
       prevAppUrlRef.current = appUrl;
+      setIsComponentSelectorInitialized(false);
+      setIsPicking(false);
       setNavigationHistory([appUrl]);
       setCurrentHistoryPosition(0);
       setCanGoBack(false);
@@ -739,12 +890,30 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
     if (visualEditingSelectedComponent) {
       getCurrentElementStyles();
     }
-  }, [visualEditingSelectedComponent]);
+  }, [getCurrentElementStyles, visualEditingSelectedComponent]);
 
   // Function to activate component selector in the iframe
   const handleActivateComponentSelector = () => {
+    if (!isComponentSelectorInitialized) {
+      showWarning(
+        "Preview tools are still loading. If this persists, your app may be blocking injected scripts via CSP.",
+      );
+      return;
+    }
     if (iframeRef.current?.contentWindow) {
       const newIsPicking = !isPicking;
+      if (newIsPicking) {
+        if (appRootPath) {
+          iframeRef.current.contentWindow.postMessage(
+            { type: "anyon-app-root", path: appRootPath },
+            "*",
+          );
+        }
+        iframeRef.current.contentWindow.postMessage(
+          { type: "anyon-pro-mode", enabled: isProMode },
+          "*",
+        );
+      }
       if (!newIsPicking) {
         // Clean up any text editing states when deactivating
         iframeRef.current.contentWindow.postMessage(
@@ -959,9 +1128,9 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
       <div className="flex flex-col h-full relative">
         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
           <div className="relative w-5 h-5 animate-spin">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full"></div>
-            <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary rounded-full opacity-80"></div>
-            <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full opacity-60"></div>
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
+            <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary rounded-full opacity-80" />
+            <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full opacity-60" />
           </div>
           <p className="text-muted-foreground">Preparing app preview...</p>
         </div>
@@ -1022,11 +1191,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                         ? "bg-purple-500 text-white hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700"
                         : " text-purple-700 hover:bg-purple-200  dark:text-purple-300 dark:hover:bg-purple-900"
                     }`}
-                    disabled={
-                      loading ||
-                      !selectedAppId ||
-                      !isComponentSelectorInitialized
-                    }
+                    disabled={loading || !selectedAppId}
                     data-testid="preview-pick-element-button"
                   />
                 }
@@ -1034,9 +1199,11 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                 <MousePointerClick size={16} />
               </TooltipTrigger>
               <TooltipContent>
-                {isPicking
-                  ? "Deactivate component selector"
-                  : `Select component (${isMac ? "⌘ + ⇧ + C" : "Ctrl + ⇧ + C"})`}
+                {!isComponentSelectorInitialized
+                  ? "Waiting for component selector to initialize..."
+                  : isPicking
+                    ? "Deactivate component selector"
+                    : `Select component (${isMac ? "⌘ + ⇧ + C" : "Ctrl + ⇧ + C"})`}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -1272,22 +1439,16 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
               <div
                 className="w-full h-full bg-background"
                 style={
-                  deviceMode == "desktop"
+                  deviceMode === "desktop"
                     ? {}
                     : { width: `${deviceWidthConfig[deviceMode]}px` }
                 }
               >
-                {userBudget ? (
-                  <Annotator
-                    screenshotUrl={screenshotDataUrl}
-                    onSubmit={addAttachments}
-                    handleAnnotatorClick={handleAnnotatorClick}
-                  />
-                ) : (
-                  <AnnotatorOnlyForPro
-                    onGoBack={() => setAnnotatorMode(false)}
-                  />
-                )}
+                <Annotator
+                  screenshotUrl={screenshotDataUrl}
+                  onSubmit={addAttachments}
+                  handleAnnotatorClick={handleAnnotatorClick}
+                />
               </div>
             ) : (
               <>
@@ -1304,7 +1465,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   title={`Preview for App ${selectedAppId}`}
                   className="w-full h-full border-none bg-background"
                   style={
-                    deviceMode == "desktop"
+                    deviceMode === "desktop"
                       ? {}
                       : { width: `${deviceWidthConfig[deviceMode]}px` }
                   }
@@ -1312,16 +1473,14 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   allow="clipboard-read; clipboard-write; fullscreen; microphone; camera; display-capture; geolocation; autoplay; picture-in-picture"
                 />
                 {/* Visual Editing Toolbar */}
-                {isProMode &&
-                  visualEditingSelectedComponent &&
-                  selectedAppId && (
-                    <VisualEditingToolbar
-                      selectedComponent={visualEditingSelectedComponent}
-                      iframeRef={iframeRef}
-                      isDynamic={isDynamicComponent}
-                      hasStaticText={hasStaticText}
-                    />
-                  )}
+                {visualEditingSelectedComponent && selectedAppId && (
+                  <VisualEditingToolbar
+                    selectedComponent={visualEditingSelectedComponent}
+                    iframeRef={iframeRef}
+                    isDynamic={isDynamicComponent}
+                    hasStaticText={hasStaticText}
+                  />
+                )}
               </>
             )}
           </div>
@@ -1366,7 +1525,7 @@ function parseComponentSelection(data: any): ComponentSelection | null {
   const lineNumber = Number.parseInt(lineStr, 10);
   const columnNumber = Number.parseInt(columnStr, 10);
 
-  if (isNaN(lineNumber) || isNaN(columnNumber)) {
+  if (Number.isNaN(lineNumber) || Number.isNaN(columnNumber)) {
     console.error(`Could not parse line/column from id: "${id}"`);
     return null;
   }

@@ -353,7 +353,7 @@ export const UserSettingsSchema = z
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
 export function isAnyonProEnabled(settings: UserSettings): boolean {
-  return settings.enableAnyonPro === true && hasAnyonProKey(settings);
+  return settings.enableAnyonPro !== false;
 }
 
 export function hasAnyonProKey(settings: UserSettings): boolean {
