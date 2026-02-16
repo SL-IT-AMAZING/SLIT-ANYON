@@ -370,11 +370,31 @@ port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 
-# Edge Functions — disable JWT verification for externally-called functions
+# Edge Functions — disable gateway JWT verification.
+# Our function code handles auth via verifyAuth() + supabase.auth.getUser(),
+# which is more robust than the gateway's JWT plugin (handles refresh edge cases).
 [functions.auth-callback]
 verify_jwt = false
 
 [functions.polar-webhook]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.entitlements]
+verify_jwt = false
+
+[functions.get-usage]
+verify_jwt = false
+
+[functions.track-usage]
+verify_jwt = false
+
+[functions.checkout-success]
 verify_jwt = false
 
 # Experimental features may be deprecated any time

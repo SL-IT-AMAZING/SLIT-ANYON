@@ -17,6 +17,7 @@ function getAnonKey(): string {
 }
 
 const CACHE_TTL_MS = 72 * 60 * 60 * 1000; // 72 hours
+const ACCESS_TOKEN_REFRESH_WINDOW_MS = 2 * 60 * 1000;
 
 export interface EntitlementState {
   plan: "free" | "starter" | "pro" | "power";
@@ -45,7 +46,128 @@ function getAccessToken(): string | null {
   const settings = readSettings();
   const token = settings.auth?.accessToken;
   if (!token?.value) return null;
-  return token.value;
+  return normalizeAccessToken(token.value);
+}
+
+function normalizeAccessToken(value: string): string {
+  const normalized = value.trim();
+  return normalized.startsWith("Bearer ") ? normalized.slice(7).trim() : normalized;
+}
+
+function getJwtExpiryMs(token: string): number | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64")
+        .toString("utf8"),
+    ) as { exp?: number };
+    if (typeof payload.exp !== "number") {
+      return null;
+    }
+    return payload.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  const expiry = getJwtExpiryMs(token);
+  if (!expiry) {
+    return false;
+  }
+  return Date.now() >= expiry - ACCESS_TOKEN_REFRESH_WINDOW_MS;
+}
+
+function tokenPreview(token: string): string {
+  return token.length > 12
+    ? `${token.slice(0, 6)}...${token.slice(-4)} (len=${token.length})`
+    : `invalid-length(${token.length})`;
+}
+
+async function getActiveAccessToken(operation: string): Promise<string> {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("You must be logged in to continue");
+  }
+
+  if (!isTokenExpired(accessToken)) {
+    return accessToken;
+  }
+
+  logger.warn(`Access token looks expired for ${operation}; refreshing first`);
+
+  const refreshed = await refreshSession();
+  if (!refreshed.accessToken) {
+    throw new Error(`Session refresh failed during ${operation}. Please sign in again.`);
+  }
+
+  return normalizeAccessToken(refreshed.accessToken);
+}
+
+async function requestWithAuthRefresh(
+  operation: string,
+  request: (token: string) => Promise<Response>,
+): Promise<Response> {
+  const accessToken = await getActiveAccessToken(operation);
+
+  logger.debug(`Sending ${operation} request with auth token`, {
+    operation,
+    token: tokenPreview(accessToken),
+  });
+
+  let response = await request(accessToken);
+  if (response.status !== 401) {
+    return response;
+  }
+
+  logger.warn(`Got 401 for ${operation}, attempting auth token refresh`);
+
+  try {
+    const refreshed = await refreshSession();
+    if (refreshed.accessToken) {
+      logger.info(`Refreshed auth token for ${operation}`);
+      response = await request(normalizeAccessToken(refreshed.accessToken));
+      if (response.status === 401) {
+        logger.warn(
+          `Still unauthorized after token refresh for ${operation}; please re-login`,
+        );
+      } else {
+        logger.info(`${operation} request succeeded after refresh`);
+      }
+    }
+  } catch (error) {
+    logger.warn(`Failed to refresh session before ${operation}`, error);
+  }
+
+  return response;
+}
+
+async function getErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  const payload = await response
+    .clone()
+    .json()
+    .catch(() => ({} as Record<string, unknown>));
+  if (typeof payload?.error === "string" && payload.error.length > 0) {
+    return payload.error;
+  }
+
+  const responseText = await response
+    .clone()
+    .text()
+    .catch(() => "")
+    .then((text) => text.slice(0, 200));
+
+  if (responseText) {
+    return `${fallback}: ${response.status} ${response.statusText} - ${responseText}`;
+  }
+
+  return `${fallback}: ${response.status} ${response.statusText}`;
 }
 
 function getCachedEntitlements(): EntitlementState | null {
@@ -95,19 +217,23 @@ export async function syncEntitlements(): Promise<EntitlementState> {
   }
 
   try {
-    const response = await fetch(oauthEndpoints.auth.entitlements, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: getAnonKey(),
-      },
-    });
+    const response = await requestWithAuthRefresh(
+      "entitlement sync",
+      (token) =>
+        fetch(oauthEndpoints.auth.entitlements, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: getAnonKey(),
+          },
+        }),
+    );
 
     if (!response.ok) {
       if (response.status === 401) {
         logger.warn("Auth token expired during entitlement sync");
         return getCachedEntitlements() ?? FREE_STATE;
       }
-      throw new Error(`Entitlement sync failed: ${response.status}`);
+      throw new Error(await getErrorMessage(response, "Entitlement sync failed"));
     }
 
     const data = (await response.json()) as EntitlementState;
@@ -130,11 +256,6 @@ export async function syncEntitlements(): Promise<EntitlementState> {
 export async function startCheckout(
   planId: string,
 ): Promise<{ checkoutUrl: string }> {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be logged in to subscribe");
-  }
-
   const requestCheckout = async (token: string) => {
     return fetch(oauthEndpoints.auth.checkout, {
       method: "POST",
@@ -147,39 +268,17 @@ export async function startCheckout(
     });
   };
 
-  let response = await requestCheckout(accessToken);
-
-  if (response.status === 401) {
-    try {
-      const refreshed = await refreshSession();
-      if (refreshed.accessToken) {
-        response = await requestCheckout(refreshed.accessToken);
-      }
-    } catch (error) {
-      logger.warn("Failed to refresh session before checkout", error);
-    }
-  }
-
+  const response = await requestWithAuthRefresh("checkout", requestCheckout);
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      (errorData as Record<string, string>).error ??
-        `Checkout failed: ${response.status}`,
-    );
+    throw new Error(await getErrorMessage(response, "Checkout failed"));
   }
 
   const data = (await response.json()) as { checkoutUrl: string };
-
   await shell.openExternal(data.checkoutUrl);
   return data;
 }
 
 export async function openCustomerPortal(): Promise<{ portalUrl: string }> {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be logged in to manage your subscription");
-  }
-
   const requestPortal = async (token: string) => {
     return fetch(oauthEndpoints.auth.customerPortal, {
       method: "POST",
@@ -190,57 +289,38 @@ export async function openCustomerPortal(): Promise<{ portalUrl: string }> {
     });
   };
 
-  let response = await requestPortal(accessToken);
-
-  if (response.status === 401) {
-    try {
-      const refreshed = await refreshSession();
-      if (refreshed.accessToken) {
-        response = await requestPortal(refreshed.accessToken);
-      }
-    } catch (error) {
-      logger.warn(
-        "Failed to refresh session before opening customer portal",
-        error,
-      );
-    }
-  }
-
+  const response = await requestWithAuthRefresh("customer portal", requestPortal);
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      (errorData as Record<string, string>).error ??
-        `Portal request failed: ${response.status}`,
-    );
+    throw new Error(await getErrorMessage(response, "Portal request failed"));
   }
 
   const data = (await response.json()) as { portalUrl: string };
-
   await shell.openExternal(data.portalUrl);
   return data;
 }
 
 export async function getUsage(): Promise<UsageInfo> {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    return {
-      creditsUsed: 0,
-      creditsLimit: 0,
-      resetAt: null,
-      overageRate: null,
-    };
-  }
-
-  try {
-    const response = await fetch(oauthEndpoints.auth.usage, {
+  const requestUsage = async (token: string) => {
+    return fetch(oauthEndpoints.auth.usage, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
         apikey: getAnonKey(),
       },
     });
+  };
 
+  try {
+    const response = await requestWithAuthRefresh("usage fetch", requestUsage);
     if (!response.ok) {
-      throw new Error(`Usage fetch failed: ${response.status}`);
+      if (response.status === 401) {
+        return {
+          creditsUsed: 0,
+          creditsLimit: 0,
+          resetAt: null,
+          overageRate: null,
+        };
+      }
+      throw new Error(await getErrorMessage(response, "Usage fetch failed"));
     }
 
     return (await response.json()) as UsageInfo;

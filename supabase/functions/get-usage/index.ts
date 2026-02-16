@@ -2,6 +2,16 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { polar } from "../_shared/polar.ts";
 import { verifyAuth } from "../_shared/supabase.ts";
 
+function isAuthError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("authorization") ||
+    normalized.includes("invalid or expired token") ||
+    normalized.includes("missing or invalid authorization header") ||
+    normalized.includes("invalid token")
+  );
+}
+
 const ZERO_USAGE = {
   creditsUsed: 0,
   creditsLimit: 0,
@@ -68,7 +78,7 @@ Deno.serve(async (req) => {
       error instanceof Error ? error.message : "Internal server error";
     const status =
       error instanceof Error &&
-      error.message.toLowerCase().includes("authorization")
+      isAuthError(error.message)
         ? 401
         : 500;
     return new Response(JSON.stringify({ error: message }), {

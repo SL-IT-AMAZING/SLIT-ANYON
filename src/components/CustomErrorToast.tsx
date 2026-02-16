@@ -1,11 +1,11 @@
-import React from "react";
-import { toast } from "sonner";
-import { X, Copy, Check } from "lucide-react";
+
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Check, Copy, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface CustomErrorToastProps {
   message: string;
@@ -47,34 +47,40 @@ export function CustomErrorToast({
               {/* Action buttons */}
               <div className="flex items-center space-x-1.5 ml-auto">
                 <Tooltip>
-                  <TooltipTrigger>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopy();
-                      }}
-                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100/70 rounded-lg transition-all duration-150"
-                    >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy();
+                        }}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100/70 rounded-lg transition-all duration-150"
+                      >
+                        {copied ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
+                    }
+                  >
                   </TooltipTrigger>
                   <TooltipContent>Copy to clipboard</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClose();
-                      }}
-                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100/70 rounded-lg transition-all duration-150"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClose();
+                        }}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100/70 rounded-lg transition-all duration-150"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    }
+                  >
                   </TooltipTrigger>
                   <TooltipContent>Close</TooltipContent>
                 </Tooltip>

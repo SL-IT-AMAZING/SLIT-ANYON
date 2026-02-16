@@ -2,6 +2,16 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { planToProductId, polar } from "../_shared/polar.ts";
 import { verifyAuth } from "../_shared/supabase.ts";
 
+function isAuthError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("authorization") ||
+    normalized.includes("invalid or expired token") ||
+    normalized.includes("missing or invalid authorization header") ||
+    normalized.includes("invalid token")
+  );
+}
+
 interface CheckoutBody {
   planId?: string;
 }
@@ -46,13 +56,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const edgeFunctionsUrl = Deno.env.get("SUPABASE_URL") + "/functions/v1";
     const checkout = await polar.checkouts.create({
       products: [productId],
       customerEmail: user.email,
       metadata: {
         supabaseUserId: user.id,
       },
-      successUrl: "anyon://checkout-success",
+      successUrl: `${edgeFunctionsUrl}/checkout-success`,
     });
 
     return new Response(JSON.stringify({ checkoutUrl: checkout.url }), {
@@ -63,7 +74,7 @@ Deno.serve(async (req) => {
       error instanceof Error ? error.message : "Internal server error";
     const status =
       error instanceof Error &&
-      error.message.toLowerCase().includes("authorization")
+      isAuthError(error.message)
         ? 401
         : 500;
     return new Response(JSON.stringify({ error: message }), {
