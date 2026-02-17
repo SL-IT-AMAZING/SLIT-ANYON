@@ -9,6 +9,7 @@ The `MessagesList` component now groups `Message[]` into `MessageTurn` objects a
 ## 1. TURN GROUPING ALGORITHM ANALYSIS
 
 ### Current Implementation (Lines 41-70)
+
 ```typescript
 function groupMessagesIntoTurns(messages: Message[]): MessageTurn[] {
   const turns: MessageTurn[] = [];
@@ -45,22 +46,26 @@ function groupMessagesIntoTurns(messages: Message[]): MessageTurn[] {
 ### Edge Cases Identified
 
 #### **EDGE CASE 1: Assistant-First Messages (Orphaned Assistant)**
+
 **Risk Level:** HIGH
 
 **Symptom:** When a message stream begins with an assistant response (no preceding user message), it creates an orphaned turn with `id: turn-orphan-${messageId}`.
 
 **Problem:**
+
 - Turn ID is based on assistant message ID, not user message ID
 - In `expandedTurnIds` tracking (line 399), this orphan turn's expand state uses `turn-orphan-${assistantId}`
 - If this state persists across chat sessions, future turns with normal IDs won't find matching expand states
 - The orphan state is lost when messages reload (e.g., after undo/retry)
 
 **Concrete Locations:**
+
 - Line 58: `id: turn-orphan-${message.id}` generation
 - Line 399: `useState<Set<string>>(new Set())` for tracking
 - Line 442, 558: `expandedTurnIds.has(turn.id)` lookups
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE (Line 56-64)
 if (!currentTurn) {
@@ -75,7 +80,7 @@ if (!currentTurn) {
 
 // AFTER: Use a deterministic orphan ID or warn in dev
 if (!currentTurn) {
-  const orphanId = `turn-orphan-${turns.length}`;  // Use turn index instead
+  const orphanId = `turn-orphan-${turns.length}`; // Use turn index instead
   currentTurn = {
     id: orphanId,
     userMessage: null,
@@ -83,7 +88,7 @@ if (!currentTurn) {
   };
   turns.push(currentTurn);
   console.warn(
-    `[MessagesList] Assistant message appears without user message: id=${message.id}, orphanId=${orphanId}`
+    `[MessagesList] Assistant message appears without user message: id=${message.id}, orphanId=${orphanId}`,
   );
   continue;
 }
@@ -92,11 +97,13 @@ if (!currentTurn) {
 ---
 
 #### **EDGE CASE 2: Undo/Retry Message Index Assumptions**
+
 **Risk Level:** CRITICAL
 
 **Symptom:** Undo/retry logic assumes fixed message array positions.
 
 **Problem:**
+
 - Line 245: `messages[messages.length - 1]` (current message)
 - Line 247: `messages[messages.length - 2]` (user message)
 - Line 304: `messages[messages.length - 1]` (last version)
@@ -118,10 +125,12 @@ If user clicks undo on Turn 2:
 ```
 
 **Concrete Locations:**
+
 - Line 245-247: Undo logic for user message lookup
 - Line 304-337: Retry logic with previous assistant message
 
 **Patch Recommendation:**
+
 ```typescript
 // INSTEAD of hardcoded indices, find within current turn context
 // Get the last turn from the grouped structure
@@ -133,9 +142,8 @@ const userMessage = lastTurn?.userMessage;
 
 // For retry: search for previous assistant message by turn, not index
 const previousTurn = turns[turns.length - 2];
-const previousAssistantMessage = previousTurn?.assistantMessages[
-  previousTurn.assistantMessages.length - 1
-];
+const previousAssistantMessage =
+  previousTurn?.assistantMessages[previousTurn.assistantMessages.length - 1];
 
 // This bounds the search to the correct logical turn
 ```
@@ -143,16 +151,19 @@ const previousAssistantMessage = previousTurn?.assistantMessages[
 ---
 
 #### **EDGE CASE 3: Multi-Message Assistant Responses**
+
 **Risk Level:** HIGH
 
 **Symptom:** Assistant responses are streamed in multiple chunks, each creating a separate `Message` object.
 
 **Problem:**
+
 - Lines 163-174: `summarizeTurn()` computes duration across ALL assistant messages in a turn
 - If streaming creates 10 assistant messages in one turn, duration calculation depends on first and last
 - **But turn grouping doesn't guarantee message order matches creation order**
 
 Example:
+
 ```
 Turn 1: [User 1, Assistant 1.1, Assistant 1.2, Assistant 1.3]
         ^ messages from stream chunks, but might not have sequential createdAt
@@ -161,14 +172,18 @@ Turn 1: [User 1, Assistant 1.1, Assistant 1.2, Assistant 1.3]
 If message sorting is ever changed upstream, this breaks silently.
 
 **Concrete Locations:**
+
 - Line 163: `const assistantWithCreatedAt = turn.assistantMessages.filter(...)`
 - Line 165-170: Duration computed from first and last createdAt
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE (Lines 163-174)
 let duration: string | undefined;
-const assistantWithCreatedAt = turn.assistantMessages.filter((m) => m.createdAt);
+const assistantWithCreatedAt = turn.assistantMessages.filter(
+  (m) => m.createdAt,
+);
 if (assistantWithCreatedAt.length > 0) {
   const start = new Date(assistantWithCreatedAt[0].createdAt as string | Date);
   const end = new Date(
@@ -185,9 +200,10 @@ if (assistantWithCreatedAt.length > 0) {
 let duration: string | undefined;
 const assistantWithCreatedAt = turn.assistantMessages
   .filter((m) => m.createdAt)
-  .sort((a, b) => 
-    new Date(a.createdAt as string | Date).getTime() - 
-    new Date(b.createdAt as string | Date).getTime()
+  .sort(
+    (a, b) =>
+      new Date(a.createdAt as string | Date).getTime() -
+      new Date(b.createdAt as string | Date).getTime(),
   );
 if (assistantWithCreatedAt.length > 0) {
   const start = new Date(assistantWithCreatedAt[0].createdAt as string | Date);
@@ -205,11 +221,13 @@ if (assistantWithCreatedAt.length > 0) {
 ---
 
 #### **EDGE CASE 4: Streaming State Race Condition**
+
 **Risk Level:** CRITICAL
 
 **Symptom:** `isStreaming` flag vs. turn grouping timing mismatch during rapid streams.
 
 **Problem:**
+
 - Line 437: `const isTurnWorking = isStreaming && isLastTurn;`
 - This assumes the last turn is the one currently streaming
 - **But `groupMessagesIntoTurns()` is called in `useMemo(() => groupMessagesIntoTurns(messages), [messages])`**
@@ -226,39 +244,47 @@ But then stream adds Assistant Msg 2.1 before state updates
 ```
 
 **Concrete Locations:**
+
 - Line 437: Streaming detection per turn
 - Line 554: Test mode also assumes last turn = current stream
 - Line 431: `useMemo` dependency on `[messages]`
 
 **Patch Recommendation:**
+
 ```typescript
 // ENHANCEMENT: Add explicit streaming turn tracking
 const isStreamingLastTurn = isStreaming && selectedChatId !== null;
 // Then check: is this turn the one with messages from current stream?
 
 // OR: Compare message creation times
-const isTurnWorking = isStreaming && isLastTurn && 
+const isTurnWorking =
+  isStreaming &&
+  isLastTurn &&
   lastTurnHasRecentMessages(turn, currentStreamStartTime);
 
 function lastTurnHasRecentMessages(
-  turn: MessageTurn, 
-  streamStartTime?: number
+  turn: MessageTurn,
+  streamStartTime?: number,
 ): boolean {
   if (!streamStartTime) return true;
   const lastMsg = turn.assistantMessages[turn.assistantMessages.length - 1];
-  return !lastMsg?.createdAt || 
-    (new Date(lastMsg.createdAt).getTime() >= streamStartTime);
+  return (
+    !lastMsg?.createdAt ||
+    new Date(lastMsg.createdAt).getTime() >= streamStartTime
+  );
 }
 ```
 
 ---
 
 #### **EDGE CASE 5: Turn ID Stability & Expansion State**
+
 **Risk Level:** HIGH
 
 **Symptom:** `expandedTurnIds` state uses turn IDs, but turn IDs are keyed to message IDs.
 
 **Problem:**
+
 - When undo/retry removes and re-adds messages, their IDs don't change
 - But if the grouping changes (e.g., a turn merges with another), the turn ID formula breaks
 - For non-orphan turns: `id: turn-${message.id}` where `message` = user message
@@ -277,11 +303,13 @@ expandedTurnIds still has "turn-5" → orphaned state!
 ```
 
 **Concrete Locations:**
+
 - Line 48: `id: turn-${message.id}` for non-orphan
 - Line 399: `useState<Set<string>>(new Set())` - no cleanup on message removal
 - Line 456-464, 571-579: `setExpandedTurnIds` updates
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE: State is never cleaned up
 const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(new Set());
@@ -289,9 +317,7 @@ const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(new Set());
 // AFTER: Add effect to sync expansion state with actual turns
 useEffect(() => {
   setExpandedTurnIds((prev) => {
-    const validIds = new Set(
-      turns.map(turn => turn.id)
-    );
+    const validIds = new Set(turns.map((turn) => turn.id));
     // Keep only IDs that still exist in turns
     const next = new Set(prev);
     for (const id of prev) {
@@ -299,7 +325,7 @@ useEffect(() => {
         next.delete(id);
       }
     }
-    return prev.size === next.size ? prev : next;  // Return prev if unchanged
+    return prev.size === next.size ? prev : next; // Return prev if unchanged
   });
 }, [turns]); // NOT [turns.length]!
 ```
@@ -307,31 +333,36 @@ useEffect(() => {
 ---
 
 #### **EDGE CASE 6: Test Mode vs. Virtuoso Parity**
+
 **Risk Level:** MEDIUM
 
 **Symptom:** Test mode renders all turns without virtualization, but non-test mode uses Virtuoso.
 
 **Problem:**
+
 - Lines 545-589: Test mode renders `turns.map()`
 - Lines 591-609: Non-test mode uses `<Virtuoso data={turns} ... />`
 - Both use same `itemContent` callback and rendering logic
 - **But Virtuoso's `initialTopMostItemIndex={turns.length - 1}` may not initialize the same way in non-test**
 
 Additionally:
+
 - Test mode: immediate DOM access for all turns
 - Non-test mode: lazy virtualization with `increaseViewportBy={{ top: 1000, bottom: 500 }}`
 - If E2E tests switch between modes, they see different behavior
 
 **Concrete Locations:**
+
 - Line 407: `const isTestMode = settings?.isTestMode;`
 - Line 545-589: Test render path
 - Line 591-609: Virtuoso render path
 - Line 599: `initialTopMostItemIndex={turns.length - 1}`
 
 **Patch Recommendation:**
+
 ```typescript
 // ENHANCEMENT: Extract common render logic
-const turnItems = useMemo(() => 
+const turnItems = useMemo(() =>
   turns.map((turn, index) => ({
     turn,
     isLastTurn: index === turns.length - 1,
@@ -348,7 +379,7 @@ const turnItems = useMemo(() =>
 return (
   <Virtuoso
     data={turns}
-    {...(isTestMode ? { 
+    {...(isTestMode ? {
       // In test mode: disable virtualization features
       disableScrolling: true,
       // ... other test overrides
@@ -364,11 +395,13 @@ return (
 ---
 
 #### **EDGE CASE 7: Retry with Orphaned Assistant**
+
 **Risk Level:** HIGH
 
 **Symptom:** Retry logic searches for last user message with `[...messages].reverse().find(m => m.role === "user")`.
 
 **Problem:**
+
 - Lines 340-346: Retry finds last user message by role
 - This is correct!
 - **But if a previous stream created an orphaned assistant turn, the messages array has assistant messages WITHOUT a corresponding user message**
@@ -392,10 +425,12 @@ Should it use turn 2's partial state?
 ```
 
 **Concrete Locations:**
+
 - Lines 340-346: Last user message search
 - Line 351-355: `streamMessage()` call with found message
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE: Simple reverse search
 const lastUserMessage = [...messages]
@@ -403,14 +438,12 @@ const lastUserMessage = [...messages]
   .find((message) => message.role === "user");
 
 // AFTER: Use turn structure for context
-const lastUserTurn = turns.findLast(
-  (turn) => turn.userMessage !== null
-);
+const lastUserTurn = turns.findLast((turn) => turn.userMessage !== null);
 const lastUserMessage = lastUserTurn?.userMessage;
 if (!lastUserMessage) {
   console.error(
     "[MessagesList] No user message found in any turn. Orphaned assistant messages: ",
-    turns.filter(t => !t.userMessage).length
+    turns.filter((t) => !t.userMessage).length,
   );
   return;
 }
@@ -419,11 +452,13 @@ if (!lastUserMessage) {
 ---
 
 #### **EDGE CASE 8: Footer Context Coupling**
+
 **Risk Level:** MEDIUM
 
 **Symptom:** `FooterComponent` receives raw `messages` array, not `turns`.
 
 **Problem:**
+
 - Lines 185-202: `FooterContext` passes `messages: Message[]`
 - Lines 208-387: `FooterComponent` uses raw messages for undo/retry
 - The footer doesn't know about the turn structure!
@@ -436,11 +471,13 @@ But rendered last turn might be turn-index-1 based on Virtuoso!
 ```
 
 **Concrete Locations:**
+
 - Lines 208-387: FooterComponent implementation
 - Line 245: `messages[messages.length - 1]` assumption
 - Line 477: `messages` passed in context
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE: Footer uses raw messages
 interface FooterContext {
@@ -463,18 +500,20 @@ if (!lastTurn?.userMessage) {
   return;
 }
 const userMessage = lastTurn.userMessage;
-const previousAssistantMessage = 
+const previousAssistantMessage =
   lastTurn.assistantMessages[lastTurn.assistantMessages.length - 1];
 ```
 
 ---
 
 #### **EDGE CASE 9: Empty Turn After Undo**
+
 **Risk Level:** MEDIUM
 
 **Symptom:** A turn with only a user message (no assistant responses) renders with `className="opacity-70"`.
 
 **Problem:**
+
 - Lines 441, 466, 581: `hasAssistantContent = turn.assistantMessages.length > 0`
 - If undo removes assistant messages but leaves user message, the turn becomes faded
 - **But the user message is still valuable context!**
@@ -490,11 +529,13 @@ Result: Faded turn with user's request but no assistant response
 ```
 
 **Concrete Locations:**
+
 - Line 441: `const hasAssistantContent = turn.assistantMessages.length > 0;`
 - Line 466: `className={!hasAssistantContent ? "opacity-70" : undefined}`
 - Line 581: Same in test mode
 
 **Patch Recommendation:**
+
 ```typescript
 // BEFORE: Binary hasAssistantContent
 const hasAssistantContent = turn.assistantMessages.length > 0;
@@ -509,14 +550,14 @@ return (
 
 // AFTER: Distinguish between "never had" vs "had but lost"
 const hasAssistantContent = turn.assistantMessages.length > 0;
-const isIncomplete = 
-  turn.userMessage !== null && 
-  !hasAssistantContent && 
+const isIncomplete =
+  turn.userMessage !== null &&
+  !hasAssistantContent &&
   isTurnWorking;  // Only fade if it's actually processing
-  
+
 return (
-  <div 
-    className="px-4" 
+  <div
+    className="px-4"
     key={turn.id}
     data-testid={`turn-${turn.id}`}
     data-incomplete={isIncomplete}
@@ -555,11 +596,13 @@ onClick={async () => {
 ```
 
 **Assumptions:**
+
 1. Last message is the assistant response to undo
 2. Second-to-last message is the user message that triggered it
 3. Both exist and are in sequential positions
 
 **Failures with turn grouping:**
+
 - ✗ If turn 1 has multiple assistant responses: `messages[length-1]` might not be the one to revert
 - ✗ If turn 2 user message exists: `messages[length-2]` might be turn 1's assistant, not turn 2's user
 
@@ -599,11 +642,13 @@ onClick={async () => {
 ```
 
 **Assumptions:**
+
 1. Last message role can be checked to detect if it's an assistant response
 2. Previous assistant is 3 positions back (user, assistant, assistant pattern)
 3. Last user message can always be found
 
 **Failures with turn grouping:**
+
 - ✗ Pattern assumes `[user, assistant, assistant]` but could be `[user, assistant_1, assistant_2, user_2, assistant_3]`
 - ✗ Orphaned assistant messages break the position assumption
 
@@ -614,16 +659,19 @@ onClick={async () => {
 ### Current Streaming Logic
 
 **isStreaming Detection (Line 437):**
+
 ```typescript
 const isTurnWorking = isStreaming && isLastTurn;
 ```
 
 **Problem:** `isStreaming` is global to the chat, not per-turn. If:
+
 1. Turn 1 finishes streaming
 2. Turn 2 starts streaming
 3. Turn 1 is still rendered: `isLastTurn = false`, so `isTurnWorking = false` ✓
 
 **But if messy state:**
+
 1. Turn 1 streaming marked complete
 2. Turn 2 user message added
 3. Turn 2 assistant response added BEFORE state settles
@@ -639,6 +687,7 @@ const stepsExpanded =
 ```
 
 **Problem:** If a turn starts working, steps auto-expand. **But what if user manually closes steps?**
+
 - User clicks "Hide steps" → `expandedTurnIds` updated
 - Turn keeps streaming → steps auto-collapse when new chunk arrives
 - User experience is flaky
@@ -666,6 +715,7 @@ Turn 2: user=msg_1, assistants=[] ← now there's an incomplete turn!
 ```
 
 **Concrete Risk:**
+
 - No test covers: "Assistant message appears before user message in array"
 - IPC contract guarantees order? **Not explicitly verified**
 
@@ -675,13 +725,13 @@ Turn 2: user=msg_1, assistants=[] ← now there's an incomplete turn!
 
 ### Differences Between Test and Non-Test Rendering
 
-| Aspect | Test Mode | Non-Test |
-|--------|-----------|----------|
-| Rendering | `turns.map()` direct | `<Virtuoso>` with lazy rendering |
-| Initialization | Immediate | `initialTopMostItemIndex={turns.length - 1}` |
-| DOM Size | All turns visible | Only viewport + buffer visible |
-| Scrolling | Native browser | Virtuoso managed |
-| Footer Visibility | Part of renders | Separate `<Footer>` component |
+| Aspect            | Test Mode            | Non-Test                                     |
+| ----------------- | -------------------- | -------------------------------------------- |
+| Rendering         | `turns.map()` direct | `<Virtuoso>` with lazy rendering             |
+| Initialization    | Immediate            | `initialTopMostItemIndex={turns.length - 1}` |
+| DOM Size          | All turns visible    | Only viewport + buffer visible               |
+| Scrolling         | Native browser       | Virtuoso managed                             |
+| Footer Visibility | Part of renders      | Separate `<Footer>` component                |
 
 ### Potential Mismatches
 
@@ -699,17 +749,17 @@ Turn 2: user=msg_1, assistants=[] ← now there's an incomplete turn!
 
 ## 6. CONCRETE PATCH RECOMMENDATIONS SUMMARY
 
-| Edge Case | File | Lines | Patch Priority | Implementation Effort |
-|-----------|------|-------|-----------------|----------------------|
-| **Orphan turn ID stability** | MessagesList.tsx | 56-64, 399 | HIGH | Low |
-| **Undo array index assumption** | MessagesList.tsx | 245-247, 304-337 | CRITICAL | Medium |
-| **Retry array index assumption** | MessagesList.tsx | 311, 340-355 | CRITICAL | Medium |
-| **Multi-message duration sorting** | MessagesList.tsx | 163-174 | MEDIUM | Low |
-| **Streaming state race condition** | MessagesList.tsx | 437, 554 | CRITICAL | Medium |
-| **Expansion state cleanup** | MessagesList.tsx | 399, 456-464 | HIGH | Low |
-| **Test/Virtuoso parity** | MessagesList.tsx | 407, 545-609 | MEDIUM | High |
-| **Retry with orphan** | MessagesList.tsx | 340-346 | HIGH | Low |
-| **Empty turn opacity** | MessagesList.tsx | 441, 466 | MEDIUM | Low |
+| Edge Case                          | File             | Lines            | Patch Priority | Implementation Effort |
+| ---------------------------------- | ---------------- | ---------------- | -------------- | --------------------- |
+| **Orphan turn ID stability**       | MessagesList.tsx | 56-64, 399       | HIGH           | Low                   |
+| **Undo array index assumption**    | MessagesList.tsx | 245-247, 304-337 | CRITICAL       | Medium                |
+| **Retry array index assumption**   | MessagesList.tsx | 311, 340-355     | CRITICAL       | Medium                |
+| **Multi-message duration sorting** | MessagesList.tsx | 163-174          | MEDIUM         | Low                   |
+| **Streaming state race condition** | MessagesList.tsx | 437, 554         | CRITICAL       | Medium                |
+| **Expansion state cleanup**        | MessagesList.tsx | 399, 456-464     | HIGH           | Low                   |
+| **Test/Virtuoso parity**           | MessagesList.tsx | 407, 545-609     | MEDIUM         | High                  |
+| **Retry with orphan**              | MessagesList.tsx | 340-346          | HIGH           | Low                   |
+| **Empty turn opacity**             | MessagesList.tsx | 441, 466         | MEDIUM         | Low                   |
 
 ---
 
@@ -759,4 +809,3 @@ The turn grouping refactor in `MessagesList` is architecturally sound but has **
 3. **Orphan assistant messages** are unsupported and create invalid state
 
 **Immediate action:** Add test cases for the CRITICAL items before merging any upstream changes to message handling.
-

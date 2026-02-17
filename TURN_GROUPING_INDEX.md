@@ -5,7 +5,9 @@
 This regression hunt consists of three complementary documents:
 
 ### 1. 📄 TURN_GROUPING_SUMMARY.md (8.2 KB) - START HERE
+
 **Best for:** Quick understanding, executive summary, action planning
+
 - 🎯 Findings at a glance (9 edge cases, 3 CRITICAL)
 - 🔴 Critical issues with examples
 - 🟠 High-risk findings with impact
@@ -17,7 +19,9 @@ This regression hunt consists of three complementary documents:
 ---
 
 ### 2. ⚡ TURN_GROUPING_QUICK_REF.md (5.3 KB) - DEVELOPER GUIDE
+
 **Best for:** Implementation, quick lookup, patch templates
+
 - 🔴 Critical issues checklist
 - 🟠 High-risk issues table
 - 📍 Code hotspots map
@@ -32,7 +36,9 @@ This regression hunt consists of three complementary documents:
 ---
 
 ### 3. 📖 TURN_GROUPING_REGRESSION_HUNT.md (24 KB) - DEEP DIVE
+
 **Best for:** Detailed analysis, understanding architecture, comprehensive review
+
 - 🏗️ Full algorithm analysis
 - 📚 Detailed explanation of each edge case (1-9)
   - Risk level & symptom
@@ -53,24 +59,29 @@ This regression hunt consists of three complementary documents:
 ## 🎯 QUICK NAVIGATION BY TASK
 
 ### **"I need to understand what's wrong" (5-10 min)**
+
 → Read `TURN_GROUPING_SUMMARY.md`
 → Focus on: Findings at a Glance + Critical Findings
 
 ### **"I need to fix the CRITICAL issues" (2-4 hours)**
+
 → Start with `TURN_GROUPING_QUICK_REF.md` lines: Code Hotspots
 → Reference `TURN_GROUPING_REGRESSION_HUNT.md` Edge Cases 1, 2, 3
 → Use patch templates from Quick Ref
 
 ### **"I need to do a full code review" (1-2 hours)**
+
 → Read entire `TURN_GROUPING_REGRESSION_HUNT.md`
 → Verify against actual code in `src/components/chat/MessagesList.tsx`
 → Check Critical Unknowns section
 
 ### **"I need to write tests" (1-2 hours)**
+
 → Use test templates from `TURN_GROUPING_QUICK_REF.md`
 → See detailed scenarios in `TURN_GROUPING_REGRESSION_HUNT.md` section 7
 
 ### **"I need to present findings" (10-15 min)**
+
 → Show `TURN_GROUPING_SUMMARY.md` slides
 → Use impact matrix from Quick Ref
 → Back up with deep dive examples
@@ -79,23 +90,24 @@ This regression hunt consists of three complementary documents:
 
 ## 🗺️ EDGE CASES AT A GLANCE
 
-| # | Edge Case | Risk | Lines | Fix Effort |
-|---|-----------|------|-------|-----------|
-| 1 | Orphaned assistant turn ID | HIGH | 56-64, 399 | Low |
-| 2 | Undo/retry array indices | **CRITICAL** | 245-247, 304-337 | Medium |
-| 3 | Multi-msg duration calc | HIGH | 163-174 | Low |
-| 4 | Streaming race condition | **CRITICAL** | 437, 554 | Medium |
-| 5 | Turn ID stability/cleanup | HIGH | 48, 399, 456-464 | Low |
-| 6 | Test/Virtuoso parity | MEDIUM | 407, 545-609 | High |
-| 7 | Retry with orphan | HIGH | 340-346 | Low |
-| 8 | Footer context coupling | MEDIUM | 185-202, 245, 477 | Medium |
-| 9 | Empty turn opacity | MEDIUM | 441, 466 | Low |
+| #   | Edge Case                  | Risk         | Lines             | Fix Effort |
+| --- | -------------------------- | ------------ | ----------------- | ---------- |
+| 1   | Orphaned assistant turn ID | HIGH         | 56-64, 399        | Low        |
+| 2   | Undo/retry array indices   | **CRITICAL** | 245-247, 304-337  | Medium     |
+| 3   | Multi-msg duration calc    | HIGH         | 163-174           | Low        |
+| 4   | Streaming race condition   | **CRITICAL** | 437, 554          | Medium     |
+| 5   | Turn ID stability/cleanup  | HIGH         | 48, 399, 456-464  | Low        |
+| 6   | Test/Virtuoso parity       | MEDIUM       | 407, 545-609      | High       |
+| 7   | Retry with orphan          | HIGH         | 340-346           | Low        |
+| 8   | Footer context coupling    | MEDIUM       | 185-202, 245, 477 | Medium     |
+| 9   | Empty turn opacity         | MEDIUM       | 441, 466          | Low        |
 
 ---
 
 ## ✅ IMPLEMENTATION CHECKLIST
 
 ### CRITICAL FIXES (Do First - 6-8 hours)
+
 - [ ] Edge Case 2: Refactor undo/retry to use turn structure
   - Location: `MessagesList.tsx` lines 245-247, 304-337
   - Document: TURN_GROUPING_REGRESSION_HUNT.md, Edge Case 2
@@ -112,6 +124,7 @@ This regression hunt consists of three complementary documents:
   - Quick Ref: "Fix 1: Orphan Turn ID"
 
 ### HIGH-PRIORITY FIXES (Next - 3-4 hours)
+
 - [ ] Edge Case 5: Add expansion state cleanup
   - Quick Ref: "Fix 4: Expansion State Cleanup"
   - Add: `useEffect` on `expandedTurnIds`
@@ -132,6 +145,7 @@ This regression hunt consists of three complementary documents:
   - Only fade if `isTurnWorking`
 
 ### MEDIUM-PRIORITY POLISH (Later - 4-6 hours)
+
 - [ ] Edge Case 6: Test/Virtuoso parity
   - Extract common rendering logic
   - Add test-mode config to Virtuoso
@@ -141,6 +155,7 @@ This regression hunt consists of three complementary documents:
 ## 🧪 TEST REQUIREMENTS
 
 ### Unit Tests
+
 - `groupMessagesIntoTurns([])` → `[]`
 - `groupMessagesIntoTurns([assistant])` → orphan turn
 - Orphan turn ID stability
@@ -149,6 +164,7 @@ This regression hunt consists of three complementary documents:
 See: TURN_GROUPING_QUICK_REF.md "Test Templates"
 
 ### E2E Tests
+
 - **Existing:** `undo.spec.ts`, `retry.spec.ts` - verify still pass
 - **New:** Undo with multi-assistant turn
 - **New:** Retry with orphaned assistant
@@ -161,6 +177,7 @@ See: TURN_GROUPING_REGRESSION_HUNT.md Section 7
 ## 🔍 KEY FILES TO REVIEW
 
 ### Production Code
+
 - `src/components/chat/MessagesList.tsx` - Main file
   - Lines 41-70: `groupMessagesIntoTurns()`
   - Lines 82-182: `summarizeTurn()`
@@ -171,11 +188,13 @@ See: TURN_GROUPING_REGRESSION_HUNT.md Section 7
   - Lines 591-609: Virtuoso render
 
 ### Existing Tests
+
 - `e2e-tests/undo.spec.ts` - Undo behavior
 - `e2e-tests/retry.spec.ts` - Retry behavior
 - `src/__tests__/ai_messages_cleanup.test.ts` - Message handling
 
 ### Related Code
+
 - `src/hooks/useStreamChat.ts` - Streaming implementation
 - `src/ipc/types/chat.ts` - Message/Chat types
 - `src/components/chat-v2/SessionTurn.tsx` - Rendering component
@@ -231,14 +250,15 @@ A: Undo/retry will fail on multi-turn chats, streaming UI bugs, flaky E2E tests,
 
 ## 📊 DOCUMENT STATISTICS
 
-| Document | Size | Content | Read Time |
-|----------|------|---------|-----------|
-| SUMMARY | 8.2 KB | Findings, action plan | 5-10 min |
-| QUICK_REF | 5.3 KB | Checklists, templates | 3-5 min |
-| REGRESSION_HUNT | 24 KB | Deep analysis | 20-30 min |
-| **TOTAL** | **37.5 KB** | **Complete analysis** | **30-45 min** |
+| Document        | Size        | Content               | Read Time     |
+| --------------- | ----------- | --------------------- | ------------- |
+| SUMMARY         | 8.2 KB      | Findings, action plan | 5-10 min      |
+| QUICK_REF       | 5.3 KB      | Checklists, templates | 3-5 min       |
+| REGRESSION_HUNT | 24 KB       | Deep analysis         | 20-30 min     |
+| **TOTAL**       | **37.5 KB** | **Complete analysis** | **30-45 min** |
 
 **Analysis Scope:**
+
 - 9 edge cases identified
 - 3 CRITICAL, 5 HIGH, 1 MEDIUM
 - 612+ LOC reviewed

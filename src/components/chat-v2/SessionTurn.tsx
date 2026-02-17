@@ -118,7 +118,12 @@ export function SessionTurn({
       )}
 
       {hasSteps && (
-        <div className={cn("sticky z-10 bg-background", hasUserMessage ? "top-[28px]" : "top-0")}>
+        <div
+          className={cn(
+            "sticky z-10 bg-background",
+            hasUserMessage ? "top-[28px]" : "top-0",
+          )}
+        >
           <button
             type="button"
             onClick={onToggleSteps}

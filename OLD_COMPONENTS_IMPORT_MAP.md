@@ -1,4 +1,4 @@
-# Old Anyon* Component Import Analysis
+# Old Anyon\* Component Import Analysis
 
 ## 🎯 Status: SAFE TO DELETE 27 COMPONENTS
 
@@ -8,19 +8,20 @@ Search completed across entire `src/` directory. Results confirm that the migrat
 
 ## 📌 Quick Reference
 
-| File | Status | Why |
-|------|--------|-----|
-| `AnyonMarkdownParser.tsx` | 🟢 KEEP | Core component - imports ALL tools from chat-v2/tools ✅ |
-| `AnyonThink.tsx` | 🟢 KEEP | Used by AnyonMarkdownParser rendering pipeline |
-| `AnyonWebSearchResult.tsx` | 🟢 KEEP | Used by AnyonMarkdownParser rendering pipeline |
-| `AnyonTokenSavings.tsx` | 🟢 KEEP | Dependency of AnyonThink |
-| All other 27 Anyon* components | 🔴 DELETE | Zero imports anywhere in codebase |
+| File                            | Status    | Why                                                      |
+| ------------------------------- | --------- | -------------------------------------------------------- |
+| `AnyonMarkdownParser.tsx`       | 🟢 KEEP   | Core component - imports ALL tools from chat-v2/tools ✅ |
+| `AnyonThink.tsx`                | 🟢 KEEP   | Used by AnyonMarkdownParser rendering pipeline           |
+| `AnyonWebSearchResult.tsx`      | 🟢 KEEP   | Used by AnyonMarkdownParser rendering pipeline           |
+| `AnyonTokenSavings.tsx`         | 🟢 KEEP   | Dependency of AnyonThink                                 |
+| All other 27 Anyon\* components | 🔴 DELETE | Zero imports anywhere in codebase                        |
 
 ---
 
 ## 🔍 Search Methodology
 
 ### ✅ Verified: No External Imports
+
 ```bash
 # Command: Find all imports of old Anyon* components
 grep -r "import.*from.*chat" src/ --include="*.tsx" --include="*.ts" | \
@@ -30,11 +31,12 @@ grep -r "import.*from.*chat" src/ --include="*.tsx" --include="*.ts" | \
 # Result: ZERO matches found
 ```
 
-**Conclusion**: No files outside `src/components/chat/` import any old Anyon* components.
+**Conclusion**: No files outside `src/components/chat/` import any old Anyon\* components.
 
 ---
 
 ### ✅ Verified: AnyonMarkdownParser Updated
+
 ```bash
 # Command: Check imports in AnyonMarkdownParser.tsx
 head -50 src/components/chat/AnyonMarkdownParser.tsx | grep "import.*from"
@@ -48,7 +50,7 @@ import {
 } from "../chat-v2/tools";
 ```
 
-**Conclusion**: Migration is complete. The parser no longer imports from old Anyon* files.
+**Conclusion**: Migration is complete. The parser no longer imports from old Anyon\* files.
 
 ---
 
@@ -90,25 +92,30 @@ src/components/chat/OpenCodeTool.tsx
 ## 🔄 Components to Keep & Their Dependencies
 
 ### 1. `AnyonMarkdownParser.tsx`
+
 - **Used by**: `ChatMessage.tsx` (active chat message rendering)
 - **Imports from**: `../chat-v2/tools` (30 new tool components)
 - **Status**: ✅ Ready to keep
 
 ### 2. `AnyonThink.tsx`
+
 - **Used by**: Rendered via AnyonMarkdownParser tag handling
 - **Imports**: `VanillaMarkdownParser`, `AnyonTokenSavings`
 - **Status**: ✅ Keep as dependency
 
 ### 3. `AnyonWebSearchResult.tsx`
+
 - **Used by**: Rendered via AnyonMarkdownParser tag handling
 - **Imports**: `VanillaMarkdownParser`
 - **Status**: ✅ Keep as dependency
 
 ### 4. `AnyonTokenSavings.tsx`
+
 - **Used by**: `AnyonThink.tsx`
 - **Status**: ✅ Keep as dependency
 
 ### 5. `VanillaMarkdownParser` (exported from AnyonMarkdownParser.tsx)
+
 - **Used by**:
   - `ChatMessage.tsx` (user messages)
   - `AnyonThink.tsx`
@@ -123,13 +130,16 @@ src/components/chat/OpenCodeTool.tsx
 ## ⚠️ Important Notes
 
 ### Note 1: Duplicate VanillaMarkdownParser
+
 Two implementations exist:
+
 - `src/components/chat/AnyonMarkdownParser.tsx` (canonical, being used)
 - `src/components/LoadingBlock.tsx` (duplicate)
 
 Consider unifying in a future refactor.
 
 ### Note 2: Old Spinner Component
+
 The request mentioned searching for "old Spinner from chat-v2/Spinner". This file doesn't match any imports found - either it's unused or the name has changed. Verify separately if needed.
 
 ---
@@ -139,7 +149,7 @@ The request mentioned searching for "old Spinner from chat-v2/Spinner". This fil
 1. **Verify** `npm run build` passes
 2. **Delete** all 27 orphaned files
 3. **Test** application startup and chat message rendering
-4. **Commit** with message: "Remove unused legacy Anyon* components after chat-v2 migration"
+4. **Commit** with message: "Remove unused legacy Anyon\* components after chat-v2 migration"
 
 ---
 
@@ -150,4 +160,3 @@ The request mentioned searching for "old Spinner from chat-v2/Spinner". This fil
 - **Excluded**: node_modules, .storybook, build artifacts
 - **Search patterns used**: 25+ variations of component names
 - **Results**: All negative (confirming orphaned status)
-

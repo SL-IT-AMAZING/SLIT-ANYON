@@ -241,11 +241,7 @@ export const WithPermission: Story = {
     childTools: sisyphusTools,
     running: true,
     permissionContent: (
-      <PermissionPrompt
-        onAllowOnce={fn()}
-        onAllowAlways={fn()}
-        onDeny={fn()}
-      />
+      <PermissionPrompt onAllowOnce={fn()} onAllowAlways={fn()} onDeny={fn()} />
     ),
   },
 };

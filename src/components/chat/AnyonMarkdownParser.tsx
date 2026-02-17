@@ -547,16 +547,11 @@ export function renderCustomTag(
       );
 
     case "anyon-database-schema":
-      return (
-        <DatabaseSchemaTool status={status}>{content}</DatabaseSchemaTool>
-      );
+      return <DatabaseSchemaTool status={status}>{content}</DatabaseSchemaTool>;
 
     case "anyon-supabase-table-schema":
       return (
-        <SupabaseTableSchemaTool
-          table={attributes.table || ""}
-          status={status}
-        >
+        <SupabaseTableSchemaTool table={attributes.table || ""} status={status}>
           {content}
         </SupabaseTableSchemaTool>
       );
@@ -570,10 +565,7 @@ export function renderCustomTag(
 
     case "anyon-status":
       return (
-        <StatusTool
-          title={attributes.title || "Processing..."}
-          status={status}
-        >
+        <StatusTool title={attributes.title || "Processing..."} status={status}>
           {content}
         </StatusTool>
       );

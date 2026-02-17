@@ -3,7 +3,11 @@ import type React from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { OpenRouterSetupBanner } from "../SetupBanner";
-import { SessionTurn, type StepItem, computeStatus } from "../chat-v2/SessionTurn";
+import {
+  SessionTurn,
+  type StepItem,
+  computeStatus,
+} from "../chat-v2/SessionTurn";
 import { getToolIcon } from "../chat-v2/tools";
 import {
   getState,
@@ -106,7 +110,10 @@ function groupMessagesIntoTurns(messages: Message[]): MessageTurn[] {
 }
 
 function formatDuration(from: Date, to: Date): string {
-  const seconds = Math.max(1, Math.round((to.getTime() - from.getTime()) / 1000));
+  const seconds = Math.max(
+    1,
+    Math.round((to.getTime() - from.getTime()) / 1000),
+  );
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remaining = seconds % 60;
@@ -170,8 +177,10 @@ function summarizeTurn(
       const isRunning =
         tagInfo.tag === "opencode-tool"
           ? tagInfo.attributes.status === "running"
-          : getState({ isStreaming: isTurnWorking, inProgress: tagInfo.inProgress }) ===
-            "pending";
+          : getState({
+              isStreaming: isTurnWorking,
+              inProgress: tagInfo.inProgress,
+            }) === "pending";
 
       if (isRunning) {
         activeToolName = statusToolName;
@@ -204,9 +213,13 @@ function summarizeTurn(
   }
 
   let duration: string | undefined;
-  const assistantWithCreatedAt = turn.assistantMessages.filter((m) => m.createdAt);
+  const assistantWithCreatedAt = turn.assistantMessages.filter(
+    (m) => m.createdAt,
+  );
   if (assistantWithCreatedAt.length > 0) {
-    const start = new Date(assistantWithCreatedAt[0].createdAt as string | Date);
+    const start = new Date(
+      assistantWithCreatedAt[0].createdAt as string | Date,
+    );
     const end = new Date(
       assistantWithCreatedAt[assistantWithCreatedAt.length - 1].createdAt as
         | string
@@ -391,7 +404,10 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                   }
 
                   // Find the last user message
-                  const lastUserMessage = findLastMessageByRole(messages, "user");
+                  const lastUserMessage = findLastMessageByRole(
+                    messages,
+                    "user",
+                  );
                   if (!lastUserMessage) {
                     console.error("No user message found");
                     return;
@@ -448,7 +464,9 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const setMessagesById = useSetAtom(chatMessagesByIdAtom);
     const [isUndoLoading, setIsUndoLoading] = useState(false);
     const [isRetryLoading, setIsRetryLoading] = useState(false);
-    const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(new Set());
+    const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(
+      new Set(),
+    );
     const selectedChatId = useAtomValue(selectedChatIdAtom);
     const { userBudget } = useUserBudgetInfo();
 

@@ -12,27 +12,28 @@ test("retry - should work", async ({ po }) => {
   await po.snapshotMessages();
 });
 
-testSkipIfWindows("retry - local-agent multi tool turn should work", async ({
-  po,
-}) => {
-  await po.setUpAnyonPro({ localAgent: true });
-  await po.importApp("minimal");
-  await po.selectLocalAgentMode();
+testSkipIfWindows(
+  "retry - local-agent multi tool turn should work",
+  async ({ po }) => {
+    await po.setUpAnyonPro({ localAgent: true });
+    await po.importApp("minimal");
+    await po.selectLocalAgentMode();
 
-  await po.sendPrompt("tc=local-agent/parallel-tools");
-  await po.snapshotMessages();
-  await po.snapshotAppFiles({
-    name: "before-retry-local-agent-parallel-tools",
-    files: ["src/utils/math.ts", "src/utils/string.ts"],
-  });
+    await po.sendPrompt("tc=local-agent/parallel-tools");
+    await po.snapshotMessages();
+    await po.snapshotAppFiles({
+      name: "before-retry-local-agent-parallel-tools",
+      files: ["src/utils/math.ts", "src/utils/string.ts"],
+    });
 
-  await po.dismissAllToasts();
-  await po.clickRetry();
-  await po.expectNoToast();
+    await po.dismissAllToasts();
+    await po.clickRetry();
+    await po.expectNoToast();
 
-  await po.snapshotMessages();
-  await po.snapshotAppFiles({
-    name: "after-retry-local-agent-parallel-tools",
-    files: ["src/utils/math.ts", "src/utils/string.ts"],
-  });
-});
+    await po.snapshotMessages();
+    await po.snapshotAppFiles({
+      name: "after-retry-local-agent-parallel-tools",
+      files: ["src/utils/math.ts", "src/utils/string.ts"],
+    });
+  },
+);

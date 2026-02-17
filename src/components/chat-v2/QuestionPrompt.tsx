@@ -206,10 +206,7 @@ export function QuestionPrompt({
             )}
 
             {editing && (
-              <form
-                className="flex gap-2 mt-2"
-                onSubmit={handleCustomSubmit}
-              >
+              <form className="flex gap-2 mt-2" onSubmit={handleCustomSubmit}>
                 <input
                   autoFocus
                   className="flex-1 px-3 py-1.5 text-sm rounded-md border border-border bg-background outline-none focus:border-foreground/50"

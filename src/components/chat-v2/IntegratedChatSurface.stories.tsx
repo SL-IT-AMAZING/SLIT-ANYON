@@ -202,11 +202,13 @@ export const DesktopReplica: Story = {
                   questions={[
                     {
                       header: "Scope",
-                      question: "Which visual fidelity level do you want for this migration?",
+                      question:
+                        "Which visual fidelity level do you want for this migration?",
                       options: [
                         {
                           label: "Exact desktop parity",
-                          description: "Prioritize behavior and structure parity.",
+                          description:
+                            "Prioritize behavior and structure parity.",
                         },
                         {
                           label: "Style parity only",

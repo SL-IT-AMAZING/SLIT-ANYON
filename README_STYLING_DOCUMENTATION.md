@@ -11,6 +11,7 @@ Complete, exhaustive mapping of all input/composer styling patterns in the ANYON
 ## 📚 Five Documents, One Mission
 
 ### 1️⃣ **STYLING_DOCUMENTATION_INDEX.md** ← START HERE FIRST
+
 Your navigation guide to all documentation.
 
 - Document overview and purposes
@@ -25,9 +26,11 @@ Your navigation guide to all documentation.
 ---
 
 ### 2️⃣ **MAPPING_SUMMARY.md**
+
 Executive overview of the entire mapping project.
 
 **Contains:**
+
 - Mission accomplished statement
 - Components analyzed (6 covered)
 - Two design eras identified (Legacy vs Modern)
@@ -42,9 +45,11 @@ Executive overview of the entire mapping project.
 ---
 
 ### 3️⃣ **STYLING_QUICK_REFERENCE.md**
+
 Fast-lookup guide with immediately usable patterns.
 
 **Contains:**
+
 - TL;DR standards (copy-paste ready)
 - Component-specific patterns table
 - Color palette quick map
@@ -61,9 +66,11 @@ Fast-lookup guide with immediately usable patterns.
 ---
 
 ### 4️⃣ **STYLING_COMPARATIVE_ANALYSIS.md**
+
 Side-by-side detailed analysis of all implementations.
 
 **Contains:**
+
 - Visual & structural comparison matrices
 - Container styling evolution (3-way comparison)
 - Spacing detailed comparison
@@ -80,9 +87,11 @@ Side-by-side detailed analysis of all implementations.
 ---
 
 ### 5️⃣ **INPUT_STYLING_PATTERNS.md**
+
 Exhaustive 12-section deep-dive reference with line-by-line code.
 
 **Contains:**
+
 1. HomeChatInput styling (lines 81-172)
 2. ChatInput styling (lines 407-547)
 3. LexicalChatInput editor patterns
@@ -105,6 +114,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ## 🚀 Quick Start Guide
 
 ### "I need to implement the restyle right now"
+
 1. Read **STYLING_DOCUMENTATION_INDEX.md** (2 min)
 2. Skim **MAPPING_SUMMARY.md** Section "Concrete Recommendations" (2 min)
 3. Keep **STYLING_QUICK_REFERENCE.md** open while coding
@@ -115,6 +125,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ---
 
 ### "I need to understand why before implementing"
+
 1. Read **MAPPING_SUMMARY.md** fully (10 min)
 2. Read **STYLING_COMPARATIVE_ANALYSIS.md** (20 min)
 3. Reference **INPUT_STYLING_PATTERNS.md** for specifics as needed
@@ -125,6 +136,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ---
 
 ### "I'm modernizing a legacy component"
+
 1. Open **STYLING_COMPARATIVE_ANALYSIS.md** Section 8 (Evolution Timeline)
 2. Find your component in the timeline
 3. Follow the migration path section
@@ -135,6 +147,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ---
 
 ### "I need one specific pattern right now"
+
 1. Check **STYLING_QUICK_REFERENCE.md** first (fastest)
 2. Then **INPUT_STYLING_PATTERNS.md** (most comprehensive)
 3. Use file references to find original implementations
@@ -146,6 +159,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ## 📋 What's Documented
 
 ### ✅ Components (5 Primary)
+
 - HomeChatInput (legacy style reference)
 - ChatInput (modern reference - **use this**)
 - LexicalChatInput (rich text with mentions)
@@ -153,6 +167,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 - Thread (layout with footer)
 
 ### ✅ Patterns (All Styling Aspects)
+
 - Container styling (radius, border, shadow, background)
 - Input row styling (spacing, flex layout)
 - Button styling (send, stop, secondary)
@@ -162,6 +177,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 - Responsive behavior
 
 ### ✅ Design System
+
 - Color palette (semantic tokens)
 - Spacing conventions (px, py, pb, pt, gap)
 - Shadow scale (sm, lg)
@@ -170,6 +186,7 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 - Interactive states (hover, focus, disabled, drag)
 
 ### ✅ Additional Coverage
+
 - UI Components (Button, Input, Card, Tooltip, Dropdown)
 - Thread system (ThreadViewport, ThreadFooter, ThreadWelcome)
 - Design tokens (globals.css variables)
@@ -180,23 +197,27 @@ Exhaustive 12-section deep-dive reference with line-by-line code.
 ## 🎯 Core Recommendations (TL;DR)
 
 ### Modern Standard Pattern
+
 Use **ChatInput** as reference for all new input components:
 
 ```tsx
 // Container
-className="border border-input rounded-2xl bg-background shadow-sm"
+className = "border border-input rounded-2xl bg-background shadow-sm";
 
 // Input Row
-className="flex items-end gap-2 px-3 pb-2 pt-1"
+className = "flex items-end gap-2 px-3 pb-2 pt-1";
 
 // Send Button
-className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none";
 
 // Stop Button
-className="flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background hover:bg-muted"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background hover:bg-muted";
 ```
 
 ### DO NOT
+
 - ❌ Use `rounded-xl` (legacy, HomeChatInput)
 - ❌ Use `border-border` on main container
 - ❌ Use `bg-primary` for send button
@@ -227,20 +248,21 @@ className="flex items-center justify-center size-8 shrink-0 rounded-full border 
 
 ## 📊 Documentation Statistics
 
-| Document | Size | Sections | Words | Purpose |
-|----------|------|----------|-------|---------|
-| STYLING_DOCUMENTATION_INDEX.md | 11K | 8 | ~2000 | Navigation |
-| MAPPING_SUMMARY.md | 9.2K | 10 | ~2100 | Overview |
-| STYLING_QUICK_REFERENCE.md | 4.8K | 8 | ~1200 | Fast lookup |
-| STYLING_COMPARATIVE_ANALYSIS.md | 11K | 10 | ~2900 | Analysis |
-| INPUT_STYLING_PATTERNS.md | 16K | 12 | ~3800 | Reference |
-| **TOTAL** | **41K** | **40+** | **~12000** | Complete library |
+| Document                        | Size    | Sections | Words      | Purpose          |
+| ------------------------------- | ------- | -------- | ---------- | ---------------- |
+| STYLING_DOCUMENTATION_INDEX.md  | 11K     | 8        | ~2000      | Navigation       |
+| MAPPING_SUMMARY.md              | 9.2K    | 10       | ~2100      | Overview         |
+| STYLING_QUICK_REFERENCE.md      | 4.8K    | 8        | ~1200      | Fast lookup      |
+| STYLING_COMPARATIVE_ANALYSIS.md | 11K     | 10       | ~2900      | Analysis         |
+| INPUT_STYLING_PATTERNS.md       | 16K     | 12       | ~3800      | Reference        |
+| **TOTAL**                       | **41K** | **40+**  | **~12000** | Complete library |
 
 ---
 
 ## 🔗 Cross-References
 
 ### By Component
+
 - **HomeChatInput** → MAPPING_SUMMARY Section 1 + STYLING_COMPARATIVE_ANALYSIS Section 1
 - **ChatInput** → STYLING_QUICK_REFERENCE "Component-Specific Patterns" ⭐ PRIMARY
 - **Composer v2** → STYLING_COMPARATIVE_ANALYSIS Section 3
@@ -248,6 +270,7 @@ className="flex items-center justify-center size-8 shrink-0 rounded-full border 
 - **Thread** → INPUT_STYLING_PATTERNS Section 4
 
 ### By Use Case
+
 - **Need pattern now** → STYLING_QUICK_REFERENCE.md
 - **Need understanding** → STYLING_COMPARATIVE_ANALYSIS.md
 - **Need overview** → MAPPING_SUMMARY.md
@@ -325,4 +348,3 @@ className="flex items-center justify-center size-8 shrink-0 rounded-full border 
 **Ready to code**: Open STYLING_QUICK_REFERENCE.md and follow the checklist
 
 ✨ You're all set. Implementation can begin immediately. ✨
-

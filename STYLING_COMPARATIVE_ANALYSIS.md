@@ -5,15 +5,20 @@
 ### 1. CONTAINER STYLING COMPARISON
 
 #### HomeChatInput (Legacy)
+
 ```tsx
 <div className="p-4">
-  <div className={`relative flex flex-col border border-border rounded-xl bg-background`} />
+  <div
+    className={`relative flex flex-col border border-border rounded-xl bg-background`}
+  />
 </div>
 ```
+
 **Characteristics:**
+
 - **Outer padding**: `p-4` (1rem full padding)
 - **Border radius**: `rounded-xl` (12px) - **OLDER STYLE**
-- **Border color**: `border-border` 
+- **Border color**: `border-border`
 - **Shadow**: None
 - **Visual weight**: Lighter, minimal elevation
 - **Use case**: Home screen, less formal context
@@ -21,12 +26,15 @@
 ---
 
 #### ChatInput (Current Standard ⭐)
+
 ```tsx
 <div className="px-3 pb-4 md:pb-6">
   <div className={`relative flex flex-col border border-input rounded-2xl bg-background shadow-sm ${...}`} />
 </div>
 ```
+
 **Characteristics:**
+
 - **Outer padding**: `px-3 pb-4 md:pb-6` (responsive)
 - **Border radius**: `rounded-2xl` (16px) - **MODERN STANDARD** ✅
 - **Border color**: `border-input` (slightly warmer than `border-border`)
@@ -38,13 +46,16 @@
 ---
 
 #### Composer v2 (Modern Minimal)
+
 ```tsx
 <div className={cn(
   "rounded-2xl border border-input bg-background shadow-sm",
   disabled && "opacity-50 pointer-events-none"
 )}>
 ```
+
 **Characteristics:**
+
 - **No outer wrapper**: Direct styling on container
 - **Border radius**: `rounded-2xl` (16px) - matches ChatInput ✅
 - **Border color**: `border-input` - consistent
@@ -58,9 +69,11 @@
 ### 2. INTERNAL SPACING COMPARISON
 
 #### HomeChatInput Input Row
+
 ```tsx
 <div className="flex items-end gap-2 px-4 pb-3 pt-2">
 ```
+
 - **Horizontal**: `px-4` = 1rem
 - **Bottom**: `pb-3` = 0.75rem
 - **Top**: `pt-2` = 0.5rem
@@ -68,9 +81,11 @@
 - **Profile**: Generous horizontal, asymmetric vertical
 
 #### ChatInput Input Row
+
 ```tsx
 <div className="flex items-end gap-2 px-3 pb-2 pt-1">
 ```
+
 - **Horizontal**: `px-3` = 0.75rem (tighter)
 - **Bottom**: `pb-2` = 0.5rem (tighter)
 - **Top**: `pt-1` = 0.25rem (tighter)
@@ -80,9 +95,11 @@
 **Verdict**: ChatInput is the modern refined approach. ✅
 
 #### Composer Textarea Row
+
 ```tsx
 <textarea className="px-4 pt-3 pb-2 ... min-h-14 max-h-[200px]" />
 ```
+
 - **Horizontal**: `px-4` = 1rem
 - **Top**: `pt-3` = 0.75rem
 - **Bottom**: `pb-2` = 0.5rem
@@ -94,26 +111,32 @@
 ### 3. CONTROL ROW COMPARISON
 
 #### HomeChatInput
+
 ```tsx
 <div className="px-3 pb-3 flex items-center justify-between">
 ```
+
 - **Horizontal**: `px-3` = 0.75rem
 - **Bottom**: `pb-3` = 0.75rem
 - **Symmetrical bottom padding** with input row
 
 #### ChatInput
+
 ```tsx
 <div className="px-3 pb-2 flex items-center justify-between">
 ```
+
 - **Horizontal**: `px-3` = 0.75rem
 - **Bottom**: `pb-2` = 0.5rem
 - **Tighter** than HomeChatInput
 - **Consistent** with input row spacing
 
 #### Composer Button Row
+
 ```tsx
 <div className="flex items-center justify-end px-3 pb-3">
 ```
+
 - **Horizontal**: `px-3` = 0.75rem
 - **Bottom**: `pb-3` = 0.75rem
 - **Consistent** vertical spacing
@@ -123,108 +146,126 @@
 ### 4. BUTTON STYLING COMPARISON
 
 #### Send Button (HomeChatInput)
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground";
 ```
-| Aspect | Value |
-|--------|-------|
-| **Size** | `size-8` (32px) |
-| **Active BG** | `bg-primary` |
-| **Active Text** | `text-primary-foreground` |
-| **Hover** | `hover:bg-primary/90` |
-| **Disabled** | `opacity-50 + color change` |
-| **Semantic** | Color-based semantic meaning |
+
+| Aspect          | Value                        |
+| --------------- | ---------------------------- |
+| **Size**        | `size-8` (32px)              |
+| **Active BG**   | `bg-primary`                 |
+| **Active Text** | `text-primary-foreground`    |
+| **Hover**       | `hover:bg-primary/90`        |
+| **Disabled**    | `opacity-50 + color change`  |
+| **Semantic**    | Color-based semantic meaning |
 
 ---
 
 #### Send Button (ChatInput)
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none";
 ```
-| Aspect | Value |
-|--------|-------|
-| **Size** | `size-8` (32px) - same |
-| **Active BG** | `bg-foreground` (darker, higher contrast) |
-| **Active Text** | `text-background` (lighter) |
-| **Hover** | `hover:bg-foreground/90` |
-| **Disabled** | `opacity-30 + pointer-events-none` |
-| **Semantic** | Value-based (dark/light) |
-| **Contrast** | Higher contrast than HomeChatInput |
+
+| Aspect          | Value                                     |
+| --------------- | ----------------------------------------- |
+| **Size**        | `size-8` (32px) - same                    |
+| **Active BG**   | `bg-foreground` (darker, higher contrast) |
+| **Active Text** | `text-background` (lighter)               |
+| **Hover**       | `hover:bg-foreground/90`                  |
+| **Disabled**    | `opacity-30 + pointer-events-none`        |
+| **Semantic**    | Value-based (dark/light)                  |
+| **Contrast**    | Higher contrast than HomeChatInput        |
 
 ---
 
 #### Send Button (Composer v2)
+
 ```tsx
 className={cn(
   "flex size-8 items-center justify-center rounded-full bg-foreground text-background transition-colors hover:bg-foreground/90",
   !canSend && "opacity-30 pointer-events-none",
 )}
 ```
-| Aspect | Value |
-|--------|-------|
-| **Size** | `size-8` |
-| **Active BG** | `bg-foreground` - same as ChatInput ✅ |
-| **Active Text** | `text-background` |
-| **Hover** | `hover:bg-foreground/90` |
-| **Disabled** | `opacity-30 pointer-events-none` |
-| **Transition** | Explicit `transition-colors` |
-| **Pattern** | Matches ChatInput exactly |
+
+| Aspect          | Value                                  |
+| --------------- | -------------------------------------- |
+| **Size**        | `size-8`                               |
+| **Active BG**   | `bg-foreground` - same as ChatInput ✅ |
+| **Active Text** | `text-background`                      |
+| **Hover**       | `hover:bg-foreground/90`               |
+| **Disabled**    | `opacity-30 pointer-events-none`       |
+| **Transition**  | Explicit `transition-colors`           |
+| **Pattern**     | Matches ChatInput exactly              |
 
 ---
 
 #### Stop Button (HomeChatInput - Disabled State)
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full bg-muted text-muted-foreground cursor-not-allowed"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full bg-muted text-muted-foreground cursor-not-allowed";
 ```
-| Aspect | Value |
-|--------|-------|
-| **Style** | Static disabled appearance |
-| **Background** | `bg-muted` (neutral) |
-| **Text** | `text-muted-foreground` |
-| **Cursor** | `cursor-not-allowed` |
-| **Appearance** | Visually disabled |
+
+| Aspect         | Value                      |
+| -------------- | -------------------------- |
+| **Style**      | Static disabled appearance |
+| **Background** | `bg-muted` (neutral)       |
+| **Text**       | `text-muted-foreground`    |
+| **Cursor**     | `cursor-not-allowed`       |
+| **Appearance** | Visually disabled          |
 
 ---
 
 #### Stop Button (ChatInput - Streaming State)
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background transition-colors hover:bg-muted"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background transition-colors hover:bg-muted";
 ```
-| Aspect | Value |
-|--------|-------|
-| **Style** | Interactive outline button |
-| **Border** | `border border-border` |
+
+| Aspect         | Value                             |
+| -------------- | --------------------------------- |
+| **Style**      | Interactive outline button        |
+| **Border**     | `border border-border`            |
 | **Background** | `bg-background` (transparent-ish) |
-| **Hover** | `hover:bg-muted` |
-| **Cursor** | Implicit (not disabled) |
-| **Appearance** | Active, clickable |
+| **Hover**      | `hover:bg-muted`                  |
+| **Cursor**     | Implicit (not disabled)           |
+| **Appearance** | Active, clickable                 |
 
 ---
 
 #### Stop Button (Composer v2)
+
 ```tsx
-className="flex size-8 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-muted"
+className =
+  "flex size-8 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-muted";
 ```
-| Aspect | Value |
-|--------|-------|
-| **Style** | Outline button (matches ChatInput) ✅ |
-| **Border** | `border border-border` |
-| **Background** | `bg-background` |
-| **Hover** | `hover:bg-muted` |
-| **Transition** | Explicit transition |
-| **Pattern** | Identical to ChatInput |
+
+| Aspect         | Value                                 |
+| -------------- | ------------------------------------- |
+| **Style**      | Outline button (matches ChatInput) ✅ |
+| **Border**     | `border border-border`                |
+| **Background** | `bg-background`                       |
+| **Hover**      | `hover:bg-muted`                      |
+| **Transition** | Explicit transition                   |
+| **Pattern**    | Identical to ChatInput                |
 
 ---
 
 ### 5. LEXICAL EDITOR SPECIFIC
 
 #### ContentEditable Container
+
 ```tsx
-<ContentEditable
-  className="flex-1 px-4 pt-4 pb-2 focus:outline-none overflow-y-auto min-h-[44px] max-h-[200px] resize-none text-sm"
-/>
+<ContentEditable className="flex-1 px-4 pt-4 pb-2 focus:outline-none overflow-y-auto min-h-[44px] max-h-[200px] resize-none text-sm" />
 ```
+
 **Unique characteristics:**
+
 - **Min height**: `min-h-[44px]` (touch-friendly)
 - **Max height**: `max-h-[200px]` (prevents runaway growth)
 - **Vertical spacing**: `pt-4 pb-2` (asymmetric, top-heavy)
@@ -233,10 +274,14 @@ className="flex size-8 items-center justify-center rounded-full border border-bo
 - **Scroll**: `overflow-y-auto` (internal scrolling)
 
 #### Mention Menu
+
 ```tsx
-className="m-0 mb-1 min-w-[300px] w-auto max-h-64 overflow-y-auto bg-popover border border-border rounded-lg shadow-lg z-50"
+className =
+  "m-0 mb-1 min-w-[300px] w-auto max-h-64 overflow-y-auto bg-popover border border-border rounded-lg shadow-lg z-50";
 ```
+
 **Special styling:**
+
 - **Width**: `min-w-[300px]` (explicit minimum)
 - **Height**: `max-h-64` (capped at 256px)
 - **Radius**: `rounded-lg` (8px - smaller than containers)
@@ -249,12 +294,15 @@ className="m-0 mb-1 min-w-[300px] w-auto max-h-64 overflow-y-auto bg-popover bor
 ### 6. THREAD/FOOTER STYLING
 
 #### ThreadFooter (Sticky Container)
+
 ```tsx
 className={cn(
   "sticky bottom-0 mx-auto mt-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 overflow-visible rounded-t-3xl bg-background pb-4 md:pb-6",
 )}
 ```
+
 **Distinctive features:**
+
 - **Position**: `sticky bottom-0` (stays at bottom during scroll)
 - **Radius**: `rounded-t-3xl` (24px, only top corners - large)
 - **Max width**: `max-w-[var(--thread-max-width)]` (44rem = 704px)
@@ -271,26 +319,32 @@ className={cn(
 ### Three Button Patterns Identified
 
 #### Pattern A: Semantic Primary (HomeChatInput Send)
+
 ```
 bg-primary text-primary-foreground
 ```
+
 ✓ Aligns with site primary color  
 ✗ Less contrast in some themes  
 ✗ Depends on theme color scheme
 
 #### Pattern B: Value-Based (ChatInput & Composer Send) ⭐
+
 ```
 bg-foreground text-background
 ```
+
 ✓ **Highest contrast always**  
 ✓ **Works in light AND dark mode**  
 ✓ **Most accessible**  
 ✓ **Matches Composer v2**
 
 #### Pattern C: State-Based (Stop Button)
+
 ```
 border border-border bg-background hover:bg-muted
 ```
+
 ✓ Secondary, outline style  
 ✓ Subtle state change  
 ✓ Consistent across variants
@@ -331,23 +385,29 @@ Composer v2 (Modern Minimal)
 ### For NEW Components: Use ChatInput Pattern ✅
 
 **Container**
+
 ```tsx
-className="border border-input rounded-2xl bg-background shadow-sm"
+className = "border border-input rounded-2xl bg-background shadow-sm";
 ```
 
 **Input Row**
+
 ```tsx
-className="flex items-end gap-2 px-3 pb-2 pt-1"
+className = "flex items-end gap-2 px-3 pb-2 pt-1";
 ```
 
 **Send Button**
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none";
 ```
 
 **Stop Button**
+
 ```tsx
-className="flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background hover:bg-muted"
+className =
+  "flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background hover:bg-muted";
 ```
 
 ### Why This Pattern?
@@ -374,11 +434,12 @@ className={`relative flex flex-col border border-input rounded-2xl bg-background
 ```
 
 **Changes:**
+
 - `border-border` → `border-input` (more sophisticated)
 - `rounded-xl` → `rounded-2xl` (modern standard)
 - Add `shadow-sm` (elevation)
 
 **Spacing migrations:**
+
 - Input row: `px-4 pb-3 pt-2` → `px-3 pb-2 pt-1` (tighter, refined)
 - Control row: `px-3 pb-3` → `px-3 pb-2` (consistent tightness)
-

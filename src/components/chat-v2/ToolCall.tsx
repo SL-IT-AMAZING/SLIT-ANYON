@@ -90,7 +90,9 @@ export function ToolCall({
           </span>
         )}
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
-          {status === "running" && <LogoSpinner variant="strokeLoop" size={14} />}
+          {status === "running" && (
+            <LogoSpinner variant="strokeLoop" size={14} />
+          )}
           {status === "completed" && (
             <Check className="size-3.5 text-muted-foreground" />
           )}
