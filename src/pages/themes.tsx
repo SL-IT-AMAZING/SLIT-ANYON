@@ -12,8 +12,10 @@ import type { CustomTheme } from "@/ipc/types";
 import { showError } from "@/lib/toast";
 import { Palette, Plus } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ThemesPage() {
+  const { t } = useTranslation(["app", "common"]);
   const { customThemes, isLoading } = useCustomThemes();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -28,18 +30,19 @@ export default function ThemesPage() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold mr-4">
               <Palette className="inline-block h-8 w-8 mr-2" />
-              Themes
+              {t("library.themes.title", { ns: "app" })}
             </h1>
             <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> New Theme
+              <Plus className="mr-2 h-4 w-4" />
+              {t("library.themes.new", { ns: "app" })}
             </Button>
           </div>
 
           {isLoading ? (
-            <div>Loading...</div>
+            <div>{t("labels.loading", { ns: "common" })}</div>
           ) : customThemes.length === 0 ? (
             <div className="text-muted-foreground">
-              No custom themes yet. Create one to get started.
+              {t("library.themes.empty", { ns: "app" })}
             </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
@@ -60,6 +63,7 @@ export default function ThemesPage() {
 }
 
 function ThemeCard({ theme }: { theme: CustomTheme }) {
+  const { t } = useTranslation("app");
   const updateThemeMutation = useUpdateCustomTheme();
   const deleteThemeMutation = useDeleteCustomTheme();
   const isDeleting = deleteThemeMutation.isPending;
@@ -77,9 +81,8 @@ function ThemeCard({ theme }: { theme: CustomTheme }) {
     try {
       await deleteThemeMutation.mutateAsync(theme.id);
     } catch (error) {
-      showError(
-        `Failed to delete theme: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("library.themes.deleteFailed", { message }));
     }
   };
 
@@ -105,7 +108,7 @@ function ThemeCard({ theme }: { theme: CustomTheme }) {
             <EditThemeDialog theme={theme} onUpdateTheme={handleUpdate} />
             <DeleteConfirmationDialog
               itemName={theme.name}
-              itemType="Theme"
+              itemType={t("library.themes.itemType")}
               onDelete={handleDelete}
               isDeleting={isDeleting}
             />

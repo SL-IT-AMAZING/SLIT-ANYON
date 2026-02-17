@@ -11,7 +11,14 @@
     "experiments": "Experiments",
     "dangerZone": "Danger Zone"
   },
+  "search": {
+    "placeholder": "Search settings...",
+    "ariaLabel": "Search settings",
+    "clearAriaLabel": "Clear search",
+    "noResults": "No settings found"
+  },
   "general": {
+    "goBack": "Go Back",
     "theme": "Theme",
     "themeDescription": "Choose your preferred color theme.",
     "themeOptions": {
@@ -21,48 +28,186 @@
     },
     "language": "Language",
     "languageDescription": "Choose your preferred display language.",
+    "languagePlaceholder": "Select language",
+    "languageOptions": {
+      "en": "English",
+      "ko": "Korean"
+    },
+    "languageOptionDescriptions": {
+      "en": "Use English for the interface.",
+      "ko": "Use Korean for the interface."
+    },
     "zoom": "Zoom level",
     "zoomDescription": "Adjust the interface zoom level.",
+    "zoomPlaceholder": "Select zoom level",
+    "zoomLevelDescriptions": {
+      "90": "Slightly zoomed out to fit more content on screen.",
+      "100": "Default zoom level.",
+      "110": "Zoom in a little for easier reading.",
+      "125": "Large zoom for improved readability.",
+      "150": "Maximum zoom for maximum accessibility."
+    },
     "autoUpdate": "Auto-update",
     "autoUpdateDescription": "Automatically download and install updates.",
+    "autoUpdateChanged": "Auto-update setting changed",
+    "restartRequired": "You will need to restart ANYON for your settings to take effect.",
+    "restartAnyon": "Restart ANYON",
     "releaseChannel": "Release channel",
     "releaseChannelDescription": "Choose which version updates to receive.",
     "releaseChannelOptions": {
       "stable": "Stable",
       "beta": "Beta"
-    }
+    },
+    "releaseChannelStableNote": "Stable is recommended for most users.",
+    "releaseChannelBetaNote": "Beta receives more frequent updates but may have more bugs.",
+    "releaseChannelToasts": {
+      "stable": {
+        "title": "Using Stable release channel",
+        "description": "You'll stay on your current version until a newer stable release is available, or you can manually downgrade now.",
+        "action": "Download Stable"
+      },
+      "beta": {
+        "title": "Using Beta release channel",
+        "description": "You will need to restart ANYON for your settings to take effect.",
+        "action": "Restart ANYON"
+      }
+    },
+    "runtimeMode": "Runtime mode",
+    "runtimeModeDescription": "Choose whether to run apps directly on the local machine or in Docker containers.",
+    "runtimeModeUpdateFailed": "Failed to update runtime mode: {{message}}",
+    "runtimeModeOptions": {
+      "host": "Local (default)",
+      "docker": "Docker (experimental)"
+    },
+    "runtimeModeDockerWarningPrefix": "Docker mode is",
+    "runtimeModeDockerExperimental": "experimental",
+    "runtimeModeDockerWarningMiddle": "and requires",
+    "runtimeModeDockerDesktop": "Docker Desktop",
+    "runtimeModeDockerWarningSuffix": "to be installed and running.",
+    "nodePath": {
+      "title": "Node.js path configuration",
+      "browse": "Browse for Node.js",
+      "selecting": "Selecting...",
+      "resetDefault": "Reset to default",
+      "customPath": "Custom path:",
+      "systemPath": "System PATH:",
+      "customBadge": "Custom",
+      "notFound": "Not found",
+      "configured": "Node.js is properly configured and ready to use.",
+      "help": "Select the folder where Node.js is installed if it's not in your system PATH.",
+      "loading": "Loading...",
+      "systemPathUnavailable": "System PATH (not available)",
+      "updateSuccess": "Node.js path updated successfully",
+      "updateFailed": "Failed to set Node.js path: {{message}}",
+      "notFoundAtPath": "Could not find Node.js at the path '{{path}}'",
+      "resetSuccess": "Reset to system Node.js path",
+      "resetFailed": "Failed to reset Node.js path: {{message}}"
+    },
+    "appVersion": "App Version:"
   },
   "workflow": {
     "autoApprove": "Auto-approve",
     "autoApproveDescription": "Automatically approve AI-suggested changes.",
+    "autoApproveDisableHint": "Auto-approve enabled. You'll stop seeing approval prompts for AI changes.",
     "autoFix": "Auto-fix problems",
     "autoFixDescription": "Automatically fix detected issues.",
+    "autoFixDisableHint": "Auto-fix enabled. ANYON will automatically attempt to fix detected problems.",
     "autoExpandPreview": "Auto-expand preview panel",
-    "autoExpandPreviewDescription": "Automatically expand the preview panel when content is available."
+    "autoExpandPreviewDescription": "Automatically expand the preview panel when content is available.",
+    "chatCompletionNotification": "Show notification when chat completes",
+    "chatCompletionNotificationDescription": "Show a native notification when a chat response completes while the app is not focused."
   },
   "ai": {
     "model": "Model",
     "modelDescription": "Select the AI model to use.",
     "maxChatTurns": "Max chat turns",
     "maxChatTurnsDescription": "Maximum number of conversation turns in context.",
+    "maxChatTurnsLabel": "Maximum number of chat turns used in context",
+    "maxChatTurnsPlaceholder": "Select turns",
+    "maxChatTurnsOptions": {
+      "economy": "Economy (2)",
+      "default": "Default ({{count}})",
+      "plus": "Plus (5)",
+      "high": "High (10)",
+      "max": "Max (100)"
+    },
+    "maxChatTurnsDescriptions": {
+      "economy": "Minimal context to reduce token usage and improve response times.",
+      "default": "Balanced context size for most conversations.",
+      "plus": "Slightly higher context size for detailed conversations.",
+      "high": "Extended context for complex conversations requiring more history.",
+      "max": "Maximum context (not recommended due to cost and speed)."
+    },
     "thinkingBudget": "Thinking budget",
     "thinkingBudgetDescription": "Control the AI's thinking depth.",
+    "thinkingBudgetPlaceholder": "Select budget",
     "thinkingBudgetOptions": {
       "low": "Low",
       "medium": "Medium (default)",
       "high": "High"
+    },
+    "thinkingBudgetDescriptions": {
+      "low": "Minimal thinking tokens for faster responses and lower costs.",
+      "medium": "Balanced thinking for most conversations.",
+      "high": "Extended thinking for complex problems requiring deep analysis."
+    },
+    "defaultChatMode": "Default chat mode",
+    "defaultChatModeDescription": "The chat mode used when creating new chats.",
+    "defaultChatModeOptions": {
+      "localAgent": {
+        "proTitle": "Agent",
+        "proDescription": "Better at bigger tasks",
+        "freeTitle": "Basic Agent",
+        "freeDescription": "Free tier (5 messages/day)"
+      },
+      "build": {
+        "title": "Build",
+        "description": "Generate and edit code"
+      },
+      "agent": {
+        "title": "Build with MCP",
+        "description": "Build with tools (MCP)"
+      }
+    },
+    "openCodeConnection": {
+      "label": "OpenCode connection",
+      "options": {
+        "proxy": "ANYON Pro (Proxy Server)",
+        "direct": "Direct (Your Subscription)"
+      },
+      "descriptions": {
+        "proxy": "Route AI requests through ANYON proxy server (requires ANYON Pro subscription).",
+        "direct": "Use your own OpenCode/Claude subscription directly (for development)."
+      },
+      "apiKeyLabel": "ANYON Pro API key",
+      "apiKeyPlaceholder": "anyon_...",
+      "save": "Save",
+      "saving": "Saving...",
+      "savedSuccess": "ANYON Pro API key saved",
+      "saveFailed": "Failed to save API key: {{message}}",
+      "deleteSuccess": "API key removed",
+      "deleteFailed": "Failed to remove API key: {{message}}",
+      "updateModeFailed": "Failed to update connection mode: {{message}}",
+      "directWarning": "Direct mode uses your personal OpenCode configuration. Make sure you have a valid Claude/OpenCode subscription."
     }
   },
   "telemetry": {
     "title": "Telemetry",
     "description": "Help us improve by sending anonymous usage data.",
     "optIn": "Share usage data",
-    "optOut": "Don't share"
+    "optOut": "Don't share",
+    "idLabel": "Telemetry ID:"
+  },
+  "experiments": {
+    "nativeGit": "Enable Native Git",
+    "nativeGitDescription": "This doesn't require any external Git installation and offers a faster, native-Git performance experience."
   },
   "dangerZone": {
     "title": "Danger Zone",
     "deleteData": "Delete all data",
     "deleteDataDescription": "This will permanently delete all your apps and settings.",
-    "deleteDataConfirm": "Are you sure? This action cannot be undone."
+    "deleteDataConfirm": "Are you sure? This action cannot be undone.",
+    "resetting": "Resetting...",
+    "resetSuccess": "Successfully reset everything. Restart the application."
   }
 }

@@ -172,7 +172,13 @@ const ErrorBanner = ({ error, onDismiss, onAIFix }: ErrorBannerProps) => {
 };
 
 // Preview iframe component
-export const PreviewIframe = ({ loading }: { loading: boolean }) => {
+export const PreviewIframe = ({
+  loading,
+  minimal = false,
+}: {
+  loading: boolean;
+  minimal?: boolean;
+}) => {
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const currentApp = useAtomValue(currentAppAtom);
   const { appUrl, originalUrl } = useAtomValue(appUrlAtom);
@@ -181,7 +187,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [errorMessage, setErrorMessage] = useAtom(previewErrorMessageAtom);
   const selectedChatId = useAtomValue(selectedChatIdAtom);
-  const { streamMessage } = useStreamChat();
+  const { streamMessage } = useStreamChat({ hasChatId: !minimal });
   const { routes: availableRoutes } = useParseRouter(selectedAppId);
   const { restartApp } = useRunApp();
   const { settings, updateSettings } = useSettings();
@@ -1157,7 +1163,7 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
   return (
     <div className="flex flex-col h-full">
       {/* Browser-style header - hide when annotator is active */}
-      {!annotatorMode && (
+      {!annotatorMode && !minimal && (
         <div className="flex items-center p-2 border-b space-x-2">
           {/* Navigation Buttons */}
           <div className="flex space-x-1">
@@ -1473,14 +1479,16 @@ export const PreviewIframe = ({ loading }: { loading: boolean }) => {
                   allow="clipboard-read; clipboard-write; fullscreen; microphone; camera; display-capture; geolocation; autoplay; picture-in-picture"
                 />
                 {/* Visual Editing Toolbar */}
-                {visualEditingSelectedComponent && selectedAppId && (
-                  <VisualEditingToolbar
-                    selectedComponent={visualEditingSelectedComponent}
-                    iframeRef={iframeRef}
-                    isDynamic={isDynamicComponent}
-                    hasStaticText={hasStaticText}
-                  />
-                )}
+                {!minimal &&
+                  visualEditingSelectedComponent &&
+                  selectedAppId && (
+                    <VisualEditingToolbar
+                      selectedComponent={visualEditingSelectedComponent}
+                      iframeRef={iframeRef}
+                      isDynamic={isDynamicComponent}
+                      hasStaticText={hasStaticText}
+                    />
+                  )}
               </>
             )}
           </div>

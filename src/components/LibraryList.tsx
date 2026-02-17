@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { FileText, Palette } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type LibrarySection = {
   id: string;
@@ -10,23 +11,35 @@ type LibrarySection = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-const LIBRARY_SECTIONS: LibrarySection[] = [
-  { id: "themes", label: "Themes", to: "/themes", icon: Palette },
-  { id: "prompts", label: "Prompts", to: "/library", icon: FileText },
-];
-
 export function LibraryList() {
+  const { t } = useTranslation("app");
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
+  const librarySections: LibrarySection[] = [
+    {
+      id: "themes",
+      label: t("library.sections.themes"),
+      to: "/themes",
+      icon: Palette,
+    },
+    {
+      id: "prompts",
+      label: t("library.sections.prompts"),
+      to: "/library",
+      icon: FileText,
+    },
+  ];
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 p-4">
-        <h2 className="text-lg font-semibold tracking-tight">Library</h2>
+        <h2 className="text-lg font-semibold tracking-tight">
+          {t("library.title")}
+        </h2>
       </div>
       <ScrollArea className="flex-grow">
         <div className="space-y-1 p-4 pt-0">
-          {LIBRARY_SECTIONS.map((section) => {
+          {librarySections.map((section) => {
             const isActive =
               section.to === pathname ||
               (section.to !== "/" && pathname.startsWith(section.to));

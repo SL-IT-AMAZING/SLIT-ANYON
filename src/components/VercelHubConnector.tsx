@@ -5,9 +5,11 @@ import { ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
 import { ExternalLink } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export function VercelHubConnector() {
+  const { t } = useTranslation("app");
   const { settings, refreshSettings, updateSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
 
@@ -15,7 +17,7 @@ export function VercelHubConnector() {
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "vercel-oauth-return") {
         await refreshSettings();
-        toast.success("Successfully connected to Vercel!");
+        toast.success(t("connect.vercel.connected"));
         clearLastDeepLink();
       }
     };
@@ -30,7 +32,9 @@ export function VercelHubConnector() {
       <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
         <div className="flex flex-col items-start justify-between">
           <div className="flex items-center justify-between w-full">
-            <h2 className="text-lg font-medium pb-1">Vercel</h2>
+            <h2 className="text-lg font-medium pb-1">
+              {t("connect.vercel.title")}
+            </h2>
             <Button
               variant="outline"
               onClick={() => {
@@ -38,12 +42,12 @@ export function VercelHubConnector() {
               }}
               className="ml-2 px-2 py-1 h-8 mb-2 inline-flex items-center gap-1"
             >
-              Vercel
+              {t("connect.vercel.title")}
               <ExternalLink className="h-3 w-3" />
             </Button>
           </div>
           <p className="text-sm text-muted-foreground pb-3">
-            You are connected to Vercel
+            {t("connect.vercel.connectedDescription")}
           </p>
           <Button
             variant="destructive"
@@ -53,10 +57,10 @@ export function VercelHubConnector() {
                 vercel: undefined,
                 vercelAccessToken: undefined,
               });
-              toast.success("Disconnected from Vercel");
+              toast.success(t("connect.vercel.disconnected"));
             }}
           >
-            Disconnect
+            {t("connect.common.disconnect")}
           </Button>
         </div>
       </div>
@@ -66,9 +70,11 @@ export function VercelHubConnector() {
   return (
     <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
-        <h2 className="text-lg font-medium pb-1">Vercel</h2>
+        <h2 className="text-lg font-medium pb-1">
+          {t("connect.vercel.title")}
+        </h2>
         <p className="text-sm text-muted-foreground pb-3">
-          Deploy your projects to the web with Vercel's generous free tier.
+          {t("connect.vercel.description")}
         </p>
         <div
           onClick={async () => {
@@ -77,7 +83,7 @@ export function VercelHubConnector() {
           className="w-auto h-10 cursor-pointer flex items-center justify-center px-4 py-2 rounded-md border-2 transition-colors font-medium text-sm dark:bg-muted dark:border-border"
           data-testid="connect-vercel-hub-button"
         >
-          <span className="mr-2">Connect to</span>
+          <span className="mr-2">{t("connect.vercel.connectPrefix")}</span>
           <VercelSvg />
         </div>
       </div>

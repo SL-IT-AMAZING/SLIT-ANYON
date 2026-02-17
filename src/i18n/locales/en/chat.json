@@ -32,8 +32,24 @@
     "plan": "Plan",
     "build": "Build",
     "ask": "Ask",
+    "agent": "Agent",
+    "agentV2": "Agent v2",
     "basicAgent": "Basic Agent",
-    "buildWithMcp": "Build with MCP"
+    "buildWithMcp": "Build with MCP",
+    "newBadge": "New"
+  },
+  "modeMenu": {
+    "tooltip": "Open mode menu ({{shortcut}} to toggle)"
+  },
+  "modeDescriptions": {
+    "agentV2": "Better at bigger tasks and debugging",
+    "plan": "Design before you build",
+    "basicAgentFree": "Try our AI agent for free",
+    "basicAgentLimitReached": "Daily limit reached",
+    "remainingToday": "({{remaining}}/5 remaining for today)",
+    "build": "Generate and edit code",
+    "ask": "Ask questions about the app",
+    "buildWithMcp": "Like Build, but can use tools (MCP) to generate code"
   },
   "tokens": {
     "title": "Token Usage Breakdown",

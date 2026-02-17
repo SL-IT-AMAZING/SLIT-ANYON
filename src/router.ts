@@ -1,15 +1,17 @@
 import { createRouter } from "@tanstack/react-router";
-import { rootRoute } from "./routes/root";
-import { homeRoute } from "./routes/home";
-import { chatRoute } from "./routes/chat";
-import { settingsRoute } from "./routes/settings";
-import { providerSettingsRoute } from "./routes/settings/providers/$provider";
+import { appDetailRoute } from "./routes/app-detail";
 import { appDetailsRoute } from "./routes/app-details";
+import { appsRoute } from "./routes/apps";
+import { chatRoute } from "./routes/chat";
+import { connectRoute } from "./routes/connect";
+import { homeRoute } from "./routes/home";
 import { hubRoute } from "./routes/hub";
 import { libraryRoute } from "./routes/library";
-import { themesRoute } from "./routes/themes";
+import { rootRoute } from "./routes/root";
+import { settingsRoute } from "./routes/settings";
+import { providerSettingsRoute } from "./routes/settings/providers/$provider";
 import { templateDetailRoute } from "./routes/template-detail";
-import { connectRoute } from "./routes/connect";
+import { themesRoute } from "./routes/themes";
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
@@ -20,12 +22,14 @@ const routeTree = rootRoute.addChildren([
   themesRoute,
   chatRoute,
   appDetailsRoute,
+  appsRoute,
+  appDetailRoute,
   settingsRoute.addChildren([providerSettingsRoute]),
 ]);
 
+import { useNavigate } from "@tanstack/react-router";
 // src/components/NotFoundRedirect.tsx
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export function NotFoundRedirect() {

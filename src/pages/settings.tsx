@@ -15,6 +15,7 @@ import { showError, showSuccess } from "@/lib/toast";
 import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../contexts/ThemeContext";
 
 import { activeSettingsSectionAtom } from "@/atoms/viewAtoms";
@@ -43,6 +44,7 @@ export default function SettingsPage() {
   const appVersion = useAppVersion();
   const { settings, updateSettings } = useSettings();
   const router = useRouter();
+  const { t } = useTranslation(["app", "settings", "common"]);
   const setActiveSettingsSection = useSetAtom(activeSettingsSectionAtom);
 
   useEffect(() => {
@@ -53,11 +55,13 @@ export default function SettingsPage() {
     setIsResetting(true);
     try {
       await ipc.system.resetAll();
-      showSuccess("Successfully reset everything. Restart the application.");
+      showSuccess(t("dangerZone.resetSuccess", { ns: "settings" }));
     } catch (error) {
       console.error("Error resetting:", error);
       showError(
-        error instanceof Error ? error.message : "An unknown error occurred",
+        error instanceof Error
+          ? error.message
+          : t("errors.generic", { ns: "common" }),
       );
     } finally {
       setIsResetting(false);
@@ -82,10 +86,12 @@ export default function SettingsPage() {
             className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
           >
             <ArrowLeft className="h-4 w-4" />
-            Go Back
+            {t("general.goBack", { ns: "settings" })}
           </Button>
           <div className="flex justify-between mb-4">
-            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("settings.title", { ns: "app" })}
+            </h1>
           </div>
 
           <div className="space-y-6">
@@ -106,19 +112,23 @@ export default function SettingsPage() {
                 className="bg-card rounded-xl shadow-sm p-6"
               >
                 <h2 className="text-lg font-medium text-foreground mb-4">
-                  Telemetry
+                  {t("sections.telemetry", { ns: "settings" })}
                 </h2>
                 <div id={SETTING_IDS.telemetry} className="space-y-2">
                   <TelemetrySwitch />
                   <div className="text-sm text-muted-foreground">
-                    This records anonymous usage data to improve the product.
+                    {t("telemetry.description", { ns: "settings" })}
                   </div>
                 </div>
 
                 <div className="mt-2 flex items-center text-sm text-muted-foreground">
-                  <span className="mr-2 font-medium">Telemetry ID:</span>
+                  <span className="mr-2 font-medium">
+                    {t("telemetry.idLabel", { ns: "settings" })}
+                  </span>
                   <span className="bg-muted px-2 py-0.5 rounded text-foreground font-mono">
-                    {settings ? settings.telemetryUserId : "n/a"}
+                    {settings
+                      ? settings.telemetryUserId
+                      : t("labels.none", { ns: "common" })}
                   </span>
                 </div>
               </div>
@@ -130,7 +140,7 @@ export default function SettingsPage() {
               className="bg-card rounded-xl shadow-sm p-6"
             >
               <h2 className="text-lg font-medium text-foreground mb-4">
-                Integrations
+                {t("settings.tabs.integrations", { ns: "app" })}
               </h2>
               <div className="space-y-4">
                 <div id={SETTING_IDS.github}>
@@ -154,7 +164,7 @@ export default function SettingsPage() {
               className="bg-card rounded-xl shadow-sm p-6"
             >
               <h2 className="text-lg font-medium text-foreground mb-4">
-                Tools (MCP)
+                {t("settings.tabs.toolsMcp", { ns: "app" })}
               </h2>
               <ToolsMcpSettings />
             </div>
@@ -165,14 +175,16 @@ export default function SettingsPage() {
               className="bg-card rounded-xl shadow-sm p-6"
             >
               <h2 className="text-lg font-medium text-foreground mb-4">
-                Experiments
+                {t("settings.tabs.experiments", { ns: "app" })}
               </h2>
               <div className="space-y-4">
                 <div id={SETTING_IDS.nativeGit} className="space-y-1 mt-4">
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="enable-native-git"
-                      aria-label="Enable Native Git"
+                      aria-label={t("experiments.nativeGit", {
+                        ns: "settings",
+                      })}
                       checked={!!settings?.enableNativeGit}
                       onCheckedChange={(checked) => {
                         updateSettings({
@@ -180,11 +192,14 @@ export default function SettingsPage() {
                         });
                       }}
                     />
-                    <Label htmlFor="enable-native-git">Enable Native Git</Label>
+                    <Label htmlFor="enable-native-git">
+                      {t("experiments.nativeGit", { ns: "settings" })}
+                    </Label>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    This doesn't require any external Git installation and
-                    offers a faster, native-Git performance experience.
+                    {t("experiments.nativeGitDescription", {
+                      ns: "settings",
+                    })}
                   </div>
                 </div>
               </div>
@@ -196,7 +211,7 @@ export default function SettingsPage() {
               className="bg-card rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-800"
             >
               <h2 className="text-lg font-medium text-red-600 dark:text-red-400 mb-4">
-                Danger Zone
+                {t("sections.dangerZone", { ns: "settings" })}
               </h2>
 
               <div className="space-y-4">
@@ -206,11 +221,12 @@ export default function SettingsPage() {
                 >
                   <div>
                     <h3 className="text-sm font-medium text-foreground">
-                      Reset Everything
+                      {t("dangerZone.deleteData", { ns: "settings" })}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      This will delete all your apps, chats, and settings. This
-                      action cannot be undone.
+                      {t("dangerZone.deleteDataDescription", {
+                        ns: "settings",
+                      })}
                     </p>
                   </div>
                   <button
@@ -218,7 +234,9 @@ export default function SettingsPage() {
                     disabled={isResetting}
                     className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isResetting ? "Resetting..." : "Reset Everything"}
+                    {isResetting
+                      ? t("dangerZone.resetting", { ns: "settings" })
+                      : t("dangerZone.deleteData", { ns: "settings" })}
                   </button>
                 </div>
               </div>
@@ -228,10 +246,10 @@ export default function SettingsPage() {
 
         <ConfirmationDialog
           isOpen={isResetDialogOpen}
-          title="Reset Everything"
-          message="Are you sure you want to reset everything? This will delete all your apps, chats, and settings. This action cannot be undone."
-          confirmText="Reset Everything"
-          cancelText="Cancel"
+          title={t("dangerZone.deleteData", { ns: "settings" })}
+          message={t("dangerZone.deleteDataConfirm", { ns: "settings" })}
+          confirmText={t("dangerZone.deleteData", { ns: "settings" })}
+          cancelText={t("buttons.cancel", { ns: "common" })}
           onConfirm={handleResetEverything}
           onCancel={() => setIsResetDialogOpen(false)}
         />
@@ -241,18 +259,19 @@ export default function SettingsPage() {
 }
 
 export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
+  const { t } = useTranslation(["app", "settings"]);
   const { theme, setTheme } = useTheme();
 
   return (
     <div id={SECTION_IDS.general} className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-medium text-foreground mb-4">
-        General Settings
+        {t("settings.tabs.general", { ns: "app" })}
       </h2>
 
       <div className="space-y-4 mb-4">
         <div id={SETTING_IDS.theme} className="flex items-center gap-4">
           <label className="text-sm font-medium text-muted-foreground">
-            Theme
+            {t("general.theme", { ns: "settings" })}
           </label>
 
           <div className="relative bg-muted rounded-lg p-1 flex">
@@ -270,7 +289,7 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
                 }
               `}
               >
-                {option.charAt(0).toUpperCase() + option.slice(1)}
+                {t(`general.themeOptions.${option}`, { ns: "settings" })}
               </button>
             ))}
           </div>
@@ -288,8 +307,7 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
       <div id={SETTING_IDS.autoUpdate} className="space-y-1 mt-4">
         <AutoUpdateSwitch />
         <div className="text-sm text-muted-foreground">
-          This will automatically update the app when new versions are
-          available.
+          {t("general.autoUpdateDescription", { ns: "settings" })}
         </div>
       </div>
 
@@ -305,7 +323,9 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
       </div>
 
       <div className="flex items-center text-sm text-muted-foreground mt-4">
-        <span className="mr-2 font-medium">App Version:</span>
+        <span className="mr-2 font-medium">
+          {t("general.appVersion", { ns: "settings" })}
+        </span>
         <span className="bg-muted px-2 py-0.5 rounded text-foreground font-mono">
           {appVersion ? appVersion : "-"}
         </span>
@@ -315,10 +335,11 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
 }
 
 export function WorkflowSettings() {
+  const { t } = useTranslation(["app", "settings"]);
   return (
     <div id={SECTION_IDS.workflow} className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-medium text-foreground mb-4">
-        Workflow Settings
+        {t("settings.tabs.workflow", { ns: "app" })}
       </h2>
 
       <div id={SETTING_IDS.defaultChatMode} className="mt-4">
@@ -328,21 +349,21 @@ export function WorkflowSettings() {
       <div id={SETTING_IDS.autoApprove} className="space-y-1 mt-4">
         <AutoApproveSwitch showToast={false} />
         <div className="text-sm text-muted-foreground">
-          This will automatically approve code changes and run them.
+          {t("workflow.autoApproveDescription", { ns: "settings" })}
         </div>
       </div>
 
       <div id={SETTING_IDS.autoFix} className="space-y-1 mt-4">
         <AutoFixProblemsSwitch />
         <div className="text-sm text-muted-foreground">
-          This will automatically fix TypeScript errors.
+          {t("workflow.autoFixDescription", { ns: "settings" })}
         </div>
       </div>
 
       <div id={SETTING_IDS.autoExpandPreview} className="space-y-1 mt-4">
         <AutoExpandPreviewSwitch />
         <div className="text-sm text-muted-foreground">
-          Automatically expand the preview panel when code changes are made.
+          {t("workflow.autoExpandPreviewDescription", { ns: "settings" })}
         </div>
       </div>
 
@@ -352,17 +373,21 @@ export function WorkflowSettings() {
       >
         <ChatCompletionNotificationSwitch />
         <div className="text-sm text-muted-foreground">
-          Show a native notification when a chat response completes while the
-          app is not focused.
+          {t("workflow.chatCompletionNotificationDescription", {
+            ns: "settings",
+          })}
         </div>
       </div>
     </div>
   );
 }
 export function AISettings() {
+  const { t } = useTranslation(["app", "settings"]);
   return (
     <div id={SECTION_IDS.ai} className="bg-card rounded-xl shadow-sm p-6">
-      <h2 className="text-lg font-medium text-foreground mb-4">AI Settings</h2>
+      <h2 className="text-lg font-medium text-foreground mb-4">
+        {t("settings.tabs.ai", { ns: "app" })}
+      </h2>
 
       <div className="mt-4">
         <OpenCodeConnectionModeSelector />

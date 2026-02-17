@@ -1,8 +1,4 @@
-import { useState, useEffect, useRef } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +8,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Save, Edit2, Loader2 } from "lucide-react";
-import { showError } from "@/lib/toast";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { CustomTheme } from "@/ipc/types";
+import { showError } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { Edit2, Loader2, Save } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 interface EditThemeDialogProps {
   theme: CustomTheme;
@@ -33,6 +34,7 @@ export function EditThemeDialog({
   onUpdateTheme,
   trigger,
 }: EditThemeDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draft, setDraft] = useState({
@@ -93,12 +95,11 @@ export function EditThemeDialog({
         description: draft.description.trim() || undefined,
         prompt: draft.prompt.trim(),
       });
-      toast.success("Theme updated successfully");
+      toast.success(t("library.themes.updated", { ns: "app" }));
       setOpen(false);
     } catch (error) {
-      showError(
-        `Failed to update theme: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("library.themes.updateFailed", { ns: "app", message }));
     } finally {
       setIsSaving(false);
     }
@@ -121,26 +122,28 @@ export function EditThemeDialog({
         <DialogTrigger
           className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
           data-testid="edit-theme-button"
-          title="Edit theme"
+          title={t("library.themes.editTooltip", { ns: "app" })}
         >
           <Edit2 className="h-4 w-4" />
         </DialogTrigger>
       )}
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Theme</DialogTitle>
+          <DialogTitle>
+            {t("library.themes.editTitle", { ns: "app" })}
+          </DialogTitle>
           <DialogDescription>
-            Modify your custom theme settings and prompt.
+            {t("library.themes.editDescription", { ns: "app" })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-4">
           <div className="space-y-2">
             <label htmlFor="edit-theme-name" className="text-sm font-medium">
-              Theme Name
+              {t("library.themes.name", { ns: "app" })}
             </label>
             <Input
               id="edit-theme-name"
-              placeholder="Theme name"
+              placeholder={t("library.themes.namePlaceholder", { ns: "app" })}
               value={draft.name}
               onChange={(e) =>
                 setDraft((d) => ({ ...d, name: e.target.value }))
@@ -152,11 +155,13 @@ export function EditThemeDialog({
               htmlFor="edit-theme-description"
               className="text-sm font-medium"
             >
-              Description (optional)
+              {t("library.themes.descriptionOptional", { ns: "app" })}
             </label>
             <Input
               id="edit-theme-description"
-              placeholder="A brief description of your theme"
+              placeholder={t("library.themes.descriptionPlaceholder", {
+                ns: "app",
+              })}
               value={draft.description}
               onChange={(e) =>
                 setDraft((d) => ({ ...d, description: e.target.value }))
@@ -165,12 +170,12 @@ export function EditThemeDialog({
           </div>
           <div className="space-y-2">
             <label htmlFor="edit-theme-prompt" className="text-sm font-medium">
-              Theme Prompt
+              {t("library.themes.prompt", { ns: "app" })}
             </label>
             <Textarea
               id="edit-theme-prompt"
               ref={textareaRef}
-              placeholder="Enter your theme system prompt..."
+              placeholder={t("library.themes.promptPlaceholder", { ns: "app" })}
               value={draft.prompt}
               onChange={(e) => {
                 setDraft((d) => ({ ...d, prompt: e.target.value }));
@@ -183,7 +188,7 @@ export function EditThemeDialog({
         </div>
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
+            {t("buttons.cancel", { ns: "common" })}
           </Button>
           <Button
             onClick={handleSave}
@@ -192,11 +197,12 @@ export function EditThemeDialog({
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t("library.themes.saving", { ns: "app" })}
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" /> Save
+                <Save className="mr-2 h-4 w-4" />
+                {t("buttons.save", { ns: "common" })}
               </>
             )}
           </Button>

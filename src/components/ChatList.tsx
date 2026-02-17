@@ -41,9 +41,20 @@ export function ChatList() {
   const { settings, updateSettings, envVars } = useSettings();
   const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
 
-  const { chats, loading, invalidateChats } = useChats(selectedAppId);
   const routerState = useRouterState();
-  const isChatRoute = routerState.location.pathname === "/chat";
+  const pathname = routerState.location.pathname;
+  const isChatRoute = pathname === "/chat";
+
+  // Extract appId from route if on app detail page
+  const isAppDetailRoute =
+    pathname.startsWith("/apps/") && pathname !== "/apps";
+  const routeAppId = isAppDetailRoute ? Number(pathname.split("/")[2]) : null;
+
+  // Use route appId if available and valid, otherwise fall back to selected atom
+  const effectiveAppId =
+    routeAppId && !Number.isNaN(routeAppId) ? routeAppId : selectedAppId;
+
+  const { chats, loading, invalidateChats } = useChats(effectiveAppId);
 
   // Rename dialog state
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -83,10 +94,10 @@ export function ChatList() {
 
   const handleNewChat = async () => {
     // Only create a new chat if an app is selected
-    if (selectedAppId) {
+    if (effectiveAppId) {
       try {
         // Create a new chat with an empty title for now
-        const chatId = await ipc.chat.createChat(selectedAppId);
+        const chatId = await ipc.chat.createChat(effectiveAppId);
 
         // Set the default chat mode for the new chat
         // Only consider quota available if it has finished loading and is not exceeded

@@ -32,8 +32,24 @@
     "plan": "계획",
     "build": "빌드",
     "ask": "질문",
+    "agent": "에이전트",
+    "agentV2": "에이전트 v2",
     "basicAgent": "기본 에이전트",
-    "buildWithMcp": "MCP로 빌드"
+    "buildWithMcp": "MCP로 빌드",
+    "newBadge": "신규"
+  },
+  "modeMenu": {
+    "tooltip": "모드 메뉴 열기 ({{shortcut}}로 전환)"
+  },
+  "modeDescriptions": {
+    "agentV2": "더 큰 작업과 디버깅에 더 강합니다",
+    "plan": "빌드 전에 설계를 먼저 합니다",
+    "basicAgentFree": "AI 에이전트를 무료로 사용해 보세요",
+    "basicAgentLimitReached": "일일 한도에 도달했습니다",
+    "remainingToday": "(오늘 {{remaining}}/5 남음)",
+    "build": "코드를 생성하고 수정합니다",
+    "ask": "앱에 대해 질문합니다",
+    "buildWithMcp": "Build와 비슷하지만 도구(MCP)를 사용해 코드를 생성할 수 있습니다"
   },
   "tokens": {
     "title": "토큰 사용량 분석",

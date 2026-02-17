@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { useSettings } from "@/hooks/useSettings";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 interface NeonDisconnectButtonProps {
   className?: string;
 }
 
 export function NeonDisconnectButton({ className }: NeonDisconnectButtonProps) {
+  const { t } = useTranslation("app");
   const { updateSettings, settings } = useSettings();
 
   const handleDisconnect = async () => {
@@ -14,10 +16,10 @@ export function NeonDisconnectButton({ className }: NeonDisconnectButtonProps) {
       await updateSettings({
         neon: undefined,
       });
-      toast.success("Disconnected from Neon successfully");
+      toast.success(t("connect.neon.disconnected"));
     } catch (error) {
       console.error("Failed to disconnect from Neon:", error);
-      toast.error("Failed to disconnect from Neon");
+      toast.error(t("connect.neon.disconnectFailed"));
     }
   };
 
@@ -32,7 +34,7 @@ export function NeonDisconnectButton({ className }: NeonDisconnectButtonProps) {
       className={className}
       size="sm"
     >
-      Disconnect from Neon
+      {t("connect.neon.disconnect")}
     </Button>
   );
 }

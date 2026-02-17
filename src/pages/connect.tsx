@@ -1,13 +1,15 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
 import { NeonConnector } from "@/components/NeonConnector";
 import { SupabaseHubConnector } from "@/components/SupabaseHubConnector";
 import { VercelHubConnector } from "@/components/VercelHubConnector";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import type React from "react";
+import { useTranslation } from "react-i18next";
 
 const ConnectPage: React.FC = () => {
   const router = useRouter();
+  const { t } = useTranslation(["app", "common"]);
 
   return (
     <div className="min-h-screen px-8 py-4">
@@ -19,13 +21,15 @@ const ConnectPage: React.FC = () => {
           className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
         >
           <ArrowLeft className="h-4 w-4" />
-          Go Back
+          {t("buttons.back", { ns: "common" })}
         </Button>
 
         <header className="mb-8 text-left">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Connect</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {t("connect.title")}
+          </h1>
           <p className="text-md text-muted-foreground">
-            Connect to backend services for your projects.
+            {t("connect.description")}
           </p>
         </header>
 

@@ -7,36 +7,42 @@ import {
 } from "@/components/ui/select";
 import { useSettings } from "@/hooks/useSettings";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 
 interface OptionInfo {
-  value: string;
-  label: string;
-  description: string;
+  value: "low" | "medium" | "high";
+  labelKey:
+    | "ai.thinkingBudgetOptions.low"
+    | "ai.thinkingBudgetOptions.medium"
+    | "ai.thinkingBudgetOptions.high";
+  descriptionKey:
+    | "ai.thinkingBudgetDescriptions.low"
+    | "ai.thinkingBudgetDescriptions.medium"
+    | "ai.thinkingBudgetDescriptions.high";
 }
 
-const defaultValue = "medium";
+const defaultValue = "medium" as const;
 
 const options: OptionInfo[] = [
   {
     value: "low",
-    label: "Low",
-    description:
-      "Minimal thinking tokens for faster responses and lower costs.",
+    labelKey: "ai.thinkingBudgetOptions.low",
+    descriptionKey: "ai.thinkingBudgetDescriptions.low",
   },
   {
     value: defaultValue,
-    label: "Medium (default)",
-    description: "Balanced thinking for most conversations.",
+    labelKey: "ai.thinkingBudgetOptions.medium",
+    descriptionKey: "ai.thinkingBudgetDescriptions.medium",
   },
   {
     value: "high",
-    label: "High",
-    description:
-      "Extended thinking for complex problems requiring deep analysis.",
+    labelKey: "ai.thinkingBudgetOptions.high",
+    descriptionKey: "ai.thinkingBudgetDescriptions.high",
   },
 ];
 
 export const ThinkingBudgetSelector: React.FC = () => {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
 
   const handleValueChange = (value: string) => {
@@ -57,26 +63,26 @@ export const ThinkingBudgetSelector: React.FC = () => {
           htmlFor="thinking-budget"
           className="text-sm font-medium text-muted-foreground"
         >
-          Thinking Budget
+          {t("ai.thinkingBudget")}
         </label>
         <Select
           value={currentValue}
           onValueChange={(v) => v && handleValueChange(v)}
         >
           <SelectTrigger className="w-[180px]" id="thinking-budget">
-            <SelectValue placeholder="Select budget" />
+            <SelectValue placeholder={t("ai.thinkingBudgetPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <div className="text-sm text-muted-foreground">
-        {currentOption.description}
+        {t(currentOption.descriptionKey)}
       </div>
     </div>
   );

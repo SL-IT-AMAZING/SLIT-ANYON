@@ -1,14 +1,16 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Check, ExternalLink } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { useTemplates } from "@/hooks/useTemplates";
-import { useSettings } from "@/hooks/useSettings";
-import { CreateAppDialog } from "@/components/CreateAppDialog";
 import { CommunityCodeConsentDialog } from "@/components/CommunityCodeConsentDialog";
+import { CreateAppDialog } from "@/components/CreateAppDialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/useSettings";
+import { useTemplates } from "@/hooks/useTemplates";
 import { ipc } from "@/ipc/types";
 import { showWarning } from "@/lib/toast";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft, Check, ExternalLink } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface TemplateDetailPageProps {
   templateId: string;
@@ -17,6 +19,7 @@ interface TemplateDetailPageProps {
 const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   templateId,
 }) => {
+  const { t } = useTranslation(["app", "common"]);
   const router = useRouter();
   const { templates } = useTemplates();
   const { settings, updateSettings } = useSettings();
@@ -36,10 +39,10 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
             className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Marketplace
+            {t("templateDetail.backToMarketplace", { ns: "app" })}
           </Button>
           <div className="text-muted-foreground text-center py-12">
-            Template not found.
+            {t("templateDetail.notFound", { ns: "app" })}
           </div>
         </div>
       </div>
@@ -53,7 +56,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
     }
 
     if (template.requiresNeon && !settings?.neon?.accessToken) {
-      showWarning("Please connect your Neon account to use this template.");
+      showWarning(t("templateDetail.neonRequired", { ns: "app" }));
       return;
     }
 
@@ -82,7 +85,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
           className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Marketplace
+          {t("templateDetail.backToMarketplace", { ns: "app" })}
         </Button>
 
         {/* Hero Section */}
@@ -108,14 +111,17 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
             </h1>
             {template.author && (
               <p className="text-muted-foreground mt-1">
-                by {template.author.name}
+                {t("templateDetail.byAuthor", {
+                  ns: "app",
+                  author: template.author.name,
+                })}
               </p>
             )}
 
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3 mt-6">
               <Button className="w-full text-lg py-6" onClick={handleChoose}>
-                Choose This Template
+                {t("templateDetail.chooseTemplate", { ns: "app" })}
               </Button>
               <div className="flex gap-2">
                 {template.githubUrl && (
@@ -127,7 +133,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
                     }
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    View on GitHub
+                    {t("templateDetail.viewOnGitHub", { ns: "app" })}
                   </Button>
                 )}
                 {template.demoUrl && (
@@ -139,7 +145,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
                     }
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Live Demo
+                    {t("templateDetail.liveDemo", { ns: "app" })}
                   </Button>
                 )}
               </div>
@@ -149,7 +155,9 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
 
         {/* About Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-3">About</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-3">
+            {t("templateDetail.about", { ns: "app" })}
+          </h2>
           <p className="text-muted-foreground leading-relaxed">
             {template.longDescription || template.description}
           </p>
@@ -159,7 +167,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
         {template.features && template.features.length > 0 && (
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-3">
-              Features
+              {t("templateDetail.features", { ns: "app" })}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {template.features.map((feature) => (
@@ -176,7 +184,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
         {template.techStack && template.techStack.length > 0 && (
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-3">
-              Tech Stack
+              {t("templateDetail.techStack", { ns: "app" })}
             </h2>
             <div className="flex flex-wrap gap-2">
               {template.techStack.map((tech) => (
@@ -195,14 +203,18 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
         {template.screenshots && template.screenshots.length > 0 && (
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-3">
-              Screenshots
+              {t("templateDetail.screenshots", { ns: "app" })}
             </h2>
             <div className="flex overflow-x-auto gap-4 pb-4 snap-x">
               {template.screenshots.map((src, index) => (
                 <img
                   key={index}
                   src={src}
-                  alt={`${template.title} screenshot ${index + 1}`}
+                  alt={t("templateDetail.screenshotAlt", {
+                    ns: "app",
+                    title: template.title,
+                    index: index + 1,
+                  })}
                   className="h-64 rounded-lg shadow-sm snap-start flex-shrink-0"
                 />
               ))}

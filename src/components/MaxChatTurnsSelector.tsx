@@ -8,11 +8,22 @@ import {
 import { MAX_CHAT_TURNS_IN_CONTEXT } from "@/constants/settings_constants";
 import { useSettings } from "@/hooks/useSettings";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 
 interface OptionInfo {
   value: string;
-  label: string;
-  description: string;
+  labelKey:
+    | "ai.maxChatTurnsOptions.economy"
+    | "ai.maxChatTurnsOptions.default"
+    | "ai.maxChatTurnsOptions.plus"
+    | "ai.maxChatTurnsOptions.high"
+    | "ai.maxChatTurnsOptions.max";
+  descriptionKey:
+    | "ai.maxChatTurnsDescriptions.economy"
+    | "ai.maxChatTurnsDescriptions.default"
+    | "ai.maxChatTurnsDescriptions.plus"
+    | "ai.maxChatTurnsDescriptions.high"
+    | "ai.maxChatTurnsDescriptions.max";
 }
 
 const defaultValue = "default";
@@ -20,34 +31,33 @@ const defaultValue = "default";
 const options: OptionInfo[] = [
   {
     value: "2",
-    label: "Economy (2)",
-    description:
-      "Minimal context to reduce token usage and improve response times.",
+    labelKey: "ai.maxChatTurnsOptions.economy",
+    descriptionKey: "ai.maxChatTurnsDescriptions.economy",
   },
   {
     value: defaultValue,
-    label: `Default (${MAX_CHAT_TURNS_IN_CONTEXT})  `,
-    description: "Balanced context size for most conversations.",
+    labelKey: "ai.maxChatTurnsOptions.default",
+    descriptionKey: "ai.maxChatTurnsDescriptions.default",
   },
   {
     value: "5",
-    label: "Plus (5)",
-    description: "Slightly higher context size for detailed conversations.",
+    labelKey: "ai.maxChatTurnsOptions.plus",
+    descriptionKey: "ai.maxChatTurnsDescriptions.plus",
   },
   {
     value: "10",
-    label: "High (10)",
-    description:
-      "Extended context for complex conversations requiring more history.",
+    labelKey: "ai.maxChatTurnsOptions.high",
+    descriptionKey: "ai.maxChatTurnsDescriptions.high",
   },
   {
     value: "100",
-    label: "Max (100)",
-    description: "Maximum context (not recommended due to cost and speed).",
+    labelKey: "ai.maxChatTurnsOptions.max",
+    descriptionKey: "ai.maxChatTurnsDescriptions.max",
   },
 ];
 
 export const MaxChatTurnsSelector: React.FC = () => {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
 
   const handleValueChange = (value: string) => {
@@ -74,26 +84,26 @@ export const MaxChatTurnsSelector: React.FC = () => {
           htmlFor="max-chat-turns"
           className="text-sm font-medium text-muted-foreground"
         >
-          Maximum number of chat turns used in context
+          {t("ai.maxChatTurnsLabel")}
         </label>
         <Select
           value={currentValue}
           onValueChange={(v) => v && handleValueChange(v)}
         >
           <SelectTrigger className="w-[180px]" id="max-chat-turns">
-            <SelectValue placeholder="Select turns" />
+            <SelectValue placeholder={t("ai.maxChatTurnsPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey, { count: MAX_CHAT_TURNS_IN_CONTEXT })}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <div className="text-sm text-muted-foreground">
-        {currentOption.description}
+        {t(currentOption.descriptionKey)}
       </div>
     </div>
   );

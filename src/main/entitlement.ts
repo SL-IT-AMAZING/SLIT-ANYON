@@ -1,26 +1,105 @@
 import { shell } from "electron";
 import log from "electron-log";
+import { updateOmocConfig } from "../ipc/utils/opencode_config_setup";
 import { oauthEndpoints } from "../lib/oauthConfig";
 import { refreshSession } from "./auth";
 import { readSettings, writeSettings } from "./settings";
 
 const logger = log.scope("entitlement");
 
-// ──────────────────────────────────────────────────────────────────────────────
-// TODO(payment-merge): Remove this entire dev bypass block when merging with
-// the payment branch. Payment gating is being developed in a separate branch;
-// this bypass gives full access during local development so that unrelated
-// feature work is not blocked by entitlement checks.
-// ──────────────────────────────────────────────────────────────────────────────
-const IS_DEV = process.env.NODE_ENV === "development";
+/**
+ * Model intelligence tier classification.
+ * Light = cost-effective models (Flash, Haiku, Mini variants)
+ * Pro = premium models (Sonnet, Opus, GPT-5, Gemini Pro, etc.)
+ */
+export type ModelTier = "light" | "pro";
 
-const DEV_ENTITLEMENT_STATE: EntitlementState = {
-  plan: "pro",
-  isActive: true,
-  expiresAt: null,
-  polarSubscriptionId: null,
-  syncedAt: new Date().toISOString(),
+/**
+ * Light-tier model patterns. If a model name matches any of these patterns,
+ * it's classified as "light". Everything else is "pro".
+ */
+const LIGHT_MODEL_PATTERNS = [
+  "flash",
+  "haiku",
+  "mini",
+  "gpt-4o-mini",
+  "deepseek",
+  "grok",
+  "glm",
+] as const;
+
+/** Model preset type for oh-my-opencode config */
+export type ModelPreset = {
+  agents: Record<string, { model: string; variant?: string }>;
+  categories: Record<string, { model: string; variant?: string }>;
 };
+
+/**
+ * Pro preset: best-case oh-my-opencode config (max20 equivalent).
+ * Used for pro and power plan subscribers.
+ */
+export const PRO_PRESET: ModelPreset = {
+  agents: {
+    Sisyphus: { model: "anthropic/claude-opus-4-6" },
+    oracle: { model: "openai/gpt-5.2", variant: "high" },
+    explore: { model: "opencode/grok-code-fast-1" },
+    librarian: { model: "opencode/glm-4.7" },
+    "multimodal-looker": { model: "google/gemini-3-pro-preview" },
+    "Prometheus (Planner)": { model: "anthropic/claude-opus-4-6" },
+    "Metis (Plan Consultant)": { model: "anthropic/claude-opus-4-6" },
+    "Momus (Plan Reviewer)": { model: "openai/gpt-5.2", variant: "medium" },
+    Atlas: { model: "anthropic/claude-opus-4-6" },
+  },
+  categories: {
+    "visual-engineering": { model: "google/gemini-3-pro-preview" },
+    ultrabrain: { model: "openai/gpt-5.2-codex" },
+    artistry: { model: "google/gemini-3-pro-preview", variant: "max" },
+    quick: { model: "anthropic/claude-haiku-4-5" },
+    "unspecified-low": { model: "anthropic/claude-sonnet-4-5" },
+    "unspecified-high": { model: "anthropic/claude-opus-4-6" },
+    writing: { model: "google/gemini-3-flash-preview" },
+  },
+} as const;
+
+/**
+ * Light preset: standard oh-my-opencode config.
+ * Used for free and starter plan subscribers.
+ * Only unspecified-high category agents are downgraded (Opus → Sonnet).
+ */
+export const LIGHT_PRESET: ModelPreset = {
+  agents: {
+    Sisyphus: { model: "anthropic/claude-sonnet-4-5" },
+    oracle: { model: "openai/gpt-5.2", variant: "high" },
+    explore: { model: "opencode/grok-code-fast-1" },
+    librarian: { model: "opencode/glm-4.7" },
+    "multimodal-looker": { model: "google/gemini-3-pro-preview" },
+    "Prometheus (Planner)": { model: "anthropic/claude-sonnet-4-5" },
+    "Metis (Plan Consultant)": { model: "anthropic/claude-sonnet-4-5" },
+    "Momus (Plan Reviewer)": { model: "openai/gpt-5.2", variant: "medium" },
+    Atlas: { model: "anthropic/claude-sonnet-4-5" },
+  },
+  categories: {
+    "visual-engineering": { model: "google/gemini-3-pro-preview" },
+    ultrabrain: { model: "openai/gpt-5.2-codex" },
+    artistry: { model: "google/gemini-3-pro-preview", variant: "max" },
+    quick: { model: "anthropic/claude-haiku-4-5" },
+    "unspecified-low": { model: "anthropic/claude-sonnet-4-5" },
+    "unspecified-high": { model: "anthropic/claude-sonnet-4-5" },
+    writing: { model: "google/gemini-3-flash-preview" },
+  },
+} as const;
+
+/**
+ * Determines the intelligence tier for a given model.
+ * Used for credit consumption rates and plan-based access control.
+ */
+export function getModelTier(modelName: string): ModelTier {
+  const lower = modelName.toLowerCase();
+  for (const pattern of LIGHT_MODEL_PATTERNS) {
+    if (lower.includes(pattern)) return "light";
+  }
+  return "pro";
+}
 
 function getAnonKey(): string {
   const key = process.env.ANYON_SUPABASE_ANON_KEY;
@@ -224,8 +303,6 @@ function saveCachedEntitlements(state: EntitlementState): void {
 }
 
 export async function getEntitlements(): Promise<EntitlementState> {
-  if (IS_DEV) return DEV_ENTITLEMENT_STATE;
-
   const cached = getCachedEntitlements();
   if (cached) return cached;
 
@@ -233,11 +310,6 @@ export async function getEntitlements(): Promise<EntitlementState> {
 }
 
 export async function syncEntitlements(): Promise<EntitlementState> {
-  if (IS_DEV) {
-    saveCachedEntitlements(DEV_ENTITLEMENT_STATE);
-    return DEV_ENTITLEMENT_STATE;
-  }
-
   const accessToken = getAccessToken();
   if (!accessToken) {
     logger.info("No auth token — clearing cache and returning free state");
@@ -275,10 +347,33 @@ export async function syncEntitlements(): Promise<EntitlementState> {
     };
 
     saveCachedEntitlements(state);
+
+    applyModelPreset(state.plan).catch((err) =>
+      logger.error("Failed to apply model preset after sync:", err),
+    );
+
     return state;
   } catch (error) {
     logger.error("Failed to sync entitlements:", error);
     return getCachedEntitlements() ?? FREE_STATE;
+  }
+}
+
+/**
+ * Applies the appropriate model preset to the oh-my-opencode config
+ * based on the user's subscription plan.
+ */
+export async function applyModelPreset(
+  plan: "free" | "starter" | "pro" | "power",
+): Promise<void> {
+  const preset = plan === "pro" || plan === "power" ? PRO_PRESET : LIGHT_PRESET;
+  try {
+    updateOmocConfig(preset);
+    logger.info(
+      `Applied ${plan === "pro" || plan === "power" ? "Pro" : "Light"} model preset for plan: ${plan}`,
+    );
+  } catch (error) {
+    logger.error("Failed to apply model preset:", error);
   }
 }
 
@@ -391,43 +486,79 @@ export interface CreditCheckResult {
   creditsRemaining: number;
   plan: "free" | "starter" | "pro" | "power";
   usagePercent: number;
+  modelTier: ModelTier;
 }
 
 export async function checkCreditsForModel(
   modelName: string,
 ): Promise<CreditCheckResult> {
-  if (IS_DEV) {
-    return {
-      allowed: true,
-      creditsRemaining: Number.POSITIVE_INFINITY,
-      plan: "pro",
-      usagePercent: 0,
-    };
-  }
-
-  void modelName;
   const plan = getPlanTier();
+  const tier = getModelTier(modelName);
 
-  if (plan === "free") {
+  // Pro models require pro or power plan
+  if (tier === "pro" && (plan === "free" || plan === "starter")) {
     return {
       allowed: false,
       reason:
-        "This model requires a paid plan. Upgrade to Starter to get started.",
+        "Pro intelligence requires a Pro plan or higher. Upgrade to use premium models.",
       creditsRemaining: 0,
       plan,
       usagePercent: 0,
+      modelTier: tier,
     };
   }
 
+  // Free plan: allow Light models with limited credits
+  if (plan === "free") {
+    const usage = await getUsage();
+    const creditsRemaining = Math.max(
+      0,
+      usage.creditsLimit - usage.creditsUsed,
+    );
+    const usagePercent =
+      usage.creditsLimit > 0
+        ? (usage.creditsUsed / usage.creditsLimit) * 100
+        : 0;
+
+    if (creditsRemaining <= 0) {
+      return {
+        allowed: false,
+        reason:
+          "You've used all your free credits. Upgrade to Starter for more credits.",
+        creditsRemaining: 0,
+        plan,
+        usagePercent,
+        modelTier: tier,
+      };
+    }
+
+    return {
+      allowed: true,
+      creditsRemaining,
+      plan,
+      usagePercent,
+      modelTier: tier,
+    };
+  }
+
+  // Paid plans: check credits
   const usage = await getUsage();
   const creditsRemaining = Math.max(0, usage.creditsLimit - usage.creditsUsed);
   const usagePercent =
     usage.creditsLimit > 0 ? (usage.creditsUsed / usage.creditsLimit) * 100 : 0;
 
+  // Power plan: always allowed (overage billing)
   if (plan === "power") {
-    return { allowed: true, creditsRemaining, plan, usagePercent };
+    return {
+      allowed: true,
+      creditsRemaining,
+      plan,
+      usagePercent,
+      modelTier: tier,
+    };
   }
 
+  // Starter/Pro with credits exhausted
   if (creditsRemaining <= 0) {
     return {
       allowed: false,
@@ -436,14 +567,22 @@ export async function checkCreditsForModel(
       creditsRemaining,
       plan,
       usagePercent,
+      modelTier: tier,
     };
   }
 
-  return { allowed: true, creditsRemaining, plan, usagePercent };
+  return {
+    allowed: true,
+    creditsRemaining,
+    plan,
+    usagePercent,
+    modelTier: tier,
+  };
 }
 
 /**
  * Reports token usage to the server for Polar metering.
+ * Includes model tier so the server can apply tier-based credit rates.
  * Fire-and-forget: failures are logged but don't block the user.
  */
 export async function reportTokenUsage(
@@ -453,6 +592,8 @@ export async function reportTokenUsage(
   const accessToken = getAccessToken();
   if (!accessToken) return; // Not logged in, skip
 
+  const tier = getModelTier(modelId);
+
   try {
     await fetch(oauthEndpoints.auth.usageIngest, {
       method: "POST",
@@ -461,7 +602,7 @@ export async function reportTokenUsage(
         "Content-Type": "application/json",
         apikey: getAnonKey(),
       },
-      body: JSON.stringify({ rawTokens, modelId }),
+      body: JSON.stringify({ rawTokens, modelId, tier }),
     });
   } catch (error) {
     logger.error("Failed to report token usage:", error);

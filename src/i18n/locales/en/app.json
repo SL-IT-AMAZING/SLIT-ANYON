@@ -4,7 +4,12 @@
     "home": "Home",
     "settings": "Settings",
     "chat": "Chat",
-    "help": "Help"
+    "help": "Help",
+    "library": "Library",
+    "market": "Market",
+    "connect": "Connect",
+    "signIn": "Sign In",
+    "apps": "Apps"
   },
   "apps": {
     "title": "Your Apps",
@@ -26,6 +31,301 @@
     "title": "Build a new app",
     "subtitle": "What would you like to build today?"
   },
+  "home": {
+    "loading": {
+      "title": "Building your app",
+      "descriptionLine1": "We're setting up your app with AI magic.",
+      "descriptionLine2": "This might take a moment..."
+    },
+    "hero": {
+      "build": "Build",
+      "anything": "anything",
+      "with": "with",
+      "subtitle": "Just tell me what you want. I'll handle the rest."
+    },
+    "inspiration": {
+      "moreIdeas": "More ideas",
+      "buildMeTemplate": "Build me a {{label}}"
+    },
+    "recentProjects": {
+      "title": "Recent Projects"
+    },
+    "releaseNotes": {
+      "title": "What's new in v{{version}}?",
+      "iframeTitle": "Release notes for v{{version}}"
+    },
+    "errors": {
+      "createAppFailed": "Failed to create app. {{message}}"
+    }
+  },
+  "hub": {
+    "title": "Marketplace",
+    "description": "Browse ready-to-use templates for your next project.",
+    "loadingMore": "Loading additional templates...",
+    "categories": {
+      "apps": "Apps",
+      "web": "Web",
+      "saas": "SaaS"
+    },
+    "templateCount": "{{count}} templates",
+    "searchPlaceholder": "Search templates...",
+    "loadingTemplates": "Loading templates...",
+    "noTemplates": "No templates found."
+  },
+  "connect": {
+    "title": "Connect",
+    "description": "Connect to backend services for your projects.",
+    "common": {
+      "connect": "Connect",
+      "connecting": "Connecting...",
+      "disconnect": "Disconnect"
+    },
+    "neon": {
+      "title": "Neon Database",
+      "description": "Neon Database has a good free tier with backups and up to 10 projects.",
+      "connectedDescription": "You are connected to Neon Database",
+      "connected": "Successfully connected to Neon!",
+      "disconnected": "Disconnected from Neon successfully",
+      "disconnectFailed": "Failed to disconnect from Neon",
+      "disconnect": "Disconnect from Neon",
+      "enterApiKey": "Please enter your Neon API key",
+      "apiKeyPlaceholder": "Enter your Neon API key",
+      "connectFailed": "Failed to connect to Neon",
+      "getApiKeyFrom": "Get your API key from",
+      "apiKeyPath": "Neon Console → Account Settings → API Keys"
+    },
+    "supabase": {
+      "title": "Supabase",
+      "description": "Supabase provides auth, database, storage and more with a generous free tier.",
+      "connectedDescription": "You are connected to Supabase",
+      "connected": "Successfully connected to Supabase!",
+      "disconnected": "Disconnected from Supabase",
+      "connectAlt": "Connect to Supabase"
+    },
+    "vercel": {
+      "title": "Vercel",
+      "description": "Deploy your projects to the web with Vercel's generous free tier.",
+      "connectedDescription": "You are connected to Vercel",
+      "connected": "Successfully connected to Vercel!",
+      "disconnected": "Disconnected from Vercel",
+      "connectPrefix": "Connect to"
+    }
+  },
+  "library": {
+    "title": "Library",
+    "sections": {
+      "themes": "Themes",
+      "prompts": "Prompts"
+    },
+    "prompts": {
+      "title": "Library: Prompts",
+      "new": "New Prompt",
+      "editTooltip": "Edit prompt",
+      "createTitle": "Create New Prompt",
+      "editTitle": "Edit Prompt",
+      "createDescription": "Create a new prompt template for your library.",
+      "editDescription": "Edit your prompt template.",
+      "descriptionOptional": "Description (optional)",
+      "contentPlaceholder": "Content",
+      "prefilled": "Prefilled prompt: {{title}}",
+      "empty": "No prompts yet. Create one to get started.",
+      "itemType": "Prompt"
+    },
+    "themes": {
+      "title": "Themes",
+      "new": "New Theme",
+      "empty": "No custom themes yet. Create one to get started.",
+      "itemType": "Theme",
+      "name": "Theme Name",
+      "namePlaceholder": "Theme name",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "A brief description of your theme",
+      "prompt": "Theme Prompt",
+      "promptPlaceholder": "Enter your theme system prompt...",
+      "editTooltip": "Edit theme",
+      "editTitle": "Edit Theme",
+      "editDescription": "Modify your custom theme settings and prompt.",
+      "createTitle": "Create Custom Theme",
+      "createDescription": "Create a custom theme using manual configuration or AI-powered generation.",
+      "aiPoweredGenerator": "AI-Powered Generator",
+      "manualConfiguration": "Manual Configuration",
+      "saveTheme": "Save Theme",
+      "saving": "Saving...",
+      "updated": "Theme updated successfully",
+      "created": "Custom theme created successfully",
+      "updateFailed": "Failed to update theme: {{message}}",
+      "createFailed": "Failed to create theme: {{message}}",
+      "deleteFailed": "Failed to delete theme: {{message}}",
+      "nameRequired": "Please enter a theme name",
+      "promptRequired": "Please enter a theme prompt",
+      "generatePromptFirst": "Please generate a prompt first",
+      "aiGenerator": {
+        "themeName": "Theme Name",
+        "themeNamePlaceholder": "My AI-Generated Theme",
+        "descriptionOptional": "Description (optional)",
+        "descriptionPlaceholder": "A brief description of your theme",
+        "referenceSource": "Reference Source",
+        "referenceImages": "Reference Images",
+        "uploading": "Uploading...",
+        "clickToUpload": "Click to upload images",
+        "uploadHint": "Upload UI screenshots to inspire your theme",
+        "imageCount": "{{count}} / {{max}} images",
+        "maxReached": "• Maximum reached",
+        "uploadAlt": "Upload {{index}}",
+        "websitePlaceholder": "https://example.com",
+        "websiteHint": "Enter a website URL to extract its design system",
+        "keywordsOptional": "Keywords (optional)",
+        "keywordsPlaceholder": "modern, minimal, dark mode, glassmorphism...",
+        "keywordsHint": "Add keywords or reference designs to guide the generation",
+        "generationMode": "Generation Mode",
+        "modelSelection": "Model Selection",
+        "generatingFromWebsite": "Generating from website...",
+        "generatingPrompt": "Generating prompt...",
+        "generateThemePrompt": "Generate Theme Prompt",
+        "generatedPrompt": "Generated Prompt",
+        "generatedPromptPlaceholder": "Generated prompt will appear here...",
+        "noPromptYet": "No prompt generated yet.",
+        "emptyStateImages": "Upload images and click \"Generate\" to create a theme prompt.",
+        "emptyStateUrl": "Enter a website URL and click \"Generate\" to extract a theme.",
+        "inputSources": {
+          "uploadImages": "Upload Images",
+          "uploadImagesDescription": "Use screenshots from your device",
+          "websiteUrl": "Website URL",
+          "websiteUrlDescription": "Extract design from a live website"
+        },
+        "modes": {
+          "inspired": {
+            "label": "Inspired",
+            "description": "Extracts an abstract, reusable design system. Does not replicate the original UI."
+          },
+          "highFidelity": {
+            "label": "High Fidelity",
+            "description": "Recreates the visual system from the image as closely as possible."
+          }
+        },
+        "models": {
+          "gemini": {
+            "label": "Gemini 3 Pro",
+            "description": "Most capable"
+          },
+          "claude": {
+            "label": "Claude Opus 4.5",
+            "description": "Creative & detailed"
+          },
+          "gpt": {
+            "label": "GPT 5.2",
+            "description": "Latest OpenAI"
+          }
+        },
+        "success": {
+          "generatedFromImages": "Theme prompt generated successfully",
+          "generatedFromWebsite": "Theme prompt generated from website"
+        },
+        "errors": {
+          "cleanupFailed": "Failed to clean up temporary image files",
+          "maxImages": "Maximum {{max}} images allowed",
+          "skippedFiles": "Only {{availableSlots}} images can be added. {{skippedCount}} files were skipped.",
+          "invalidImage": "Please upload only image files. \"{{filename}}\" is not a valid image.",
+          "fileTooLarge": "File \"{{filename}}\" exceeds 10MB limit ({{sizeMB}}MB)",
+          "readFileFailed": "Failed to read file",
+          "extractImageDataFailed": "Failed to extract image data",
+          "processingFailed": "Error processing \"{{filename}}\": {{message}}",
+          "uploadAtLeastOne": "Please upload at least one image",
+          "websiteRequired": "Please enter a website URL",
+          "generateFailed": "Failed to generate theme: {{message}}",
+          "unknownError": "Unknown error"
+        }
+      }
+    }
+  },
+  "templateDetail": {
+    "backToMarketplace": "Back to Marketplace",
+    "notFound": "Template not found.",
+    "neonRequired": "Please connect your Neon account to use this template.",
+    "byAuthor": "by {{author}}",
+    "chooseTemplate": "Choose This Template",
+    "viewOnGitHub": "View on GitHub",
+    "liveDemo": "Live Demo",
+    "about": "About",
+    "features": "Features",
+    "techStack": "Tech Stack",
+    "screenshots": "Screenshots",
+    "screenshotAlt": "{{title}} screenshot {{index}}"
+  },
+  "appDetails": {
+    "locationUpdated": "App location updated",
+    "notFound": "App not found",
+    "renameFolder": "Rename folder",
+    "moveFolder": "Move folder",
+    "copyApp": "Copy app",
+    "created": "Created",
+    "lastUpdated": "Last Updated",
+    "showInFolder": "Show in folder",
+    "openInChat": "Open in Chat",
+    "recommended": "Recommended",
+    "renameAppDialog": {
+      "title": "Rename App",
+      "placeholder": "Enter new app name"
+    },
+    "renameFolderDialog": {
+      "title": "Rename app folder",
+      "description": "This will change only the folder name, not the app name.",
+      "placeholder": "Enter new folder name",
+      "renaming": "Renaming...",
+      "renameButton": "Rename Folder"
+    },
+    "renameConfirmDialog": {
+      "title": "How would you like to rename '{{name}}'?",
+      "description": "Choose an option:",
+      "renameAppAndFolder": "Rename app and folder",
+      "renameAppAndFolderDescription": "Renames the folder to match the new app name.",
+      "renameAppOnly": "Rename app only",
+      "renameAppOnlyDescription": "The folder name will remain the same."
+    },
+    "copyDialog": {
+      "title": "Copy '{{name}}'",
+      "description1": "Create a copy of this app.",
+      "description2": "Note: this does not copy over the Supabase project or GitHub project.",
+      "invalidInput": "Invalid app ID or name for copying.",
+      "newAppName": "New app name",
+      "placeholder": "Enter new app name",
+      "nameExists": "An app with this name already exists. Please choose another name.",
+      "withHistory": "Copy app with history",
+      "withHistoryDescription": "Copies the entire app, including the Git version history.",
+      "withoutHistory": "Copy app without history",
+      "withoutHistoryDescription": "Useful if the current app has a Git-related issue."
+    },
+    "changeLocationDialog": {
+      "title": "Change App Location",
+      "description": "Select a folder where this app will be stored. The app folder name will remain the same.",
+      "moving": "Moving...",
+      "selectFolder": "Select Folder"
+    },
+    "deleteDialog": {
+      "title": "Delete '{{name}}'?",
+      "description": "This action is irreversible. All app files and chat history will be permanently deleted.",
+      "confirm": "Delete App"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "workflow": "Workflow",
+      "ai": "AI",
+      "providers": "Model Providers",
+      "integrations": "Integrations",
+      "toolsMcp": "Tools (MCP)",
+      "experiments": "Experiments",
+      "billing": "Billing",
+      "pricingPlans": "Pricing Plans"
+    },
+    "sections": {
+      "general": "General",
+      "advanced": "Advanced",
+      "account": "Account"
+    }
+  },
   "billing": {
     "choosePlanTitle": "Choose your plan",
     "choosePlanDescription": "Select a tier and continue to secure Polar checkout.",
@@ -36,17 +336,38 @@
       "starter": {
         "name": "Starter",
         "price": "$19/mo",
-        "summary": "5M adjusted tokens"
+        "summary": "5M adjusted tokens",
+        "features": [
+          "5M adjusted tokens included",
+          "Light intelligence",
+          "Community support",
+          "Basic integrations"
+        ]
       },
       "pro": {
         "name": "Pro",
         "price": "$49/mo",
-        "summary": "15M adjusted tokens"
+        "summary": "15M adjusted tokens",
+        "features": [
+          "15M adjusted tokens included",
+          "Pro intelligence — premium AI models",
+          "Priority support",
+          "Advanced integrations",
+          "Team collaboration tools"
+        ]
       },
       "power": {
         "name": "Power",
         "price": "$99/mo",
-        "summary": "35M adjusted tokens + overage"
+        "summary": "35M adjusted tokens + overage",
+        "features": [
+          "35M adjusted tokens included",
+          "Overage billing support",
+          "Pro intelligence — premium AI models",
+          "Dedicated support",
+          "All integrations",
+          "Team collaboration tools"
+        ]
       }
     },
     "currentPlan": {
@@ -55,6 +376,11 @@
       "pro": "Pro Plan",
       "power": "Power Plan"
     },
+    "currentPlanBadge": "Current Plan",
+    "upgradeCta": "Upgrade",
+    "manageBilling": "Manage Billing",
+    "loginRequired": "Please sign in to view billing and plan information.",
+    "loginButton": "Sign In",
     "actions": {
       "billingAndRefunds": "Billing & Refunds",
       "upgrade": "Upgrade",

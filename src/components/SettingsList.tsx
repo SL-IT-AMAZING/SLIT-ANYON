@@ -7,23 +7,12 @@ import Fuse from "fuse.js";
 import { useAtom } from "jotai";
 import { SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type SettingsSection = {
   id: string;
   label: string;
 };
-
-const SETTINGS_SECTIONS: SettingsSection[] = [
-  { id: SECTION_IDS.general, label: "General" },
-  { id: SECTION_IDS.workflow, label: "Workflow" },
-  { id: SECTION_IDS.ai, label: "AI" },
-  { id: SECTION_IDS.providers, label: "Model Providers" },
-  { id: SECTION_IDS.telemetry, label: "Telemetry" },
-  { id: SECTION_IDS.integrations, label: "Integrations" },
-  { id: SECTION_IDS.toolsMcp, label: "Tools (MCP)" },
-  { id: SECTION_IDS.experiments, label: "Experiments" },
-  { id: SECTION_IDS.dangerZone, label: "Danger Zone" },
-];
 
 const fuse = new Fuse(SETTINGS_SEARCH_INDEX, {
   keys: [
@@ -38,9 +27,58 @@ const fuse = new Fuse(SETTINGS_SEARCH_INDEX, {
 });
 
 export function SettingsList() {
+  const { t } = useTranslation(["app", "settings"]);
   const [activeSection, setActiveSection] = useAtom(activeSettingsSectionAtom);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const settingsSections: SettingsSection[] = useMemo(
+    () => [
+      {
+        id: SECTION_IDS.general,
+        label: t("sections.general", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.workflow,
+        label: t("sections.workflow", { ns: "settings" }),
+      },
+      { id: SECTION_IDS.ai, label: t("sections.ai", { ns: "settings" }) },
+      {
+        id: SECTION_IDS.providers,
+        label: t("sections.providers", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.telemetry,
+        label: t("sections.telemetry", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.integrations,
+        label: t("sections.integrations", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.toolsMcp,
+        label: t("sections.tools", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.experiments,
+        label: t("sections.experiments", { ns: "settings" }),
+      },
+      {
+        id: SECTION_IDS.dangerZone,
+        label: t("sections.dangerZone", { ns: "settings" }),
+      },
+    ],
+    [t],
+  );
+
+  const sectionLabelById = useMemo(
+    () =>
+      settingsSections.reduce<Record<string, string>>((acc, section) => {
+        acc[section.id] = section.label;
+        return acc;
+      }, {}),
+    [settingsSections],
+  );
 
   const scrollAndNavigateTo = useScrollAndNavigateTo("/settings", {
     behavior: "smooth",
@@ -71,7 +109,7 @@ export function SettingsList() {
       { rootMargin: "-20% 0px -80% 0px", threshold: 0 },
     );
 
-    for (const section of SETTINGS_SECTIONS) {
+    for (const section of settingsSections) {
       const el = document.getElementById(section.id);
       if (el) {
         observer.observe(el);
@@ -81,12 +119,14 @@ export function SettingsList() {
     return () => {
       observer.disconnect();
     };
-  }, [setActiveSection]);
+  }, [setActiveSection, settingsSections]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 p-4">
-        <h2 className="text-lg font-semibold tracking-tight">Settings</h2>
+        <h2 className="text-lg font-semibold tracking-tight">
+          {t("settings.title", { ns: "app" })}
+        </h2>
       </div>
       <div className="flex-shrink-0 px-4 pb-2">
         <div className="relative">
@@ -94,8 +134,8 @@ export function SettingsList() {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search settings..."
-            aria-label="Search settings"
+            placeholder={t("search.placeholder", { ns: "settings" })}
+            aria-label={t("search.ariaLabel", { ns: "settings" })}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-md border border-input bg-transparent pl-8 pr-8 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -107,7 +147,7 @@ export function SettingsList() {
                 inputRef.current?.focus();
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
+              aria-label={t("search.clearAriaLabel", { ns: "settings" })}
             >
               <XIcon className="h-3.5 w-3.5" />
             </button>
@@ -132,17 +172,18 @@ export function SettingsList() {
                 >
                   <div className="font-medium">{result.item.label}</div>
                   <div className="text-xs text-muted-foreground">
-                    {result.item.sectionLabel}
+                    {sectionLabelById[result.item.sectionId] ??
+                      result.item.sectionLabel}
                   </div>
                 </button>
               ))
             ) : (
               <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                No settings found
+                {t("search.noResults", { ns: "settings" })}
               </div>
             )
           ) : (
-            SETTINGS_SECTIONS.map((section) => (
+            settingsSections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => scrollAndNavigateTo(section.id)}

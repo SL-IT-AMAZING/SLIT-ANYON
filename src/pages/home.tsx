@@ -32,6 +32,7 @@ import { showError } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 // @ts-ignore
 import anyonLogo from "../../img/logo3.svg";
 
@@ -41,6 +42,7 @@ export interface HomeSubmitOptions {
 }
 
 export default function HomePage() {
+  const { t } = useTranslation("app");
   const [inputValue, setInputValue] = useAtom(homeChatInputValueAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
@@ -127,7 +129,7 @@ export default function HomePage() {
 
   const handleAppClick = (id: number) => {
     setSelectedAppId(id);
-    navigate({ to: "/app-details", search: { appId: id } });
+    navigate({ to: "/apps/$appId", params: { appId: String(id) } });
   };
 
   useEffect(() => {
@@ -193,7 +195,8 @@ export default function HomePage() {
       navigate({ to: "/chat", search: { id: result.chatId } });
     } catch (error) {
       console.error("Failed to create chat:", error);
-      showError("Failed to create app. " + (error as any).toString());
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("home.errors.createAppFailed", { message }));
       setIsLoading(false); // Ensure loading state is reset on error
     }
     // No finally block needed for setIsLoading(false) here if navigation happens on success
@@ -210,11 +213,11 @@ export default function HomePage() {
             <div className="absolute top-0 left-0 w-full h-full border-8 border-t-primary rounded-full animate-spin"></div>
           </div>
           <h2 className="text-2xl font-bold mb-2 text-foreground">
-            Building your app
+            {t("home.loading.title")}
           </h2>
           <p className="text-muted-foreground text-center max-w-md mb-8">
-            We're setting up your app with AI magic. <br />
-            This might take a moment...
+            {t("home.loading.descriptionLine1")} <br />
+            {t("home.loading.descriptionLine2")}
           </p>
         </div>
       </div>
@@ -236,13 +239,15 @@ export default function HomePage() {
             className="text-6xl font-bold tracking-tight mb-4 flex items-center justify-center gap-3 flex-wrap"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            <span>Build</span>
-            <span className="italic text-primary">anything</span>
-            <span>with</span>
+            <span>{t("home.hero.build")}</span>
+            <span className="italic text-primary">
+              {t("home.hero.anything")}
+            </span>
+            <span>{t("home.hero.with")}</span>
             <img src={anyonLogo} alt="ANYON" className="h-14 inline-block" />
           </h1>
           <p className="text-muted-foreground text-xl font-medium">
-            Just tell me what you want. I'll handle the rest.
+            {t("home.hero.subtitle")}
           </p>
         </div>
         <HomeChatInput onSubmit={handleSubmit} />
@@ -253,7 +258,13 @@ export default function HomePage() {
               <button
                 type="button"
                 key={index}
-                onClick={() => setInputValue(`Build me a ${item.label}`)}
+                onClick={() =>
+                  setInputValue(
+                    t("home.inspiration.buildMeTemplate", {
+                      label: item.label,
+                    }),
+                  )
+                }
                 className="flex items-center gap-3 px-4 py-2 rounded-xl border border-border
                            bg-card/50 backdrop-blur-sm
                            transition-all duration-200
@@ -291,7 +302,7 @@ export default function HomePage() {
               />
             </svg>
             <span className="text-sm font-medium text-muted-foreground">
-              More ideas
+              {t("home.inspiration.moreIdeas")}
             </span>
           </button>
         </div>
@@ -299,7 +310,7 @@ export default function HomePage() {
         {apps.length > 0 && (
           <div className="mt-8 w-full">
             <h3 className="text-sm font-medium text-muted-foreground mb-3">
-              Recent Projects
+              {t("home.recentProjects.title")}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {apps.slice(0, 6).map((app) => (
@@ -333,7 +344,9 @@ export default function HomePage() {
       <Dialog open={releaseNotesOpen} onOpenChange={setReleaseNotesOpen}>
         <DialogContent className="max-w-4xl bg-(--docs-bg) pr-0 pt-4 pl-4 gap-1">
           <DialogHeader>
-            <DialogTitle>What's new in v{appVersion}?</DialogTitle>
+            <DialogTitle>
+              {t("home.releaseNotes.title", { version: appVersion })}
+            </DialogTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -354,7 +367,9 @@ export default function HomePage() {
                 <iframe
                   src={releaseUrl}
                   className="w-full h-full border-0 rounded-lg"
-                  title={`Release notes for v${appVersion}`}
+                  title={t("home.releaseNotes.iframeTitle", {
+                    version: appVersion,
+                  })}
                 />
               </div>
             )}

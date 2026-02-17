@@ -9,8 +9,10 @@ import {
 import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
 import { showError } from "@/lib/toast";
+import { useTranslation } from "react-i18next";
 
 export function RuntimeModeSelector() {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
 
   if (!settings) {
@@ -22,8 +24,9 @@ export function RuntimeModeSelector() {
   const handleRuntimeModeChange = async (value: "host" | "docker") => {
     try {
       await updateSettings({ runtimeMode2: value });
-    } catch (error: any) {
-      showError(`Failed to update runtime mode: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("general.runtimeModeUpdateFailed", { message }));
     }
   };
 
@@ -32,7 +35,7 @@ export function RuntimeModeSelector() {
       <div className="space-y-1">
         <div className="flex items-center space-x-2">
           <Label className="text-sm font-medium" htmlFor="runtime-mode">
-            Runtime Mode
+            {t("general.runtimeMode")}
           </Label>
           <Select
             value={settings.runtimeMode2 ?? "host"}
@@ -42,19 +45,24 @@ export function RuntimeModeSelector() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="host">Local (default)</SelectItem>
-              <SelectItem value="docker">Docker (experimental)</SelectItem>
+              <SelectItem value="host">
+                {t("general.runtimeModeOptions.host")}
+              </SelectItem>
+              <SelectItem value="docker">
+                {t("general.runtimeModeOptions.docker")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="text-sm text-muted-foreground">
-          Choose whether to run apps directly on the local machine or in Docker
-          containers
+          {t("general.runtimeModeDescription")}
         </div>
       </div>
       {isDockerMode && (
         <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
-          ⚠️ Docker mode is <b>experimental</b> and requires{" "}
+          {t("general.runtimeModeDockerWarningPrefix")}{" "}
+          <b>{t("general.runtimeModeDockerExperimental")}</b>{" "}
+          {t("general.runtimeModeDockerWarningMiddle")}{" "}
           <button
             type="button"
             className="underline font-medium cursor-pointer"
@@ -64,9 +72,9 @@ export function RuntimeModeSelector() {
               )
             }
           >
-            Docker Desktop
+            {t("general.runtimeModeDockerDesktop")}
           </button>{" "}
-          to be installed and running
+          {t("general.runtimeModeDockerWarningSuffix")}
         </div>
       )}
     </div>
