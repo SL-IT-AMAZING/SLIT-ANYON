@@ -450,10 +450,10 @@ export function LexicalChatInput({
         <PlainTextPlugin
           contentEditable={
             <ContentEditable
-              className="flex-1 px-4 pt-4 pb-2 focus:outline-none overflow-y-auto min-h-[44px] max-h-[200px] resize-none text-sm"
+                className="flex-1 px-4 pt-3 pb-2 focus:outline-none overflow-y-auto min-h-14 max-h-[200px] resize-none text-sm"
               aria-placeholder={placeholder}
               placeholder={
-                <div className="absolute top-4 left-4 text-muted-foreground pointer-events-none select-none text-sm">
+                  <div className="absolute top-3 left-4 text-muted-foreground pointer-events-none select-none text-sm">
                   {placeholder}
                 </div>
               }

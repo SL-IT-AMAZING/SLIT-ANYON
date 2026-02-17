@@ -13,7 +13,7 @@ import {
   Loader2,
   Package,
   SendToBack,
-  StopCircleIcon,
+  Square,
   X,
 } from "lucide-react";
 import type React from "react";
@@ -305,7 +305,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           to: "/chat",
           search: { id: newChatId },
         });
-        await invalidateChats();
+        invalidateChats();
       } catch (err) {
         showErrorToast(
           `Failed to create new chat: ${(err as Error).toString()}`,
@@ -404,7 +404,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           Error loading proposal: {proposalError.message}
         </div>
       )}
-      <div className="p-4" data-testid="chat-input-container">
+      <div className="px-3 pb-4 md:pb-6" data-testid="chat-input-container">
         {/* Show context limit banner above chat input for visibility */}
         {showBanner && tokenCountResult && (
           <ContextLimitBanner
@@ -413,7 +413,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           />
         )}
         <div
-          className={`relative flex flex-col border border-border rounded-xl bg-background ${
+          className={`relative flex flex-col border border-input rounded-2xl bg-background shadow-sm ${
             isDraggingOver ? "ring-2 ring-ring border-ring" : ""
           } ${showBanner ? "rounded-t-none border-t-0" : ""}`}
           onDragOver={handleDragOver}
@@ -482,7 +482,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           {/* Use the DragDropOverlay component */}
           <DragDropOverlay isDraggingOver={isDraggingOver} />
 
-          <div className="flex items-end gap-2 px-4 pb-3 pt-2">
+          <div className="flex items-end gap-2 px-3 pb-2 pt-1">
             <LexicalChatInput
               value={inputValue}
               onChange={setInputValue}
@@ -499,13 +499,14 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                 <TooltipTrigger
                   render={
                     <button
+                      type="button"
                       onClick={handleCancel}
                       aria-label="Cancel generation"
-                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background transition-colors hover:bg-muted"
                     />
                   }
                 >
-                  <StopCircleIcon size={20} />
+                  <Square className="size-2.5 fill-current" />
                 </TooltipTrigger>
                 <TooltipContent>Cancel generation</TooltipContent>
               </Tooltip>
@@ -514,13 +515,14 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                 <TooltipTrigger
                   render={
                     <button
+                      type="button"
                       onClick={handleSubmit}
                       disabled={
                         (!inputValue.trim() && attachments.length === 0) ||
                         disableSendButton
                       }
                       aria-label="Send message"
-                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background transition-colors hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
                     />
                   }
                 >
@@ -530,7 +532,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               </Tooltip>
             )}
           </div>
-          <div className="px-3 pb-3 flex items-center justify-between">
+          <div className="px-3 pb-2 flex items-center justify-between">
             <div className="flex items-center">
               <ChatInputControls showContextFilesPicker={false} />
             </div>

@@ -78,9 +78,9 @@ export function HomeChatInput({
 
   return (
     <>
-      <div className="p-4" data-testid="home-chat-input-container">
+      <div className="px-3 pb-4 md:pb-6" data-testid="home-chat-input-container">
         <div
-          className={`relative flex flex-col border border-border rounded-xl bg-background ${
+          className={`relative flex flex-col border border-input rounded-2xl bg-background shadow-sm ${
             isDraggingOver ? "ring-2 ring-ring border-ring" : ""
           }`}
           onDragOver={handleDragOver}
@@ -96,7 +96,7 @@ export function HomeChatInput({
           {/* Drag and drop overlay */}
           <DragDropOverlay isDraggingOver={isDraggingOver} />
 
-          <div className="flex items-end gap-2 px-4 pb-3 pt-2">
+          <div className="flex items-end gap-2 px-3 pb-2 pt-1">
             <LexicalChatInput
               value={inputValue}
               onChange={setInputValue}
@@ -114,6 +114,7 @@ export function HomeChatInput({
                 <TooltipTrigger
                   render={
                     <button
+                      type="button"
                       aria-label="Cancel generation (unavailable here)"
                       className="flex items-center justify-center size-8 shrink-0 rounded-full bg-muted text-muted-foreground cursor-not-allowed"
                     />
@@ -130,10 +131,11 @@ export function HomeChatInput({
                 <TooltipTrigger
                   render={
                     <button
+                      type="button"
                       onClick={handleCustomSubmit}
                       disabled={!inputValue.trim() && attachments.length === 0}
                       aria-label="Send message"
-                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground"
+                      className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background transition-colors hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
                     />
                   }
                 >
@@ -143,7 +145,7 @@ export function HomeChatInput({
               </Tooltip>
             )}
           </div>
-          <div className="px-3 pb-3 flex items-center justify-between">
+          <div className="px-3 pb-2 flex items-center justify-between">
             <div className="flex items-center">
               <ChatInputControls showContextFilesPicker={false} />
             </div>
@@ -153,6 +155,7 @@ export function HomeChatInput({
                 <TooltipTrigger
                   render={
                     <button
+                      type="button"
                       onClick={() => setIsImportDialogOpen(true)}
                       className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                     />
