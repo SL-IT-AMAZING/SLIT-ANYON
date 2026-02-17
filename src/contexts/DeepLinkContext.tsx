@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { ipc, DeepLinkData } from "../ipc/types";
 import { useScrollAndNavigateTo } from "@/hooks/useScrollAndNavigateTo";
+import { queryKeys } from "@/lib/queryKeys";
 import { SECTION_IDS } from "@/lib/settingsSearchIndex";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { type DeepLinkData, ipc } from "../ipc/types";
 
 type DeepLinkContextType = {
   lastDeepLink: (DeepLinkData & { timestamp: number }) | null;
@@ -19,6 +22,7 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
     (DeepLinkData & { timestamp: number }) | null
   >(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const scrollAndNavigateTo = useScrollAndNavigateTo("/settings", {
     behavior: "smooth",
     block: "start",
@@ -28,16 +32,19 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
       // Update with timestamp to ensure state change even if same type comes twice
       setLastDeepLink({ ...data, timestamp: Date.now() });
       if (data.type === "add-mcp-server") {
-        // Navigate to tools-mcp section
         scrollAndNavigateTo(SECTION_IDS.toolsMcp);
       } else if (data.type === "add-prompt") {
-        // Navigate to library page
         navigate({ to: "/library" });
+      } else if (data.type === "auth-return") {
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.state });
+        queryClient.invalidateQueries({ queryKey: queryKeys.entitlement.all });
+      } else if (data.type === "checkout-success") {
+        queryClient.invalidateQueries({ queryKey: queryKeys.entitlement.all });
       }
     });
 
     return unsubscribe;
-  }, [navigate, scrollAndNavigateTo]);
+  }, [navigate, scrollAndNavigateTo, queryClient]);
 
   return (
     <DeepLinkContext.Provider

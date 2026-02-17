@@ -137,6 +137,27 @@ export function readSettings(): UserSettings {
         }
       }
     }
+    const auth = combinedSettings.auth;
+    if (auth) {
+      if (auth.accessToken) {
+        const encryptionType = auth.accessToken.encryptionType;
+        if (encryptionType) {
+          auth.accessToken = {
+            value: decrypt(auth.accessToken),
+            encryptionType,
+          };
+        }
+      }
+      if (auth.refreshToken) {
+        const encryptionType = auth.refreshToken.encryptionType;
+        if (encryptionType) {
+          auth.refreshToken = {
+            value: decrypt(auth.refreshToken),
+            encryptionType,
+          };
+        }
+      }
+    }
     if (combinedSettings.githubAccessToken) {
       const encryptionType = combinedSettings.githubAccessToken.encryptionType;
       combinedSettings.githubAccessToken = {
@@ -212,6 +233,18 @@ export function writeSettings(settings: Partial<UserSettings>): void {
     const filePath = getSettingsFilePath();
     const currentSettings = readSettings();
     const newSettings = { ...currentSettings, ...settings };
+    if (newSettings.auth) {
+      if (newSettings.auth.accessToken) {
+        newSettings.auth.accessToken = encrypt(
+          newSettings.auth.accessToken.value,
+        );
+      }
+      if (newSettings.auth.refreshToken) {
+        newSettings.auth.refreshToken = encrypt(
+          newSettings.auth.refreshToken.value,
+        );
+      }
+    }
     if (newSettings.githubAccessToken) {
       newSettings.githubAccessToken = encrypt(
         newSettings.githubAccessToken.value,

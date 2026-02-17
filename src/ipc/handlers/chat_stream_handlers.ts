@@ -27,6 +27,7 @@ import { db } from "../../db";
 import { chats, messages } from "../../db/schema";
 import { mcpServers } from "../../db/schema";
 import type { SmartContextMode } from "../../lib/schemas";
+import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
 import { readSettings } from "../../main/settings";
 import { getAnyonAppPath } from "../../paths/paths";
 import { SECURITY_REVIEW_SYSTEM_PROMPT } from "../../prompts/security_review_prompt";
@@ -78,6 +79,7 @@ import { AsyncVirtualFileSystem } from "../../../shared/VirtualFilesystem";
 import { escapeXmlAttr, escapeXmlContent } from "../../../shared/xmlEscape";
 import { prompts as promptsTable } from "../../db/schema";
 import { generateProblemReport } from "../processors/tsc";
+import { getLanguageModelProviders } from "../shared/language_model_helpers";
 import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
 import {
   getAnyonAddDependencyTags,
@@ -112,6 +114,13 @@ import { parsePlanFile, validatePlanId } from "./planUtils";
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
 const logger = log.scope("chat_stream_handlers");
+
+async function isFreeTierProvider(providerId: string): Promise<boolean> {
+  const providers = await getLanguageModelProviders();
+  return providers.some((provider) => {
+    return provider.id === providerId && provider.hasFreeTier === true;
+  });
+}
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
@@ -522,6 +531,15 @@ ${componentSnippet}
         );
       } else {
         // Normal AI processing for non-test prompts
+        if (!(await isFreeTierProvider(settings.selectedModel.provider))) {
+          const creditCheck = await checkCreditsForModel(
+            settings.selectedModel.name,
+          );
+          if (!creditCheck.allowed) {
+            throw new Error(creditCheck.reason ?? "Credits exhausted");
+          }
+        }
+
         const {
           modelClient,
           isEngineEnabled,
@@ -611,6 +629,11 @@ ${componentSnippet}
                         error,
                       );
                     });
+                  // Report token usage to Polar for credit metering
+                  void reportTokenUsage(
+                    totalTokens,
+                    settings.selectedModel.name,
+                  );
                 }
               },
               onError: (error: any) => {
@@ -1194,6 +1217,8 @@ This conversation includes one or more image attachments. When the user uploads 
                 logger.log(
                   `Total tokens used (aggregated for message ${placeholderAssistantMessage.id}): ${maxTokensUsed}`,
                 );
+                // Report token usage to Polar for credit metering
+                void reportTokenUsage(totalTokens, settings.selectedModel.name);
               } else {
                 logger.log("Total tokens used: unknown");
               }
@@ -1648,6 +1673,17 @@ ${problemReport.problems
                     chatContext,
                     virtualFileSystem,
                   });
+                if (
+                  !(await isFreeTierProvider(settings.selectedModel.provider))
+                ) {
+                  const creditCheck = await checkCreditsForModel(
+                    settings.selectedModel.name,
+                  );
+                  if (!creditCheck.allowed) {
+                    throw new Error(creditCheck.reason ?? "Credits exhausted");
+                  }
+                }
+
                 const { modelClient } = await getModelClient(
                   settings.selectedModel,
                   settings,

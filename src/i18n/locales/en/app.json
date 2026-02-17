@@ -25,5 +25,45 @@
   "welcome": {
     "title": "Build a new app",
     "subtitle": "What would you like to build today?"
+  },
+  "billing": {
+    "choosePlanTitle": "Choose your plan",
+    "choosePlanDescription": "Select a tier and continue to secure Polar checkout.",
+    "plans": {
+      "free": {
+        "name": "Free"
+      },
+      "starter": {
+        "name": "Starter",
+        "price": "$19/mo",
+        "summary": "5M adjusted tokens"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$49/mo",
+        "summary": "15M adjusted tokens"
+      },
+      "power": {
+        "name": "Power",
+        "price": "$99/mo",
+        "summary": "35M adjusted tokens + overage"
+      }
+    },
+    "currentPlan": {
+      "free": "Free Plan",
+      "starter": "Starter Plan",
+      "pro": "Pro Plan",
+      "power": "Power Plan"
+    },
+    "actions": {
+      "billingAndRefunds": "Billing & Refunds",
+      "upgrade": "Upgrade",
+      "signOut": "Sign Out"
+    },
+    "account": "Account",
+    "credits": "Credits",
+    "usage": "{{used}} / {{limit}} credits",
+    "overageActive": "Overage active",
+    "upgradeTo": "Upgrade to {{plan}}"
   }
 }

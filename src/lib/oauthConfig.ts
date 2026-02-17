@@ -9,6 +9,11 @@ const OAUTH_SERVER_URL =
   (typeof process !== "undefined" && process.env.OAUTH_SERVER_URL) ||
   "https://server-green-seven.vercel.app";
 
+const EDGE_FUNCTIONS_URL =
+  "https://hboncsycgqhsdqpocpsb.supabase.co/functions/v1";
+
+export { OAUTH_SERVER_URL };
+
 export const oauthEndpoints = {
   neon: {
     login: `${OAUTH_SERVER_URL}/api/oauth/neon/login`,
@@ -21,5 +26,13 @@ export const oauthEndpoints = {
   vercel: {
     login: `${OAUTH_SERVER_URL}/api/oauth/vercel/login`,
     refresh: `${OAUTH_SERVER_URL}/api/oauth/vercel/refresh`,
+  },
+  auth: {
+    callback: `${EDGE_FUNCTIONS_URL}/auth-callback`,
+    entitlements: `${EDGE_FUNCTIONS_URL}/entitlements`,
+    checkout: `${EDGE_FUNCTIONS_URL}/create-checkout`,
+    customerPortal: `${EDGE_FUNCTIONS_URL}/customer-portal`,
+    usage: `${EDGE_FUNCTIONS_URL}/get-usage`,
+    usageIngest: `${EDGE_FUNCTIONS_URL}/track-usage`,
   },
 } as const;

@@ -342,6 +342,31 @@ export const UserSettingsSchema = z
       })
       .optional(),
     hideLocalAgentNewChatToast: z.boolean().optional(),
+
+    // Auth state (Supabase Auth)
+    auth: z
+      .object({
+        accessToken: SecretSchema.optional(),
+        refreshToken: SecretSchema.optional(),
+        userId: z.string().optional(),
+        email: z.string().optional(),
+        displayName: z.string().optional(),
+        avatarUrl: z.string().optional(),
+        provider: z.enum(["google", "email"]).optional(),
+        codeVerifier: z.string().optional(), // temporary, for PKCE flow
+      })
+      .optional(),
+
+    // Entitlement cache (synced from server)
+    entitlementCache: z
+      .object({
+        plan: z.enum(["free", "starter", "pro", "power"]).optional(),
+        isActive: z.boolean().optional(),
+        expiresAt: z.string().optional(),
+        polarSubscriptionId: z.string().optional(),
+        syncedAt: z.string().optional(),
+      })
+      .optional(),
   })
   // Allow unknown properties to pass through (e.g. future settings
   // that should be preserved if user downgrades to an older version)
@@ -353,11 +378,23 @@ export const UserSettingsSchema = z
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
 export function isAnyonProEnabled(settings: UserSettings): boolean {
+  if (isEntitlementProActive(settings)) return true;
   return settings.enableAnyonPro !== false;
 }
 
 export function hasAnyonProKey(settings: UserSettings): boolean {
+  if (isEntitlementProActive(settings)) return true;
   return !!settings.providerSettings?.auto?.apiKey?.value;
+}
+
+const ENTITLEMENT_CACHE_TTL_MS = 72 * 60 * 60 * 1000;
+
+export function isEntitlementProActive(settings: UserSettings): boolean {
+  const cache = settings.entitlementCache;
+  if (cache?.plan !== "pro" || cache?.isActive !== true) return false;
+  if (!cache.syncedAt) return false;
+  const syncedAt = new Date(cache.syncedAt).getTime();
+  return Date.now() - syncedAt < ENTITLEMENT_CACHE_TTL_MS;
 }
 
 /**
