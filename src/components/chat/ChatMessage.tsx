@@ -21,11 +21,16 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LogoSpinner } from "../chat-v2/LogoSpinner";
+import {
+  INITIAL_VERBS,
+  STREAMING_VERBS,
+  ScrambleVerb,
+} from "../chat-v2/ScrambleText";
 import {
   AnyonMarkdownParser,
   VanillaMarkdownParser,
 } from "./AnyonMarkdownParser";
-import { StreamingLoadingAnimation } from "./StreamingLoadingAnimation";
 
 interface ChatMessageProps {
   message: Message;
@@ -103,7 +108,10 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
           !message.content &&
           isStreaming &&
           isLastMessage ? (
-            <StreamingLoadingAnimation variant="initial" />
+            <div className="flex items-center gap-3 p-2">
+              <LogoSpinner variant="strokeLoop" size={32} />
+              <ScrambleVerb verbs={INITIAL_VERBS} />
+            </div>
           ) : (
             <div
               className="prose dark:prose-invert prose-headings:mb-2 prose-p:my-1 prose-pre:my-0 max-w-none break-words"
@@ -113,7 +121,10 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                 <>
                   <AnyonMarkdownParser content={message.content} />
                   {isLastMessage && isStreaming && (
-                    <StreamingLoadingAnimation variant="streaming" />
+                    <div className="mt-3 ml-1 flex items-center gap-2.5">
+                      <LogoSpinner variant="strokeLoop" size={20} />
+                      <ScrambleVerb verbs={STREAMING_VERBS} />
+                    </div>
                   )}
                 </>
               ) : (
@@ -145,7 +156,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                       }
                     >
                       {copied ? (
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
@@ -161,12 +172,12 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                   <div className="flex items-center space-x-1">
                     {message.approvalState === "approved" ? (
                       <>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
                         <span>Approved</span>
                       </>
                     ) : message.approvalState === "rejected" ? (
                       <>
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
                         <span>Rejected</span>
                       </>
                     ) : null}
@@ -235,7 +246,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                   }
                 >
                   {copiedRequestId ? (
-                    <Check className="h-3 w-3 text-green-500" />
+                    <Check className="h-3 w-3 text-muted-foreground" />
                   ) : (
                     <Copy className="h-3 w-3" />
                   )}

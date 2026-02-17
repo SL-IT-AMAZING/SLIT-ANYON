@@ -1,9 +1,19 @@
 import type { Message } from "@/ipc/types";
-import React from "react";
+import type React from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { OpenRouterSetupBanner } from "../SetupBanner";
-import ChatMessage from "./ChatMessage";
+import {
+  SessionTurn,
+  type StepItem,
+  computeStatus,
+} from "../chat-v2/SessionTurn";
+import { getToolIcon } from "../chat-v2/tools";
+import {
+  getState,
+  parseCustomTagsWithDedup,
+  renderCustomTag,
+} from "./AnyonMarkdownParser";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
@@ -19,6 +29,12 @@ import { showError, showWarning } from "@/lib/toast";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Loader2, RefreshCw, Undo } from "lucide-react";
 import { PromoMessage } from "./PromoMessage";
+import {
+  findLastIndexByRole,
+  findLastMessageByRole,
+  findPreviousAssistantWithCommitBefore,
+  findPreviousMessageByRole,
+} from "./messagesListUtils";
 
 interface MessagesListProps {
   messages: Message[];
@@ -26,8 +42,201 @@ interface MessagesListProps {
   onAtBottomChange?: (atBottom: boolean) => void;
 }
 
-// Memoize ChatMessage at module level to prevent recreation on every render
-const MemoizedChatMessage = React.memo(ChatMessage);
+interface MessageTurn {
+  id: string;
+  userMessage: Message | null;
+  assistantMessages: Message[];
+}
+
+function mapTagToStatusTool(tag: string): string {
+  switch (tag) {
+    case "opencode-tool":
+      return "";
+    case "anyon-read":
+      return "read";
+    case "anyon-list-files":
+      return "list";
+    case "anyon-grep":
+    case "anyon-code-search":
+    case "anyon-code-search-result":
+      return "grep";
+    case "anyon-web-search":
+    case "anyon-web-search-result":
+    case "anyon-web-crawl":
+      return "webfetch";
+    case "anyon-edit":
+    case "anyon-search-replace":
+      return "edit";
+    case "anyon-write":
+      return "write";
+    case "anyon-command":
+      return "bash";
+    case "anyon-write-plan":
+      return "todowrite";
+    default:
+      return tag.replace(/^anyon-/, "");
+  }
+}
+
+function groupMessagesIntoTurns(messages: Message[]): MessageTurn[] {
+  const turns: MessageTurn[] = [];
+  let currentTurn: MessageTurn | null = null;
+
+  for (const [index, message] of messages.entries()) {
+    if (message.role === "user") {
+      currentTurn = {
+        id: `turn-${message.id}`,
+        userMessage: message,
+        assistantMessages: [],
+      };
+      turns.push(currentTurn);
+      continue;
+    }
+
+    if (!currentTurn) {
+      currentTurn = {
+        id: `turn-orphan-${message.id}-${index}`,
+        userMessage: null,
+        assistantMessages: [message],
+      };
+      turns.push(currentTurn);
+      continue;
+    }
+
+    currentTurn.assistantMessages.push(message);
+  }
+
+  return turns;
+}
+
+function formatDuration(from: Date, to: Date): string {
+  const seconds = Math.max(
+    1,
+    Math.round((to.getTime() - from.getTime()) / 1000),
+  );
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remaining = seconds % 60;
+  if (remaining === 0) return `${minutes}m`;
+  return `${minutes}m ${remaining}s`;
+}
+
+function summarizeTurn(
+  turn: MessageTurn,
+  isTurnWorking: boolean,
+): {
+  steps: StepItem[];
+  response: string;
+  statusText: string | undefined;
+  duration: string | undefined;
+} {
+  const steps: StepItem[] = [];
+  const responseChunks: string[] = [];
+  let activeToolName: string | undefined;
+
+  for (const message of turn.assistantMessages) {
+    const pieces = parseCustomTagsWithDedup(message.content ?? "");
+
+    for (const piece of pieces) {
+      if (piece.type === "markdown") {
+        if (piece.content.trim()) {
+          responseChunks.push(piece.content);
+        }
+        continue;
+      }
+
+      const { tagInfo } = piece;
+      if (tagInfo.tag === "anyon-chat-summary") {
+        continue;
+      }
+
+      if (tagInfo.tag === "think") {
+        if (tagInfo.content.trim()) {
+          steps.push({
+            id: `${message.id}-think-${steps.length}`,
+            type: "reasoning",
+            text: tagInfo.content,
+          });
+        }
+        continue;
+      }
+
+      const toolName =
+        tagInfo.tag === "opencode-tool"
+          ? tagInfo.attributes.name || "tool"
+          : tagInfo.tag.replace(/^anyon-/, "");
+      const statusToolName =
+        tagInfo.tag === "opencode-tool"
+          ? tagInfo.attributes.name || "tool"
+          : mapTagToStatusTool(tagInfo.tag);
+      const iconToolName =
+        tagInfo.tag === "opencode-tool"
+          ? tagInfo.attributes.name || "tool"
+          : tagInfo.tag;
+
+      const isRunning =
+        tagInfo.tag === "opencode-tool"
+          ? tagInfo.attributes.status === "running"
+          : getState({
+              isStreaming: isTurnWorking,
+              inProgress: tagInfo.inProgress,
+            }) === "pending";
+
+      if (isRunning) {
+        activeToolName = statusToolName;
+      }
+
+      const rendered = renderCustomTag(tagInfo, { isStreaming: isTurnWorking });
+      if (!rendered) {
+        continue;
+      }
+
+      steps.push({
+        id: `${message.id}-${toolName}-${steps.length}`,
+        type: "tool",
+        toolName,
+        toolIcon: getToolIcon(iconToolName),
+        title:
+          tagInfo.attributes.title ||
+          tagInfo.attributes.name ||
+          tagInfo.attributes.tool ||
+          toolName,
+        subtitle:
+          tagInfo.attributes.path ||
+          tagInfo.attributes.query ||
+          tagInfo.attributes.description ||
+          tagInfo.attributes.provider ||
+          undefined,
+        content: rendered,
+      });
+    }
+  }
+
+  let duration: string | undefined;
+  const assistantWithCreatedAt = turn.assistantMessages.filter(
+    (m) => m.createdAt,
+  );
+  if (assistantWithCreatedAt.length > 0) {
+    const start = new Date(
+      assistantWithCreatedAt[0].createdAt as string | Date,
+    );
+    const end = new Date(
+      assistantWithCreatedAt[assistantWithCreatedAt.length - 1].createdAt as
+        | string
+        | Date,
+    );
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      duration = formatDuration(start, end);
+    }
+  }
+
+  return {
+    steps,
+    response: responseChunks.join("\n").trim(),
+    statusText: activeToolName ? computeStatus(activeToolName) : undefined,
+    duration,
+  };
+}
 
 // Context type for Virtuoso
 interface FooterContext {
@@ -91,8 +300,12 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                   setIsUndoLoading(true);
                   try {
                     const currentMessage = messages[messages.length - 1];
-                    // The user message that triggered this assistant response
-                    const userMessage = messages[messages.length - 2];
+                    const currentMessageIndex = messages.length - 1;
+                    const userMessage = findPreviousMessageByRole(
+                      messages,
+                      currentMessageIndex,
+                      "user",
+                    );
                     if (currentMessage?.sourceCommitHash) {
                       console.debug(
                         "Reverting to source commit hash",
@@ -155,8 +368,14 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                     lastVersion.oid === lastMessage.commitHash &&
                     lastMessage.role === "assistant"
                   ) {
+                    const lastUserIndex = findLastIndexByRole(messages, "user");
                     const previousAssistantMessage =
-                      messages[messages.length - 3];
+                      lastUserIndex >= 0
+                        ? findPreviousAssistantWithCommitBefore(
+                            messages,
+                            lastUserIndex,
+                          )
+                        : undefined;
                     if (
                       previousAssistantMessage?.role === "assistant" &&
                       previousAssistantMessage?.commitHash
@@ -185,9 +404,10 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                   }
 
                   // Find the last user message
-                  const lastUserMessage = [...messages]
-                    .reverse()
-                    .find((message) => message.role === "user");
+                  const lastUserMessage = findLastMessageByRole(
+                    messages,
+                    "user",
+                  );
                   if (!lastUserMessage) {
                     console.error("No user message found");
                     return;
@@ -244,6 +464,9 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const setMessagesById = useSetAtom(chatMessagesByIdAtom);
     const [isUndoLoading, setIsUndoLoading] = useState(false);
     const [isRetryLoading, setIsRetryLoading] = useState(false);
+    const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(
+      new Set(),
+    );
     const selectedChatId = useAtomValue(selectedChatIdAtom);
     const { userBudget } = useUserBudgetInfo();
 
@@ -275,22 +498,45 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
       ) : null;
     }, [settings?.selectedModel, isProviderSetup, isAnyProviderSetup]);
 
+    const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages]);
+
     // Memoized item renderer for virtualized list
     const itemContent = useCallback(
-      (index: number, message: Message) => {
-        const isLastMessage = index === messages.length - 1;
-        const messageKey = message.id;
+      (index: number, turn: MessageTurn) => {
+        const isLastTurn = index === turns.length - 1;
+        const isTurnWorking = isStreaming && isLastTurn;
+        const turnSummary = summarizeTurn(turn, isTurnWorking);
+        const userMessageText = turn.userMessage?.content ?? "";
+        const hasAssistantContent = turn.assistantMessages.length > 0;
+        const stepsExpanded = expandedTurnIds.has(turn.id);
 
         return (
-          <div className="px-4" key={messageKey}>
-            <MemoizedChatMessage
-              message={message}
-              isLastMessage={isLastMessage}
+          <div className="px-4" key={turn.id}>
+            <SessionTurn
+              userMessage={userMessageText}
+              steps={turnSummary.steps}
+              response={turnSummary.response}
+              working={isTurnWorking}
+              statusText={turnSummary.statusText}
+              duration={turnSummary.duration}
+              stepsExpanded={stepsExpanded}
+              onToggleSteps={() => {
+                setExpandedTurnIds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(turn.id)) {
+                    next.delete(turn.id);
+                  } else {
+                    next.add(turn.id);
+                  }
+                  return next;
+                });
+              }}
+              className={!hasAssistantContent ? "opacity-70" : undefined}
             />
           </div>
         );
       },
-      [messages.length],
+      [turns, isStreaming, expandedTurnIds],
     );
 
     // Create context object for Footer component with stable references
@@ -371,11 +617,35 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           ref={ref}
           data-testid="messages-list"
         >
-          {messages.map((message, index) => {
-            const isLastMessage = index === messages.length - 1;
+          {turns.map((turn, index) => {
+            const isLastTurn = index === turns.length - 1;
+            const isTurnWorking = isStreaming && isLastTurn;
+            const turnSummary = summarizeTurn(turn, isTurnWorking);
+            const hasAssistantContent = turn.assistantMessages.length > 0;
+            const stepsExpanded = expandedTurnIds.has(turn.id);
             return (
-              <div className="px-4" key={message.id}>
-                <ChatMessage message={message} isLastMessage={isLastMessage} />
+              <div className="px-4" key={turn.id}>
+                <SessionTurn
+                  userMessage={turn.userMessage?.content ?? ""}
+                  steps={turnSummary.steps}
+                  response={turnSummary.response}
+                  working={isTurnWorking}
+                  statusText={turnSummary.statusText}
+                  duration={turnSummary.duration}
+                  stepsExpanded={stepsExpanded}
+                  onToggleSteps={() => {
+                    setExpandedTurnIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(turn.id)) {
+                        next.delete(turn.id);
+                      } else {
+                        next.add(turn.id);
+                      }
+                      return next;
+                    });
+                  }}
+                  className={!hasAssistantContent ? "opacity-70" : undefined}
+                />
               </div>
             );
           })}
@@ -391,9 +661,10 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         data-testid="messages-list"
       >
         <Virtuoso
-          data={messages}
+          data={turns}
+          computeItemKey={(_index, turn) => turn.id}
           increaseViewportBy={{ top: 1000, bottom: 500 }}
-          initialTopMostItemIndex={messages.length - 1}
+          initialTopMostItemIndex={turns.length - 1}
           itemContent={itemContent}
           components={{ Footer: FooterComponent }}
           context={footerContext}

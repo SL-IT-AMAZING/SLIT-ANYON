@@ -2,45 +2,47 @@ import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { AnyonWrite } from "./AnyonWrite";
-import { AnyonRename } from "./AnyonRename";
-import { AnyonDelete } from "./AnyonDelete";
-import { AnyonAddDependency } from "./AnyonAddDependency";
-import { AnyonExecuteSql } from "./AnyonExecuteSql";
-import { AnyonLogs } from "./AnyonLogs";
-import { AnyonGrep } from "./AnyonGrep";
-import { AnyonAddIntegration } from "./AnyonAddIntegration";
-import { AnyonEdit } from "./AnyonEdit";
-import { AnyonSearchReplace } from "./AnyonSearchReplace";
-import { AnyonCodebaseContext } from "./AnyonCodebaseContext";
-import { AnyonThink } from "./AnyonThink";
-import { CodeHighlight } from "./CodeHighlight";
-import { useAtomValue } from "jotai";
 import { isStreamingByIdAtom, selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { CustomTagState } from "./stateTypes";
-import { AnyonOutput } from "./AnyonOutput";
-import { AnyonProblemSummary } from "./AnyonProblemSummary";
-import { ipc } from "@/ipc/types";
-import { AnyonMcpToolCall } from "./AnyonMcpToolCall";
-import { AnyonMcpToolResult } from "./AnyonMcpToolResult";
-import { AnyonWebSearchResult } from "./AnyonWebSearchResult";
-import { AnyonWebSearch } from "./AnyonWebSearch";
-import { AnyonWebCrawl } from "./AnyonWebCrawl";
-import { AnyonCodeSearchResult } from "./AnyonCodeSearchResult";
-import { AnyonCodeSearch } from "./AnyonCodeSearch";
-import { AnyonRead } from "./AnyonRead";
-import { AnyonListFiles } from "./AnyonListFiles";
-import { AnyonDatabaseSchema } from "./AnyonDatabaseSchema";
-import { AnyonSupabaseTableSchema } from "./AnyonSupabaseTableSchema";
-import { AnyonSupabaseProjectInfo } from "./AnyonSupabaseProjectInfo";
-import { AnyonStatus } from "./AnyonStatus";
-import { AnyonWritePlan } from "./AnyonWritePlan";
-import { AnyonExitPlan } from "./AnyonExitPlan";
-import { OpenCodeTool } from "./OpenCodeTool";
-import { mapActionToButton } from "./ChatInput";
-import { SuggestedAction } from "@/lib/schemas";
-import { FixAllErrorsButton } from "./FixAllErrorsButton";
+import type { SuggestedAction } from "@/lib/schemas";
+import { useAtomValue } from "jotai";
 import { unescapeXmlAttr, unescapeXmlContent } from "../../../shared/xmlEscape";
+import { markdownComponents } from "../chat-v2/MarkdownContent";
+import {
+  AddDependencyTool,
+  AddIntegrationTool,
+  CodeSearchResultTool,
+  CodeSearchTool,
+  CodebaseContextTool,
+  DatabaseSchemaTool,
+  DeleteTool,
+  EditTool,
+  ExecuteSqlTool,
+  ExitPlanTool,
+  GrepTool,
+  ListFilesTool,
+  LogsTool,
+  McpToolCallTool,
+  McpToolResultTool,
+  OpenCodeToolTool,
+  OutputTool,
+  ProblemSummaryTool,
+  ReadTool,
+  RenameTool,
+  SearchReplaceTool,
+  StatusTool,
+  SupabaseProjectInfoTool,
+  SupabaseTableSchemaTool,
+  ThinkTool,
+  WebCrawlTool,
+  WebSearchResultTool,
+  WebSearchTool,
+  WritePlanTool,
+  WriteTool,
+  mapTagStateToStatus,
+} from "../chat-v2/tools";
+import { mapActionToButton } from "./ChatInput";
+import { FixAllErrorsButton } from "./FixAllErrorsButton";
+import type { CustomTagState } from "./stateTypes";
 
 const ANYON_CUSTOM_TAGS = [
   "anyon-write",
@@ -81,7 +83,7 @@ interface AnyonMarkdownParserProps {
   content: string;
 }
 
-type CustomTagInfo = {
+export type CustomTagInfo = {
   tag: string;
   attributes: Record<string, string>;
   content: string;
@@ -89,38 +91,13 @@ type CustomTagInfo = {
   inProgress?: boolean;
 };
 
-type ContentPiece =
+export type ContentPiece =
   | { type: "markdown"; content: string }
   | { type: "custom-tag"; tagInfo: CustomTagInfo };
 
-const customLink = ({
-  node: _node,
-  ...props
-}: {
-  node?: any;
-  [key: string]: any;
-}) => (
-  <a
-    {...props}
-    onClick={(e) => {
-      const url = props.href;
-      if (url) {
-        e.preventDefault();
-        ipc.system.openExternalUrl(url);
-      }
-    }}
-  />
-);
-
 export const VanillaMarkdownParser = ({ content }: { content: string }) => {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        code: CodeHighlight,
-        a: customLink,
-      }}
-    >
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
       {content}
     </ReactMarkdown>
   );
@@ -136,28 +113,7 @@ export const AnyonMarkdownParser: React.FC<AnyonMarkdownParserProps> = ({
   const isStreaming = useAtomValue(isStreamingByIdAtom).get(chatId!) ?? false;
   // Extract content pieces (markdown and custom tags)
   const contentPieces = useMemo(() => {
-    const pieces = parseCustomTags(content);
-    // Deduplicate opencode-tool tags: keep only the LAST occurrence per toolid
-    const lastToolIndex = new Map<string, number>();
-    pieces.forEach((piece, index) => {
-      if (
-        piece.type === "custom-tag" &&
-        piece.tagInfo.tag === "opencode-tool" &&
-        piece.tagInfo.attributes.toolid
-      ) {
-        lastToolIndex.set(piece.tagInfo.attributes.toolid, index);
-      }
-    });
-    return pieces.filter((piece, index) => {
-      if (
-        piece.type === "custom-tag" &&
-        piece.tagInfo.tag === "opencode-tool" &&
-        piece.tagInfo.attributes.toolid
-      ) {
-        return lastToolIndex.get(piece.tagInfo.attributes.toolid) === index;
-      }
-      return true;
-    });
+    return parseCustomTagsWithDedup(content);
   }, [content]);
 
   // Extract error messages and track positions
@@ -196,10 +152,7 @@ export const AnyonMarkdownParser: React.FC<AnyonMarkdownParserProps> = ({
             ? piece.content && (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  components={{
-                    code: CodeHighlight,
-                    a: customLink,
-                  }}
+                  components={markdownComponents}
                 >
                   {piece.content}
                 </ReactMarkdown>
@@ -343,7 +296,33 @@ function parseCustomTags(content: string): ContentPiece[] {
   return contentPieces;
 }
 
-function getState({
+export function parseCustomTagsWithDedup(content: string): ContentPiece[] {
+  const pieces = parseCustomTags(content);
+  // Deduplicate opencode-tool tags: keep only the LAST occurrence per toolid
+  const lastToolIndex = new Map<string, number>();
+  pieces.forEach((piece, index) => {
+    if (
+      piece.type === "custom-tag" &&
+      piece.tagInfo.tag === "opencode-tool" &&
+      piece.tagInfo.attributes.toolid
+    ) {
+      lastToolIndex.set(piece.tagInfo.attributes.toolid, index);
+    }
+  });
+
+  return pieces.filter((piece, index) => {
+    if (
+      piece.type === "custom-tag" &&
+      piece.tagInfo.tag === "opencode-tool" &&
+      piece.tagInfo.attributes.toolid
+    ) {
+      return lastToolIndex.get(piece.tagInfo.attributes.toolid) === index;
+    }
+    return true;
+  });
+}
+
+export function getState({
   isStreaming,
   inProgress,
 }: {
@@ -359,299 +338,188 @@ function getState({
 /**
  * Render a custom tag based on its type
  */
-function renderCustomTag(
+export function renderCustomTag(
   tagInfo: CustomTagInfo,
   { isStreaming }: { isStreaming: boolean },
 ): React.ReactNode {
   const { tag, attributes, content, inProgress } = tagInfo;
+  const status = mapTagStateToStatus(getState({ isStreaming, inProgress }));
 
   switch (tag) {
     case "anyon-read":
-      return (
-        <AnyonRead
-          node={{
-            properties: {
-              path: attributes.path || "",
-            },
-          }}
-        >
-          {content}
-        </AnyonRead>
-      );
+      return <ReadTool path={attributes.path || ""}>{content}</ReadTool>;
+
     case "anyon-web-search":
       return (
-        <AnyonWebSearch
-          node={{
-            properties: {
-              query: attributes.query || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
+        <WebSearchTool query={attributes.query || ""} status={status}>
           {content}
-        </AnyonWebSearch>
+        </WebSearchTool>
       );
+
     case "anyon-web-crawl":
-      return (
-        <AnyonWebCrawl
-          node={{
-            properties: {},
-          }}
-        >
-          {content}
-        </AnyonWebCrawl>
-      );
+      return <WebCrawlTool status={status}>{content}</WebCrawlTool>;
+
     case "anyon-code-search":
       return (
-        <AnyonCodeSearch
-          node={{
-            properties: {
-              query: attributes.query || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
+        <CodeSearchTool query={attributes.query || ""} status={status}>
           {content}
-        </AnyonCodeSearch>
+        </CodeSearchTool>
       );
+
     case "anyon-code-search-result":
-      return (
-        <AnyonCodeSearchResult
-          node={{
-            properties: {},
-          }}
-        >
-          {content}
-        </AnyonCodeSearchResult>
-      );
+      return <CodeSearchResultTool>{content}</CodeSearchResultTool>;
+
     case "anyon-web-search-result":
       return (
-        <AnyonWebSearchResult
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
-          {content}
-        </AnyonWebSearchResult>
+        <WebSearchResultTool status={status}>{content}</WebSearchResultTool>
       );
+
     case "think":
-      return (
-        <AnyonThink
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
-          {content}
-        </AnyonThink>
-      );
+      return <ThinkTool status={status}>{content}</ThinkTool>;
+
     case "anyon-write":
       return (
-        <AnyonWrite
-          node={{
-            properties: {
-              path: attributes.path || "",
-              description: attributes.description || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <WriteTool
+          path={attributes.path || ""}
+          description={attributes.description || ""}
+          status={status}
         >
           {content}
-        </AnyonWrite>
+        </WriteTool>
       );
 
     case "anyon-rename":
       return (
-        <AnyonRename
-          node={{
-            properties: {
-              from: attributes.from || "",
-              to: attributes.to || "",
-            },
-          }}
-        >
+        <RenameTool from={attributes.from || ""} to={attributes.to || ""}>
           {content}
-        </AnyonRename>
+        </RenameTool>
       );
 
     case "anyon-delete":
-      return (
-        <AnyonDelete
-          node={{
-            properties: {
-              path: attributes.path || "",
-            },
-          }}
-        >
-          {content}
-        </AnyonDelete>
-      );
+      return <DeleteTool path={attributes.path || ""}>{content}</DeleteTool>;
 
     case "anyon-add-dependency":
       return (
-        <AnyonAddDependency
-          node={{
-            properties: {
-              packages: attributes.packages || "",
-            },
-          }}
-        >
+        <AddDependencyTool packages={attributes.packages || ""}>
           {content}
-        </AnyonAddDependency>
+        </AddDependencyTool>
       );
 
     case "anyon-execute-sql":
       return (
-        <AnyonExecuteSql
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-              description: attributes.description || "",
-            },
-          }}
+        <ExecuteSqlTool
+          description={attributes.description || ""}
+          status={status}
         >
           {content}
-        </AnyonExecuteSql>
+        </ExecuteSqlTool>
       );
 
     case "anyon-read-logs":
       return (
-        <AnyonLogs
+        <LogsTool
           node={{
             properties: {
-              state: getState({ isStreaming, inProgress }),
               time: attributes.time || "",
               type: attributes.type || "",
               level: attributes.level || "",
               count: attributes.count || "",
             },
           }}
+          status={status}
         >
           {content}
-        </AnyonLogs>
+        </LogsTool>
       );
 
     case "anyon-grep":
       return (
-        <AnyonGrep
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-              query: attributes.query || "",
-              include: attributes.include || "",
-              exclude: attributes.exclude || "",
-              "case-sensitive": attributes["case-sensitive"] || "",
-              count: attributes.count || "",
-            },
-          }}
+        <GrepTool
+          query={attributes.query || ""}
+          include={attributes.include || ""}
+          exclude={attributes.exclude || ""}
+          caseSensitive={attributes["case-sensitive"] === "true"}
+          count={attributes.count || ""}
+          status={status}
         >
           {content}
-        </AnyonGrep>
+        </GrepTool>
       );
 
     case "anyon-add-integration":
       return (
-        <AnyonAddIntegration
-          node={{
-            properties: {
-              provider: attributes.provider || "",
-            },
-          }}
-        >
+        <AddIntegrationTool provider={attributes.provider || ""}>
           {content}
-        </AnyonAddIntegration>
+        </AddIntegrationTool>
       );
 
     case "anyon-edit":
       return (
-        <AnyonEdit
-          node={{
-            properties: {
-              path: attributes.path || "",
-              description: attributes.description || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <EditTool
+          path={attributes.path || ""}
+          description={attributes.description || ""}
+          status={status}
         >
           {content}
-        </AnyonEdit>
+        </EditTool>
       );
 
     case "anyon-search-replace":
       return (
-        <AnyonSearchReplace
-          node={{
-            properties: {
-              path: attributes.path || "",
-              description: attributes.description || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <SearchReplaceTool
+          path={attributes.path || ""}
+          description={attributes.description || ""}
+          status={status}
         >
           {content}
-        </AnyonSearchReplace>
+        </SearchReplaceTool>
       );
 
     case "anyon-codebase-context":
       return (
-        <AnyonCodebaseContext
-          node={{
-            properties: {
-              files: attributes.files || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <CodebaseContextTool
+          node={{ properties: { files: attributes.files || "" } }}
+          status={status}
         >
           {content}
-        </AnyonCodebaseContext>
+        </CodebaseContextTool>
       );
 
     case "anyon-mcp-tool-call":
       return (
-        <AnyonMcpToolCall
-          node={{
-            properties: {
-              serverName: attributes.server || "",
-              toolName: attributes.tool || "",
-            },
-          }}
+        <McpToolCallTool
+          serverName={attributes.server || ""}
+          toolName={attributes.tool || ""}
         >
           {content}
-        </AnyonMcpToolCall>
+        </McpToolCallTool>
       );
 
     case "anyon-mcp-tool-result":
       return (
-        <AnyonMcpToolResult
-          node={{
-            properties: {
-              serverName: attributes.server || "",
-              toolName: attributes.tool || "",
-            },
-          }}
+        <McpToolResultTool
+          serverName={attributes.server || ""}
+          toolName={attributes.tool || ""}
         >
           {content}
-        </AnyonMcpToolResult>
+        </McpToolResultTool>
       );
 
     case "anyon-output":
       return (
-        <AnyonOutput
+        <OutputTool
           type={attributes.type as "warning" | "error"}
           message={attributes.message}
         >
           {content}
-        </AnyonOutput>
+        </OutputTool>
       );
 
     case "anyon-problem-report":
       return (
-        <AnyonProblemSummary summary={attributes.summary}>
+        <ProblemSummaryTool summary={attributes.summary}>
           {content}
-        </AnyonProblemSummary>
+        </ProblemSummaryTool>
       );
 
     case "anyon-chat-summary":
@@ -669,109 +537,63 @@ function renderCustomTag(
 
     case "anyon-list-files":
       return (
-        <AnyonListFiles
-          node={{
-            properties: {
-              directory: attributes.directory || "",
-              recursive: attributes.recursive || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <ListFilesTool
+          directory={attributes.directory || ""}
+          recursive={attributes.recursive || ""}
+          status={status}
         >
           {content}
-        </AnyonListFiles>
+        </ListFilesTool>
       );
 
     case "anyon-database-schema":
-      return (
-        <AnyonDatabaseSchema
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
-          {content}
-        </AnyonDatabaseSchema>
-      );
+      return <DatabaseSchemaTool status={status}>{content}</DatabaseSchemaTool>;
 
     case "anyon-supabase-table-schema":
       return (
-        <AnyonSupabaseTableSchema
-          node={{
-            properties: {
-              table: attributes.table || "",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
+        <SupabaseTableSchemaTool table={attributes.table || ""} status={status}>
           {content}
-        </AnyonSupabaseTableSchema>
+        </SupabaseTableSchemaTool>
       );
 
     case "anyon-supabase-project-info":
       return (
-        <AnyonSupabaseProjectInfo
-          node={{
-            properties: {
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
+        <SupabaseProjectInfoTool status={status}>
           {content}
-        </AnyonSupabaseProjectInfo>
+        </SupabaseProjectInfoTool>
       );
 
     case "anyon-status":
       return (
-        <AnyonStatus
-          node={{
-            properties: {
-              title: attributes.title || "Processing...",
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
-        >
+        <StatusTool title={attributes.title || "Processing..."} status={status}>
           {content}
-        </AnyonStatus>
+        </StatusTool>
       );
 
     case "anyon-write-plan":
       return (
-        <AnyonWritePlan
-          node={{
-            properties: {
-              title: attributes.title || "Implementation Plan",
-              summary: attributes.summary,
-              complete: attributes.complete,
-              state: getState({ isStreaming, inProgress }),
-            },
-          }}
+        <WritePlanTool
+          title={attributes.title || "Implementation Plan"}
+          summary={attributes.summary}
+          complete={attributes.complete}
+          status={status}
         >
           {content}
-        </AnyonWritePlan>
+        </WritePlanTool>
       );
 
     case "anyon-exit-plan":
-      return (
-        <AnyonExitPlan
-          node={{
-            properties: {
-              notes: attributes.notes,
-            },
-          }}
-        />
-      );
+      return <ExitPlanTool notes={attributes.notes} />;
 
     case "opencode-tool":
       return (
-        <OpenCodeTool
+        <OpenCodeToolTool
           name={attributes.name || ""}
           status={attributes.status || "running"}
           title={attributes.title || attributes.name || ""}
         >
           {content}
-        </OpenCodeTool>
+        </OpenCodeToolTool>
       );
 
     default:
