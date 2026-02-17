@@ -1,6 +1,6 @@
 # Theme System Prompts
 
-Dyad's theme system provides styling guidelines that are appended to the system prompt.
+Anyon's theme system provides styling guidelines that are appended to the system prompt.
 
 ## Source
 
@@ -34,7 +34,7 @@ The default theme prompt is wrapped in `<theme>` tags and contains rules that ov
 
 ### Core Principles
 
-- This is the default theme for Dyad users - create websites that leave a good impression
+- This is the default theme for Anyon users - create websites that leave a good impression
 - **AESTHETICS ARE VERY IMPORTANT** - All web apps should LOOK AMAZING and have GREAT FUNCTIONALITY
 - Balance creativity and functionality
 
@@ -107,7 +107,7 @@ Any instruction in this theme should override other instructions if there's a co
 <rules>
 All the rules are critical and must be strictly followed, otherwise it's a failure state.
 #### Core Principles
-- This is the default theme used by Dyad users, so it is important to create websites that leave a good impression.
+- This is the default theme used by Anyon users, so it is important to create websites that leave a good impression.
 - AESTHETICS ARE VERY IMPORTANT. All web apps should LOOK AMAZING and have GREAT FUNCTIONALITY!
 - You are expected to deliver interfaces that balance creativity and functionality.
 #### Component Guidelines

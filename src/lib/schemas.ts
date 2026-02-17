@@ -213,11 +213,11 @@ export const ExperimentsSchema = z.object({
 });
 export type Experiments = z.infer<typeof ExperimentsSchema>;
 
-export const DyadProBudgetSchema = z.object({
+export const AnyonProBudgetSchema = z.object({
   budgetResetAt: z.string(),
   maxBudget: z.number(),
 });
-export type DyadProBudget = z.infer<typeof DyadProBudgetSchema>;
+export type AnyonProBudget = z.infer<typeof AnyonProBudgetSchema>;
 
 export const GlobPathSchema = z.object({
   globPath: z.string(),
@@ -255,6 +255,11 @@ export type Language = z.infer<typeof LanguageSchema>;
 export const DeviceModeSchema = z.enum(["desktop", "tablet", "mobile"]);
 export type DeviceMode = z.infer<typeof DeviceModeSchema>;
 
+export const OpenCodeConnectionModeSchema = z.enum(["proxy", "direct"]);
+export type OpenCodeConnectionMode = z.infer<
+  typeof OpenCodeConnectionModeSchema
+>;
+
 export const SmartContextModeSchema = z.enum([
   "balanced",
   "conservative",
@@ -276,7 +281,7 @@ export const UserSettingsSchema = z
     // DEPRECATED.
     ////////////////////////////////
     enableProSaverMode: z.boolean().optional(),
-    dyadProBudget: DyadProBudgetSchema.optional(),
+    anyonProBudget: AnyonProBudgetSchema.optional(),
     runtimeMode: RuntimeModeSchema.optional(),
 
     ////////////////////////////////
@@ -294,7 +299,7 @@ export const UserSettingsSchema = z
     telemetryConsent: z.enum(["opted_in", "opted_out", "unset"]).optional(),
     telemetryUserId: z.string().optional(),
     hasRunBefore: z.boolean().optional(),
-    enableDyadPro: z.boolean().optional(),
+    enableAnyonPro: z.boolean().optional(),
     experiments: ExperimentsSchema.optional(),
     lastShownReleaseNotesVersion: z.string().optional(),
     maxChatTurnsInContext: z.number().optional(),
@@ -320,6 +325,7 @@ export const UserSettingsSchema = z
     autoExpandPreviewPanel: z.boolean().optional(),
     enableChatCompletionNotifications: z.boolean().optional(),
     enableNativeGit: z.boolean().optional(),
+    openCodeConnectionMode: OpenCodeConnectionModeSchema.optional(),
     enableAutoUpdate: z.boolean(),
     releaseChannel: ReleaseChannelSchema,
     runtimeMode2: RuntimeMode2Schema.optional(),
@@ -371,12 +377,12 @@ export const UserSettingsSchema = z
  */
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
-export function isDyadProEnabled(settings: UserSettings): boolean {
+export function isAnyonProEnabled(settings: UserSettings): boolean {
   if (isEntitlementProActive(settings)) return true;
-  return settings.enableDyadPro === true && hasDyadProKey(settings);
+  return settings.enableAnyonPro !== false;
 }
 
-export function hasDyadProKey(settings: UserSettings): boolean {
+export function hasAnyonProKey(settings: UserSettings): boolean {
   if (isEntitlementProActive(settings)) return true;
   return !!settings.providerSettings?.auto?.apiKey?.value;
 }
@@ -407,7 +413,7 @@ export function getEffectiveDefaultChatMode(
   envVars: Record<string, string | undefined>,
   freeAgentQuotaAvailable?: boolean,
 ): ChatMode {
-  const isPro = isDyadProEnabled(settings);
+  const isPro = isAnyonProEnabled(settings);
   // We are checking that OpenAI or Anthropic is setup, which are the first two
   // choices for the Auto model selection.
   //
@@ -440,7 +446,7 @@ export function getEffectiveDefaultChatMode(
  */
 export function isBasicAgentMode(settings: UserSettings): boolean {
   return (
-    !isDyadProEnabled(settings) && settings.selectedChatMode === "local-agent"
+    !isAnyonProEnabled(settings) && settings.selectedChatMode === "local-agent"
   );
 }
 
@@ -457,7 +463,7 @@ export function isSupabaseConnected(settings: UserSettings | null): boolean {
 
 export function isTurboEditsV2Enabled(settings: UserSettings): boolean {
   return Boolean(
-    isDyadProEnabled(settings) &&
+    isAnyonProEnabled(settings) &&
     settings.enableProLazyEditsMode === true &&
     settings.proLazyEditsMode === "v2",
   );

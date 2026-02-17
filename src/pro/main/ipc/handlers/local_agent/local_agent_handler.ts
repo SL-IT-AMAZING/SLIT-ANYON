@@ -22,9 +22,9 @@ import { getModelClient } from "@/ipc/utils/get_model_client";
 import { getAiHeaders, getProviderOptions } from "@/ipc/utils/provider_options";
 import { safeSend } from "@/ipc/utils/safe_sender";
 import { getMaxTokens, getTemperature } from "@/ipc/utils/token_utils";
-import { isBasicAgentMode, isDyadProEnabled } from "@/lib/schemas";
+import { isBasicAgentMode, isAnyonProEnabled } from "@/lib/schemas";
 import { readSettings } from "@/main/settings";
-import { getDyadAppPath } from "@/paths/paths";
+import { getAnyonAppPath } from "@/paths/paths";
 
 import { mcpServers } from "@/db/schema";
 import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
@@ -106,14 +106,14 @@ export async function handleLocalAgentStream(
   {
     placeholderMessageId,
     systemPrompt,
-    dyadRequestId,
+    anyonRequestId,
     readOnly = false,
     planModeOnly = false,
     messageOverride,
   }: {
     placeholderMessageId: number;
     systemPrompt: string;
-    dyadRequestId: string;
+    anyonRequestId: string;
     /**
      * If true, the agent operates in read-only mode (e.g., ask mode).
      * State-modifying tools are disabled, and no commits/deploys are made.
@@ -136,7 +136,11 @@ export async function handleLocalAgentStream(
   // Check Pro status or Basic Agent mode
   // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
   // Read-only mode (ask mode) is allowed for all users without Pro
-  if (!readOnly && !isDyadProEnabled(settings) && !isBasicAgentMode(settings)) {
+  if (
+    !readOnly &&
+    !isAnyonProEnabled(settings) &&
+    !isBasicAgentMode(settings)
+  ) {
     safeSend(event.sender, "chat:response:error", {
       chatId: req.chatId,
       error:
@@ -160,7 +164,7 @@ export async function handleLocalAgentStream(
     throw new Error(`Chat not found: ${req.chatId}`);
   }
 
-  const appPath = getDyadAppPath(chat.app.path);
+  const appPath = getAnyonAppPath(chat.app.path);
 
   // Send initial message update
   safeSend(event.sender, "chat:response:chunk", {
@@ -195,9 +199,9 @@ export async function handleLocalAgentStream(
       messageId: placeholderMessageId,
       isSharedModulesChanged: false,
       todos: [],
-      dyadRequestId,
+      anyonRequestId,
       fileEditTracker,
-      isDyadPro: isDyadProEnabled(settings),
+      isAnyonPro: isAnyonProEnabled(settings),
       onXmlStream: (accumulatedXml: string) => {
         // Stream accumulated XML to UI without persisting
         streamingPreview = accumulatedXml;
@@ -254,9 +258,9 @@ export async function handleLocalAgentStream(
         builtinProviderId: modelClient.builtinProviderId,
       }),
       providerOptions: getProviderOptions({
-        dyadAppId: chat.app.id,
-        dyadRequestId,
-        dyadDisableFiles: true, // Local agent uses tools, not file injection
+        anyonAppId: chat.app.id,
+        anyonRequestId,
+        anyonDisableFiles: true, // Local agent uses tools, not file injection
         files: [],
         mentionedAppsCodebases: [],
         builtinProviderId: modelClient.builtinProviderId,
@@ -582,7 +586,7 @@ async function getMcpTools(
               const { serverName, toolName } = parseMcpToolKey(key);
               const content = JSON.stringify(args, null, 2);
               ctx.onXmlComplete(
-                `<dyad-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</dyad-mcp-tool-call>`,
+                `<anyon-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-call>`,
               );
 
               const res = await mcpTool.execute(args, execCtx);
@@ -590,7 +594,7 @@ async function getMcpTools(
                 typeof res === "string" ? res : JSON.stringify(res);
 
               ctx.onXmlComplete(
-                `<dyad-mcp-tool-result server="${serverName}" tool="${toolName}">\n${resultStr}\n</dyad-mcp-tool-result>`,
+                `<anyon-mcp-tool-result server="${serverName}" tool="${toolName}">\n${resultStr}\n</anyon-mcp-tool-result>`,
               );
 
               return resultStr;
@@ -600,7 +604,7 @@ async function getMcpTools(
               const errorStack =
                 error instanceof Error && error.stack ? error.stack : "";
               ctx.onXmlComplete(
-                `<dyad-output type="error" message="MCP tool '${key}' failed: ${escapeXmlAttr(errorMessage)}">${escapeXmlContent(errorStack || errorMessage)}</dyad-output>`,
+                `<anyon-output type="error" message="MCP tool '${key}' failed: ${escapeXmlAttr(errorMessage)}">${escapeXmlContent(errorStack || errorMessage)}</anyon-output>`,
               );
               throw error;
             }

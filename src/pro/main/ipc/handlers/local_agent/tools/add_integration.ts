@@ -23,7 +23,7 @@ export const addIntegrationTool: ToolDefinition<
 
   buildXml: (args, _isComplete) => {
     if (!args.provider) return undefined;
-    return `<dyad-add-integration provider="${escapeXmlAttr(args.provider)}"></dyad-add-integration>`;
+    return `<anyon-add-integration provider="${escapeXmlAttr(args.provider)}"></anyon-add-integration>`;
   },
 
   execute: async (args) => {

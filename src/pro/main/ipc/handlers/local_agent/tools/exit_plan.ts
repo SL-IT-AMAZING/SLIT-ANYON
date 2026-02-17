@@ -46,7 +46,7 @@ export const exitPlanTool: ToolDefinition<z.infer<typeof exitPlanSchema>> = {
   buildXml: (args) => {
     if (!args.confirmation) return undefined;
 
-    return `<dyad-exit-plan></dyad-exit-plan>`;
+    return `<anyon-exit-plan></anyon-exit-plan>`;
   },
 
   execute: async (_args, ctx: AgentContext) => {

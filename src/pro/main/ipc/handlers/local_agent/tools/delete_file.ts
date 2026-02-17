@@ -32,7 +32,7 @@ export const deleteFileTool: ToolDefinition<z.infer<typeof deleteFileSchema>> =
 
     buildXml: (args, _isComplete) => {
       if (!args.path) return undefined;
-      return `<dyad-delete path="${escapeXmlAttr(args.path)}"></dyad-delete>`;
+      return `<anyon-delete path="${escapeXmlAttr(args.path)}"></anyon-delete>`;
     },
 
     execute: async (args, ctx: AgentContext) => {

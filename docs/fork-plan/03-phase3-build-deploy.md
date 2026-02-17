@@ -126,15 +126,15 @@ cp "img/Frame 13.png" assets/icon.png
 
 ## TODO 3D: GitHub Releases 자동 업데이트
 
-### 현재 설정 (Dyad)
+### 현재 설정 (Anyon)
 
 ```typescript
 // src/main.ts:145-154
 updateElectronApp({
   updateSource: {
     type: UpdateSourceType.ElectronPublicUpdateService,
-    repo: "dyad-sh/dyad",
-    host: `https://api.dyad.sh/v1/update/${postfix}`,
+    repo: "anyon-sh/anyon",
+    host: `https://api.anyon.sh/v1/update/${postfix}`,
   },
 });
 ```
@@ -166,7 +166,7 @@ updateElectronApp({
   또는 URL 변경:
 
   ```
-  현재: "https://api.dyad.sh/v1/update/rollout-config.json"
+  현재: "https://api.anyon.sh/v1/update/rollout-config.json"
   변경: 제거 또는 자체 URL
   ```
 
@@ -208,8 +208,8 @@ Sentry.init({
 
   ```typescript
   // 현재
-  "dyadTelemetryConsent";
-  "dyadTelemetryUserId";
+  "anyonTelemetryConsent";
+  "anyonTelemetryUserId";
 
   // 변경 (선택)
   "anyonTelemetryConsent";
@@ -254,12 +254,12 @@ PostHog 설정이 있다면 비활성화하거나 자체 프로젝트로 교체.
 
 ## TODO 3H: 템플릿 레포지토리 (나중에)
 
-### 현재 Dyad 템플릿
+### 현재 Anyon 템플릿
 
-Dyad는 `api.dyad.sh/v1/templates`에서 템플릿 목록을 가져오고, GitHub 레포에서 클론한다:
+Anyon는 `api.anyon.sh/v1/templates`에서 템플릿 목록을 가져오고, GitHub 레포에서 클론한다:
 
-- `dyad-sh/nextjs-template`
-- `dyad-sh/portal-mini-store-template`
+- `SL-IT-AMAZING/anyon-nextjs-template`
+- `SL-IT-AMAZING/anyon-portal-mini-store-template`
 - 등등
 
 ### ANYON 템플릿 옵션
@@ -274,7 +274,7 @@ Dyad는 `api.dyad.sh/v1/templates`에서 템플릿 목록을 가져오고, GitHu
 - [ ] 템플릿 목록을 앱 내에 하드코딩
 - [ ] GitHub 레포만 변경
 
-**옵션 C: 현재 Dyad 템플릿 유지 (임시)**
+**옵션 C: 현재 Anyon 템플릿 유지 (임시)**
 
 - 어차피 공개 레포라서 클론 가능
 - 나중에 자체 템플릿으로 교체

@@ -30,6 +30,8 @@ export const AppBaseSchema = z.object({
   vercelTeamId: z.string().nullable(),
   installCommand: z.string().nullable(),
   startCommand: z.string().nullable(),
+  profileLearned: z.boolean(),
+  profileSource: z.string().nullable(),
   isFavorite: z.boolean(),
 });
 

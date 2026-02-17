@@ -1,17 +1,17 @@
-import { dialog } from "electron";
-import fs from "fs/promises";
 import path from "path";
-import { createLoggedHandler } from "./safe_handle";
-import log from "electron-log";
-import { getDyadAppPath } from "../../paths/paths";
-import { apps } from "@/db/schema";
 import { db } from "@/db";
+import { apps } from "@/db/schema";
 import { chats } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { dialog } from "electron";
+import log from "electron-log";
+import fs from "fs/promises";
+import { getAnyonAppPath } from "../../paths/paths";
+import { createLoggedHandler } from "./safe_handle";
 
-import { ImportAppParams, ImportAppResult } from "@/ipc/types";
+import type { ImportAppParams, ImportAppResult } from "@/ipc/types";
 import { copyDirectoryRecursive } from "../utils/file_utils";
-import { gitCommit, gitAdd, gitInit } from "../utils/git_utils";
+import { gitAdd, gitCommit, gitInit } from "../utils/git_utils";
 
 const logger = log.scope("import-handlers");
 const handle = createLoggedHandler(logger);
@@ -51,9 +51,9 @@ export function registerImportHandlers() {
       _,
       { appName, skipCopy }: { appName: string; skipCopy?: boolean },
     ) => {
-      // Only check filesystem if we're copying to dyad-apps
+      // Only check filesystem if we're copying to anyon-apps
       if (!skipCopy) {
-        const appPath = getDyadAppPath(appName);
+        const appPath = getAnyonAppPath(appName);
         try {
           await fs.access(appPath);
           return { exists: true };
@@ -92,10 +92,10 @@ export function registerImportHandlers() {
       }
 
       // Determine the app path based on skipCopy
-      const appPath = skipCopy ? sourcePath : getDyadAppPath(appName);
+      const appPath = skipCopy ? sourcePath : getAnyonAppPath(appName);
 
       if (!skipCopy) {
-        // Check if the app already exists in dyad-apps
+        // Check if the app already exists in anyon-apps
         const errorMessage = "An app with this name already exists";
         try {
           await fs.access(appPath);
@@ -105,7 +105,7 @@ export function registerImportHandlers() {
             throw error;
           }
         }
-        // Copy the app folder to the Dyad apps directory.
+        // Copy the app folder to the Anyon apps directory.
         // Why not use fs.cp? Because we want stable ordering for
         // tests.
         await copyDirectoryRecursive(sourcePath, appPath);
@@ -126,12 +126,14 @@ export function registerImportHandlers() {
         // Create initial commit
         await gitCommit({
           path: appPath,
-          message: "Init Dyad app",
+          message: "Init Anyon app",
         });
       }
 
       // Create a new app
       // Store the full absolute path when skipCopy is true, otherwise store appName
+      const hasCustomCommands =
+        !!installCommand?.trim() && !!startCommand?.trim();
       const [app] = await db
         .insert(apps)
         .values({
@@ -139,6 +141,9 @@ export function registerImportHandlers() {
           path: skipCopy ? sourcePath : appName,
           installCommand: installCommand ?? null,
           startCommand: startCommand ?? null,
+          ...(hasCustomCommands
+            ? { profileLearned: true, profileSource: "user" as const }
+            : {}),
         })
         .returning();
 

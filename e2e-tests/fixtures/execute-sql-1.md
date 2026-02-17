@@ -1,7 +1,7 @@
 Example SQL
 
-<dyad-execute-sql description="create_users_table">
+<anyon-execute-sql description="create_users_table">
 CREATE TABLE users (id serial primary key);
-</dyad-execute-sql>
+</anyon-execute-sql>
 
 Done.

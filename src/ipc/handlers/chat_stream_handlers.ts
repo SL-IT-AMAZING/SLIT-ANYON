@@ -29,7 +29,7 @@ import { mcpServers } from "../../db/schema";
 import type { SmartContextMode } from "../../lib/schemas";
 import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
 import { readSettings } from "../../main/settings";
-import { getDyadAppPath } from "../../paths/paths";
+import { getAnyonAppPath } from "../../paths/paths";
 import { SECURITY_REVIEW_SYSTEM_PROMPT } from "../../prompts/security_review_prompt";
 import { SUMMARIZE_CHAT_SYSTEM_PROMPT } from "../../prompts/summarize_chat_system_prompt";
 import {
@@ -81,13 +81,13 @@ import { prompts as promptsTable } from "../../db/schema";
 import { generateProblemReport } from "../processors/tsc";
 import { getLanguageModelProviders } from "../shared/language_model_helpers";
 import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
-import { cleanFullResponse } from "../utils/cleanFullResponse";
 import {
-  getDyadAddDependencyTags,
-  getDyadDeleteTags,
-  getDyadRenameTags,
-  getDyadWriteTags,
-} from "../utils/dyad_tag_parser";
+  getAnyonAddDependencyTags,
+  getAnyonDeleteTags,
+  getAnyonRenameTags,
+  getAnyonWriteTags,
+} from "../utils/anyon_tag_parser";
+import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
 import { fileExists } from "../utils/file_utils";
 import {
@@ -129,7 +129,7 @@ const activeStreams = new Map<number, AbortController>();
 const partialResponses = new Map<number, string>();
 
 // Directory for storing temporary files
-const TEMP_DIR = path.join(os.tmpdir(), "dyad-attachments");
+const TEMP_DIR = path.join(os.tmpdir(), "anyon-attachments");
 
 // Common helper functions
 const TEXT_FILE_EXTENSIONS = [
@@ -210,15 +210,15 @@ async function processStreamChunks({
         inThinkingBlock = true;
       }
 
-      chunk += escapeDyadTags(part.text);
+      chunk += escapeAnyonTags(part.text);
     } else if (part.type === "tool-call") {
       const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeDyadTags(JSON.stringify(part.input));
-      chunk = `<dyad-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</dyad-mcp-tool-call>\n`;
+      const content = escapeAnyonTags(JSON.stringify(part.input));
+      chunk = `<anyon-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-call>\n`;
     } else if (part.type === "tool-result") {
       const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeDyadTags(part.output);
-      chunk = `<dyad-mcp-tool-result server="${serverName}" tool="${toolName}">\n${content}\n</dyad-mcp-tool-result>\n`;
+      const content = escapeAnyonTags(part.output);
+      chunk = `<anyon-mcp-tool-result server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-result>\n`;
     }
 
     if (!chunk) {
@@ -249,7 +249,7 @@ export function registerChatStreamHandlers() {
       const fileUploadsState = FileUploadsState.getInstance();
       // Clear any stale state from previous requests for this chat
       fileUploadsState.clear(req.chatId);
-      let dyadRequestId: string | undefined;
+      let anyonRequestId: string | undefined;
       // Create an AbortController for this stream
       const abortController = new AbortController();
       activeStreams.set(req.chatId, abortController);
@@ -330,7 +330,7 @@ export function registerChatStreamHandlers() {
 
           if (attachment.attachmentType === "upload-to-codebase") {
             // For upload-to-codebase, create a unique file ID and store the mapping
-            const fileId = `DYAD_ATTACHMENT_${index}`;
+            const fileId = `ANYON_ATTACHMENT_${index}`;
 
             fileUploadsState.addFileUpload(
               { chatId: req.chatId, fileId },
@@ -340,7 +340,7 @@ export function registerChatStreamHandlers() {
               },
             );
 
-            // Add instruction for AI to use dyad-write tag
+            // Add instruction for AI to use anyon-write tag
             attachmentInfo += `\n\nFile to upload to codebase: ${attachment.name} (file id: ${fileId})\n`;
           } else {
             // For chat-context, use the existing logic
@@ -348,8 +348,8 @@ export function registerChatStreamHandlers() {
             // If it's a text-based file, try to include the content
             if (await isTextFile(filePath)) {
               try {
-                attachmentInfo += `<dyad-text-attachment filename="${attachment.name}" type="${attachment.type}" path="${filePath}">
-                </dyad-text-attachment>
+                attachmentInfo += `<anyon-text-attachment filename="${attachment.name}" type="${attachment.type}" path="${filePath}">
+                </anyon-text-attachment>
                 \n\n`;
               } catch (err) {
                 logger.error(`Error reading file content: ${err}`);
@@ -392,17 +392,17 @@ export function registerChatStreamHandlers() {
           implementPlanDisplayPrompt = userPrompt;
           const planSlug = implementPlanMatch[1];
           validatePlanId(planSlug);
-          const appPath = getDyadAppPath(chat.app.path);
+          const appPath = getAnyonAppPath(chat.app.path);
           const planFilePath = path.join(
             appPath,
-            ".dyad",
+            ".anyon",
             "plans",
             `${planSlug}.md`,
           );
           const raw = await fs.promises.readFile(planFilePath, "utf-8");
           const { meta, content } = parsePlanFile(raw);
 
-          const planPath = `.dyad/plans/${planSlug}.md`;
+          const planPath = `.anyon/plans/${planSlug}.md`;
 
           userPrompt = `Please implement the following plan:
 
@@ -427,7 +427,7 @@ You may update the plan at \`${planPath}\` to mark your progress.`;
           let componentSnippet = "[component snippet not available]";
           try {
             const componentFileContent = await readFile(
-              path.join(getDyadAppPath(chat.app.path), component.relativePath),
+              path.join(getAnyonAppPath(chat.app.path), component.relativePath),
               "utf8",
             );
             const lines = componentFileContent.split(/\r?\n/);
@@ -473,9 +473,9 @@ ${componentSnippet}
       const userMessageId = insertedUserMessage.id;
       const settings = readSettings();
       // Only ANYON Pro requests have request ids.
-      if (settings.enableDyadPro) {
+      if (settings.enableAnyonPro) {
         // Generate requestId early so it can be saved with the message
-        dyadRequestId = uuidv4();
+        anyonRequestId = uuidv4();
       }
 
       // Add a placeholder assistant message immediately
@@ -485,10 +485,10 @@ ${componentSnippet}
           chatId: req.chatId,
           role: "assistant",
           content: "", // Start with empty content
-          requestId: dyadRequestId,
+          requestId: anyonRequestId,
           model: settings.selectedModel.name,
           sourceCommitHash: await getCurrentCommitHash({
-            path: getDyadAppPath(chat.app.path),
+            path: getAnyonAppPath(chat.app.path),
           }),
         })
         .returning();
@@ -547,15 +547,15 @@ ${componentSnippet}
           isOpenCodeMode,
         } = await getModelClient(settings.selectedModel, settings, {
           chatId: req.chatId,
-          appPath: getDyadAppPath(updatedChat.app.path),
+          appPath: getAnyonAppPath(updatedChat.app.path),
         });
 
-        // OpenCode mode: skip all Dyad-specific processing (codebase extraction,
+        // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
         // history assembly, system prompt construction, post-response file processing).
         // OpenCode handles everything internally via its own tools and sessions.
         if (isOpenCodeMode) {
           const aiRules = await readAiRules(
-            getDyadAppPath(updatedChat.app.path),
+            getAnyonAppPath(updatedChat.app.path),
           );
           const openCodeSystemPrompt = constructSystemPrompt({
             aiRules,
@@ -675,7 +675,7 @@ ${componentSnippet}
 
           if (!abortController.signal.aborted && fullResponse) {
             const chatTitle = fullResponse.match(
-              /<dyad-chat-summary>(.*?)<\/dyad-chat-summary>/,
+              /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
             );
             if (chatTitle) {
               await db
@@ -690,7 +690,7 @@ ${componentSnippet}
               .where(eq(messages.id, placeholderAssistantMessage.id));
 
             let _hasFileChanges = false;
-            const appPath = getDyadAppPath(updatedChat.app.path);
+            const appPath = getAnyonAppPath(updatedChat.app.path);
             try {
               const uncommittedFiles = await getGitUncommittedFiles({
                 path: appPath,
@@ -699,7 +699,7 @@ ${componentSnippet}
                 await gitAddAll({ path: appPath });
                 const commitHash = await gitCommit({
                   path: appPath,
-                  message: `[dyad/opencode] ${chatTitle?.[1] ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                  message: `[anyon/opencode] ${chatTitle?.[1] ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
                 });
                 await db
                   .update(messages)
@@ -724,7 +724,7 @@ ${componentSnippet}
           return req.chatId;
         }
 
-        const appPath = getDyadAppPath(updatedChat.app.path);
+        const appPath = getAnyonAppPath(updatedChat.app.path);
         // When we don't have smart context enabled, we
         // only include the selected components' files for codebase context.
         //
@@ -750,7 +750,7 @@ ${componentSnippet}
 
         // For smart context and selected components, we will mark the selected components' files as focused.
         // This means that we don't do the regular smart context handling, but we'll allow fetching
-        // additional files through <dyad-read> as needed.
+        // additional files through <anyon-read> as needed.
         if (
           isSmartContextEnabled &&
           req.selectedComponents &&
@@ -879,7 +879,9 @@ ${componentSnippet}
           );
         }
 
-        const aiRules = await readAiRules(getDyadAppPath(updatedChat.app.path));
+        const aiRules = await readAiRules(
+          getAnyonAppPath(updatedChat.app.path),
+        );
 
         // Get theme prompt for the app (null themeId means "no theme")
         const themePrompt = await getThemePromptById(updatedChat.app.themeId);
@@ -913,7 +915,7 @@ ${componentSnippet}
         if (isSecurityReviewIntent) {
           systemPrompt = SECURITY_REVIEW_SYSTEM_PROMPT;
           try {
-            const appPath = getDyadAppPath(updatedChat.app.path);
+            const appPath = getAnyonAppPath(updatedChat.app.path);
             const rulesPath = path.join(appPath, "SECURITY_RULES.md");
             let securityRules = "";
 
@@ -981,7 +983,7 @@ ${componentSnippet}
           );
         // If there's mixed attachments (e.g. some upload to codebase attachments and some upload images as chat context attachemnts)
         // we will just include the file upload system prompt, otherwise the AI gets confused and doesn't reliably
-        // print out the dyad-write tags.
+        // print out the anyon-write tags.
         // Usually, AI models will want to use the image as reference to generate code (e.g. UI mockups) anyways, so
         // it's not that critical to include the image analysis instructions.
         const isAskMode = settings.selectedChatMode === "ask";
@@ -990,11 +992,11 @@ ${componentSnippet}
             systemPrompt += `
 
 When files are attached to this conversation, upload them to the codebase using the \`write_file\` tool.
-Use the attachment ID (e.g., DYAD_ATTACHMENT_0) as the content, and it will be automatically resolved to the actual file content.
+Use the attachment ID (e.g., ANYON_ATTACHMENT_0) as the content, and it will be automatically resolved to the actual file content.
 
-Example for file with id of DYAD_ATTACHMENT_0:
+Example for file with id of ANYON_ATTACHMENT_0:
 \`\`\`
-write_file(path="src/components/Button.jsx", content="DYAD_ATTACHMENT_0", description="Upload file to codebase")
+write_file(path="src/components/Button.jsx", content="ANYON_ATTACHMENT_0", description="Upload file to codebase")
 \`\`\`
 
 `;
@@ -1003,14 +1005,14 @@ write_file(path="src/components/Button.jsx", content="DYAD_ATTACHMENT_0", descri
   
 When files are attached to this conversation, upload them to the codebase using this exact format:
 
-<dyad-write path="path/to/destination/filename.ext" description="Upload file to codebase">
-DYAD_ATTACHMENT_X
-</dyad-write>
+<anyon-write path="path/to/destination/filename.ext" description="Upload file to codebase">
+ANYON_ATTACHMENT_X
+</anyon-write>
 
-Example for file with id of DYAD_ATTACHMENT_0:
-<dyad-write path="src/components/Button.jsx" description="Upload file to codebase">
-DYAD_ATTACHMENT_0
-</dyad-write>
+Example for file with id of ANYON_ATTACHMENT_0:
+<anyon-write path="src/components/Button.jsx" description="Upload file to codebase">
+ANYON_ATTACHMENT_0
+</anyon-write>
 
   `;
           }
@@ -1064,10 +1066,10 @@ This conversation includes one or more image attachments. When the user uploads 
           // and eats up extra tokens.
           content:
             settings.selectedChatMode === "ask"
-              ? removeDyadTags(removeNonEssentialTags(msg.content))
+              ? removeAnyonTags(removeNonEssentialTags(msg.content))
               : removeNonEssentialTags(msg.content),
           providerOptions: {
-            "dyad-engine": {
+            "anyon-engine": {
               sourceCommitHash: msg.sourceCommitHash,
               commitHash: msg.commitHash,
             },
@@ -1138,7 +1140,7 @@ This conversation includes one or more image attachments. When the user uploads 
           modelClient,
           tools,
           systemPromptOverride = systemPrompt,
-          dyadDisableFiles = false,
+          anyonDisableFiles = false,
           files,
         }: {
           chatMessages: ModelMessage[];
@@ -1146,12 +1148,12 @@ This conversation includes one or more image attachments. When the user uploads 
           files: CodebaseFile[];
           tools?: ToolSet;
           systemPromptOverride?: string;
-          dyadDisableFiles?: boolean;
+          anyonDisableFiles?: boolean;
         }) => {
           if (isEngineEnabled) {
             logger.log(
               "sending AI request to engine with request id:",
-              dyadRequestId,
+              anyonRequestId,
             );
           } else {
             logger.log("sending AI request");
@@ -1168,9 +1170,9 @@ This conversation includes one or more image attachments. When the user uploads 
             ? "deep"
             : "balanced";
           const providerOptions = getProviderOptions({
-            dyadAppId: updatedChat.app.id,
-            dyadRequestId,
-            dyadDisableFiles,
+            anyonAppId: updatedChat.app.id,
+            anyonRequestId,
+            anyonDisableFiles,
             smartContextMode,
             files,
             versionedFiles,
@@ -1229,7 +1231,7 @@ This conversation includes one or more image attachments. When the user uploads 
               }
               const message = errorMessage || JSON.stringify(error);
               const requestIdPrefix = isEngineEnabled
-                ? `[Request ID: ${dyadRequestId}] `
+                ? `[Request ID: ${anyonRequestId}] `
                 : "";
               logger.error(
                 `AI stream text error for request: ${requestIdPrefix} errorMessage=${errorMessage} error=`,
@@ -1319,7 +1321,7 @@ This conversation includes one or more image attachments. When the user uploads 
               // This is OK because those intents should always happen in a new chat
               // and new chats will default to non-ask modes.
               systemPrompt: readOnlySystemPrompt,
-              dyadRequestId: dyadRequestId ?? "[no-request-id]",
+              anyonRequestId: anyonRequestId ?? "[no-request-id]",
               readOnly: true,
               messageOverride: isSummarizeIntent ? chatMessages : undefined,
             },
@@ -1349,7 +1351,7 @@ This conversation includes one or more image attachments. When the user uploads 
           await handleLocalAgentStream(event, req, abortController, {
             placeholderMessageId: placeholderAssistantMessage.id,
             systemPrompt: planModeSystemPrompt,
-            dyadRequestId: dyadRequestId ?? "[no-request-id]",
+            anyonRequestId: anyonRequestId ?? "[no-request-id]",
             planModeOnly: true,
             messageOverride: isSummarizeIntent ? chatMessages : undefined,
           });
@@ -1395,7 +1397,7 @@ This conversation includes one or more image attachments. When the user uploads 
               {
                 placeholderMessageId: placeholderAssistantMessage.id,
                 systemPrompt,
-                dyadRequestId: dyadRequestId ?? "[no-request-id]",
+                anyonRequestId: anyonRequestId ?? "[no-request-id]",
                 messageOverride: isSummarizeIntent ? chatMessages : undefined,
               },
             );
@@ -1425,12 +1427,12 @@ This conversation includes one or more image attachments. When the user uploads 
               },
             },
             systemPromptOverride: constructSystemPrompt({
-              aiRules: await readAiRules(getDyadAppPath(updatedChat.app.path)),
+              aiRules: await readAiRules(getAnyonAppPath(updatedChat.app.path)),
               chatMode: "agent",
               enableTurboEditsV2: false,
             }),
             files: files,
-            dyadDisableFiles: true,
+            anyonDisableFiles: true,
           });
 
           const result = await processStreamChunks({
@@ -1475,7 +1477,7 @@ This conversation includes one or more image attachments. When the user uploads 
           ) {
             let issues = await dryRunSearchReplace({
               fullResponse,
-              appPath: getDyadAppPath(updatedChat.app.path),
+              appPath: getAnyonAppPath(updatedChat.app.path),
             });
             sendTelemetryEvent("search_replace:fix", {
               attemptNumber: 0,
@@ -1504,7 +1506,7 @@ This conversation includes one or more image attachments. When the user uploads 
                 })
                 .join("\n\n");
 
-              fullResponse += `<dyad-output type="warning" message="Could not apply Turbo Edits properly for some of the files; re-generating code...">${formattedSearchReplaceIssues}</dyad-output>`;
+              fullResponse += `<anyon-output type="warning" message="Could not apply Turbo Edits properly for some of the files; re-generating code...">${formattedSearchReplaceIssues}</anyon-output>`;
               await processResponseChunkUpdate({
                 fullResponse,
               });
@@ -1515,8 +1517,8 @@ This conversation includes one or more image attachments. When the user uploads 
 
               const fixSearchReplacePrompt =
                 searchReplaceFixAttempts === 0
-                  ? `There was an issue with the following \`dyad-search-replace\` tags. Make sure you use \`dyad-read\` to read the latest version of the file and then trying to do search & replace again.`
-                  : `There was an issue with the following \`dyad-search-replace\` tags. Please fix the errors by generating the code changes using \`dyad-write\` tags instead.`;
+                  ? `There was an issue with the following \`anyon-search-replace\` tags. Make sure you use \`anyon-read\` to read the latest version of the file and then trying to do search & replace again.`
+                  : `There was an issue with the following \`anyon-search-replace\` tags. Please fix the errors by generating the code changes using \`anyon-write\` tags instead.`;
               searchReplaceFixAttempts++;
               const userPrompt = {
                 role: "user",
@@ -1554,7 +1556,7 @@ ${formattedSearchReplaceIssues}`,
               // Re-check for issues after the fix attempt
               issues = await dryRunSearchReplace({
                 fullResponse: result.incrementalResponse,
-                appPath: getDyadAppPath(updatedChat.app.path),
+                appPath: getAnyonAppPath(updatedChat.app.path),
               });
 
               sendTelemetryEvent("search_replace:fix", {
@@ -1572,16 +1574,16 @@ ${formattedSearchReplaceIssues}`,
           if (
             !abortController.signal.aborted &&
             settings.selectedChatMode !== "ask" &&
-            hasUnclosedDyadWrite(fullResponse)
+            hasUnclosedAnyonWrite(fullResponse)
           ) {
             let continuationAttempts = 0;
             while (
-              hasUnclosedDyadWrite(fullResponse) &&
+              hasUnclosedAnyonWrite(fullResponse) &&
               continuationAttempts < 2 &&
               !abortController.signal.aborted
             ) {
               logger.warn(
-                `Received unclosed dyad-write tag, attempting to continue, attempt #${continuationAttempts + 1}`,
+                `Received unclosed anyon-write tag, attempting to continue, attempt #${continuationAttempts + 1}`,
               );
               continuationAttempts++;
 
@@ -1609,7 +1611,7 @@ ${formattedSearchReplaceIssues}`,
               }
             }
           }
-          const addDependencies = getDyadAddDependencyTags(fullResponse);
+          const addDependencies = getAnyonAddDependencyTags(fullResponse);
           if (
             !abortController.signal.aborted &&
             // If there are dependencies, we don't want to auto-fix problems
@@ -1623,7 +1625,7 @@ ${formattedSearchReplaceIssues}`,
               // IF auto-fix is enabled
               let problemReport = await generateProblemReport({
                 fullResponse,
-                appPath: getDyadAppPath(updatedChat.app.path),
+                appPath: getAnyonAppPath(updatedChat.app.path),
               });
 
               let autoFixAttempts = 0;
@@ -1634,14 +1636,14 @@ ${formattedSearchReplaceIssues}`,
                 autoFixAttempts < 2 &&
                 !abortController.signal.aborted
               ) {
-                fullResponse += `<dyad-problem-report summary="${problemReport.problems.length} problems">
+                fullResponse += `<anyon-problem-report summary="${problemReport.problems.length} problems">
 ${problemReport.problems
   .map(
     (problem) =>
       `<problem file="${escapeXmlAttr(problem.file)}" line="${problem.line}" column="${problem.column}" code="${problem.code}">${escapeXmlContent(problem.message)}</problem>`,
   )
   .join("\n")}
-</dyad-problem-report>`;
+</anyon-problem-report>`;
 
                 logger.info(
                   `Attempting to auto-fix problems, attempt #${autoFixAttempts + 1}`,
@@ -1650,15 +1652,15 @@ ${problemReport.problems
                 const problemFixPrompt = createProblemFixPrompt(problemReport);
 
                 const virtualFileSystem = new AsyncVirtualFileSystem(
-                  getDyadAppPath(updatedChat.app.path),
+                  getAnyonAppPath(updatedChat.app.path),
                   {
                     fileExists: (fileName: string) => fileExists(fileName),
                     readFile: (fileName: string) => readFileWithCache(fileName),
                   },
                 );
-                const writeTags = getDyadWriteTags(fullResponse);
-                const renameTags = getDyadRenameTags(fullResponse);
-                const deletePaths = getDyadDeleteTags(fullResponse);
+                const writeTags = getAnyonWriteTags(fullResponse);
+                const renameTags = getAnyonRenameTags(fullResponse);
+                const deletePaths = getAnyonDeleteTags(fullResponse);
                 virtualFileSystem.applyResponseChanges({
                   deletePaths,
                   renameTags,
@@ -1732,7 +1734,7 @@ ${problemReport.problems
 
                 problemReport = await generateProblemReport({
                   fullResponse,
-                  appPath: getDyadAppPath(updatedChat.app.path),
+                  appPath: getAnyonAppPath(updatedChat.app.path),
                 });
               }
             } catch (error) {
@@ -1780,9 +1782,9 @@ ${problemReport.problems
 
       // Only save the response and process it if we weren't aborted
       if (!abortController.signal.aborted && fullResponse) {
-        // Scrape from: <dyad-chat-summary>Renaming profile file</dyad-chat-title>
+        // Scrape from: <anyon-chat-summary>Renaming profile file</anyon-chat-title>
         const chatTitle = fullResponse.match(
-          /<dyad-chat-summary>(.*?)<\/dyad-chat-summary>/,
+          /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
         );
         if (chatTitle) {
           await db
@@ -1958,7 +1960,7 @@ async function replaceTextAttachmentWithContent(
       // Replace the placeholder tag with the full content
       const escapedPath = filePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const tagPattern = new RegExp(
-        `<dyad-text-attachment filename="[^"]*" type="[^"]*" path="${escapedPath}">\\s*<\\/dyad-text-attachment>`,
+        `<anyon-text-attachment filename="[^"]*" type="[^"]*" path="${escapedPath}">\\s*<\\/anyon-text-attachment>`,
         "g",
       );
 
@@ -2057,18 +2059,18 @@ function removeThinkingTags(text: string): string {
 
 export function removeProblemReportTags(text: string): string {
   const problemReportRegex =
-    /<dyad-problem-report[^>]*>[\s\S]*?<\/dyad-problem-report>/g;
+    /<anyon-problem-report[^>]*>[\s\S]*?<\/anyon-problem-report>/g;
   return text.replace(problemReportRegex, "").trim();
 }
 
-export function removeDyadTags(text: string): string {
-  const dyadRegex = /<dyad-[^>]*>[\s\S]*?<\/dyad-[^>]*>/g;
-  return text.replace(dyadRegex, "").trim();
+export function removeAnyonTags(text: string): string {
+  const anyonRegex = /<anyon-[^>]*>[\s\S]*?<\/anyon-[^>]*>/g;
+  return text.replace(anyonRegex, "").trim();
 }
 
-export function hasUnclosedDyadWrite(text: string): boolean {
-  // Find the last opening dyad-write tag
-  const openRegex = /<dyad-write[^>]*>/g;
+export function hasUnclosedAnyonWrite(text: string): boolean {
+  // Find the last opening anyon-write tag
+  const openRegex = /<anyon-write[^>]*>/g;
   let lastOpenIndex = -1;
   let match;
 
@@ -2083,19 +2085,19 @@ export function hasUnclosedDyadWrite(text: string): boolean {
 
   // Look for a closing tag after the last opening tag
   const textAfterLastOpen = text.substring(lastOpenIndex);
-  const hasClosingTag = /<\/dyad-write>/.test(textAfterLastOpen);
+  const hasClosingTag = /<\/anyon-write>/.test(textAfterLastOpen);
 
   return !hasClosingTag;
 }
 
-function escapeDyadTags(text: string): string {
-  // Escape dyad tags in reasoning content
+function escapeAnyonTags(text: string): string {
+  // Escape anyon tags in reasoning content
   // We are replacing the opening tag with a look-alike character
-  // to avoid issues where thinking content includes dyad tags
+  // to avoid issues where thinking content includes anyon tags
   // and are mishandled by:
   // 1. FE markdown parser
   // 2. Main process response processor
-  return text.replace(/<dyad/g, "＜dyad").replace(/<\/dyad/g, "＜/dyad");
+  return text.replace(/<anyon/g, "＜anyon").replace(/<\/anyon/g, "＜/anyon");
 }
 
 const CODEBASE_PROMPT_PREFIX = "This is my codebase.";

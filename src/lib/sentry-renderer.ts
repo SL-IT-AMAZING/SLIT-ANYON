@@ -8,7 +8,7 @@ export function initSentryRenderer(): void {
   SentryRenderer.init({
     dsn: __SENTRY_DSN__ || "",
     enabled: isProduction,
-    release: `dyad@${version}`,
+    release: `anyon@${version}`,
     environment: isProduction ? "production" : "development",
     tracesSampleRate: 0.1,
     sendDefaultPii: false,

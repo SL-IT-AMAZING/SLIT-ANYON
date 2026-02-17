@@ -24,6 +24,14 @@ export async function createFromTemplate({
     return;
   }
 
+  if (templateId === "next") {
+    await copyDirectoryRecursive(
+      path.join(__dirname, "..", "..", "scaffold-nextjs"),
+      fullAppPath,
+    );
+    return;
+  }
+
   const template = await getTemplateOrThrow(templateId);
   if (!template.githubUrl) {
     throw new Error(`Template ${templateId} has no GitHub URL`);
@@ -82,7 +90,7 @@ async function cloneRepo(repoUrl: string): Promise<string> {
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
-          "User-Agent": "Dyad", // GitHub API requires this
+          "User-Agent": "Anyon", // GitHub API requires this
           Accept: "application/vnd.github.v3+json",
         },
       });

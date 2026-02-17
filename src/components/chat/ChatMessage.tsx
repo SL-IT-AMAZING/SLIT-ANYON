@@ -22,9 +22,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  DyadMarkdownParser,
+  AnyonMarkdownParser,
   VanillaMarkdownParser,
-} from "./DyadMarkdownParser";
+} from "./AnyonMarkdownParser";
 import { StreamingLoadingAnimation } from "./StreamingLoadingAnimation";
 
 interface ChatMessageProps {
@@ -111,7 +111,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
             >
               {message.role === "assistant" ? (
                 <>
-                  <DyadMarkdownParser content={message.content} />
+                  <AnyonMarkdownParser content={message.content} />
                   {isLastMessage && isStreaming && (
                     <StreamingLoadingAnimation variant="streaming" />
                   )}
@@ -199,7 +199,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                   >
                     {
                       messageVersion.message
-                        .replace(/^\[dyad\]\s*/i, "")
+                        .replace(/^\[anyon\]\s*/i, "")
                         .split("\n")[0]
                     }
                   </span>

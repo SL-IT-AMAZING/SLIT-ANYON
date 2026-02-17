@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide enables any team member to execute a release of the Dyad Electron app independently.
+This guide enables any team member to execute a release of the Anyon Electron app independently.
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ This guide enables any team member to execute a release of the Dyad Electron app
 
 - **Apple Developer Account** - For macOS code signing and notarization
 - **Azure Account** - For Windows Trusted Signing (Azure Code Signing service)
-- **GitHub Account** - With write access to the `dyad-sh/dyad` repository
+- **GitHub Account** - With write access to the `anyon-sh/anyon` repository
 
 ### Required Tools
 
@@ -105,7 +105,7 @@ npm run make
 
 After running `npm run make`, test the built application on each platform:
 
-- **macOS**: Test `.app` in `out/dyad-darwin-arm64/` or `out/dyad-darwin-x64/`
+- **macOS**: Test `.app` in `out/anyon-darwin-arm64/` or `out/anyon-darwin-x64/`
 - **Windows**: Test `.exe` installer in `out/make/squirrel.windows/x64/`
 - **Linux**: Test `.deb`, `.rpm`, or `.AppImage` in `out/make/`
 
@@ -135,7 +135,7 @@ Check that all CI checks pass on the `main` branch:
 git log --oneline -5
 
 # Or check GitHub Actions directly
-open https://github.com/dyad-sh/dyad/actions
+open https://github.com/SL-IT-AMAZING/SLIT-ANYON/actions
 ```
 
 ### Step 2: Create Git Tag
@@ -165,7 +165,7 @@ git push origin v0.36.0-beta.1
 
 The release workflow will automatically start when the tag is pushed.
 
-1. Go to: https://github.com/dyad-sh/dyad/actions
+1. Go to: https://github.com/SL-IT-AMAZING/SLIT-ANYON/actions
 2. Click on the "Release app" workflow run
 3. Monitor the 4 parallel build jobs:
    - `windows-latest` - Windows .exe installer and .nupkg
@@ -198,7 +198,7 @@ Expected output:
 
 ### Step 6: Edit Draft Release on GitHub
 
-1. Go to: https://github.com/dyad-sh/dyad/releases
+1. Go to: https://github.com/SL-IT-AMAZING/SLIT-ANYON/releases
 2. Find the draft release (marked with "Draft" badge)
 3. Click "Edit"
 4. Add release notes:
@@ -348,8 +348,8 @@ The workflow generates `signing-metadata.json`:
 ```json
 {
   "Endpoint": "https://eus.codesigning.azure.net/",
-  "CodeSigningAccountName": "dyad",
-  "CertificateProfileName": "dyad-tech"
+  "CodeSigningAccountName": "anyon",
+  "CertificateProfileName": "anyon-tech"
 }
 ```
 
@@ -388,10 +388,10 @@ export const windowsSign: WindowsSignOptions = {
 
 ### How It Works
 
-Dyad uses `update-electron-app` to check for updates:
+Anyon uses `update-electron-app` to check for updates:
 
 1. App checks for updates on launch and every 10 minutes
-2. Queries `https://api.dyad.sh/update` (or GitHub Releases API)
+2. Queries `https://api.anyon.sh/update` (or GitHub Releases API)
 3. Downloads and installs updates in the background
 4. Prompts user to restart when update is ready
 
@@ -417,7 +417,7 @@ Users on stable channel will NOT receive beta updates automatically.
 
 When promoting a beta release to stable (e.g., 0.36.0-beta.1 → 0.36.0):
 
-1. **Both channels receive the same build**: The stable release (v0.36.0) is published as a non-prerelease GitHub Release. The update server at `api.dyad.sh` serves the latest non-prerelease version for the `stable` channel and the latest (including prerelease) for the `beta` channel.
+1. **Both channels receive the same build**: The stable release (v0.36.0) is published as a non-prerelease GitHub Release. The update server at `api.anyon.sh` serves the latest non-prerelease version for the `stable` channel and the latest (including prerelease) for the `beta` channel.
 
 2. **Beta users auto-upgrade**: Since 0.36.0 > 0.36.0-beta.1, beta channel users will automatically receive the stable release.
 
@@ -429,7 +429,7 @@ When promoting a beta release to stable (e.g., 0.36.0-beta.1 → 0.36.0):
 
 ```typescript
 const postfix = settings.releaseChannel === "beta" ? "beta" : "stable";
-const host = `https://api.dyad.sh/v1/update/${postfix}`;
+const host = `https://api.anyon.sh/v1/update/${postfix}`;
 ```
 
 Users can switch channels in Settings > General > Release Channel.
@@ -450,7 +450,7 @@ Each machine is assigned a stable bucket (0–99) derived from an MD5 hash of `a
 
 #### Server-Side Gating
 
-The endpoint `https://api.dyad.sh/v1/update/rollout-config.json` controls rollout:
+The endpoint `https://api.anyon.sh/v1/update/rollout-config.json` controls rollout:
 
 ```json
 {
@@ -465,7 +465,7 @@ The system is **fail-open**: if the config endpoint is unreachable, returns an e
 
 #### Manual Staged Rollout
 
-To perform a staged rollout, update `rollout-config.json` on `api.dyad.sh` with the target version and desired percentage.
+To perform a staged rollout, update `rollout-config.json` on `api.anyon.sh` with the target version and desired percentage.
 
 **Example schedule:**
 
@@ -502,7 +502,7 @@ To skip gating entirely (immediate full rollout), set `rolloutPercentage` to `10
    gh release delete vX.Y.Z --yes
 
    # Or via web UI
-   # Go to: https://github.com/dyad-sh/dyad/releases
+   # Go to: https://github.com/SL-IT-AMAZING/SLIT-ANYON/releases
    # Click release → Delete
    ```
 
@@ -532,9 +532,9 @@ To skip gating entirely (immediate full rollout), set `rolloutPercentage` to `10
 
 **SQLite Database Location**:
 
-- **macOS**: `~/Library/Application Support/dyad/`
-- **Windows**: `%APPDATA%\dyad\`
-- **Linux**: `~/.config/dyad/`
+- **macOS**: `~/Library/Application Support/anyon/`
+- **Windows**: `%APPDATA%\anyon\`
+- **Linux**: `~/.config/anyon/`
 
 **Manual Recovery Steps**:
 
@@ -542,13 +542,13 @@ To skip gating entirely (immediate full rollout), set `rolloutPercentage` to `10
 
    ```bash
    # macOS
-   cp ~/Library/Application\ Support/dyad/dyad.db ~/Desktop/dyad-backup.db
+   cp ~/Library/Application\ Support/anyon/anyon.db ~/Desktop/anyon-backup.db
 
    # Windows
-   copy %APPDATA%\dyad\dyad.db %USERPROFILE%\Desktop\dyad-backup.db
+   copy %APPDATA%\anyon\anyon.db %USERPROFILE%\Desktop\anyon-backup.db
 
    # Linux
-   cp ~/.config/dyad/dyad.db ~/Desktop/dyad-backup.db
+   cp ~/.config/anyon/anyon.db ~/Desktop/anyon-backup.db
    ```
 
 2. **Rollback to previous version**:
@@ -637,29 +637,29 @@ We apologize for the inconvenience. If you're affected, please [workaround or ro
 
 The release should include exactly **10 assets**:
 
-| Asset                 | Platform      | Format      | Example Filename               |
-| --------------------- | ------------- | ----------- | ------------------------------ |
-| Windows Installer     | Windows       | `.exe`      | `dyad-0.36.0.Setup.exe`        |
-| Windows NuGet Package | Windows       | `.nupkg`    | `dyad-0.36.0-full.nupkg`       |
-| Windows RELEASES File | Windows       | `RELEASES`  | `RELEASES`                     |
-| macOS DMG (ARM)       | macOS (arm64) | `.dmg`      | `dyad-0.36.0-arm64.dmg`        |
-| macOS DMG (Intel)     | macOS (x64)   | `.dmg`      | `dyad-0.36.0-x64.dmg`          |
-| macOS ZIP (ARM)       | macOS (arm64) | `.zip`      | `dyad-darwin-arm64-0.36.0.zip` |
-| macOS ZIP (Intel)     | macOS (x64)   | `.zip`      | `dyad-darwin-x64-0.36.0.zip`   |
-| Linux Debian          | Linux         | `.deb`      | `dyad_0.36.0_amd64.deb`        |
-| Linux RPM             | Linux         | `.rpm`      | `dyad-0.36.0-1.x86_64.rpm`     |
-| Linux AppImage        | Linux         | `.AppImage` | `dyad_0.36.0_x86_64.AppImage`  |
+| Asset                 | Platform      | Format      | Example Filename                |
+| --------------------- | ------------- | ----------- | ------------------------------- |
+| Windows Installer     | Windows       | `.exe`      | `anyon-0.36.0.Setup.exe`        |
+| Windows NuGet Package | Windows       | `.nupkg`    | `anyon-0.36.0-full.nupkg`       |
+| Windows RELEASES File | Windows       | `RELEASES`  | `RELEASES`                      |
+| macOS DMG (ARM)       | macOS (arm64) | `.dmg`      | `anyon-0.36.0-arm64.dmg`        |
+| macOS DMG (Intel)     | macOS (x64)   | `.dmg`      | `anyon-0.36.0-x64.dmg`          |
+| macOS ZIP (ARM)       | macOS (arm64) | `.zip`      | `anyon-darwin-arm64-0.36.0.zip` |
+| macOS ZIP (Intel)     | macOS (x64)   | `.zip`      | `anyon-darwin-x64-0.36.0.zip`   |
+| Linux Debian          | Linux         | `.deb`      | `anyon_0.36.0_amd64.deb`        |
+| Linux RPM             | Linux         | `.rpm`      | `anyon-0.36.0-1.x86_64.rpm`     |
+| Linux AppImage        | Linux         | `.AppImage` | `anyon_0.36.0_x86_64.AppImage`  |
 
 **Beta Release Naming**:
 
 For beta releases (e.g., `v0.36.0-beta.1`), filenames vary by platform:
 
-- **Windows installer**: `dyad-0.36.0-beta.1.Setup.exe` (keeps `-beta.1`)
-- **Windows NuGet**: `dyad-0.36.0-beta1-full.nupkg` (removes dot: `-beta1`)
-- **macOS**: `dyad-darwin-arm64-0.36.0-beta.1.zip` (keeps `-beta.1`)
-- **Linux Debian**: `dyad_0.36.0.beta.1_amd64.deb` (replaces dash with dot: `.beta.1`)
-- **Linux RPM**: `dyad-0.36.0.beta.1-1.x86_64.rpm` (replaces dash with dot: `.beta.1`)
-- **Linux AppImage**: `dyad_0.36.0-beta.1_x86_64.AppImage` (keeps `-beta.1`)
+- **Windows installer**: `anyon-0.36.0-beta.1.Setup.exe` (keeps `-beta.1`)
+- **Windows NuGet**: `anyon-0.36.0-beta1-full.nupkg` (removes dot: `-beta1`)
+- **macOS**: `anyon-darwin-arm64-0.36.0-beta.1.zip` (keeps `-beta.1`)
+- **Linux Debian**: `anyon_0.36.0.beta.1_amd64.deb` (replaces dash with dot: `.beta.1`)
+- **Linux RPM**: `anyon-0.36.0.beta.1-1.x86_64.rpm` (replaces dash with dot: `.beta.1`)
+- **Linux AppImage**: `anyon_0.36.0-beta.1_x86_64.AppImage` (keeps `-beta.1`)
 
 ## Troubleshooting
 
@@ -776,7 +776,7 @@ If still failing, increase to `8192` or `16384`.
 
 Monitor for P0/P1 bug reports:
 
-1. Go to: https://github.com/dyad-sh/dyad/issues
+1. Go to: https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues
 2. Filter by labels: `bug`, `P0`, `P1`
 3. Respond within 24 hours
 4. Escalate critical issues immediately
@@ -789,7 +789,7 @@ Track adoption and usage via PostHog dashboard:
 - **Update success rate**: % of successful auto-updates
 - **Feature usage**: Track new feature adoption
 
-**PostHog Dashboard**: https://us.posthog.com/ (project: Dyad)
+**PostHog Dashboard**: https://us.posthog.com/ (project: Anyon)
 
 ### Crash Reporting
 
@@ -851,10 +851,10 @@ gh release delete vX.Y.Z --yes
 
 ### Key URLs
 
-- **Releases**: https://github.com/dyad-sh/dyad/releases
-- **Actions**: https://github.com/dyad-sh/dyad/actions
-- **Issues**: https://github.com/dyad-sh/dyad/issues
-- **Discussions**: https://github.com/dyad-sh/dyad/discussions
+- **Releases**: https://github.com/SL-IT-AMAZING/SLIT-ANYON/releases
+- **Actions**: https://github.com/SL-IT-AMAZING/SLIT-ANYON/actions
+- **Issues**: https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues
+- **Discussions**: https://github.com/SL-IT-AMAZING/SLIT-ANYON/discussions
 
 ---
 

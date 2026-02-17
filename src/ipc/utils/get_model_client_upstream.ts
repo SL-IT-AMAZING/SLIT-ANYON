@@ -23,8 +23,8 @@ import {
 } from "../shared/language_model_constants";
 import { getLanguageModelProviders } from "../shared/language_model_helpers";
 import {
-  type DyadEngineProvider,
-  createDyadEngine,
+  type AnyonEngineProvider,
+  createAnyonEngine,
 } from "./llm_engine_provider";
 import { getEnvVar } from "./read_env";
 
@@ -33,7 +33,7 @@ import { createFallback } from "./fallback_ai_model";
 import { LM_STUDIO_BASE_URL } from "./lm_studio_utils";
 import { createOllamaProvider } from "./ollama_provider";
 
-const dyadEngineUrl = process.env.DYAD_ENGINE_URL;
+const anyonEngineUrl = process.env.ANYON_ENGINE_URL;
 
 const AUTO_MODELS = [
   {
@@ -71,7 +71,7 @@ export async function getModelClientUpstream(
 }> {
   const allProviders = await getLanguageModelProviders();
 
-  const dyadApiKey = settings.providerSettings?.auto?.apiKey?.value;
+  const anyonApiKey = settings.providerSettings?.auto?.apiKey?.value;
 
   // --- Handle specific provider ---
   const providerConfig = allProviders.find((p) => p.id === model.provider);
@@ -81,17 +81,17 @@ export async function getModelClientUpstream(
   }
 
   // Handle ANYON Pro override
-  if (dyadApiKey && settings.enableDyadPro) {
+  if (anyonApiKey && settings.enableAnyonPro) {
     // Check if the selected provider supports ANYON Pro (has a gateway prefix) OR
     // we're using local engine.
     // IMPORTANT: some providers like OpenAI have an empty string gateway prefix,
     // so we do a nullish and not a truthy check here.
-    if (providerConfig.gatewayPrefix != null || dyadEngineUrl) {
+    if (providerConfig.gatewayPrefix != null || anyonEngineUrl) {
       const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
-      const provider = createDyadEngine({
-        apiKey: dyadApiKey,
-        baseURL: dyadEngineUrl ?? "https://engine.any-on.dev/v1",
-        dyadOptions: {
+      const provider = createAnyonEngine({
+        apiKey: anyonApiKey,
+        baseURL: anyonEngineUrl ?? "https://engine.any-on.dev/v1",
+        anyonOptions: {
           enableLazyEdits:
             settings.selectedChatMode === "ask"
               ? false
@@ -108,7 +108,7 @@ export async function getModelClientUpstream(
       );
 
       logger.info(
-        `\x1b[1;30;42m Using ANYON Pro engine: ${dyadEngineUrl ?? "<prod>"} \x1b[0m`,
+        `\x1b[1;30;42m Using ANYON Pro engine: ${anyonEngineUrl ?? "<prod>"} \x1b[0m`,
       );
 
       // Do not use free variant (for openrouter).
@@ -198,7 +198,7 @@ function getProModelClient({
 }: {
   model: LargeLanguageModel;
   settings: UserSettings;
-  provider: DyadEngineProvider;
+  provider: AnyonEngineProvider;
   modelId: string;
 }): ModelClient {
   if (

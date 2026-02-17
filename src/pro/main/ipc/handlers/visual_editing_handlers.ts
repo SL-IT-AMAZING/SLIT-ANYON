@@ -1,26 +1,26 @@
-import { ipcMain } from "electron";
 import fs from "node:fs";
 import { promises as fsPromises } from "node:fs";
-import path from "path";
-import { db } from "../../../../db";
-import { apps } from "../../../../db/schema";
-import { eq } from "drizzle-orm";
-import { getDyadAppPath } from "../../../../paths/paths";
-import {
-  stylesToTailwind,
-  extractClassPrefixes,
-} from "../../../../utils/style-utils";
-import { gitAdd, gitCommit } from "../../../../ipc/utils/git_utils";
-import { safeJoin } from "@/ipc/utils/path_utils";
-import {
+import path from "node:path";
+import type {
   AnalyseComponentParams,
   ApplyVisualEditingChangesParams,
 } from "@/ipc/types";
-import {
-  transformContent,
-  analyzeComponent,
-} from "../../utils/visual_editing_utils";
+import { safeJoin } from "@/ipc/utils/path_utils";
+import { eq } from "drizzle-orm";
+import { ipcMain } from "electron";
 import { normalizePath } from "../../../../../shared/normalizePath";
+import { db } from "../../../../db";
+import { apps } from "../../../../db/schema";
+import { gitAdd, gitCommit } from "../../../../ipc/utils/git_utils";
+import { getAnyonAppPath } from "../../../../paths/paths";
+import {
+  extractClassPrefixes,
+  stylesToTailwind,
+} from "../../../../utils/style-utils";
+import {
+  analyzeComponent,
+  transformContent,
+} from "../../utils/visual_editing_utils";
 
 export function registerVisualEditingHandlers() {
   ipcMain.handle(
@@ -39,7 +39,7 @@ export function registerVisualEditingHandlers() {
           throw new Error(`App not found: ${appId}`);
         }
 
-        const appPath = getDyadAppPath(app.path);
+        const appPath = getAnyonAppPath(app.path);
         const fileChanges = new Map<
           string,
           Map<
@@ -96,10 +96,20 @@ export function registerVisualEditingHandlers() {
     async (_event, analyseComponentParams: AnalyseComponentParams) => {
       const { appId, componentId } = analyseComponentParams;
       try {
-        const [filePath, lineStr] = componentId.split(":");
-        const line = parseInt(lineStr, 10);
+        const parts = componentId.split(":");
+        if (parts.length < 2) {
+          return { isDynamic: false, hasStaticText: false };
+        }
 
-        if (!filePath || isNaN(line)) {
+        if (parts.length >= 3) {
+          parts.pop();
+        }
+
+        const lineStr = parts.pop();
+        const filePath = parts.join(":");
+        const line = Number.parseInt(lineStr ?? "", 10);
+
+        if (!filePath || Number.isNaN(line)) {
           return { isDynamic: false, hasStaticText: false };
         }
 
@@ -112,7 +122,7 @@ export function registerVisualEditingHandlers() {
           throw new Error(`App not found: ${appId}`);
         }
 
-        const appPath = getDyadAppPath(app.path);
+        const appPath = getAnyonAppPath(app.path);
         const fullPath = safeJoin(appPath, filePath);
         const content = await fsPromises.readFile(fullPath, "utf-8");
         return analyzeComponent(content, line);

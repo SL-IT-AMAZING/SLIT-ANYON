@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
-type SetupProviderVariant = "google" | "openrouter" | "dyad";
+type SetupProviderVariant = "google" | "openrouter" | "anyon";
 
 export function SetupProviderCard({
   variant,
@@ -95,7 +95,7 @@ function getVariantStyles(variant: SetupProviderVariant) {
         chipColor: "text-muted-foreground bg-card border border-border",
         chevronColor: "text-muted-foreground",
       } as const;
-    case "dyad":
+    case "anyon":
       return {
         container:
           "bg-primary/10 border-primary/50 dark:bg-violet-800/50 dark:border-violet-700 hover:bg-violet-100 dark:hover:bg-violet-900/70",

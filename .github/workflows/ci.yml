@@ -112,7 +112,7 @@ jobs:
     if: needs.check-changes.outputs.should_run_tests == 'true'
     # Why Mac and Windows?
     # I can't run electron playwright on ubuntu-latest and
-    # Linux support for Dyad is experimental so not as important
+    # Linux support for Anyon is experimental so not as important
     # as Mac + Windows
     strategy:
       fail-fast: false
@@ -170,12 +170,12 @@ jobs:
         run: |
           echo "## Build Size Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -d "out/dyad-darwin-arm64" ]; then
-            SIZE=$(du -sh "out/dyad-darwin-arm64" | awk '{print $1}')
+          if [ -d "out/anyon-darwin-arm64" ]; then
+            SIZE=$(du -sh "out/anyon-darwin-arm64" | awk '{print $1}')
             echo "- **macOS (arm64):** $SIZE" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ -d "out/dyad-darwin-x64" ]; then
-            SIZE=$(du -sh "out/dyad-darwin-x64" | awk '{print $1}')
+          if [ -d "out/anyon-darwin-x64" ]; then
+            SIZE=$(du -sh "out/anyon-darwin-x64" | awk '{print $1}')
             echo "- **macOS (x64):** $SIZE" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -241,7 +241,7 @@ jobs:
         with:
           version: latest
       - name: Clone nextjs-template
-        run: git clone --depth 1 https://github.com/dyad-sh/nextjs-template.git nextjs-template
+        run: git clone --depth 1 https://github.com/SL-IT-AMAZING/nextjs-template.git nextjs-template
       - name: Get pnpm store directory
         id: pnpm-cache
         shell: bash

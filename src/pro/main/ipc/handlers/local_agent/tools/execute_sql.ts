@@ -23,9 +23,9 @@ export const executeSqlTool: ToolDefinition<z.infer<typeof executeSqlSchema>> =
     buildXml: (args, isComplete) => {
       if (args.query == undefined) return undefined;
 
-      let xml = `<dyad-execute-sql description="${escapeXmlAttr(args.description ?? "")}">\n${args.query}`;
+      let xml = `<anyon-execute-sql description="${escapeXmlAttr(args.description ?? "")}">\n${args.query}`;
       if (isComplete) {
-        xml += "\n</dyad-execute-sql>";
+        xml += "\n</anyon-execute-sql>";
       }
       return xml;
     },

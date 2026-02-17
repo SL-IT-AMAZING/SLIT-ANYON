@@ -72,7 +72,7 @@ function sanitizeKeywords(keywords: string): string {
 }
 
 // Directory for storing temporary theme images
-const THEME_IMAGES_TEMP_DIR = path.join(os.tmpdir(), "dyad-theme-images");
+const THEME_IMAGES_TEMP_DIR = path.join(os.tmpdir(), "anyon-theme-images");
 
 // Ensure temp directory exists
 if (!fs.existsSync(THEME_IMAGES_TEMP_DIR)) {
@@ -579,12 +579,6 @@ Modern dark theme with purple accents for testing.
         };
       }
 
-      if (!settings.enableDyadPro) {
-        throw new Error(
-          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
-        );
-      }
-
       // Validate inputs - image paths are required
       if (params.imagePaths.length === 0) {
         throw new Error("Please upload at least one image to generate a theme");
@@ -707,12 +701,6 @@ Modern theme extracted from website for testing.
         };
       }
 
-      if (!settings.enableDyadPro) {
-        throw new Error(
-          "ANYON Pro is required for AI theme generation. Please enable ANYON Pro in Settings.",
-        );
-      }
-
       // Validate URL format and protocol
       let parsedUrl: URL;
       try {
@@ -760,7 +748,7 @@ Modern theme extracted from website for testing.
         throw new Error("Invalid model selection");
       }
 
-      // Get API key for Dyad Engine
+      // Get API key for Anyon Engine
       const apiKey = settings.providerSettings?.auto?.apiKey?.value;
       if (!apiKey) {
         throw new Error("ANYON Pro API key is required");
@@ -769,8 +757,8 @@ Modern theme extracted from website for testing.
       // Crawl the website
       logger.log(`Crawling website for theme: ${params.url}`);
 
-      const DYAD_ENGINE_URL =
-        process.env.DYAD_ENGINE_URL ?? "https://engine.any-on.dev/v1";
+      const ANYON_ENGINE_URL =
+        process.env.ANYON_ENGINE_URL ?? "https://engine.any-on.dev/v1";
 
       // Create AbortController for timeout
       const controller = new AbortController();
@@ -781,12 +769,12 @@ Modern theme extracted from website for testing.
 
       let crawlResponse: Response;
       try {
-        crawlResponse = await fetch(`${DYAD_ENGINE_URL}/tools/web-crawl`, {
+        crawlResponse = await fetch(`${ANYON_ENGINE_URL}/tools/web-crawl`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
-            "X-Dyad-Request-Id": `theme-crawl-${uuidv4()}`,
+            "X-Anyon-Request-Id": `theme-crawl-${uuidv4()}`,
           },
           body: JSON.stringify({ url: params.url }),
           signal: controller.signal,

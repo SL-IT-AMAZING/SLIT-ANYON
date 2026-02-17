@@ -2,7 +2,7 @@
 
 ## 프로젝트 소개
 
-Dyad의 외부 OAuth 서비스(oauth.dyad.sh)를 대체하는 자체 호스팅 OAuth 프록시 서버입니다. Neon, Supabase, Vercel의 OAuth 플로우를 처리하고, 인증 완료 후 `dyad://` 딥링크를 통해 Electron 앱으로 리다이렉트합니다.
+Anyon의 외부 OAuth 서비스(oauth.any-on.dev)를 대체하는 자체 호스팅 OAuth 프록시 서버입니다. Neon, Supabase, Vercel의 OAuth 플로우를 처리하고, 인증 완료 후 `anyon://` 딥링크를 통해 Electron 앱으로 리다이렉트합니다.
 
 이 서버를 사용하면 외부 OAuth 서비스에 의존하지 않고 독립적으로 OAuth 인증을 관리할 수 있습니다.
 
@@ -59,7 +59,7 @@ VERCEL_CLIENT_SECRET=
 
 1. https://console.neon.tech/app/settings/api-keys 접속
 2. **Create new API Key** 클릭
-3. 생성된 API 키를 Dyad 앱의 Neon 커넥터에 입력
+3. 생성된 API 키를 Anyon 앱의 Neon 커넥터에 입력
 
 **OAuth 방식 (Partner Program 필요):**
 
@@ -126,17 +126,17 @@ OAUTH_SERVER_URL=http://localhost:3000
 
 ## API 엔드포인트
 
-| Method | Path                           | 설명                                                 |
-| ------ | ------------------------------ | ---------------------------------------------------- |
-| GET    | `/api/oauth/neon/login`        | Neon OAuth 인증 시작 (302 리다이렉트)                |
-| GET    | `/api/oauth/neon/callback`     | Neon OAuth 콜백 → `dyad://neon-oauth-return`         |
-| POST   | `/api/oauth/neon/refresh`      | Neon 액세스 토큰 갱신 (body: `{refreshToken}`)       |
-| GET    | `/api/oauth/supabase/login`    | Supabase OAuth 인증 시작 (302 리다이렉트)            |
-| GET    | `/api/oauth/supabase/callback` | Supabase OAuth 콜백 → `dyad://supabase-oauth-return` |
-| POST   | `/api/oauth/supabase/refresh`  | Supabase 액세스 토큰 갱신 (body: `{refreshToken}`)   |
-| GET    | `/api/oauth/vercel/login`      | Vercel OAuth 인증 시작 (PKCE 사용)                   |
-| GET    | `/api/oauth/vercel/callback`   | Vercel OAuth 콜백 → `dyad://vercel-oauth-return`     |
-| POST   | `/api/oauth/vercel/refresh`    | Vercel 액세스 토큰 갱신 (body: `{refreshToken}`)     |
+| Method | Path                           | 설명                                                  |
+| ------ | ------------------------------ | ----------------------------------------------------- |
+| GET    | `/api/oauth/neon/login`        | Neon OAuth 인증 시작 (302 리다이렉트)                 |
+| GET    | `/api/oauth/neon/callback`     | Neon OAuth 콜백 → `anyon://neon-oauth-return`         |
+| POST   | `/api/oauth/neon/refresh`      | Neon 액세스 토큰 갱신 (body: `{refreshToken}`)        |
+| GET    | `/api/oauth/supabase/login`    | Supabase OAuth 인증 시작 (302 리다이렉트)             |
+| GET    | `/api/oauth/supabase/callback` | Supabase OAuth 콜백 → `anyon://supabase-oauth-return` |
+| POST   | `/api/oauth/supabase/refresh`  | Supabase 액세스 토큰 갱신 (body: `{refreshToken}`)    |
+| GET    | `/api/oauth/vercel/login`      | Vercel OAuth 인증 시작 (PKCE 사용)                    |
+| GET    | `/api/oauth/vercel/callback`   | Vercel OAuth 콜백 → `anyon://vercel-oauth-return`     |
+| POST   | `/api/oauth/vercel/refresh`    | Vercel 액세스 토큰 갱신 (body: `{refreshToken}`)      |
 
 ### Refresh 엔드포인트 사용 예시
 
@@ -196,7 +196,7 @@ curl -X POST https://oauth.yourcompany.com/api/oauth/neon/refresh \
 2. **Callback 엔드포인트**:
    - OAuth 제공자로부터 인증 코드 수신
    - 액세스 토큰과 리프레시 토큰 교환
-   - `dyad://` 딥링크로 토큰 데이터와 함께 리다이렉트
+   - `anyon://` 딥링크로 토큰 데이터와 함께 리다이렉트
 3. **Refresh 엔드포인트**:
    - POST 요청으로 `{refreshToken}` 수신
    - 새로운 액세스 토큰 발급
@@ -207,16 +207,16 @@ curl -X POST https://oauth.yourcompany.com/api/oauth/neon/refresh \
 콜백 후 Electron 앱으로 전달되는 딥링크 형식:
 
 ```
-dyad://neon-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
-dyad://supabase-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
-dyad://vercel-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
+anyon://neon-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
+anyon://supabase-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
+anyon://vercel-oauth-return?accessToken=xxx&refreshToken=yyy&expiresIn=3600
 ```
 
 ## 클라이언트 설정
 
-OAuth 서버 배포 후, Dyad Electron 앱의 설정을 업데이트해야 합니다:
+OAuth 서버 배포 후, Anyon Electron 앱의 설정을 업데이트해야 합니다:
 
-1. `/Users/cosmos/Documents/test/dyad/src/lib/oauthConfig.ts` 파일 열기
+1. `/Users/cosmos/Documents/test/anyon/src/lib/oauthConfig.ts` 파일 열기
 2. `OAUTH_SERVER_URL` 상수를 배포된 서버 URL로 변경:
 
 ```typescript
@@ -225,7 +225,7 @@ export const OAUTH_SERVER_URL = "https://oauth.yourcompany.com";
 
 3. Electron 앱 재빌드
 
-이제 Dyad 앱은 자체 호스팅된 OAuth 서버를 사용하여 인증을 처리합니다.
+이제 Anyon 앱은 자체 호스팅된 OAuth 서버를 사용하여 인증을 처리합니다.
 
 ## 문제 해결
 

@@ -1,8 +1,8 @@
-# Dyad ← OpenCode 풀 기능 통합 계획서
+# Anyon ← OpenCode 풀 기능 통합 계획서
 
-> **목표**: Dyad 데스크탑 앱에서 OpenCode CLI의 모든 기능을 UI로 제어할 수 있도록 한다.
+> **목표**: Anyon 데스크탑 앱에서 OpenCode CLI의 모든 기능을 UI로 제어할 수 있도록 한다.
 > **작성일**: 2026-02-06
-> **현재 상태**: Dyad는 OpenCode 서버에 연결되어 있으나, 93개 API 중 4개만 사용 중
+> **현재 상태**: Anyon는 OpenCode 서버에 연결되어 있으나, 93개 API 중 4개만 사용 중
 
 ---
 
@@ -11,7 +11,7 @@
 ### 연결 구조 (이미 작동 중)
 
 ```
-Dyad Electron App
+Anyon Electron App
   └─ opencode_server.ts    → `opencode serve` 프로세스 스폰 (127.0.0.1:4096)
   └─ opencode_provider.ts  → LanguageModelV2 인터페이스로 래핑
   └─ get_model_client.ts   → OpenCode만 유일한 프로바이더로 강제
@@ -30,13 +30,13 @@ Dyad Electron App
 
 1. **모델 1개 하드코딩**: `claude-sonnet-4-20250514`만 존재 (`language_model_constants.ts`)
 2. **프로바이더 1개 하드코딩**: `opencode` (OpenCode CLI)만 존재
-3. **에이전트 선택 불가**: 모드(build/ask/plan 등)는 Dyad 자체 시스템
+3. **에이전트 선택 불가**: 모드(build/ask/plan 등)는 Anyon 자체 시스템
 4. **프로바이더 설정 불가**: API 키 입력, OAuth 인증 UI 없음
 5. **모델 피커**: 단순 드롭다운, 검색/그룹핑/상세정보 없음
 
-### 기술 스택 차이 (OpenCode App vs Dyad)
+### 기술 스택 차이 (OpenCode App vs Anyon)
 
-|               | OpenCode App             | Dyad                       |
+|               | OpenCode App             | Anyon                      |
 | ------------- | ------------------------ | -------------------------- |
 | 프레임워크    | SolidJS                  | React                      |
 | UI 라이브러리 | @kobalte/core            | shadcn/ui + @base-ui/react |
@@ -213,7 +213,7 @@ export class OpenCodeAPI {
 
 ### Wave 2: 에이전트 시스템 연동
 
-> **목표**: OpenCode의 에이전트(build, plan, explore, custom...)를 Dyad UI에서 선택 가능
+> **목표**: OpenCode의 에이전트(build, plan, explore, custom...)를 Anyon UI에서 선택 가능
 > **예상 난이도**: ★★☆☆☆
 > **예상 작업량**: 작음
 > **의존성**: Wave 1-5 완료 필요 (세션에 에이전트 전달)
@@ -245,7 +245,7 @@ export class OpenCodeAPI {
 
 ### Wave 3: 설정 패널 + 세션 관리
 
-> **목표**: OpenCode 설정을 Dyad UI에서 관리, 세션 고급 기능
+> **목표**: OpenCode 설정을 Anyon UI에서 관리, 세션 고급 기능
 > **예상 난이도**: ★★★☆☆
 > **예상 작업량**: 중간
 > **의존성**: Wave 1 완료 필요
@@ -374,7 +374,7 @@ export class OpenCodeAPI {
 ## 리스크 및 고려사항
 
 1. **OpenCode 세션 API 스키마**: 세션 생성 시 모델/에이전트를 어떻게 지정하는지 정확한 스키마 확인 필요
-2. **Dyad 자체 모드 시스템과의 충돌**: Dyad의 build/ask/plan 모드와 OpenCode의 에이전트 시스템이 겹침 → 어떻게 공존/대체할지 결정 필요
+2. **Anyon 자체 모드 시스템과의 충돌**: Anyon의 build/ask/plan 모드와 OpenCode의 에이전트 시스템이 겹침 → 어떻게 공존/대체할지 결정 필요
 3. **인증 보안**: API 키가 Electron 프로세스에서 관리되므로 보안 고려
 4. **OpenCode CLI 의존성**: 사용자 머신에 `opencode` CLI가 설치되어 있어야 함
 5. **버전 호환성**: OpenCode 서버 API가 버전마다 다를 수 있음
