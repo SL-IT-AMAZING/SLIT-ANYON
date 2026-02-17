@@ -1,4 +1,3 @@
-
 import {
   Tooltip,
   TooltipContent,
@@ -63,8 +62,7 @@ export function CustomErrorToast({
                         )}
                       </button>
                     }
-                  >
-                  </TooltipTrigger>
+                  ></TooltipTrigger>
                   <TooltipContent>Copy to clipboard</TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -80,8 +78,7 @@ export function CustomErrorToast({
                         <X className="w-4 h-4" />
                       </button>
                     }
-                  >
-                  </TooltipTrigger>
+                  ></TooltipTrigger>
                   <TooltipContent>Close</TooltipContent>
                 </Tooltip>
               </div>

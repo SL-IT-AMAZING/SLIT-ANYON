@@ -68,10 +68,7 @@ Deno.serve(async (req) => {
     const message =
       error instanceof Error ? error.message : "Internal server error";
     const status =
-      error instanceof Error &&
-      isAuthError(error.message)
-        ? 401
-        : 500;
+      error instanceof Error && isAuthError(error.message) ? 401 : 500;
     return new Response(JSON.stringify({ error: message }), {
       status,
       headers: { "Content-Type": "application/json", ...corsHeaders },

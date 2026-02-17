@@ -51,7 +51,9 @@ function getAccessToken(): string | null {
 
 function normalizeAccessToken(value: string): string {
   const normalized = value.trim();
-  return normalized.startsWith("Bearer ") ? normalized.slice(7).trim() : normalized;
+  return normalized.startsWith("Bearer ")
+    ? normalized.slice(7).trim()
+    : normalized;
 }
 
 function getJwtExpiryMs(token: string): number | null {
@@ -61,8 +63,10 @@ function getJwtExpiryMs(token: string): number | null {
       return null;
     }
     const payload = JSON.parse(
-      Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64")
-        .toString("utf8"),
+      Buffer.from(
+        parts[1].replace(/-/g, "+").replace(/_/g, "/"),
+        "base64",
+      ).toString("utf8"),
     ) as { exp?: number };
     if (typeof payload.exp !== "number") {
       return null;
@@ -101,7 +105,9 @@ async function getActiveAccessToken(operation: string): Promise<string> {
 
   const refreshed = await refreshSession();
   if (!refreshed.accessToken) {
-    throw new Error(`Session refresh failed during ${operation}. Please sign in again.`);
+    throw new Error(
+      `Session refresh failed during ${operation}. Please sign in again.`,
+    );
   }
 
   return normalizeAccessToken(refreshed.accessToken);
@@ -152,7 +158,7 @@ async function getErrorMessage(
   const payload = await response
     .clone()
     .json()
-    .catch(() => ({} as Record<string, unknown>));
+    .catch(() => ({}) as Record<string, unknown>);
   if (typeof payload?.error === "string" && payload.error.length > 0) {
     return payload.error;
   }
@@ -217,15 +223,13 @@ export async function syncEntitlements(): Promise<EntitlementState> {
   }
 
   try {
-    const response = await requestWithAuthRefresh(
-      "entitlement sync",
-      (token) =>
-        fetch(oauthEndpoints.auth.entitlements, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            apikey: getAnonKey(),
-          },
-        }),
+    const response = await requestWithAuthRefresh("entitlement sync", (token) =>
+      fetch(oauthEndpoints.auth.entitlements, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: getAnonKey(),
+        },
+      }),
     );
 
     if (!response.ok) {
@@ -233,7 +237,9 @@ export async function syncEntitlements(): Promise<EntitlementState> {
         logger.warn("Auth token expired during entitlement sync");
         return getCachedEntitlements() ?? FREE_STATE;
       }
-      throw new Error(await getErrorMessage(response, "Entitlement sync failed"));
+      throw new Error(
+        await getErrorMessage(response, "Entitlement sync failed"),
+      );
     }
 
     const data = (await response.json()) as EntitlementState;
@@ -289,7 +295,10 @@ export async function openCustomerPortal(): Promise<{ portalUrl: string }> {
     });
   };
 
-  const response = await requestWithAuthRefresh("customer portal", requestPortal);
+  const response = await requestWithAuthRefresh(
+    "customer portal",
+    requestPortal,
+  );
   if (!response.ok) {
     throw new Error(await getErrorMessage(response, "Portal request failed"));
   }
