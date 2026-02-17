@@ -6,6 +6,22 @@ import { readSettings, writeSettings } from "./settings";
 
 const logger = log.scope("entitlement");
 
+// ──────────────────────────────────────────────────────────────────────────────
+// TODO(payment-merge): Remove this entire dev bypass block when merging with
+// the payment branch. Payment gating is being developed in a separate branch;
+// this bypass gives full access during local development so that unrelated
+// feature work is not blocked by entitlement checks.
+// ──────────────────────────────────────────────────────────────────────────────
+const IS_DEV = process.env.NODE_ENV === "development";
+
+const DEV_ENTITLEMENT_STATE: EntitlementState = {
+  plan: "pro",
+  isActive: true,
+  expiresAt: null,
+  polarSubscriptionId: null,
+  syncedAt: new Date().toISOString(),
+};
+
 function getAnonKey(): string {
   const key = process.env.ANYON_SUPABASE_ANON_KEY;
   if (!key) {
@@ -208,6 +224,8 @@ function saveCachedEntitlements(state: EntitlementState): void {
 }
 
 export async function getEntitlements(): Promise<EntitlementState> {
+  if (IS_DEV) return DEV_ENTITLEMENT_STATE;
+
   const cached = getCachedEntitlements();
   if (cached) return cached;
 
@@ -215,6 +233,11 @@ export async function getEntitlements(): Promise<EntitlementState> {
 }
 
 export async function syncEntitlements(): Promise<EntitlementState> {
+  if (IS_DEV) {
+    saveCachedEntitlements(DEV_ENTITLEMENT_STATE);
+    return DEV_ENTITLEMENT_STATE;
+  }
+
   const accessToken = getAccessToken();
   if (!accessToken) {
     logger.info("No auth token — clearing cache and returning free state");
@@ -373,6 +396,15 @@ export interface CreditCheckResult {
 export async function checkCreditsForModel(
   modelName: string,
 ): Promise<CreditCheckResult> {
+  if (IS_DEV) {
+    return {
+      allowed: true,
+      creditsRemaining: Number.POSITIVE_INFINITY,
+      plan: "pro",
+      usagePercent: 0,
+    };
+  }
+
   void modelName;
   const plan = getPlanTier();
 
