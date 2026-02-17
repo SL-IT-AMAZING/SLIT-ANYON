@@ -698,51 +698,54 @@ ${componentSnippet}
             throw streamError;
           }
 
-          if (!abortController.signal.aborted && fullResponse) {
-            const chatTitle = fullResponse.match(
-              /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
-            );
-            if (chatTitle) {
-              await db
-                .update(chats)
-                .set({ title: chatTitle[1] })
-                .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
-            }
+          if (!abortController.signal.aborted) {
+            let chatSummary: string | undefined;
 
-            await db
-              .update(messages)
-              .set({ content: fullResponse })
-              .where(eq(messages.id, placeholderAssistantMessage.id));
-
-            let _hasFileChanges = false;
-            const appPath = getAnyonAppPath(updatedChat.app.path);
-            try {
-              const uncommittedFiles = await getGitUncommittedFiles({
-                path: appPath,
-              });
-              if (uncommittedFiles.length > 0) {
-                await gitAddAll({ path: appPath });
-                const commitHash = await gitCommit({
-                  path: appPath,
-                  message: `[anyon/opencode] ${chatTitle?.[1] ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
-                });
+            if (fullResponse) {
+              const chatTitle = fullResponse.match(
+                /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
+              );
+              chatSummary = chatTitle?.[1];
+              if (chatSummary) {
                 await db
-                  .update(messages)
-                  .set({ commitHash })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-                _hasFileChanges = true;
-                logger.log(
-                  `OpenCode git commit: ${commitHash} (${uncommittedFiles.length} files)`,
-                );
+                  .update(chats)
+                  .set({ title: chatSummary })
+                  .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
               }
-            } catch (gitError) {
-              logger.error("OpenCode git commit failed:", gitError);
+
+              await db
+                .update(messages)
+                .set({ content: fullResponse })
+                .where(eq(messages.id, placeholderAssistantMessage.id));
+
+              const appPath = getAnyonAppPath(updatedChat.app.path);
+              try {
+                const uncommittedFiles = await getGitUncommittedFiles({
+                  path: appPath,
+                });
+                if (uncommittedFiles.length > 0) {
+                  await gitAddAll({ path: appPath });
+                  const commitHash = await gitCommit({
+                    path: appPath,
+                    message: `[anyon/opencode] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                  });
+                  await db
+                    .update(messages)
+                    .set({ commitHash })
+                    .where(eq(messages.id, placeholderAssistantMessage.id));
+                  logger.log(
+                    `OpenCode git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                  );
+                }
+              } catch (gitError) {
+                logger.error("OpenCode git commit failed:", gitError);
+              }
             }
 
             safeSend(event.sender, "chat:response:end", {
               chatId: req.chatId,
               updatedFiles: false,
-              chatSummary: chatTitle?.[1],
+              chatSummary,
             } satisfies ChatResponseEnd);
           }
 
