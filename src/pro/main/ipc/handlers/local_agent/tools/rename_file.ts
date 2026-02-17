@@ -10,14 +10,34 @@ import {
   deleteSupabaseFunction,
 } from "../../../../../../supabase_admin/supabase_management_client";
 import {
+  extractFunctionNameFromPath,
   isServerFunction,
   isSharedServerModule,
 } from "../../../../../../supabase_admin/supabase_utils";
 
 const logger = log.scope("rename_file");
 
-function getFunctionNameFromPath(input: string): string {
-  return path.basename(path.extname(input) ? path.dirname(input) : input);
+function normalizePath(input: string): string {
+  return input.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
+function isFunctionDirectoryPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+$/.test(normalizePath(input));
+}
+
+function isFunctionEntrypointPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+\/index\.ts$/.test(normalizePath(input));
+}
+
+function hasFunctionEntrypoint(appPath: string, functionName: string): boolean {
+  const entrypointPath = path.join(
+    appPath,
+    "supabase",
+    "functions",
+    functionName,
+    "index.ts",
+  );
+  return fs.existsSync(entrypointPath);
 }
 
 const renameFileSchema = z.object({
@@ -68,28 +88,61 @@ export const renameFileTool: ToolDefinition<z.infer<typeof renameFileSchema>> =
 
         // Handle Supabase functions
         if (ctx.supabaseProjectId) {
+          const fromIsServerFunction = isServerFunction(args.from);
+          const toIsServerFunction = isServerFunction(args.to);
+          const fromFunctionName = fromIsServerFunction
+            ? extractFunctionNameFromPath(args.from)
+            : undefined;
+          const toFunctionName = toIsServerFunction
+            ? extractFunctionNameFromPath(args.to)
+            : undefined;
+
+          const shouldDeleteFromFunction =
+            fromIsServerFunction &&
+            (isFunctionDirectoryPath(args.from) ||
+              isFunctionEntrypointPath(args.from));
+
           if (isServerFunction(args.from)) {
             try {
-              await deleteSupabaseFunction({
-                supabaseProjectId: ctx.supabaseProjectId,
-                functionName: getFunctionNameFromPath(args.from),
-                organizationSlug: ctx.supabaseOrganizationSlug ?? null,
-              });
+              if (shouldDeleteFromFunction) {
+                await deleteSupabaseFunction({
+                  supabaseProjectId: ctx.supabaseProjectId,
+                  functionName: fromFunctionName!,
+                  organizationSlug: ctx.supabaseOrganizationSlug ?? null,
+                });
+              } else if (
+                !ctx.isSharedModulesChanged &&
+                (!toIsServerFunction || fromFunctionName !== toFunctionName)
+              ) {
+                await deploySupabaseFunction({
+                  supabaseProjectId: ctx.supabaseProjectId,
+                  functionName: fromFunctionName!,
+                  appPath: ctx.appPath,
+                  organizationSlug: ctx.supabaseOrganizationSlug ?? null,
+                });
+              }
             } catch (error) {
               logger.warn(
-                `Failed to delete old Supabase function: ${args.from}`,
+                shouldDeleteFromFunction
+                  ? `Failed to delete old Supabase function: ${args.from}`
+                  : `Failed to redeploy Supabase function after rename: ${args.from}`,
                 error,
               );
             }
           }
           if (isServerFunction(args.to) && !ctx.isSharedModulesChanged) {
             try {
-              await deploySupabaseFunction({
-                supabaseProjectId: ctx.supabaseProjectId,
-                functionName: getFunctionNameFromPath(args.to),
-                appPath: ctx.appPath,
-                organizationSlug: ctx.supabaseOrganizationSlug ?? null,
-              });
+              if (
+                toFunctionName &&
+                hasFunctionEntrypoint(ctx.appPath, toFunctionName)
+              ) {
+                await deploySupabaseFunction({
+                  supabaseProjectId: ctx.supabaseProjectId,
+                  functionName: toFunctionName,
+                  appPath: ctx.appPath,
+                  organizationSlug: ctx.supabaseOrganizationSlug ?? null,
+                });
+              }
             } catch (error) {
               return `File renamed, but failed to deploy Supabase function: ${error}`;
             }

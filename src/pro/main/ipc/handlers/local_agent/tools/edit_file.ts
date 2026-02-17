@@ -6,6 +6,7 @@ import { ToolDefinition, AgentContext, escapeXmlAttr } from "./types";
 import { safeJoin } from "@/ipc/utils/path_utils";
 import { deploySupabaseFunction } from "../../../../../../supabase_admin/supabase_management_client";
 import {
+  extractFunctionNameFromPath,
   isServerFunction,
   isSharedServerModule,
 } from "../../../../../../supabase_admin/supabase_utils";
@@ -205,7 +206,7 @@ export const editFileTool: ToolDefinition<z.infer<typeof editFileSchema>> = {
       try {
         await deploySupabaseFunction({
           supabaseProjectId: ctx.supabaseProjectId,
-          functionName: path.basename(path.dirname(args.path)),
+          functionName: extractFunctionNameFromPath(args.path),
           appPath: ctx.appPath,
           organizationSlug: ctx.supabaseOrganizationSlug ?? null,
         });

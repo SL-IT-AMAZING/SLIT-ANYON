@@ -1,44 +1,44 @@
+import fs from "node:fs";
+import path from "node:path";
+import { and, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { chats, messages } from "../../db/schema";
-import { and, eq } from "drizzle-orm";
-import fs from "node:fs";
 import { getAnyonAppPath } from "../../paths/paths";
-import path from "node:path";
 import { safeJoin } from "../utils/path_utils";
 
+import { readSettings } from "@/main/settings";
 import log from "electron-log";
-import { executeAddDependency } from "./executeAddDependency";
+import type { UserSettings } from "../../lib/schemas";
+import { applySearchReplace } from "../../pro/main/ipc/processors/search_replace_processor";
 import {
   deleteSupabaseFunction,
   deploySupabaseFunction,
   executeSupabaseSql,
 } from "../../supabase_admin/supabase_management_client";
 import {
-  isServerFunction,
-  isSharedServerModule,
   deployAllSupabaseFunctions,
   extractFunctionNameFromPath,
+  isServerFunction,
+  isSharedServerModule,
 } from "../../supabase_admin/supabase_utils";
-import { UserSettings } from "../../lib/schemas";
 import {
-  gitCommit,
-  gitAdd,
-  gitRemove,
-  gitAddAll,
-  getGitUncommittedFiles,
-} from "../utils/git_utils";
-import { readSettings } from "@/main/settings";
+  getAnyonAddDependencyTags,
+  getAnyonDeleteTags,
+  getAnyonExecuteSqlTags,
+  getAnyonRenameTags,
+  getAnyonSearchReplaceTags,
+  getAnyonWriteTags,
+} from "../utils/anyon_tag_parser";
 import { writeMigrationFile } from "../utils/file_utils";
 import {
-  getAnyonWriteTags,
-  getAnyonRenameTags,
-  getAnyonDeleteTags,
-  getAnyonAddDependencyTags,
-  getAnyonExecuteSqlTags,
-  getAnyonSearchReplaceTags,
-} from "../utils/anyon_tag_parser";
-import { applySearchReplace } from "../../pro/main/ipc/processors/search_replace_processor";
+  getGitUncommittedFiles,
+  gitAdd,
+  gitAddAll,
+  gitCommit,
+  gitRemove,
+} from "../utils/git_utils";
 import { storeDbTimestampAtCurrentVersion } from "../utils/neon_timestamp_utils";
+import { executeAddDependency } from "./executeAddDependency";
 
 import { FileUploadsState } from "../utils/file_uploads_state";
 
@@ -48,6 +48,33 @@ const logger = log.scope("response_processor");
 interface Output {
   message: string;
   error: unknown;
+}
+
+function normalizePath(input: string): string {
+  return input.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
+function isFunctionDirectoryPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+$/.test(normalizePath(input));
+}
+
+function isFunctionEntrypointPath(input: string): boolean {
+  return /^supabase\/functions\/[^/]+\/index\.ts$/.test(normalizePath(input));
+}
+
+function shouldDeleteFunctionForPath(input: string): boolean {
+  return isFunctionDirectoryPath(input) || isFunctionEntrypointPath(input);
+}
+
+function hasFunctionEntrypoint(appPath: string, functionName: string): boolean {
+  const entrypointPath = path.join(
+    appPath,
+    "supabase",
+    "functions",
+    functionName,
+    "index.ts",
+  );
+  return fs.existsSync(entrypointPath);
 }
 
 export async function dryRunSearchReplace({
@@ -280,17 +307,30 @@ export async function processFullResponseActions(
       } else {
         logger.warn(`File to delete does not exist: ${fullFilePath}`);
       }
-      // Only delete individual functions, not shared modules
       if (isServerFunction(filePath)) {
+        const functionName = extractFunctionNameFromPath(filePath);
         try {
-          await deleteSupabaseFunction({
-            supabaseProjectId: chatWithApp.app.supabaseProjectId!,
-            functionName: extractFunctionNameFromPath(filePath),
-            organizationSlug: chatWithApp.app.supabaseOrganizationSlug ?? null,
-          });
+          if (shouldDeleteFunctionForPath(filePath)) {
+            await deleteSupabaseFunction({
+              supabaseProjectId: chatWithApp.app.supabaseProjectId!,
+              functionName,
+              organizationSlug:
+                chatWithApp.app.supabaseOrganizationSlug ?? null,
+            });
+          } else if (!sharedModulesChanged) {
+            await deploySupabaseFunction({
+              supabaseProjectId: chatWithApp.app.supabaseProjectId!,
+              functionName,
+              appPath,
+              organizationSlug:
+                chatWithApp.app.supabaseOrganizationSlug ?? null,
+            });
+          }
         } catch (error) {
           errors.push({
-            message: `Failed to delete Supabase function: ${filePath}`,
+            message: shouldDeleteFunctionForPath(filePath)
+              ? `Failed to delete Supabase function: ${filePath}`
+              : `Failed to redeploy Supabase function after delete: ${filePath}`,
             error: error,
           });
         }
@@ -328,30 +368,62 @@ export async function processFullResponseActions(
       } else {
         logger.warn(`Source file for rename does not exist: ${fromPath}`);
       }
-      // Only handle individual functions, not shared modules
-      if (isServerFunction(tag.from)) {
+      const fromIsServerFunction = isServerFunction(tag.from);
+      const toIsServerFunction = isServerFunction(tag.to);
+      const fromFunctionName = fromIsServerFunction
+        ? extractFunctionNameFromPath(tag.from)
+        : undefined;
+      const toFunctionName = toIsServerFunction
+        ? extractFunctionNameFromPath(tag.to)
+        : undefined;
+
+      const shouldDeleteFromFunction =
+        fromIsServerFunction && shouldDeleteFunctionForPath(tag.from);
+
+      if (fromIsServerFunction) {
         try {
-          await deleteSupabaseFunction({
-            supabaseProjectId: chatWithApp.app.supabaseProjectId!,
-            functionName: extractFunctionNameFromPath(tag.from),
-            organizationSlug: chatWithApp.app.supabaseOrganizationSlug ?? null,
-          });
+          if (shouldDeleteFromFunction) {
+            await deleteSupabaseFunction({
+              supabaseProjectId: chatWithApp.app.supabaseProjectId!,
+              functionName: fromFunctionName!,
+              organizationSlug:
+                chatWithApp.app.supabaseOrganizationSlug ?? null,
+            });
+          } else if (
+            !sharedModulesChanged &&
+            (!toIsServerFunction || fromFunctionName !== toFunctionName)
+          ) {
+            await deploySupabaseFunction({
+              supabaseProjectId: chatWithApp.app.supabaseProjectId!,
+              functionName: fromFunctionName!,
+              appPath,
+              organizationSlug:
+                chatWithApp.app.supabaseOrganizationSlug ?? null,
+            });
+          }
         } catch (error) {
           warnings.push({
-            message: `Failed to delete Supabase function: ${tag.from} as part of renaming ${tag.from} to ${tag.to}`,
+            message: shouldDeleteFromFunction
+              ? `Failed to delete Supabase function: ${tag.from} as part of renaming ${tag.from} to ${tag.to}`
+              : `Failed to redeploy Supabase function: ${tag.from} after renaming ${tag.from} to ${tag.to}`,
             error: error,
           });
         }
       }
-      // Deploy renamed function (skip if shared modules changed - will be handled later)
-      if (isServerFunction(tag.to) && !sharedModulesChanged) {
+      if (toIsServerFunction && !sharedModulesChanged) {
         try {
-          await deploySupabaseFunction({
-            supabaseProjectId: chatWithApp.app.supabaseProjectId!,
-            functionName: extractFunctionNameFromPath(tag.to),
-            appPath,
-            organizationSlug: chatWithApp.app.supabaseOrganizationSlug ?? null,
-          });
+          if (
+            toFunctionName &&
+            hasFunctionEntrypoint(appPath, toFunctionName)
+          ) {
+            await deploySupabaseFunction({
+              supabaseProjectId: chatWithApp.app.supabaseProjectId!,
+              functionName: toFunctionName,
+              appPath,
+              organizationSlug:
+                chatWithApp.app.supabaseOrganizationSlug ?? null,
+            });
+          }
         } catch (error) {
           errors.push({
             message: `Failed to deploy Supabase function: ${tag.to} as part of renaming ${tag.from} to ${tag.to}`,
@@ -544,7 +616,7 @@ export async function processFullResponseActions(
       if (anyonExecuteSqlQueries.length > 0)
         changes.push(`executed ${anyonExecuteSqlQueries.length} SQL queries`);
 
-      let message = chatSummary
+      const message = chatSummary
         ? `[anyon] ${chatSummary} - ${changes.join(", ")}`
         : `[anyon] ${changes.join(", ")}`;
       // Use chat summary, if provided, or default for commit message

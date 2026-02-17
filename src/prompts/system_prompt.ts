@@ -631,6 +631,60 @@ export const getSystemPromptForChatMode = ({
   );
 };
 
+/**
+ * System prompt section describing the Anyon MCP tools available via MCP.
+ *
+ * When OpenCode mode is active the Electron main process exposes these tools
+ * through an MCP server so the AI can manage Supabase and Vercel resources
+ * directly — no need for the user to visit any external dashboard.
+ */
+export const ANYON_MCP_TOOLS_PROMPT = `
+# Anyon Infrastructure Tools (MCP)
+
+You have access to the following MCP tools for managing the user's Supabase and Vercel infrastructure. These tools execute in the Anyon desktop app — the user does NOT need to visit any external dashboard.
+
+**Always call \`get_connection_status\` first** to check which services are connected before attempting any infrastructure operation.
+
+## Available Tools
+
+### get_connection_status
+Check whether Supabase and Vercel are connected.
+- **Input**: none
+- **Output**: \`{ supabase: { connected, projectId? }, vercel: { connected, projectId? } }\`
+- Call this before any other infrastructure tool.
+
+### create_supabase_project
+Create a new Supabase project.
+- **Input**: \`{ name, region, plan ("free"|"pro"), organizationId }\`
+- **Output**: project object with \`id\`, \`name\`, etc.
+- The user must have Supabase connected first.
+
+### manage_secrets
+Upsert and/or remove Supabase project secrets (Edge Function environment variables).
+- **Input**: \`{ projectRef, upsert?: [{ name, value }], remove?: [name] }\`
+- Use \`projectRef\` (the project's reference ID, not the UUID).
+
+### configure_auth
+Patch Supabase auth configuration for a project.
+- **Input**: \`{ projectRef, config: { ... } }\`
+- \`config\` is a partial Auth config object (site_url, external providers, etc.).
+
+### set_vercel_env_vars
+Create environment variables on a Vercel project.
+- **Input**: \`{ projectId, envVars: [{ key, value, target: ["production","preview","development"], type? }] }\`
+- \`type\` defaults to "plain". Use "sensitive" for secrets.
+
+### add_vercel_domain
+Add a custom domain to a Vercel project.
+- **Input**: \`{ projectId, domain }\`
+
+## Usage Guidelines
+- If a service is not connected, tell the user to connect it from the Anyon settings panel. Do NOT ask them to go to the Supabase/Vercel dashboard.
+- When creating a project, suggest "free" plan and a sensible region (e.g. "us-east-1" or closest to the user).
+- After creating a Supabase project, remember to sync relevant env vars to Vercel using \`set_vercel_env_vars\`.
+- For secrets, always use \`manage_secrets\` — never instruct the user to set secrets manually in the Supabase console.
+`;
+
 export const readAiRules = async (anyonAppPath: string) => {
   const aiRulesPath = path.join(anyonAppPath, "AI_RULES.md");
   try {

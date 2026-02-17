@@ -1,28 +1,32 @@
-import { IpcMainInvokeEvent } from "electron";
-import { Vercel } from "@vercel/sdk";
-import { writeSettings, readSettings } from "../../main/settings";
-import * as schema from "../../db/schema";
-import { db } from "../../db";
-import { apps } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import log from "electron-log";
-import { IS_TEST_BUILD } from "../utils/test_utils";
 import * as fs from "fs";
 import * as path from "path";
-import { CreateProjectFramework } from "@vercel/sdk/models/createprojectop.js";
+import { retryWithRateLimit } from "@/ipc/utils/retryWithRateLimit";
 import { getAnyonAppPath } from "@/paths/paths";
-import { createTypedHandler } from "./base";
+import { getSupabaseClient } from "@/supabase_admin/supabase_management_client";
+import { Vercel } from "@vercel/sdk";
+import type { CreateProjectFramework } from "@vercel/sdk/models/createprojectop.js";
+import { eq } from "drizzle-orm";
+import type { IpcMainInvokeEvent } from "electron";
+import log from "electron-log";
+import { db } from "../../db";
+import * as schema from "../../db/schema";
+import { apps } from "../../db/schema";
+import { writeSettings } from "../../main/settings";
+import { getVercelAccessToken } from "../../vercel_admin/vercel_management_client";
 import {
+  type ConnectToExistingVercelProjectParams,
+  type CreateVercelProjectParams,
+  type DisconnectVercelProjectParams,
+  type GetVercelDeploymentsParams,
+  type IsVercelProjectAvailableParams,
+  type SaveVercelAccessTokenParams,
+  type SyncSupabaseEnvParams,
+  type VercelDeployment,
+  type VercelProject,
   vercelContracts,
-  SaveVercelAccessTokenParams,
-  IsVercelProjectAvailableParams,
-  CreateVercelProjectParams,
-  ConnectToExistingVercelProjectParams,
-  GetVercelDeploymentsParams,
-  DisconnectVercelProjectParams,
-  VercelProject,
-  VercelDeployment,
 } from "../types/vercel";
+import { IS_TEST_BUILD } from "../utils/test_utils";
+import { createTypedHandler } from "./base";
 
 const logger = log.scope("vercel_handlers");
 
@@ -32,6 +36,14 @@ const TEST_SERVER_BASE = "http://localhost:3500";
 const VERCEL_API_BASE = IS_TEST_BUILD
   ? `${TEST_SERVER_BASE}/vercel/api`
   : "https://api.vercel.com";
+const VERCEL_ENV_TARGETS = ["production", "preview", "development"] as const;
+
+const SUPABASE_VERCEL_ENV_KEYS = {
+  publicUrl: "NEXT_PUBLIC_SUPABASE_URL",
+  publicAnonKey: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  serverUrl: "SUPABASE_URL",
+  serverAnonKey: "SUPABASE_ANON_KEY",
+} as const;
 
 // --- Helper Functions ---
 
@@ -189,6 +201,133 @@ async function detectFramework(
   }
 }
 
+async function getSupabasePublishableKey({
+  projectId,
+  organizationSlug,
+}: {
+  projectId: string;
+  organizationSlug: string | null;
+}): Promise<string> {
+  if (IS_TEST_BUILD) {
+    return "test-publishable-key";
+  }
+
+  const supabase = await getSupabaseClient({ organizationSlug });
+  const keys = await retryWithRateLimit(
+    () => supabase.getProjectApiKeys(projectId),
+    `Get API keys for ${projectId}`,
+  );
+
+  if (!keys) {
+    throw new Error(`No API keys found for Supabase project ${projectId}.`);
+  }
+
+  const publishableKey = keys.find(
+    (key) =>
+      (key as { name?: string; type?: string }).name === "anon" ||
+      (key as { name?: string; type?: string }).type === "publishable",
+  );
+
+  if (!publishableKey?.api_key) {
+    throw new Error(
+      `No publishable API key found for Supabase project ${projectId}.`,
+    );
+  }
+
+  return publishableKey.api_key;
+}
+
+export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
+  const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
+
+  if (!app) {
+    throw new Error(`App ${appId} not found.`);
+  }
+
+  if (!app.supabaseProjectId || !app.vercelProjectId) {
+    throw new Error(
+      `App ${appId} must be linked to both Supabase and Vercel before syncing env vars.`,
+    );
+  }
+
+  const vercelProjectId = app.vercelProjectId;
+
+  const supabaseUrl = `https://${app.supabaseProjectId}.supabase.co`;
+  const supabaseAnonKey = await getSupabasePublishableKey({
+    projectId: app.supabaseProjectId,
+    organizationSlug: app.supabaseOrganizationSlug,
+  });
+
+  const accessToken = await getVercelAccessToken();
+  const vercel = createVercelClient(accessToken);
+
+  await retryWithRateLimit(
+    () =>
+      vercel.projects.createProjectEnv({
+        idOrName: vercelProjectId,
+        teamId: app.vercelTeamId ?? undefined,
+        upsert: "true",
+        requestBody: [
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.publicUrl,
+            value: supabaseUrl,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.publicAnonKey,
+            value: supabaseAnonKey,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.serverUrl,
+            value: supabaseUrl,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.serverAnonKey,
+            value: supabaseAnonKey,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+        ],
+      }),
+    `Sync Supabase env vars to Vercel project ${vercelProjectId}`,
+  );
+
+  logger.info(
+    `Synced Supabase env vars to Vercel project ${vercelProjectId} for app ${appId}`,
+  );
+}
+
+export async function autoSyncSupabaseEnvVarsIfConnected(
+  appId: number,
+): Promise<void> {
+  const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
+
+  if (!app?.supabaseProjectId || !app.vercelProjectId) {
+    return;
+  }
+
+  try {
+    await syncSupabaseEnvVarsForApp(appId);
+  } catch (error) {
+    logger.warn(
+      `Automatic Supabase->Vercel env sync failed for app ${appId}:`,
+      error,
+    );
+  }
+}
+
+async function handleSyncSupabaseEnvVars(
+  _event: IpcMainInvokeEvent,
+  { appId }: SyncSupabaseEnvParams,
+): Promise<void> {
+  await syncSupabaseEnvVarsForApp(appId);
+}
+
 // --- IPC Handlers ---
 
 async function handleSaveVercelToken(
@@ -226,12 +365,7 @@ async function handleSaveVercelToken(
 // --- Vercel List Projects Handler ---
 async function handleListVercelProjects(): Promise<VercelProject[]> {
   try {
-    const settings = readSettings();
-    const accessToken = settings.vercelAccessToken?.value;
-    if (!accessToken) {
-      throw new Error("Not authenticated with Vercel.");
-    }
-
+    const accessToken = await getVercelAccessToken();
     const response = await getVercelProjects(accessToken);
 
     if (!response.projects) {
@@ -255,11 +389,7 @@ async function handleIsProjectAvailable(
   { name }: IsVercelProjectAvailableParams,
 ): Promise<{ available: boolean; error?: string }> {
   try {
-    const settings = readSettings();
-    const accessToken = settings.vercelAccessToken?.value;
-    if (!accessToken) {
-      return { available: false, error: "Not authenticated with Vercel." };
-    }
+    const accessToken = await getVercelAccessToken();
 
     // Check if project name is available by searching for projects with that name
     const response = await getVercelProjects(accessToken, { search: name });
@@ -289,13 +419,8 @@ async function handleCreateProject(
   event: IpcMainInvokeEvent,
   { name, appId }: CreateVercelProjectParams,
 ): Promise<void> {
-  const settings = readSettings();
-  const accessToken = settings.vercelAccessToken?.value;
-  if (!accessToken) {
-    throw new Error("Not authenticated with Vercel.");
-  }
-
   try {
+    const accessToken = await getVercelAccessToken();
     logger.info(`Creating Vercel project: ${name} for app ${appId}`);
 
     // Get app details to determine the framework
@@ -340,7 +465,9 @@ async function handleCreateProject(
     const projectDomains = await vercel.projects.getProjectDomains({
       idOrName: projectData.id,
     });
-    const projectUrl = "https://" + projectDomains.domains[0].name;
+    const projectUrl = projectDomains.domains?.[0]?.name
+      ? `https://${projectDomains.domains[0].name}`
+      : null;
 
     // Store project info in the app's DB row
     await updateAppVercelProject({
@@ -350,6 +477,8 @@ async function handleCreateProject(
       teamId: teamId,
       deploymentUrl: projectUrl,
     });
+
+    await autoSyncSupabaseEnvVarsIfConnected(appId);
 
     logger.info(
       `Successfully created Vercel project: ${projectData.id} with GitHub repo: ${app.githubOrg}/${app.githubRepo}`,
@@ -394,11 +523,7 @@ async function handleConnectToExistingProject(
   { projectId, appId }: ConnectToExistingVercelProjectParams,
 ): Promise<void> {
   try {
-    const settings = readSettings();
-    const accessToken = settings.vercelAccessToken?.value;
-    if (!accessToken) {
-      throw new Error("Not authenticated with Vercel.");
-    }
+    const accessToken = await getVercelAccessToken();
 
     logger.info(
       `Connecting to existing Vercel project: ${projectId} for app ${appId}`,
@@ -428,6 +553,8 @@ async function handleConnectToExistingProject(
         : null,
     });
 
+    await autoSyncSupabaseEnvVarsIfConnected(appId);
+
     logger.info(`Successfully connected to Vercel project: ${projectData.id}`);
   } catch (err: any) {
     logger.error(
@@ -444,11 +571,7 @@ async function handleGetVercelDeployments(
   { appId }: GetVercelDeploymentsParams,
 ): Promise<VercelDeployment[]> {
   try {
-    const settings = readSettings();
-    const accessToken = settings.vercelAccessToken?.value;
-    if (!accessToken) {
-      throw new Error("Not authenticated with Vercel.");
-    }
+    const accessToken = await getVercelAccessToken();
 
     const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
     if (!app || !app.vercelProjectId) {
@@ -566,6 +689,10 @@ export function registerVercelHandlers() {
 
   createTypedHandler(vercelContracts.disconnect, async (event, params) => {
     await handleDisconnectVercelProject(event, params);
+  });
+
+  createTypedHandler(vercelContracts.syncSupabaseEnv, async (event, params) => {
+    await handleSyncSupabaseEnvVars(event, params);
   });
 
   logger.debug("Registered Vercel IPC handlers");

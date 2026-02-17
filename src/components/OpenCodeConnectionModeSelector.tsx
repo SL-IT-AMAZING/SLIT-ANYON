@@ -54,7 +54,7 @@ export function OpenCodeConnectionModeSelector() {
             apiKey: { value: trimmed },
           },
         },
-        enableDyadPro: true,
+        enableAnyonPro: true,
       };
       await updateSettings(settingsUpdate);
       setApiKeyInput("");
@@ -79,7 +79,7 @@ export function OpenCodeConnectionModeSelector() {
             apiKey: undefined,
           },
         },
-        enableDyadPro: false,
+        enableAnyonPro: false,
       });
       showSuccess("API key removed");
     } catch (error: unknown) {
