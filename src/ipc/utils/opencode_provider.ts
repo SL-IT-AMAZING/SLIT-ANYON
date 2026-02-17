@@ -382,23 +382,43 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                 }
 
                 if (
+                  event.type === "message.part.delta" &&
+                  event.properties.delta != null
+                ) {
+                  const props = event.properties as {
+                    sessionID?: string;
+                    partID?: string;
+                    field?: string;
+                    delta?: string;
+                  };
+                  if (props.sessionID !== session.id) continue;
+
+                  const delta = props.delta ?? "";
+                  if (!delta) continue;
+
+                  if (props.field === "text") {
+                    closeReasoningBlock(controller);
+                    emitDelta(controller, delta);
+                  } else if (props.field === "reasoning") {
+                    if (!inReasoningBlock) {
+                      emitDelta(controller, "\n<think>\n");
+                      inReasoningBlock = true;
+                    }
+                    emitDelta(controller, delta);
+                  }
+                } else if (
                   event.type === "message.part.updated" &&
                   event.properties.part
                 ) {
                   const part = event.properties.part;
-                  const delta = event.properties.delta;
 
                   if (part.sessionID !== session.id) continue;
 
                   logger.debug(
-                    `Part updated: type=${part.type}, hasDelta=${!!delta}, hasText=${!!part.text}`,
+                    `Part updated: type=${part.type}, hasText=${!!part.text}`,
                   );
 
-                  if (part.type === "text") {
-                    if (!delta) continue;
-                    closeReasoningBlock(controller);
-                    emitDelta(controller, delta);
-                  } else if (part.type === "tool" && part.state && part.tool) {
+                  if (part.type === "tool" && part.state && part.tool) {
                     closeReasoningBlock(controller);
                     const status = part.state.status;
                     const lastStatus = emittedToolStates.get(part.id);
@@ -428,12 +448,6 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                         );
                       }
                     }
-                  } else if (part.type === "reasoning" && delta) {
-                    if (!inReasoningBlock) {
-                      emitDelta(controller, "\n<think>\n");
-                      inReasoningBlock = true;
-                    }
-                    emitDelta(controller, delta);
                   } else if (
                     part.type === "step-start" ||
                     part.type === "step-finish"
@@ -516,7 +530,25 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
               throw err;
             });
 
-          await Promise.all([sendPromise, processEventsPromise]);
+          const STREAM_TIMEOUT_MS = 5 * 60 * 1000;
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            const timer = setTimeout(() => {
+              abortController.abort();
+              reject(
+                new Error(
+                  `OpenCode stream timed out after ${STREAM_TIMEOUT_MS / 1000}s`,
+                ),
+              );
+            }, STREAM_TIMEOUT_MS);
+            abortController.signal.addEventListener("abort", () =>
+              clearTimeout(timer),
+            );
+          });
+
+          await Promise.race([
+            Promise.all([sendPromise, processEventsPromise]),
+            timeoutPromise,
+          ]);
         } catch (err) {
           if (
             err instanceof Error &&
