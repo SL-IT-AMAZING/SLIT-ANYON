@@ -1,0 +1,109 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                   CHAT UI COMPONENTS & INFRASTRUCTURE SUMMARY                  ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+📦 SHADCN/UI COMPONENTS AVAILABLE (32 total)
+├─ Layout:      card, dialog, alert-dialog, sheet, sidebar
+├─ Forms:       input, textarea, label, checkbox, radio-group, switch, select, 
+│               toggle, toggle-group
+├─ Display:     badge, alert, skeleton, separator, scroll-area
+├─ Menus:       dropdown-menu, popover, tooltip, accordion, command
+└─ Custom:      button, LoadingBar, ColorPicker, NumberInput, SimpleAvatar
+
+🎨 CSS VARIABLES & THEME TOKENS
+├─ Color Space: OKLch (modern perceptual color space)
+├─ Light Mode:
+│   ├─ Primary:  oklch(0.205 0 0) = Dark gray for buttons
+│   ├─ Card:     oklch(1 0 0) = Pure white for containers
+│   └─ Text:     oklch(0.145 0 0) = Dark text
+├─ Dark Mode:
+│   ├─ Primary:  oklch(0.985 0 0) = Light for buttons
+│   ├─ Card:     oklch(0.145 0 0) = Dark gray containers
+│   └─ Text:     oklch(0.985 0 0) = Light text
+├─ Semantic: primary, secondary, accent, muted, destructive, border, ring
+├─ Charts: chart-1 through chart-5 (5 distinct visualization colors)
+└─ Radius: --radius base with -sm, -md, -lg, -xl variants
+
+🎬 ANIMATION INFRASTRUCTURE
+├─ Tailwind Animations (via tw-animate-css plugin):
+│   ├─ State-based: animate-in, animate-out
+│   ├─ Opacity: fade-in-0, fade-out-0
+│   ├─ Scale: zoom-in-95, zoom-out-95
+│   └─ Direction: slide-in-from-top-2, left-2, right-2, bottom-2
+├─ Custom Keyframes:
+│   ├─ marquee (2s linear infinite) - for LoadingBar
+│   ├─ shimmer - for Skeleton loading states
+│   └─ settings-highlight - 1.5s ease-out fade
+└─ Framer Motion: ^12.6.3 (for complex choreography)
+
+📝 TYPOGRAPHY
+├─ Fonts:
+│   ├─ Display: "Space Grotesk" (font-weight: 700)
+│   ├─ Body: "Geist" (400, 500, 700 weights)
+│   └─ Mono: "Geist Mono" (400, 500, 700 weights)
+├─ Prose Plugin: @tailwindcss/typography v0.5.16 (ACTIVE)
+├─ Prose Classes: prose, dark:prose-invert, prose-headings:*, prose-p:*, prose-pre:*
+└─ Chat Ready: prose + prose-headings:mb-2 + prose-p:my-1 + max-w-none + break-words
+
+🌙 DARK MODE
+├─ Theme Context: src/contexts/ThemeContext.tsx
+├─ Options: "system" (default) | "light" | "dark"
+├─ Persistence: localStorage (key: "theme")
+├─ Implementation: .dark or .light class on <html>
+├─ Detection: Watches prefers-color-scheme media query
+└─ Automatic: All CSS variables switch via .dark selector
+
+📍 KEY FILES
+├─ CSS Variables: src/styles/globals.css (lines 90-219)
+├─ Theme Logic: src/contexts/ThemeContext.tsx
+├─ UI Components: src/components/ui/ (32 files)
+├─ Chat Components: src/components/chat/ (existing base)
+├─ Tailwind Config: vite.renderer.config.mts (uses @tailwindcss/vite)
+└─ Reference Doc: UI_INFRASTRUCTURE.md (generated)
+
+💡 CHAT UI COMPOSITION PATTERNS
+
+Message Container:
+  <Card className="bg-card rounded-lg">
+    <CardContent className="prose dark:prose-invert max-w-none">
+      {/* Message content with markdown support */}
+    </CardContent>
+  </Card>
+
+Chat Input:
+  <div className="flex gap-2 items-end">
+    <Input placeholder="Type message..." />
+    <Button size="icon">Send</Button>
+  </div>
+
+Loading State:
+  <Skeleton className="h-12 w-full rounded-md" />
+
+Streaming Response:
+  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+    {/* Content with framer-motion entrance animation */}
+  </motion.div>
+
+🚀 READY-TO-USE PATTERNS
+✓ Error messages (destructive color with 10% opacity background)
+✓ Loading states (Skeleton with built-in shimmer)
+✓ Disabled states (opacity-50 + cursor-not-allowed)
+✓ Responsive layouts (grid with md: and lg: breakpoints)
+✓ Focus states (automatic focus-visible ring with --ring color)
+✓ Dark mode (automatic with --dark class, no refactoring needed)
+
+⚡ QUICK START FOR CHAT UI
+1. Import shadcn components: import { Button, Input, Card } from "@/components/ui"
+2. Use color classes: bg-primary, text-card-foreground, border-border
+3. Add prose for markdown: className="prose dark:prose-invert"
+4. Wrap in ThemeProvider (already done at app root)
+5. Optional framer-motion for advanced animations
+
+✅ VERIFIED WORKING
+✓ All 32 UI components imported and exportable
+✓ CSS variables use modern OKLch color space (perceptually uniform)
+✓ Light/dark mode toggling via CSS (no JavaScript color conversion)
+✓ Prose typography plugin active and configured
+✓ tw-animate-css providing Tailwind animation utilities
+✓ Framer Motion ^12.6.3 available for complex animations
+✓ Theme Context manages localStorage persistence + system detection
