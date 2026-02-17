@@ -1,10 +1,4 @@
-import { useCallback } from "react";
-import type {
-  ComponentSelection,
-  FileAttachment,
-  ChatAttachment,
-} from "@/ipc/types";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import {
   chatErrorByIdAtom,
   chatMessagesByIdAtom,
@@ -12,24 +6,30 @@ import {
   isStreamingByIdAtom,
   recentStreamChatIdsAtom,
 } from "@/atoms/chatAtoms";
-import { ipc } from "@/ipc/types";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
-import type { ChatResponseEnd, App } from "@/ipc/types";
-import type { ChatSummary } from "@/lib/schemas";
-import { useChats } from "./useChats";
-import { useLoadApp } from "./useLoadApp";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useVersions } from "./useVersions";
-import { showExtraFilesToast } from "@/lib/toast";
-import { useSearch } from "@tanstack/react-router";
-import { useRunApp } from "./useRunApp";
-import { useCountTokens } from "./useCountTokens";
-import { useUserBudgetInfo } from "./useUserBudgetInfo";
-import { usePostHog } from "posthog-js/react";
-import { useCheckProblems } from "./useCheckProblems";
-import { useSettings } from "./useSettings";
-import { useQueryClient } from "@tanstack/react-query";
+import type {
+  ChatAttachment,
+  ComponentSelection,
+  FileAttachment,
+} from "@/ipc/types";
+import { ipc } from "@/ipc/types";
+import type { App, ChatResponseEnd } from "@/ipc/types";
 import { queryKeys } from "@/lib/queryKeys";
+import type { ChatSummary } from "@/lib/schemas";
+import { showExtraFilesToast } from "@/lib/toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { usePostHog } from "posthog-js/react";
+import { useCallback } from "react";
+import { useChats } from "./useChats";
+import { useCheckProblems } from "./useCheckProblems";
+import { useCountTokens } from "./useCountTokens";
+import { useLoadApp } from "./useLoadApp";
+import { useRunApp } from "./useRunApp";
+import { useSettings } from "./useSettings";
+import { useUserBudgetInfo } from "./useUserBudgetInfo";
+import { useVersions } from "./useVersions";
 
 export function getRandomNumberId() {
   return Math.floor(Math.random() * 1_000_000_000_000_000);
@@ -64,8 +64,14 @@ export function useStreamChat({
   let chatId: number | undefined;
 
   if (hasChatId) {
-    const { id } = useSearch({ from: "/chat" });
-    chatId = id;
+    const search = useSearch({ strict: false });
+    const rawId = search.id;
+    if (typeof rawId === "number") {
+      chatId = rawId;
+    } else if (typeof rawId === "string") {
+      const parsedId = Number(rawId);
+      chatId = Number.isNaN(parsedId) ? undefined : parsedId;
+    }
   }
   const { invalidateTokenCount } = useCountTokens(chatId ?? null, "");
 

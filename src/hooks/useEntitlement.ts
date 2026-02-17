@@ -19,7 +19,7 @@ export function useEntitlement() {
   const { data: usageData, isLoading: isUsageLoading } = useQuery({
     queryKey: queryKeys.entitlement.usage,
     queryFn: () => ipc.entitlement.getUsage(),
-    enabled: !!entitlementData?.isActive,
+    enabled: !!entitlementData,
   });
 
   const syncMutation = useMutation({

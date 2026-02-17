@@ -80,7 +80,6 @@ import { AsyncVirtualFileSystem } from "../../../shared/VirtualFilesystem";
 import { escapeXmlAttr, escapeXmlContent } from "../../../shared/xmlEscape";
 import { prompts as promptsTable } from "../../db/schema";
 import { generateProblemReport } from "../processors/tsc";
-import { getLanguageModelProviders } from "../shared/language_model_helpers";
 import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
 import {
   getAnyonAddDependencyTags,
@@ -115,13 +114,6 @@ import { parsePlanFile, validatePlanId } from "./planUtils";
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
 const logger = log.scope("chat_stream_handlers");
-
-async function isFreeTierProvider(providerId: string): Promise<boolean> {
-  const providers = await getLanguageModelProviders();
-  return providers.some((provider) => {
-    return provider.id === providerId && provider.hasFreeTier === true;
-  });
-}
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
@@ -532,13 +524,11 @@ ${componentSnippet}
         );
       } else {
         // Normal AI processing for non-test prompts
-        if (!(await isFreeTierProvider(settings.selectedModel.provider))) {
-          const creditCheck = await checkCreditsForModel(
-            settings.selectedModel.name,
-          );
-          if (!creditCheck.allowed) {
-            throw new Error(creditCheck.reason ?? "Credits exhausted");
-          }
+        const creditCheck = await checkCreditsForModel(
+          settings.selectedModel.name,
+        );
+        if (!creditCheck.allowed) {
+          throw new Error(creditCheck.reason ?? "Credits exhausted");
         }
 
         const {
@@ -1698,15 +1688,11 @@ ${problemReport.problems
                     chatContext,
                     virtualFileSystem,
                   });
-                if (
-                  !(await isFreeTierProvider(settings.selectedModel.provider))
-                ) {
-                  const creditCheck = await checkCreditsForModel(
-                    settings.selectedModel.name,
-                  );
-                  if (!creditCheck.allowed) {
-                    throw new Error(creditCheck.reason ?? "Credits exhausted");
-                  }
+                const creditCheck = await checkCreditsForModel(
+                  settings.selectedModel.name,
+                );
+                if (!creditCheck.allowed) {
+                  throw new Error(creditCheck.reason ?? "Credits exhausted");
                 }
 
                 const { modelClient } = await getModelClient(

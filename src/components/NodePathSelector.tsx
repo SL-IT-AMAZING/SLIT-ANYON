@@ -5,8 +5,10 @@ import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
 import { AlertCircle, CheckCircle, FolderOpen, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function NodePathSelector() {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
   const [isSelectingPath, setIsSelectingPath] = useState(false);
   const [nodeStatus, setNodeStatus] = useState<{
@@ -17,7 +19,9 @@ export function NodePathSelector() {
     isValid: false,
   });
   const [isCheckingNode, setIsCheckingNode] = useState(false);
-  const [systemPath, setSystemPath] = useState<string>("Loading...");
+  const [systemPath, setSystemPath] = useState<string>(
+    t("general.nodePath.loading"),
+  );
 
   // Check Node.js status when component mounts or path changes
   useEffect(() => {
@@ -27,10 +31,12 @@ export function NodePathSelector() {
   const fetchSystemPath = async () => {
     try {
       const debugInfo = await ipc.system.getSystemDebugInfo();
-      setSystemPath(debugInfo.nodePath || "System PATH (not available)");
+      setSystemPath(
+        debugInfo.nodePath || t("general.nodePath.systemPathUnavailable"),
+      );
     } catch (err) {
       console.error("Failed to fetch system path:", err);
-      setSystemPath("System PATH (not available)");
+      setSystemPath(t("general.nodePath.systemPathUnavailable"));
     }
   };
 
@@ -67,14 +73,17 @@ export function NodePathSelector() {
         await ipc.system.reloadEnvPath();
         // Recheck Node.js status
         await checkNodeStatus();
-        showSuccess("Node.js path updated successfully");
+        showSuccess(t("general.nodePath.updateSuccess"));
       } else if (result.path === null && result.canceled === false) {
         showError(
-          `Could not find Node.js at the path "${result.selectedPath}"`,
+          t("general.nodePath.notFoundAtPath", {
+            path: result.selectedPath,
+          }),
         );
       }
-    } catch (error: any) {
-      showError(`Failed to set Node.js path: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("general.nodePath.updateFailed", { message }));
     } finally {
       setIsSelectingPath(false);
     }
@@ -88,9 +97,10 @@ export function NodePathSelector() {
       // Recheck Node.js status
       await fetchSystemPath();
       await checkNodeStatus();
-      showSuccess("Reset to system Node.js path");
-    } catch (error: any) {
-      showError(`Failed to reset Node.js path: ${error.message}`);
+      showSuccess(t("general.nodePath.resetSuccess"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("general.nodePath.resetFailed", { message }));
     }
   };
 
@@ -104,7 +114,7 @@ export function NodePathSelector() {
       <div className="space-y-2">
         <div className="flex gap-2">
           <Label className="text-sm font-medium">
-            Node.js Path Configuration
+            {t("general.nodePath.title")}
           </Label>
 
           <Button
@@ -115,7 +125,9 @@ export function NodePathSelector() {
             className="flex items-center gap-2"
           >
             <FolderOpen className="w-4 h-4" />
-            {isSelectingPath ? "Selecting..." : "Browse for Node.js"}
+            {isSelectingPath
+              ? t("general.nodePath.selecting")
+              : t("general.nodePath.browse")}
           </Button>
 
           {isCustomPath && (
@@ -126,7 +138,7 @@ export function NodePathSelector() {
               className="flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              Reset to Default
+              {t("general.nodePath.resetDefault")}
             </Button>
           )}
         </div>
@@ -135,11 +147,13 @@ export function NodePathSelector() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-medium text-muted-foreground">
-                  {isCustomPath ? "Custom Path:" : "System PATH:"}
+                  {isCustomPath
+                    ? t("general.nodePath.customPath")
+                    : t("general.nodePath.systemPath")}
                 </span>
                 {isCustomPath && (
                   <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
-                    Custom
+                    {t("general.nodePath.customBadge")}
                   </span>
                 )}
               </div>
@@ -160,7 +174,9 @@ export function NodePathSelector() {
               ) : (
                 <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
                   <AlertCircle className="w-4 h-4" />
-                  <span className="text-xs">Not found</span>
+                  <span className="text-xs">
+                    {t("general.nodePath.notFound")}
+                  </span>
                 </div>
               )}
             </div>
@@ -170,13 +186,10 @@ export function NodePathSelector() {
         {/* Help Text */}
         <div className="text-sm text-muted-foreground">
           {nodeStatus.isValid ? (
-            <p>Node.js is properly configured and ready to use.</p>
+            <p>{t("general.nodePath.configured")}</p>
           ) : (
             <>
-              <p>
-                Select the folder where Node.js is installed if it's not in your
-                system PATH.
-              </p>
+              <p>{t("general.nodePath.help")}</p>
             </>
           )}
         </div>

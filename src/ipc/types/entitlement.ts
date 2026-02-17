@@ -10,6 +10,9 @@ export const SubscriptionPlanSchema = z.enum([
 
 export type SubscriptionPlan = z.infer<typeof SubscriptionPlanSchema>;
 
+export const ModelTierSchema = z.enum(["light", "pro"]);
+export type ModelTierType = z.infer<typeof ModelTierSchema>;
+
 export const EntitlementStateSchema = z.object({
   plan: SubscriptionPlanSchema,
   isActive: z.boolean(),
@@ -35,6 +38,7 @@ export const CreditCheckResultSchema = z.object({
   creditsRemaining: z.number(),
   plan: SubscriptionPlanSchema,
   usagePercent: z.number(),
+  modelTier: ModelTierSchema,
 });
 
 export type CreditCheckResult = z.infer<typeof CreditCheckResultSchema>;

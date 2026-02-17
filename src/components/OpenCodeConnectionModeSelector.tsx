@@ -13,8 +13,10 @@ import type { OpenCodeConnectionMode, UserSettings } from "@/lib/schemas";
 import { showError, showSuccess } from "@/lib/toast";
 import { CheckCircle, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function OpenCodeConnectionModeSelector() {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -27,10 +29,9 @@ export function OpenCodeConnectionModeSelector() {
   const handleChange = async (value: OpenCodeConnectionMode) => {
     try {
       await updateSettings({ openCodeConnectionMode: value });
-    } catch (error: unknown) {
-      showError(
-        `Failed to update connection mode: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("ai.openCodeConnection.updateModeFailed", { message }));
     }
   };
 
@@ -58,11 +59,10 @@ export function OpenCodeConnectionModeSelector() {
       };
       await updateSettings(settingsUpdate);
       setApiKeyInput("");
-      showSuccess("ANYON Pro API key saved");
-    } catch (error: unknown) {
-      showError(
-        `Failed to save API key: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      showSuccess(t("ai.openCodeConnection.savedSuccess"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("ai.openCodeConnection.saveFailed", { message }));
     } finally {
       setIsSaving(false);
     }
@@ -81,11 +81,10 @@ export function OpenCodeConnectionModeSelector() {
         },
         enableAnyonPro: false,
       });
-      showSuccess("API key removed");
-    } catch (error: unknown) {
-      showError(
-        `Failed to remove API key: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      showSuccess(t("ai.openCodeConnection.deleteSuccess"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      showError(t("ai.openCodeConnection.deleteFailed", { message }));
     } finally {
       setIsSaving(false);
     }
@@ -101,7 +100,7 @@ export function OpenCodeConnectionModeSelector() {
       <div className="space-y-1">
         <div className="flex items-center space-x-2">
           <Label className="text-sm font-medium" htmlFor="opencode-connection">
-            OpenCode Connection
+            {t("ai.openCodeConnection.label")}
           </Label>
           <Select
             value={currentMode}
@@ -111,21 +110,27 @@ export function OpenCodeConnectionModeSelector() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="proxy">ANYON Pro (Proxy Server)</SelectItem>
-              <SelectItem value="direct">Direct (Your Subscription)</SelectItem>
+              <SelectItem value="proxy">
+                {t("ai.openCodeConnection.options.proxy")}
+              </SelectItem>
+              <SelectItem value="direct">
+                {t("ai.openCodeConnection.options.direct")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="text-sm text-muted-foreground">
           {currentMode === "proxy"
-            ? "Route AI requests through ANYON proxy server (requires ANYON Pro subscription)"
-            : "Use your own OpenCode/Claude subscription directly (for development)"}
+            ? t("ai.openCodeConnection.descriptions.proxy")
+            : t("ai.openCodeConnection.descriptions.direct")}
         </div>
       </div>
 
       {currentMode === "proxy" && (
         <div className="space-y-2 rounded-lg border p-3">
-          <Label className="text-sm font-medium">ANYON Pro API Key</Label>
+          <Label className="text-sm font-medium">
+            {t("ai.openCodeConnection.apiKeyLabel")}
+          </Label>
 
           {hasSavedKey ? (
             <div className="flex items-center gap-2">
@@ -161,7 +166,7 @@ export function OpenCodeConnectionModeSelector() {
             <div className="flex items-center gap-2">
               <Input
                 type="password"
-                placeholder="anyon_..."
+                placeholder={t("ai.openCodeConnection.apiKeyPlaceholder")}
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
@@ -172,7 +177,9 @@ export function OpenCodeConnectionModeSelector() {
                 disabled={isSaving || !apiKeyInput.trim()}
                 size="sm"
               >
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving
+                  ? t("ai.openCodeConnection.saving")
+                  : t("ai.openCodeConnection.save")}
               </Button>
             </div>
           )}
@@ -181,8 +188,7 @@ export function OpenCodeConnectionModeSelector() {
 
       {currentMode === "direct" && (
         <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
-          Direct mode uses your personal OpenCode configuration. Make sure you
-          have a valid Claude/OpenCode subscription.
+          {t("ai.openCodeConnection.directWarning")}
         </div>
       )}
     </div>

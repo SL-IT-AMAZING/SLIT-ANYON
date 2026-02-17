@@ -1,8 +1,10 @@
-import { useSettings } from "@/hooks/useSettings";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/hooks/useSettings";
+import { useTranslation } from "react-i18next";
 
 export function ChatCompletionNotificationSwitch() {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings } = useSettings();
   const isEnabled = settings?.enableChatCompletionNotifications === true;
 
@@ -29,7 +31,7 @@ export function ChatCompletionNotificationSwitch() {
         }}
       />
       <Label htmlFor="chat-completion-notifications">
-        Show notification when chat completes
+        {t("workflow.chatCompletionNotification")}
       </Label>
     </div>
   );

@@ -11,17 +11,25 @@ import { type Language, LanguageSchema } from "@/lib/schemas";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-const LANGUAGE_LABELS: Record<Language, string> = {
-  en: "English",
-  ko: "한국어",
+const LANGUAGE_LABELS: Record<
+  Language,
+  "general.languageOptions.en" | "general.languageOptions.ko"
+> = {
+  en: "general.languageOptions.en",
+  ko: "general.languageOptions.ko",
 };
 
-const LANGUAGE_DESCRIPTIONS: Record<Language, string> = {
-  en: "Use English for the interface.",
-  ko: "인터페이스에 한국어를 사용합니다.",
+const LANGUAGE_DESCRIPTIONS: Record<
+  Language,
+  | "general.languageOptionDescriptions.en"
+  | "general.languageOptionDescriptions.ko"
+> = {
+  en: "general.languageOptionDescriptions.en",
+  ko: "general.languageOptionDescriptions.ko",
 };
 
 const DEFAULT_LANGUAGE: Language = "en";
+const LANGUAGE_ORDER: Language[] = ["en", "ko"];
 
 export function LanguageSelector() {
   const { settings, updateSettings } = useSettings();
@@ -49,15 +57,15 @@ export function LanguageSelector() {
         }
       >
         <SelectTrigger id="language" className="w-[220px]">
-          <SelectValue placeholder="Select language" />
+          <SelectValue placeholder={t("general.languagePlaceholder")} />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
+          {LANGUAGE_ORDER.map((value) => (
             <SelectItem key={value} value={value}>
               <div className="flex flex-col text-left">
-                <span>{label}</span>
+                <span>{t(LANGUAGE_LABELS[value])}</span>
                 <span className="text-xs text-muted-foreground">
-                  {LANGUAGE_DESCRIPTIONS[value as Language]}
+                  {t(LANGUAGE_DESCRIPTIONS[value])}
                 </span>
               </div>
             </SelectItem>

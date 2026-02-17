@@ -1,25 +1,31 @@
-import React, { useState, useMemo } from "react";
+import { TemplateCard } from "@/components/TemplateCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Smartphone, Globe, Briefcase } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
 import { useTemplates } from "@/hooks/useTemplates";
-import { TemplateCard } from "@/components/TemplateCard";
-import type { TemplateCategory } from "@/shared/templates";
 import { cn } from "@/lib/utils";
+import type { TemplateCategory } from "@/shared/templates";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft, Briefcase, Globe, Search, Smartphone } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const CATEGORIES: {
   key: TemplateCategory;
-  label: string;
+  labelKey:
+    | "hub.categories.apps"
+    | "hub.categories.web"
+    | "hub.categories.saas";
   icon: React.FC<{ className?: string }>;
 }[] = [
-  { key: "apps", label: "Apps", icon: Smartphone },
-  { key: "web", label: "Web", icon: Globe },
-  { key: "saas", label: "SaaS", icon: Briefcase },
+  { key: "apps", labelKey: "hub.categories.apps", icon: Smartphone },
+  { key: "web", labelKey: "hub.categories.web", icon: Globe },
+  { key: "saas", labelKey: "hub.categories.saas", icon: Briefcase },
 ];
 
 const HubPage: React.FC = () => {
   const router = useRouter();
+  const { t } = useTranslation(["app", "common"]);
   const { templates, isLoading } = useTemplates();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] =
@@ -62,16 +68,16 @@ const HubPage: React.FC = () => {
           className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
         >
           <ArrowLeft className="h-4 w-4" />
-          Go Back
+          {t("buttons.back", { ns: "common" })}
         </Button>
 
         <header className="mb-8 text-left">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Marketplace
+            {t("hub.title")}
           </h1>
           <p className="text-md text-muted-foreground">
-            Browse ready-to-use templates for your next project.
-            {isLoading && " Loading additional templates..."}
+            {t("hub.description")}
+            {isLoading && ` ${t("hub.loadingMore")}`}
           </p>
         </header>
 
@@ -98,10 +104,10 @@ const HubPage: React.FC = () => {
                   )}
                 />
                 <span className="font-semibold text-foreground">
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
-                  {categoryCounts[cat.key]} templates
+                  {t("hub.templateCount", { count: categoryCounts[cat.key] })}
                 </span>
               </div>
             );
@@ -112,7 +118,7 @@ const HubPage: React.FC = () => {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search templates..."
+            placeholder={t("hub.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 w-full"
@@ -128,7 +134,7 @@ const HubPage: React.FC = () => {
           </div>
         ) : (
           <div className="text-muted-foreground text-center py-12">
-            {isLoading ? "Loading templates..." : "No templates found."}
+            {isLoading ? t("hub.loadingTemplates") : t("hub.noTemplates")}
           </div>
         )}
       </div>

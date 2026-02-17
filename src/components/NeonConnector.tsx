@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/types";
-import { toast } from "sonner";
 import { useSettings } from "@/hooks/useSettings";
+import { ipc } from "@/ipc/types";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { ExternalLink, Key } from "lucide-react";
 import { NeonDisconnectButton } from "@/components/NeonDisconnectButton";
 import { Input } from "@/components/ui/input";
+import { useDeepLink } from "@/contexts/DeepLinkContext";
+import { ExternalLink, Key } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function NeonConnector() {
+  const { t } = useTranslation("app");
   const { settings, refreshSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
 
@@ -17,7 +19,7 @@ export function NeonConnector() {
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "neon-oauth-return") {
         await refreshSettings();
-        toast.success("Successfully connected to Neon!");
+        toast.success(t("connect.neon.connected"));
         clearLastDeepLink();
       }
     };
@@ -29,7 +31,9 @@ export function NeonConnector() {
       <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
         <div className="flex flex-col items-start justify-between">
           <div className="flex items-center justify-between w-full">
-            <h2 className="text-lg font-medium pb-1">Neon Database</h2>
+            <h2 className="text-lg font-medium pb-1">
+              {t("connect.neon.title")}
+            </h2>
             <Button
               variant="outline"
               onClick={() => {
@@ -42,7 +46,7 @@ export function NeonConnector() {
             </Button>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
-            You are connected to Neon Database
+            {t("connect.neon.connectedDescription")}
           </p>
           <NeonDisconnectButton />
         </div>
@@ -55,7 +59,7 @@ export function NeonConnector() {
 
   const handleApiKeyConnect = async () => {
     if (!apiKey.trim()) {
-      toast.error("Please enter your Neon API key");
+      toast.error(t("connect.neon.enterApiKey"));
       return;
     }
 
@@ -63,10 +67,11 @@ export function NeonConnector() {
     try {
       await ipc.neon.connectWithApiKey({ apiKey: apiKey.trim() });
       await refreshSettings();
-      toast.success("Successfully connected to Neon!");
+      toast.success(t("connect.neon.connected"));
       setApiKey("");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to connect to Neon");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message || t("connect.neon.connectFailed"));
     } finally {
       setIsConnecting(false);
     }
@@ -75,16 +80,16 @@ export function NeonConnector() {
   return (
     <div className="flex flex-col space-y-4 p-4 border bg-white dark:bg-gray-800 max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
-        <h2 className="text-lg font-medium pb-1">Neon Database</h2>
+        <h2 className="text-lg font-medium pb-1">{t("connect.neon.title")}</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 pb-3">
-          Neon Database has a good free tier with backups and up to 10 projects.
+          {t("connect.neon.description")}
         </p>
 
         <div className="w-full space-y-3">
           <div className="flex gap-2">
             <Input
               type="password"
-              placeholder="Enter your Neon API key"
+              placeholder={t("connect.neon.apiKeyPlaceholder")}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               onKeyDown={(e) => {
@@ -102,12 +107,14 @@ export function NeonConnector() {
               data-testid="connect-neon-button"
             >
               <Key className="h-4 w-4" />
-              {isConnecting ? "Connecting..." : "Connect"}
+              {isConnecting
+                ? t("connect.common.connecting")
+                : t("connect.common.connect")}
             </Button>
           </div>
 
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Get your API key from{" "}
+            {t("connect.neon.getApiKeyFrom")}{" "}
             <button
               type="button"
               onClick={() =>
@@ -117,7 +124,7 @@ export function NeonConnector() {
               }
               className="text-blue-500 hover:underline"
             >
-              Neon Console → Account Settings → API Keys
+              {t("connect.neon.apiKeyPath")}
             </button>
           </p>
         </div>

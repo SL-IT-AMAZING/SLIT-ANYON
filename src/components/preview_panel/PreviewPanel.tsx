@@ -51,8 +51,12 @@ const ConsoleHeader = ({
 );
 
 // Main PreviewPanel component
-export function PreviewPanel() {
-  const [previewMode] = useAtom(previewModeAtom);
+interface PreviewPanelProps {
+  minimal?: boolean;
+}
+
+export function PreviewPanel({ minimal = false }: PreviewPanelProps) {
+  const [previewMode, setPreviewMode] = useAtom(previewModeAtom);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const { runApp, stopApp, loading, app } = useRunApp();
@@ -65,6 +69,12 @@ export function PreviewPanel() {
     consoleEntries.length > 0
       ? consoleEntries[consoleEntries.length - 1]?.message
       : undefined;
+
+  useEffect(() => {
+    if (minimal && previewMode !== "preview") {
+      setPreviewMode("preview");
+    }
+  }, [minimal, previewMode, setPreviewMode]);
 
   useEffect(() => {
     const previousAppId = runningAppIdRef.current;
@@ -138,7 +148,9 @@ export function PreviewPanel() {
         <PanelGroup direction="vertical">
           <Panel id="content" minSize={30}>
             <div className="h-full overflow-y-auto">
-              {previewMode === "preview" ? (
+              {minimal ? (
+                <PreviewIframe key={key} loading={loading} minimal />
+              ) : previewMode === "preview" ? (
                 <PreviewIframe key={key} loading={loading} />
               ) : previewMode === "code" ? (
                 <CodeView loading={loading} app={app} />
@@ -155,7 +167,7 @@ export function PreviewPanel() {
               )}
             </div>
           </Panel>
-          {isConsoleOpen && (
+          {!minimal && isConsoleOpen && (
             <>
               <PanelResizeHandle className="h-1 bg-border hover:bg-accent transition-colors cursor-row-resize" />
               <Panel id="console" minSize={10} defaultSize={30}>
@@ -172,7 +184,7 @@ export function PreviewPanel() {
           )}
         </PanelGroup>
       </div>
-      {!isConsoleOpen && (
+      {!minimal && !isConsoleOpen && (
         <ConsoleHeader
           isOpen={false}
           onToggle={() => setIsConsoleOpen(true)}

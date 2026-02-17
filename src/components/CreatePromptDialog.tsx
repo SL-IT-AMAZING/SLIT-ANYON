@@ -1,7 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +8,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Save, Edit2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit2, Plus, Save } from "lucide-react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface CreateOrEditPromptDialogProps {
   mode: "create" | "edit";
@@ -52,6 +54,7 @@ export function CreateOrEditPromptDialog({
   isOpen,
   onOpenChange,
 }: CreateOrEditPromptDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
@@ -164,13 +167,14 @@ export function CreateOrEditPromptDialog({
         <DialogTrigger>{trigger}</DialogTrigger>
       ) : mode === "create" ? (
         <DialogTrigger className={buttonVariants()}>
-          <Plus className="mr-2 h-4 w-4" /> New Prompt
+          <Plus className="mr-2 h-4 w-4" />
+          {t("library.prompts.new", { ns: "app" })}
         </DialogTrigger>
       ) : (
         <DialogTrigger
           className={buttonVariants({ variant: "ghost", size: "icon" })}
           data-testid="edit-prompt-button"
-          title="Edit prompt"
+          title={t("library.prompts.editTooltip", { ns: "app" })}
         >
           <Edit2 className="h-4 w-4" />
         </DialogTrigger>
@@ -178,22 +182,26 @@ export function CreateOrEditPromptDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Create New Prompt" : "Edit Prompt"}
+            {mode === "create"
+              ? t("library.prompts.createTitle", { ns: "app" })
+              : t("library.prompts.editTitle", { ns: "app" })}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Create a new prompt template for your library."
-              : "Edit your prompt template."}
+              ? t("library.prompts.createDescription", { ns: "app" })
+              : t("library.prompts.editDescription", { ns: "app" })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Input
-            placeholder="Title"
+            placeholder={t("labels.title", { ns: "common" })}
             value={draft.title}
             onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
           />
           <Input
-            placeholder="Description (optional)"
+            placeholder={t("library.prompts.descriptionOptional", {
+              ns: "app",
+            })}
             value={draft.description}
             onChange={(e) =>
               setDraft((d) => ({ ...d, description: e.target.value }))
@@ -201,7 +209,7 @@ export function CreateOrEditPromptDialog({
           />
           <Textarea
             ref={textareaRef}
-            placeholder="Content"
+            placeholder={t("library.prompts.contentPlaceholder", { ns: "app" })}
             value={draft.content}
             onChange={(e) => {
               setDraft((d) => ({ ...d, content: e.target.value }));
@@ -214,13 +222,14 @@ export function CreateOrEditPromptDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
-            Cancel
+            {t("buttons.cancel", { ns: "common" })}
           </Button>
           <Button
             onClick={onSave}
             disabled={!draft.title.trim() || !draft.content.trim()}
           >
-            <Save className="mr-2 h-4 w-4" /> Save
+            <Save className="mr-2 h-4 w-4" />
+            {t("buttons.save", { ns: "common" })}
           </Button>
         </DialogFooter>
       </DialogContent>

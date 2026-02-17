@@ -9,8 +9,10 @@ import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { useSettings } from "@/hooks/useSettings";
 import type { ChatMode } from "@/lib/schemas";
 import { getEffectiveDefaultChatMode, isAnyonProEnabled } from "@/lib/schemas";
+import { useTranslation } from "react-i18next";
 
 export function DefaultChatModeSelector() {
+  const { t } = useTranslation("settings");
   const { settings, updateSettings, envVars } = useSettings();
   const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
 
@@ -36,11 +38,13 @@ export function DefaultChatModeSelector() {
   const getModeDisplayName = (mode: ChatMode) => {
     switch (mode) {
       case "build":
-        return "Build";
+        return t("ai.defaultChatModeOptions.build.title");
       case "agent":
-        return "Build (MCP)";
+        return t("ai.defaultChatModeOptions.agent.title");
       case "local-agent":
-        return isProEnabled ? "Agent" : "Basic Agent";
+        return isProEnabled
+          ? t("ai.defaultChatModeOptions.localAgent.proTitle")
+          : t("ai.defaultChatModeOptions.localAgent.freeTitle");
       case "ask":
       default:
         throw new Error(`Unknown chat mode: ${mode}`);
@@ -54,7 +58,7 @@ export function DefaultChatModeSelector() {
           htmlFor="default-chat-mode"
           className="text-sm font-medium text-muted-foreground"
         >
-          Default Chat Mode
+          {t("ai.defaultChatMode")}
         </label>
         <Select
           value={effectiveDefault}
@@ -68,29 +72,37 @@ export function DefaultChatModeSelector() {
               <SelectItem value="local-agent">
                 <div className="flex flex-col items-start">
                   <span className="font-medium">
-                    {isProEnabled ? "Agent" : "Basic Agent"}
+                    {isProEnabled
+                      ? t("ai.defaultChatModeOptions.localAgent.proTitle")
+                      : t("ai.defaultChatModeOptions.localAgent.freeTitle")}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {isProEnabled
-                      ? "Better at bigger tasks"
-                      : "Free tier (5 messages/day)"}
+                      ? t("ai.defaultChatModeOptions.localAgent.proDescription")
+                      : t(
+                          "ai.defaultChatModeOptions.localAgent.freeDescription",
+                        )}
                   </span>
                 </div>
               </SelectItem>
             )}
             <SelectItem value="build">
               <div className="flex flex-col items-start">
-                <span className="font-medium">Build</span>
+                <span className="font-medium">
+                  {t("ai.defaultChatModeOptions.build.title")}
+                </span>
                 <span className="text-xs text-muted-foreground">
-                  Generate and edit code
+                  {t("ai.defaultChatModeOptions.build.description")}
                 </span>
               </div>
             </SelectItem>
             <SelectItem value="agent">
               <div className="flex flex-col items-start">
-                <span className="font-medium">Build with MCP</span>
+                <span className="font-medium">
+                  {t("ai.defaultChatModeOptions.agent.title")}
+                </span>
                 <span className="text-xs text-muted-foreground">
-                  Build with tools (MCP)
+                  {t("ai.defaultChatModeOptions.agent.description")}
                 </span>
               </div>
             </SelectItem>
@@ -98,7 +110,7 @@ export function DefaultChatModeSelector() {
         </Select>
       </div>
       <div className="text-sm text-muted-foreground">
-        The chat mode used when creating new chats.
+        {t("ai.defaultChatModeDescription")}
       </div>
     </div>
   );

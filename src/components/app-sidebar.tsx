@@ -11,6 +11,7 @@ import {
   Store,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Sidebar,
@@ -29,45 +30,14 @@ import { ChatList } from "./ChatList";
 import { HelpDialog } from "./HelpDialog";
 import { AccountMenu } from "./auth/AccountMenu";
 import { LoginDialog } from "./auth/LoginDialog";
+import { SettingsDialog } from "./settings/SettingsDialog";
 import { SubscriptionBanner } from "./subscription/SubscriptionBanner";
 
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    to: "/",
-    icon: Home,
-  },
-  {
-    title: "Chat",
-    to: "/chat",
-    icon: Inbox,
-  },
-  {
-    title: "Settings",
-    to: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Library",
-    to: "/themes",
-    icon: BookOpen,
-  },
-  {
-    title: "Market",
-    to: "/hub",
-    icon: Store,
-  },
-  {
-    title: "Connect",
-    to: "/connect",
-    icon: Plug,
-  },
-];
-
 export function AppSidebar() {
+  const { t } = useTranslation("app");
   const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { isHovering, state } = useSidebar();
 
@@ -75,26 +45,61 @@ export function AppSidebar() {
   const pathname = routerState.location.pathname;
 
   const isChatRoute = pathname === "/chat";
+  const isAppDetailRoute =
+    pathname.startsWith("/apps/") && pathname !== "/apps";
 
   const isCollapsedHover = state === "collapsed" && isHovering;
+
+  const navItems = [
+    {
+      id: "home",
+      title: t("nav.home"),
+      to: "/",
+      icon: Home,
+    },
+    {
+      id: "apps",
+      title: t("nav.apps"),
+      to: "/apps",
+      icon: Inbox,
+    },
+    {
+      id: "library",
+      title: t("nav.library"),
+      to: "/themes",
+      icon: BookOpen,
+    },
+    {
+      id: "market",
+      title: t("nav.market"),
+      to: "/hub",
+      icon: Store,
+    },
+    {
+      id: "connect",
+      title: t("nav.connect"),
+      to: "/connect",
+      icon: Plug,
+    },
+  ];
 
   return (
     <Sidebar collapsible="offcanvas">
       {!isCollapsedHover && (
         <SidebarHeader className="p-4 pt-14">
-          <img src={logo} alt="Logo" className="h-8 w-auto" />
+          <img src={logo} alt={t("name")} className="h-8 w-auto" />
         </SidebarHeader>
       )}
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {items.map((item) => {
+            {navItems.map((item) => {
               const isActive =
                 (item.to === "/" && pathname === "/") ||
                 (item.to !== "/" && pathname.startsWith(item.to));
 
               return (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton as={Link} to={item.to} isActive={isActive}>
                     <item.icon className="size-4" />
                     <span>{item.title}</span>
@@ -102,11 +107,17 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               );
             })}
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="size-4" />
+                <span>{t("nav.settings")}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
         <SidebarGroup className="flex-1 overflow-y-auto">
-          {isChatRoute && <ChatList />}
+          {(isChatRoute || isAppDetailRoute) && <ChatList />}
         </SidebarGroup>
       </SidebarContent>
 
@@ -120,7 +131,7 @@ export function AppSidebar() {
               <>
                 <SidebarMenuButton onClick={() => setIsLoginDialogOpen(true)}>
                   <LogIn className="size-4" />
-                  <span>Sign In</span>
+                  <span>{t("nav.signIn")}</span>
                 </SidebarMenuButton>
                 <LoginDialog
                   isOpen={isLoginDialogOpen}
@@ -132,7 +143,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => setIsHelpDialogOpen(true)}>
               <HelpCircle className="size-4" />
-              <span>Help</span>
+              <span>{t("nav.help")}</span>
             </SidebarMenuButton>
             <HelpDialog
               isOpen={isHelpDialogOpen}
@@ -141,6 +152,8 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </Sidebar>
   );
 }

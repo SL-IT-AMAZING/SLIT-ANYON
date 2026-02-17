@@ -1,5 +1,3 @@
-import React from "react";
-import { Trash2, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +10,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
+import { Loader2, Trash2 } from "lucide-react";
+import type React from "react";
+import { useTranslation } from "react-i18next";
 
 interface DeleteConfirmationDialogProps {
   itemName: string;
@@ -28,6 +29,7 @@ export function DeleteConfirmationDialog({
   trigger,
   isDeleting = false,
 }: DeleteConfirmationDialogProps) {
+  const { t } = useTranslation("common");
   return (
     <AlertDialog>
       {trigger ? (
@@ -37,29 +39,34 @@ export function DeleteConfirmationDialog({
           className={buttonVariants({ variant: "ghost", size: "icon" })}
           data-testid="delete-prompt-button"
           disabled={isDeleting}
-          title={`Delete ${itemType.toLowerCase()}`}
+          title={t("dialogs.deleteTriggerTitle", {
+            itemType: itemType.toLowerCase(),
+          })}
         >
           <Trash2 className="h-4 w-4" />
         </AlertDialogTrigger>
       )}
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {itemType}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("dialogs.deleteTitle", { itemType })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete "{itemName}"? This action cannot be
-            undone.
+            {t("dialogs.deleteDescription", { itemName })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>
+            {t("buttons.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction onClick={onDelete} disabled={isDeleting}>
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                {t("buttons.deleting")}
               </>
             ) : (
-              "Delete"
+              t("buttons.delete")
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

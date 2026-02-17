@@ -7,6 +7,7 @@ import { oauthEndpoints } from "@/lib/oauthConfig";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { ExternalLink } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import connectSupabaseDark from "../../assets/supabase/connect-supabase-dark.svg";
@@ -15,6 +16,7 @@ import supabaseLogoDark from "../../assets/supabase/supabase-logo-wordmark--dark
 import supabaseLogoLight from "../../assets/supabase/supabase-logo-wordmark--light.svg";
 
 export function SupabaseHubConnector() {
+  const { t } = useTranslation("app");
   const { settings, refreshSettings, updateSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
   const { isDarkMode } = useTheme();
@@ -23,7 +25,7 @@ export function SupabaseHubConnector() {
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "supabase-oauth-return") {
         await refreshSettings();
-        toast.success("Successfully connected to Supabase!");
+        toast.success(t("connect.supabase.connected"));
         clearLastDeepLink();
       }
     };
@@ -37,7 +39,9 @@ export function SupabaseHubConnector() {
       <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
         <div className="flex flex-col items-start justify-between">
           <div className="flex items-center justify-between w-full">
-            <h2 className="text-lg font-medium pb-1">Supabase</h2>
+            <h2 className="text-lg font-medium pb-1">
+              {t("connect.supabase.title")}
+            </h2>
             <Button
               variant="outline"
               onClick={() => {
@@ -56,7 +60,7 @@ export function SupabaseHubConnector() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground pb-3">
-            You are connected to Supabase
+            {t("connect.supabase.connectedDescription")}
           </p>
           <Button
             variant="destructive"
@@ -66,10 +70,10 @@ export function SupabaseHubConnector() {
                 supabase: undefined,
                 enableSupabaseWriteSqlMigration: false,
               });
-              toast.success("Disconnected from Supabase");
+              toast.success(t("connect.supabase.disconnected"));
             }}
           >
-            Disconnect
+            {t("connect.common.disconnect")}
           </Button>
         </div>
       </div>
@@ -79,17 +83,18 @@ export function SupabaseHubConnector() {
   return (
     <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
-        <h2 className="text-lg font-medium pb-1">Supabase</h2>
+        <h2 className="text-lg font-medium pb-1">
+          {t("connect.supabase.title")}
+        </h2>
         <p className="text-sm text-muted-foreground pb-3">
-          Supabase provides auth, database, storage and more with a generous
-          free tier.
+          {t("connect.supabase.description")}
         </p>
         <img
           onClick={async () => {
             await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
           }}
           src={isDarkMode ? connectSupabaseDark : connectSupabaseLight}
-          alt="Connect to Supabase"
+          alt={t("connect.supabase.connectAlt")}
           className="h-10 cursor-pointer"
           data-testid="connect-supabase-hub-button"
         />

@@ -9,8 +9,10 @@ import { usePrompts } from "@/hooks/usePrompts";
 import type { AddPromptDeepLinkData } from "@/ipc/deep_link_data";
 import { showInfo } from "@/lib/toast";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function LibraryPage() {
+  const { t } = useTranslation(["app", "common"]);
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } =
     usePrompts();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
@@ -29,7 +31,7 @@ export default function LibraryPage() {
       if (lastDeepLink?.type === "add-prompt") {
         const deepLink = lastDeepLink as unknown as AddPromptDeepLinkData;
         const payload = deepLink.payload;
-        showInfo(`Prefilled prompt: ${payload.title}`);
+        showInfo(t("library.prompts.prefilled", { title: payload.title }));
         setPrefillData({
           title: payload.title,
           description: payload.description,
@@ -59,7 +61,9 @@ export default function LibraryPage() {
       <div className="flex-1 px-8 py-6 overflow-y-auto">
         <div className="max-w-5xl">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold mr-4">Library: Prompts</h1>
+            <h1 className="text-3xl font-bold mr-4">
+              {t("library.prompts.title")}
+            </h1>
             <CreatePromptDialog
               onCreatePrompt={createPrompt}
               prefillData={prefillData}
@@ -69,10 +73,10 @@ export default function LibraryPage() {
           </div>
 
           {isLoading ? (
-            <div>Loading...</div>
+            <div>{t("labels.loading", { ns: "common" })}</div>
           ) : prompts.length === 0 ? (
             <div className="text-muted-foreground">
-              No prompts yet. Create one to get started.
+              {t("library.prompts.empty")}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -111,6 +115,7 @@ function PromptCard({
   }) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }) {
+  const { t } = useTranslation("app");
   return (
     <div
       data-testid="prompt-card"
@@ -134,7 +139,7 @@ function PromptCard({
             />
             <DeleteConfirmationDialog
               itemName={prompt.title}
-              itemType="Prompt"
+              itemType={t("library.prompts.itemType")}
               onDelete={() => onDelete(prompt.id)}
             />
           </div>

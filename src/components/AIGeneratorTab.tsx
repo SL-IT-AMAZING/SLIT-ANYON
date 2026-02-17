@@ -10,6 +10,7 @@ import { ipc } from "@/ipc/types";
 import { showError } from "@/lib/toast";
 import { Link, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import type {
@@ -54,6 +55,7 @@ export function AIGeneratorTab({
   isSaving,
   isDialogOpen,
 }: AIGeneratorTabProps) {
+  const { t } = useTranslation("app");
   const [aiImages, setAiImages] = useState<ThemeImage[]>([]);
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiGenerationMode, setAiGenerationMode] =
@@ -90,12 +92,12 @@ export function AIGeneratorTab({
           await ipc.template.cleanupThemeImages({ paths });
         } catch {
           if (showErrors) {
-            showError("Failed to cleanup temporary image files");
+            showError(t("library.themes.aiGenerator.errors.cleanupFailed"));
           }
         }
       }
     },
-    [],
+    [t],
   );
 
   // Keep ref in sync with isDialogOpen prop
@@ -133,7 +135,9 @@ export function AIGeneratorTab({
 
       const availableSlots = MAX_IMAGES - aiImages.length;
       if (availableSlots <= 0) {
-        showError(`Maximum ${MAX_IMAGES} images allowed`);
+        showError(
+          t("library.themes.aiGenerator.errors.maxImages", { max: MAX_IMAGES }),
+        );
         return;
       }
 
@@ -142,7 +146,10 @@ export function AIGeneratorTab({
 
       if (skippedCount > 0) {
         showError(
-          `Only ${availableSlots} image${availableSlots === 1 ? "" : "s"} can be added. ${skippedCount} file${skippedCount === 1 ? " was" : "s were"} skipped.`,
+          t("library.themes.aiGenerator.errors.skippedFiles", {
+            availableSlots,
+            skippedCount,
+          }),
         );
       }
 
@@ -155,7 +162,9 @@ export function AIGeneratorTab({
           // Validate file type
           if (!file.type.startsWith("image/")) {
             showError(
-              `Please upload only image files. "${file.name}" is not a valid image.`,
+              t("library.themes.aiGenerator.errors.invalidImage", {
+                filename: file.name,
+              }),
             );
             continue;
           }
@@ -163,7 +172,12 @@ export function AIGeneratorTab({
           // Validate file size (raw file size)
           if (file.size > MAX_FILE_SIZE) {
             const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            showError(`File "${file.name}" exceeds 10MB limit (${sizeMB}MB)`);
+            showError(
+              t("library.themes.aiGenerator.errors.fileTooLarge", {
+                filename: file.name,
+                sizeMB,
+              }),
+            );
             continue;
           }
 
@@ -171,12 +185,23 @@ export function AIGeneratorTab({
             // Read file as base64 for upload
             const base64Data = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
-              reader.onerror = () => reject(new Error("Failed to read file"));
+              reader.onerror = () =>
+                reject(
+                  new Error(
+                    t("library.themes.aiGenerator.errors.readFileFailed"),
+                  ),
+                );
               reader.onload = () => {
                 const base64 = reader.result as string;
                 const data = base64.split(",")[1];
                 if (!data) {
-                  reject(new Error("Failed to extract image data"));
+                  reject(
+                    new Error(
+                      t(
+                        "library.themes.aiGenerator.errors.extractImageDataFailed",
+                      ),
+                    ),
+                  );
                   return;
                 }
                 resolve(data);
@@ -199,7 +224,13 @@ export function AIGeneratorTab({
             });
           } catch (err) {
             showError(
-              `Error processing "${file.name}": ${err instanceof Error ? err.message : "Unknown error"}`,
+              t("library.themes.aiGenerator.errors.processingFailed", {
+                filename: file.name,
+                message:
+                  err instanceof Error
+                    ? err.message
+                    : t("library.themes.aiGenerator.errors.unknownError"),
+              }),
             );
           }
         }
@@ -226,7 +257,7 @@ export function AIGeneratorTab({
         }
       }
     },
-    [aiImages.length, cleanupImages],
+    [aiImages.length, cleanupImages, t],
   );
 
   const handleRemoveImage = useCallback(
@@ -245,7 +276,7 @@ export function AIGeneratorTab({
     if (inputSource === "images") {
       // Image-based generation
       if (aiImages.length === 0) {
-        showError("Please upload at least one image");
+        showError(t("library.themes.aiGenerator.errors.uploadAtLeastOne"));
         return;
       }
 
@@ -257,16 +288,23 @@ export function AIGeneratorTab({
           model: aiSelectedModel,
         });
         setAiGeneratedPrompt(result.prompt);
-        toast.success("Theme prompt generated successfully");
+        toast.success(
+          t("library.themes.aiGenerator.success.generatedFromImages"),
+        );
       } catch (error) {
         showError(
-          `Failed to generate theme: ${error instanceof Error ? error.message : "Unknown error"}`,
+          t("library.themes.aiGenerator.errors.generateFailed", {
+            message:
+              error instanceof Error
+                ? error.message
+                : t("library.themes.aiGenerator.errors.unknownError"),
+          }),
         );
       }
     } else {
       // URL-based generation
       if (!websiteUrl.trim()) {
-        showError("Please enter a website URL");
+        showError(t("library.themes.aiGenerator.errors.websiteRequired"));
         return;
       }
 
@@ -279,10 +317,17 @@ export function AIGeneratorTab({
         });
 
         setAiGeneratedPrompt(result.prompt);
-        toast.success("Theme prompt generated from website");
+        toast.success(
+          t("library.themes.aiGenerator.success.generatedFromWebsite"),
+        );
       } catch (error) {
         showError(
-          `Failed to generate theme: ${error instanceof Error ? error.message : "Unknown error"}`,
+          t("library.themes.aiGenerator.errors.generateFailed", {
+            message:
+              error instanceof Error
+                ? error.message
+                : t("library.themes.aiGenerator.errors.unknownError"),
+          }),
         );
       }
     }
@@ -301,20 +346,24 @@ export function AIGeneratorTab({
   return (
     <div className="space-y-4 mt-4">
       <div className="space-y-2">
-        <Label htmlFor="ai-name">Theme Name</Label>
+        <Label htmlFor="ai-name">
+          {t("library.themes.aiGenerator.themeName")}
+        </Label>
         <Input
           id="ai-name"
-          placeholder="My AI-Generated Theme"
+          placeholder={t("library.themes.aiGenerator.themeNamePlaceholder")}
           value={aiName}
           onChange={(e) => setAiName(e.target.value)}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="ai-description">Description (optional)</Label>
+        <Label htmlFor="ai-description">
+          {t("library.themes.aiGenerator.descriptionOptional")}
+        </Label>
         <Input
           id="ai-description"
-          placeholder="A brief description of your theme"
+          placeholder={t("library.themes.aiGenerator.descriptionPlaceholder")}
           value={aiDescription}
           onChange={(e) => setAiDescription(e.target.value)}
         />
@@ -322,7 +371,7 @@ export function AIGeneratorTab({
 
       {/* Input Source Toggle */}
       <div className="space-y-3">
-        <Label>Reference Source</Label>
+        <Label>{t("library.themes.aiGenerator.referenceSource")}</Label>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
@@ -334,9 +383,13 @@ export function AIGeneratorTab({
             }`}
           >
             <Upload className="h-5 w-5 mb-1" />
-            <span className="font-medium text-sm">Upload Images</span>
+            <span className="font-medium text-sm">
+              {t("library.themes.aiGenerator.inputSources.uploadImages")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Use screenshots from your device
+              {t(
+                "library.themes.aiGenerator.inputSources.uploadImagesDescription",
+              )}
             </span>
           </button>
           <button
@@ -349,9 +402,13 @@ export function AIGeneratorTab({
             }`}
           >
             <Link className="h-5 w-5 mb-1" />
-            <span className="font-medium text-sm">Website URL</span>
+            <span className="font-medium text-sm">
+              {t("library.themes.aiGenerator.inputSources.websiteUrl")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Extract design from a live website
+              {t(
+                "library.themes.aiGenerator.inputSources.websiteUrlDescription",
+              )}
             </span>
           </button>
         </div>
@@ -360,7 +417,7 @@ export function AIGeneratorTab({
       {/* Image Upload Section - only shown when inputSource is "images" */}
       {inputSource === "images" && (
         <div className="space-y-2">
-          <Label>Reference Images</Label>
+          <Label>{t("library.themes.aiGenerator.referenceImages")}</Label>
           <div
             className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
             onClick={() => fileInputRef.current?.click()}
@@ -380,18 +437,25 @@ export function AIGeneratorTab({
               <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
             )}
             <p className="text-sm text-muted-foreground">
-              {isUploading ? "Uploading..." : "Click to upload images"}
+              {isUploading
+                ? t("library.themes.aiGenerator.uploading")
+                : t("library.themes.aiGenerator.clickToUpload")}
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
-              Upload UI screenshots to inspire your theme
+              {t("library.themes.aiGenerator.uploadHint")}
             </p>
           </div>
 
           {/* Image counter */}
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            {aiImages.length} / {MAX_IMAGES} images
+            {t("library.themes.aiGenerator.imageCount", {
+              count: aiImages.length,
+              max: MAX_IMAGES,
+            })}
             {aiImages.length >= MAX_IMAGES && (
-              <span className="text-destructive ml-2">• Maximum reached</span>
+              <span className="text-destructive ml-2">
+                {t("library.themes.aiGenerator.maxReached")}
+              </span>
             )}
           </p>
 
@@ -402,7 +466,9 @@ export function AIGeneratorTab({
                 <div key={img.path} className="relative group">
                   <img
                     src={img.preview}
-                    alt={`Upload ${index + 1}`}
+                    alt={t("library.themes.aiGenerator.uploadAlt", {
+                      index: index + 1,
+                    })}
                     className="h-16 w-16 object-cover rounded-md border"
                   />
                   <button
@@ -421,38 +487,42 @@ export function AIGeneratorTab({
       {/* URL Input Section - only shown when inputSource is "url" */}
       {inputSource === "url" && (
         <div className="space-y-2">
-          <Label htmlFor="website-url">Website URL</Label>
+          <Label htmlFor="website-url">
+            {t("library.themes.aiGenerator.inputSources.websiteUrl")}
+          </Label>
           <Input
             id="website-url"
             type="url"
-            placeholder="https://example.com"
+            placeholder={t("library.themes.aiGenerator.websitePlaceholder")}
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             disabled={isGenerating}
           />
           <p className="text-xs text-muted-foreground">
-            Enter a website URL to extract its design system
+            {t("library.themes.aiGenerator.websiteHint")}
           </p>
         </div>
       )}
 
       {/* Keywords Input */}
       <div className="space-y-2">
-        <Label htmlFor="ai-keywords">Keywords (optional)</Label>
+        <Label htmlFor="ai-keywords">
+          {t("library.themes.aiGenerator.keywordsOptional")}
+        </Label>
         <Input
           id="ai-keywords"
-          placeholder="modern, minimal, dark mode, glassmorphism..."
+          placeholder={t("library.themes.aiGenerator.keywordsPlaceholder")}
           value={aiKeywords}
           onChange={(e) => setAiKeywords(e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          Add keywords or reference designs to guide the generation
+          {t("library.themes.aiGenerator.keywordsHint")}
         </p>
       </div>
 
       {/* Generation Mode Selection */}
       <div className="space-y-3">
-        <Label>Generation Mode</Label>
+        <Label>{t("library.themes.aiGenerator.generationMode")}</Label>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
@@ -463,10 +533,11 @@ export function AIGeneratorTab({
                 : "hover:bg-muted/50"
             }`}
           >
-            <span className="font-medium">Inspired</span>
+            <span className="font-medium">
+              {t("library.themes.aiGenerator.modes.inspired.label")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Extracts an abstract, reusable design system. Does not replicate
-              the original UI.
+              {t("library.themes.aiGenerator.modes.inspired.description")}
             </span>
           </button>
           <button
@@ -478,9 +549,11 @@ export function AIGeneratorTab({
                 : "hover:bg-muted/50"
             }`}
           >
-            <span className="font-medium">High Fidelity</span>
+            <span className="font-medium">
+              {t("library.themes.aiGenerator.modes.highFidelity.label")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Recreates the visual system from the image as closely as possible.
+              {t("library.themes.aiGenerator.modes.highFidelity.description")}
             </span>
           </button>
         </div>
@@ -488,7 +561,7 @@ export function AIGeneratorTab({
 
       {/* Model Selection */}
       <div className="space-y-3">
-        <Label>Model Selection</Label>
+        <Label>{t("library.themes.aiGenerator.modelSelection")}</Label>
         <div className="grid grid-cols-3 gap-3">
           <button
             type="button"
@@ -499,9 +572,11 @@ export function AIGeneratorTab({
                 : "hover:bg-muted/50"
             }`}
           >
-            <span className="font-medium text-sm">Gemini 3 Pro</span>
+            <span className="font-medium text-sm">
+              {t("library.themes.aiGenerator.models.gemini.label")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Most capable
+              {t("library.themes.aiGenerator.models.gemini.description")}
             </span>
           </button>
           <button
@@ -513,9 +588,11 @@ export function AIGeneratorTab({
                 : "hover:bg-muted/50"
             }`}
           >
-            <span className="font-medium text-sm">Claude Opus 4.5</span>
+            <span className="font-medium text-sm">
+              {t("library.themes.aiGenerator.models.claude.label")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Creative & detailed
+              {t("library.themes.aiGenerator.models.claude.description")}
             </span>
           </button>
           <button
@@ -527,9 +604,11 @@ export function AIGeneratorTab({
                 : "hover:bg-muted/50"
             }`}
           >
-            <span className="font-medium text-sm">GPT 5.2</span>
+            <span className="font-medium text-sm">
+              {t("library.themes.aiGenerator.models.gpt.label")}
+            </span>
             <span className="text-xs text-muted-foreground mt-1">
-              Latest OpenAI
+              {t("library.themes.aiGenerator.models.gpt.description")}
             </span>
           </button>
         </div>
@@ -550,34 +629,38 @@ export function AIGeneratorTab({
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             {inputSource === "url"
-              ? "Generating from website..."
-              : "Generating prompt..."}
+              ? t("library.themes.aiGenerator.generatingFromWebsite")
+              : t("library.themes.aiGenerator.generatingPrompt")}
           </>
         ) : (
           <>
             <Sparkles className="mr-2 h-4 w-4" />
-            Generate Theme Prompt
+            {t("library.themes.aiGenerator.generateThemePrompt")}
           </>
         )}
       </Button>
 
       {/* Generated Prompt Display */}
       <div className="space-y-2">
-        <Label htmlFor="ai-prompt">Generated Prompt</Label>
+        <Label htmlFor="ai-prompt">
+          {t("library.themes.aiGenerator.generatedPrompt")}
+        </Label>
         {aiGeneratedPrompt ? (
           <Textarea
             id="ai-prompt"
             className="min-h-[200px] font-mono text-sm"
             value={aiGeneratedPrompt}
             onChange={(e) => setAiGeneratedPrompt(e.target.value)}
-            placeholder="Generated prompt will appear here..."
+            placeholder={t(
+              "library.themes.aiGenerator.generatedPromptPlaceholder",
+            )}
           />
         ) : (
           <div className="min-h-[100px] border rounded-md p-4 flex items-center justify-center text-muted-foreground text-sm text-center">
-            No prompt generated yet.{" "}
+            {t("library.themes.aiGenerator.noPromptYet")}{" "}
             {inputSource === "images"
-              ? 'Upload images and click "Generate" to create a theme prompt.'
-              : 'Enter a website URL and click "Generate" to extract a theme.'}
+              ? t("library.themes.aiGenerator.emptyStateImages")
+              : t("library.themes.aiGenerator.emptyStateUrl")}
           </div>
         )}
       </div>
@@ -592,10 +675,10 @@ export function AIGeneratorTab({
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              {t("library.themes.saving")}
             </>
           ) : (
-            "Save Theme"
+            t("library.themes.saveTheme")
           )}
         </Button>
       )}
