@@ -93,12 +93,16 @@ async function run(): Promise<number> {
   const results: CheckResult[] = [];
 
   if (!supabaseToken || !vercelToken) {
-    console.error("Missing required env vars: SUPABASE_ACCESS_TOKEN and VERCEL_ACCESS_TOKEN");
+    console.error(
+      "Missing required env vars: SUPABASE_ACCESS_TOKEN and VERCEL_ACCESS_TOKEN",
+    );
     return 1;
   }
 
   if (writeMode && (!supabaseProjectRef || !vercelProjectId)) {
-    console.error("--write mode requires SUPABASE_PROJECT_REF and VERCEL_PROJECT_ID");
+    console.error(
+      "--write mode requires SUPABASE_PROJECT_REF and VERCEL_PROJECT_ID",
+    );
     return 1;
   }
 
@@ -189,7 +193,9 @@ async function run(): Promise<number> {
           ),
         );
       } else {
-        results.push(pass("write.supabase.secret.upsert", `Created ${secretName}`));
+        results.push(
+          pass("write.supabase.secret.upsert", `Created ${secretName}`),
+        );
       }
 
       const removeSecretBulkRes = await fetchWithRetry(
@@ -205,7 +211,11 @@ async function run(): Promise<number> {
         "supabase_remove_secret_bulk",
       );
 
-      if (!removeSecretBulkRes.ok && (removeSecretBulkRes.status === 404 || removeSecretBulkRes.status === 405)) {
+      if (
+        !removeSecretBulkRes.ok &&
+        (removeSecretBulkRes.status === 404 ||
+          removeSecretBulkRes.status === 405)
+      ) {
         const removeSecretSingleRes = await fetchWithRetry(
           `https://api.supabase.com/v1/projects/${encodeURIComponent(supabaseProjectRef!)}/secrets/${encodeURIComponent(secretName)}`,
           {
@@ -227,7 +237,9 @@ async function run(): Promise<number> {
             ),
           );
         } else {
-          results.push(pass("write.supabase.secret.remove", `Removed ${secretName}`));
+          results.push(
+            pass("write.supabase.secret.remove", `Removed ${secretName}`),
+          );
         }
       } else if (!removeSecretBulkRes.ok) {
         const body = await parseBody(removeSecretBulkRes);
@@ -238,7 +250,9 @@ async function run(): Promise<number> {
           ),
         );
       } else {
-        results.push(pass("write.supabase.secret.remove", `Removed ${secretName}`));
+        results.push(
+          pass("write.supabase.secret.remove", `Removed ${secretName}`),
+        );
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -247,9 +261,13 @@ async function run(): Promise<number> {
 
     try {
       const createEnvRes = await fetchWithRetry(
-        buildVercelUrl(`/v10/projects/${encodeURIComponent(vercelProjectId!)}/env`, vercelTeamId, {
-          upsert: "true",
-        }),
+        buildVercelUrl(
+          `/v10/projects/${encodeURIComponent(vercelProjectId!)}/env`,
+          vercelTeamId,
+          {
+            upsert: "true",
+          },
+        ),
         {
           method: "POST",
           headers: {
@@ -281,7 +299,10 @@ async function run(): Promise<number> {
       }
 
       const listEnvRes = await fetchWithRetry(
-        buildVercelUrl(`/v9/projects/${encodeURIComponent(vercelProjectId!)}/env`, vercelTeamId),
+        buildVercelUrl(
+          `/v9/projects/${encodeURIComponent(vercelProjectId!)}/env`,
+          vercelTeamId,
+        ),
         {
           method: "GET",
           headers: {
@@ -295,7 +316,10 @@ async function run(): Promise<number> {
       if (!listEnvRes.ok) {
         const body = await parseBody(listEnvRes);
         results.push(
-          fail("write.vercel.env.verify", `${listEnvRes.status} ${listEnvRes.statusText} ${body}`),
+          fail(
+            "write.vercel.env.verify",
+            `${listEnvRes.status} ${listEnvRes.statusText} ${body}`,
+          ),
         );
       } else {
         const json = (await listEnvRes.json()) as {
@@ -303,7 +327,12 @@ async function run(): Promise<number> {
         };
         const found = json.envs?.find((envVar) => envVar.key === envKey);
         if (!found) {
-          results.push(fail("write.vercel.env.verify", `${envKey} not found in project env list`));
+          results.push(
+            fail(
+              "write.vercel.env.verify",
+              `${envKey} not found in project env list`,
+            ),
+          );
         } else {
           createdVercelEnvId = found.id;
           results.push(pass("write.vercel.env.verify", `${envKey} found`));
@@ -340,7 +369,12 @@ async function run(): Promise<number> {
             ),
           );
         } else {
-          results.push(pass("write.vercel.env.cleanup", `Deleted env id ${createdVercelEnvId}`));
+          results.push(
+            pass(
+              "write.vercel.env.cleanup",
+              `Deleted env id ${createdVercelEnvId}`,
+            ),
+          );
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -355,7 +389,9 @@ async function run(): Promise<number> {
   }
 
   const failedCount = results.filter((result) => !result.ok).length;
-  console.log(`\nSummary: ${results.length - failedCount}/${results.length} checks passed`);
+  console.log(
+    `\nSummary: ${results.length - failedCount}/${results.length} checks passed`,
+  );
 
   return failedCount === 0 ? 0 : 1;
 }
@@ -365,7 +401,8 @@ run()
     process.exit(code);
   })
   .catch((error) => {
-    const message = error instanceof Error ? error.stack ?? error.message : String(error);
+    const message =
+      error instanceof Error ? (error.stack ?? error.message) : String(error);
     console.error(`[FAIL] verifier.crash - ${message}`);
     process.exit(1);
   });

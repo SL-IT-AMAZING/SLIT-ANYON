@@ -295,9 +295,9 @@ describe("MCP Tool Gateway POC", () => {
       for (const tool of body.tools) {
         expect(tool.inputSchema).toBeDefined();
         expect(typeof tool.inputSchema).toBe("object");
-        expect(
-          (tool.inputSchema as Record<string, unknown>).type,
-        ).toBe("object");
+        expect((tool.inputSchema as Record<string, unknown>).type).toBe(
+          "object",
+        );
       }
     });
 
