@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { fetchWithRetry } from "@/ipc/utils/retryWithRateLimit";
 import { getVercelAccessToken } from "@/vercel_admin/vercel_management_client";
-import type { ToolSpec } from "./spec";
+import { TOOL_FETCH_TIMEOUT_MS, type ToolSpec } from "./spec";
 
 type SetVercelEnvVarsInput = {
   projectId: string;
@@ -41,36 +42,37 @@ export const setVercelEnvVarsTool: ToolSpec<
   async execute({ projectId, envVars }) {
     const token = await getVercelAccessToken();
 
-    const results: unknown[] = [];
-    for (const envVar of envVars) {
-      const response = await fetch(
-        `https://api.vercel.com/v10/projects/${encodeURIComponent(projectId)}/env`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            key: envVar.key,
-            value: envVar.value,
-            target: envVar.target,
-            type: envVar.type ?? "plain",
-          }),
+    const payload = envVars.map((envVar) => ({
+      key: envVar.key,
+      value: envVar.value,
+      target: envVar.target,
+      type: envVar.type ?? "plain",
+    }));
+
+    const response = await fetchWithRetry(
+      `https://api.vercel.com/v10/projects/${encodeURIComponent(projectId)}/env?upsert=true`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(TOOL_FETCH_TIMEOUT_MS),
+      },
+      "set_vercel_env_vars",
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Vercel env var batch creation failed: ${response.status} ${response.statusText} - ${errorText}. attemptedKeys=[${payload
+          .map((item) => item.key)
+          .join(", ")}]`,
       );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Vercel env var creation failed: ${response.status} ${response.statusText} - ${errorText}`,
-        );
-      }
-
-      const json = (await response.json()) as unknown;
-      results.push(json);
     }
 
-    return { results };
+    const json = (await response.json()) as unknown;
+    return { results: Array.isArray(json) ? json : [json] };
   },
 };

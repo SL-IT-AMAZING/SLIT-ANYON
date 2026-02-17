@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { fetchWithRetry } from "@/ipc/utils/retryWithRateLimit";
 import { getVercelAccessToken } from "@/vercel_admin/vercel_management_client";
-import type { ToolSpec } from "./spec";
+import { TOOL_FETCH_TIMEOUT_MS, type ToolSpec } from "./spec";
 
 type AddVercelDomainInput = {
   projectId: string;
@@ -24,7 +25,7 @@ export const addVercelDomainTool: ToolSpec<
   async execute({ projectId, domain }) {
     const token = await getVercelAccessToken();
 
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `https://api.vercel.com/v10/projects/${encodeURIComponent(projectId)}/domains`,
       {
         method: "POST",
@@ -33,7 +34,9 @@ export const addVercelDomainTool: ToolSpec<
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: domain }),
+        signal: AbortSignal.timeout(TOOL_FETCH_TIMEOUT_MS),
       },
+      "add_vercel_domain",
     );
 
     if (!response.ok) {

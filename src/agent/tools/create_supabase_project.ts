@@ -5,7 +5,8 @@ import {
   getSupabaseClient,
   refreshSupabaseToken,
 } from "@/supabase_admin/supabase_management_client";
-import type { ToolSpec } from "./spec";
+import { fetchWithRetry } from "@/ipc/utils/retryWithRateLimit";
+import { TOOL_FETCH_TIMEOUT_MS, type ToolSpec } from "./spec";
 
 const logger = log.scope("tool-create-supabase-project");
 
@@ -51,19 +52,24 @@ export const createSupabaseProjectTool: ToolSpec<
 
     logger.info(`Creating Supabase project: ${name} (${region}, ${plan})`);
 
-    const response = await fetch("https://api.supabase.com/v1/projects", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      "https://api.supabase.com/v1/projects",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          region,
+          plan,
+          organization_id: organizationId,
+        }),
+        signal: AbortSignal.timeout(TOOL_FETCH_TIMEOUT_MS),
       },
-      body: JSON.stringify({
-        name,
-        region,
-        plan,
-        organization_id: organizationId,
-      }),
-    });
+      "create_supabase_project",
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

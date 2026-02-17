@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { fetchWithRetry } from "@/ipc/utils/retryWithRateLimit";
 import { readSettings } from "@/main/settings";
 import { refreshSupabaseToken } from "@/supabase_admin/supabase_management_client";
-import type { ToolSpec } from "./spec";
+import { TOOL_FETCH_TIMEOUT_MS, type ToolSpec } from "./spec";
 
 type ConfigureAuthInput = {
   projectRef: string;
@@ -51,14 +52,19 @@ export const configureAuthTool: ToolSpec<
       projectRef,
     )}/config/auth`;
 
-    const response = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      url,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(config),
+        signal: AbortSignal.timeout(TOOL_FETCH_TIMEOUT_MS),
       },
-      body: JSON.stringify(config),
-    });
+      "configure_auth",
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

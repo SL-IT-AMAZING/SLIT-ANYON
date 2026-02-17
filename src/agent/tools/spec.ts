@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const TOOL_FETCH_TIMEOUT_MS = 30_000;
+
 export interface ToolSpec<TInput = any, TOutput = any> {
   name: string;
   description: string;
