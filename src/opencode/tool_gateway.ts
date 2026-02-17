@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
 import {
-  createServer,
   type IncomingMessage,
   type Server,
   type ServerResponse,
+  createServer,
 } from "node:http";
 import type { AddressInfo } from "node:net";
 import log from "electron-log";
@@ -11,6 +11,9 @@ import { ALL_TOOLS } from "../agent/tools";
 import { zodToJsonSchema } from "../agent/tools/spec";
 
 const logger = log.scope("tool-gateway");
+const TOOL_GATEWAY_REQUEST_TIMEOUT_MS = 60_000;
+const TOOL_GATEWAY_HEADERS_TIMEOUT_MS = 10_000;
+const TOOL_GATEWAY_EXECUTION_TIMEOUT_MS = 45_000;
 
 type ToolSummary = {
   name: string;
@@ -49,6 +52,25 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(text);
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+}
+
 function getBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader) return null;
   const [scheme, token] = authHeader.split(" ");
@@ -59,7 +81,7 @@ function getBearerToken(authHeader: string | undefined): string | null {
 class ToolGateway {
   private server: Server | null = null;
   private port: number | null = null;
-  private token: string = "";
+  private token = "";
 
   async start(): Promise<{ port: number; token: string }> {
     if (this.server) {
@@ -128,7 +150,11 @@ class ToolGateway {
             });
           }
 
-          const output = await tool.execute(parsedInput.data);
+          const output = await withTimeout(
+            tool.execute(parsedInput.data),
+            TOOL_GATEWAY_EXECUTION_TIMEOUT_MS,
+            `Tool execution timed out after ${TOOL_GATEWAY_EXECUTION_TIMEOUT_MS}ms: ${toolName}`,
+          );
           const validatedOutput = tool.outputSchema.safeParse(output);
           if (!validatedOutput.success) {
             logger.error(
@@ -148,6 +174,9 @@ class ToolGateway {
           });
         }
       });
+
+      this.server.requestTimeout = TOOL_GATEWAY_REQUEST_TIMEOUT_MS;
+      this.server.headersTimeout = TOOL_GATEWAY_HEADERS_TIMEOUT_MS;
 
       this.server.listen(0, "127.0.0.1", () => {
         const addr = this.server!.address() as AddressInfo;
