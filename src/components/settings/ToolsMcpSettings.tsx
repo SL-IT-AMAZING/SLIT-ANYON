@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -10,11 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMcp, type Transport } from "@/hooks/useMcp";
+import { Switch } from "@/components/ui/switch";
+import { useDeepLink } from "@/contexts/DeepLinkContext";
+import { type Transport, useMcp } from "@/hooks/useMcp";
+import type { AddMcpServerDeepLinkData } from "@/ipc/deep_link_data";
 import { showError, showInfo, showSuccess } from "@/lib/toast";
 import { Edit2, Plus, Save, Trash2, X } from "lucide-react";
-import { useDeepLink } from "@/contexts/DeepLinkContext";
-import { AddMcpServerDeepLinkData } from "@/ipc/deep_link_data";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type KeyValue = { key: string; value: string };
 
@@ -60,6 +61,7 @@ function KeyValueEditor({
   isSaving: boolean;
   itemLabel?: string;
 }) {
+  const { t } = useTranslation(["settings", "common"]);
   const initial = useMemo(() => parseJsonToArray(json), [json]);
   const [envVars, setEnvVars] = useState<KeyValue[]>(initial);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -80,11 +82,11 @@ function KeyValueEditor({
 
   const handleAdd = async () => {
     if (!newKey.trim() || !newValue.trim()) {
-      showError("Both key and value are required");
+      showError(t("toasts.bothKeyValueRequired", { ns: "common" }));
       return;
     }
     if (envVars.some((e) => e.key === newKey.trim())) {
-      showError(`${itemLabel} with this key already exists`);
+      showError(t("toasts.duplicateKeyExists", { ns: "common", itemLabel }));
       return;
     }
     const next = [...envVars, { key: newKey.trim(), value: newValue.trim() }];
@@ -92,7 +94,7 @@ function KeyValueEditor({
     setNewKey("");
     setNewValue("");
     setIsAddingNew(false);
-    showSuccess(`${itemLabel}s saved`);
+    showSuccess(t("toasts.itemsSaved", { ns: "common", itemLabel }));
   };
 
   const handleEdit = (kv: KeyValue) => {
@@ -104,7 +106,7 @@ function KeyValueEditor({
   const handleSaveEdit = async () => {
     if (!editingKey) return;
     if (!editingKeyValue.trim() || !editingValue.trim()) {
-      showError("Both key and value are required");
+      showError(t("toasts.bothKeyValueRequired", { ns: "common" }));
       return;
     }
     if (
@@ -112,7 +114,7 @@ function KeyValueEditor({
         (e) => e.key === editingKeyValue.trim() && e.key !== editingKey,
       )
     ) {
-      showError(`${itemLabel} with this key already exists`);
+      showError(t("toasts.duplicateKeyExists", { ns: "common", itemLabel }));
       return;
     }
     const next = envVars.map((e) =>
@@ -124,7 +126,7 @@ function KeyValueEditor({
     setEditingKey(null);
     setEditingKeyValue("");
     setEditingValue("");
-    showSuccess(`${itemLabel}s saved`);
+    showSuccess(t("toasts.itemsSaved", { ns: "common", itemLabel }));
   };
 
   const handleCancelEdit = () => {
@@ -136,7 +138,7 @@ function KeyValueEditor({
   const handleDelete = async (key: string) => {
     const next = envVars.filter((e) => e.key !== key);
     await saveAll(next);
-    showSuccess(`${itemLabel}s saved`);
+    showSuccess(t("toasts.itemsSaved", { ns: "common", itemLabel }));
   };
 
   return (
@@ -147,7 +149,11 @@ function KeyValueEditor({
             <Label htmlFor={`env-new-key-${id}`}>Key</Label>
             <Input
               id={`env-new-key-${id}`}
-              placeholder={itemLabel === "Header" ? "Key" : "e.g., PATH"}
+              placeholder={
+                itemLabel === "Header"
+                  ? t("labels.key", { ns: "common" })
+                  : "e.g., PATH"
+              }
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
               autoFocus
@@ -159,7 +165,9 @@ function KeyValueEditor({
             <Input
               id={`env-new-value-${id}`}
               placeholder={
-                itemLabel === "Header" ? "Value" : "e.g., /usr/local/bin"
+                itemLabel === "Header"
+                  ? t("labels.value", { ns: "common" })
+                  : "e.g., /usr/local/bin"
               }
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
@@ -173,7 +181,9 @@ function KeyValueEditor({
               disabled={disabled || isSaving}
             >
               <Save size={14} />
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving
+                ? `${t("buttons.save", { ns: "common" })}...`
+                : t("buttons.save", { ns: "common" })}
             </Button>
             <Button
               onClick={() => {
@@ -185,7 +195,7 @@ function KeyValueEditor({
               size="sm"
             >
               <X size={14} />
-              Cancel
+              {t("buttons.cancel", { ns: "common" })}
             </Button>
           </div>
         </div>
@@ -197,14 +207,14 @@ function KeyValueEditor({
           disabled={disabled}
         >
           <Plus size={14} />
-          Add {itemLabel}
+          {t("buttons.add", { ns: "common" })} {itemLabel}
         </Button>
       )}
 
       <div className="space-y-2">
         {envVars.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No {itemLabel.toLowerCase()}s configured
+            {t("labels.noResults", { ns: "common" })}
           </p>
         ) : (
           envVars.map((kv) => (
@@ -218,14 +228,14 @@ function KeyValueEditor({
                     <Input
                       value={editingKeyValue}
                       onChange={(e) => setEditingKeyValue(e.target.value)}
-                      placeholder="Key"
+                      placeholder={t("labels.key", { ns: "common" })}
                       className="h-8"
                       disabled={disabled || isSaving}
                     />
                     <Input
                       value={editingValue}
                       onChange={(e) => setEditingValue(e.target.value)}
-                      placeholder="Value"
+                      placeholder={t("labels.value", { ns: "common" })}
                       className="h-8"
                       disabled={disabled || isSaving}
                     />
@@ -287,6 +297,7 @@ function KeyValueEditor({
 }
 
 export function ToolsMcpSettings() {
+  const { t } = useTranslation(["settings", "common"]);
   const {
     servers,
     toolsByServer,
@@ -313,7 +324,9 @@ export function ToolsMcpSettings() {
       if (lastDeepLink?.type === "add-mcp-server") {
         const deepLink = lastDeepLink as AddMcpServerDeepLinkData;
         const payload = deepLink.payload;
-        showInfo(`Prefilled ${payload.name} MCP server`);
+        showInfo(
+          t("tools.serverPrefilled", { ns: "settings", name: payload.name }),
+        );
         setName(payload.name);
         setTransport(payload.config.type);
         if (payload.config.type === "stdio") {
@@ -380,15 +393,17 @@ export function ToolsMcpSettings() {
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Name</Label>
+            <Label>{t("labels.name", { ns: "common" })}</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My MCP Server"
+              placeholder={t("tools.mcpServerName", { ns: "settings" })}
             />
           </div>
           <div>
-            <Label htmlFor="mcp-transport-select">Transport</Label>
+            <Label htmlFor="mcp-transport-select">
+              {t("labels.type", { ns: "common" })}
+            </Label>
             <select
               id="mcp-transport-select"
               data-testid="mcp-transport-select"
@@ -403,7 +418,7 @@ export function ToolsMcpSettings() {
           {transport === "stdio" && (
             <>
               <div>
-                <Label>Command</Label>
+                <Label>{t("labels.key", { ns: "common" })}</Label>
                 <Input
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
@@ -411,7 +426,7 @@ export function ToolsMcpSettings() {
                 />
               </div>
               <div>
-                <Label>Args</Label>
+                <Label>{t("labels.value", { ns: "common" })}</Label>
                 <Input
                   value={args}
                   onChange={(e) => setArgs(e.target.value)}
@@ -422,7 +437,7 @@ export function ToolsMcpSettings() {
           )}
           {transport === "http" && (
             <div className="col-span-2">
-              <Label>URL</Label>
+              <Label>{t("labels.url", { ns: "common" })}</Label>
               <Input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -432,16 +447,16 @@ export function ToolsMcpSettings() {
           )}
           <div className="flex items-center gap-2">
             <Switch
-              aria-label="Enabled"
+              aria-label={t("labels.enabled", { ns: "common" })}
               checked={enabled}
               onCheckedChange={setEnabled}
             />
-            <Label>Enabled</Label>
+            <Label>{t("labels.enabled", { ns: "common" })}</Label>
           </div>
         </div>
         <div>
           <Button onClick={onCreate} disabled={!name.trim()}>
-            Add Server
+            {t("buttons.add", { ns: "common" })} Server
           </Button>
         </div>
       </div>
@@ -468,14 +483,14 @@ export function ToolsMcpSettings() {
                   onCheckedChange={() => toggleServerEnabled(s.id, !!s.enabled)}
                 />
                 <Button variant="outline" onClick={() => deleteServer(s.id)}>
-                  Delete
+                  {t("buttons.delete", { ns: "common" })}
                 </Button>
               </div>
             </div>
             {s.transport === "stdio" && (
               <div className="mt-3">
                 <div className="text-sm font-medium mb-2">
-                  Environment Variables
+                  {t("tools.environmentVariables", { ns: "settings" })}
                 </div>
                 <KeyValueEditor
                   id={s.id}
@@ -493,7 +508,9 @@ export function ToolsMcpSettings() {
             )}
             {s.transport === "http" && (
               <div className="mt-3">
-                <div className="text-sm font-medium mb-2">Headers</div>
+                <div className="text-sm font-medium mb-2">
+                  {t("tools.headers", { ns: "settings" })}
+                </div>
                 <KeyValueEditor
                   id={s.id}
                   json={s.headersJson}
@@ -510,38 +527,46 @@ export function ToolsMcpSettings() {
               </div>
             )}
             <div className="mt-3 space-y-2">
-              {(toolsByServer[s.id] || []).map((t) => (
-                <div key={t.name} className="border rounded p-2">
+              {(toolsByServer[s.id] || []).map((tool) => (
+                <div key={tool.name} className="border rounded p-2">
                   <div className="flex items-center gap-4">
-                    <div className="font-mono text-sm truncate">{t.name}</div>
+                    <div className="font-mono text-sm truncate">
+                      {tool.name}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Select
-                        value={consents[`${s.id}:${t.name}`] || "ask"}
+                        value={consents[`${s.id}:${tool.name}`] || "ask"}
                         onValueChange={(v) =>
-                          onSetToolConsent(s.id, t.name, v as any)
+                          onSetToolConsent(s.id, tool.name, v as any)
                         }
                       >
                         <SelectTrigger className="w-[140px] h-8">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ask">Ask</SelectItem>
-                          <SelectItem value="always">Always allow</SelectItem>
-                          <SelectItem value="denied">Deny</SelectItem>
+                          <SelectItem value="ask">
+                            {t("tools.ask", { ns: "settings" })}
+                          </SelectItem>
+                          <SelectItem value="always">
+                            {t("tools.alwaysAllow", { ns: "settings" })}
+                          </SelectItem>
+                          <SelectItem value="denied">
+                            {t("tools.deny", { ns: "settings" })}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  {t.description && (
+                  {tool.description && (
                     <div className="mt-1 text-xs max-w-[500px] text-muted-foreground truncate">
-                      {t.description}
+                      {tool.description}
                     </div>
                   )}
                 </div>
               ))}
               {(toolsByServer[s.id] || []).length === 0 && (
                 <div className="text-xs text-muted-foreground">
-                  No tools discovered.
+                  {t("tools.noToolsDiscovered", { ns: "settings" })}
                 </div>
               )}
             </div>
@@ -549,7 +574,7 @@ export function ToolsMcpSettings() {
         ))}
         {servers.length === 0 && (
           <div className="text-sm text-muted-foreground">
-            No servers configured yet.
+            {t("tools.noServersConfigured", { ns: "settings" })}
           </div>
         )}
       </div>

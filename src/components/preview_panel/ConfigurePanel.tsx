@@ -1,51 +1,48 @@
-import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ipc } from "@/ipc/types";
+import { queryKeys } from "@/lib/queryKeys";
+import { showError, showSuccess } from "@/lib/toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useAtomValue } from "jotai";
 import {
-  Trash2,
+  ArrowRight,
   Edit2,
+  HelpCircle,
   Plus,
   Save,
+  Trash2,
   X,
-  HelpCircle,
-  ArrowRight,
 } from "lucide-react";
-import { showError, showSuccess } from "@/lib/toast";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { ipc } from "@/ipc/types";
-import { useNavigate } from "@tanstack/react-router";
-import { NeonConfigure } from "./NeonConfigure";
-import { queryKeys } from "@/lib/queryKeys";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const EnvironmentVariablesTitle = () => (
+const EnvironmentVariablesTitle = ({ t }: { t: any }) => (
   <div className="flex items-center gap-2">
-    <span className="text-lg font-semibold">Environment Variables</span>
+    <span className="text-lg font-semibold">{t("preview.envVariables")}</span>
     <span className="text-sm text-muted-foreground font-normal">Local</span>
     <Tooltip>
       <TooltipTrigger>
         <HelpCircle size={16} className="text-muted-foreground cursor-help" />
       </TooltipTrigger>
       <TooltipContent>
-        <p>
-          To modify environment variables for Supabase or production,
-          <br />
-          access your hosting provider's console and update them there.
-        </p>
+        <p>{t("preview.envVariablesHelpText")}</p>
       </TooltipContent>
     </Tooltip>
   </div>
 );
 
 export const ConfigurePanel = () => {
+  const { t } = useTranslation(["app", "common"]);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const queryClient = useQueryClient();
 
@@ -84,22 +81,22 @@ export const ConfigurePanel = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.appEnvVars.byApp({ appId: selectedAppId }),
       });
-      showSuccess("Environment variables saved");
+      showSuccess(t("preview.envVarsSaved"));
     },
     onError: (error) => {
-      showError(`Failed to save environment variables: ${error}`);
+      showError(t("preview.envVarsSaveFailed", { message: String(error) }));
     },
   });
 
   const handleAdd = useCallback(() => {
     if (!newKey.trim() || !newValue.trim()) {
-      showError("Both key and value are required");
+      showError(t("toasts.bothKeyValueRequired", { ns: "common" }));
       return;
     }
 
     // Check for duplicate keys
     if (envVars.some((envVar) => envVar.key === newKey.trim())) {
-      showError("Environment variable with this key already exists");
+      showError(t("toasts.duplicateKeyExists", { ns: "common" }));
       return;
     }
 
@@ -111,7 +108,7 @@ export const ConfigurePanel = () => {
     setNewKey("");
     setNewValue("");
     setIsAddingNew(false);
-  }, [newKey, newValue, envVars, saveEnvVarsMutation]);
+  }, [newKey, newValue, envVars, saveEnvVarsMutation, t]);
 
   const handleEdit = useCallback((envVar: { key: string; value: string }) => {
     setEditingKey(envVar.key);
@@ -121,7 +118,7 @@ export const ConfigurePanel = () => {
 
   const handleSaveEdit = useCallback(() => {
     if (!editingKeyValue.trim() || !editingValue.trim()) {
-      showError("Both key and value are required");
+      showError(t("toasts.bothKeyValueRequired", { ns: "common" }));
       return;
     }
 
@@ -132,7 +129,7 @@ export const ConfigurePanel = () => {
           envVar.key === editingKeyValue.trim() && envVar.key !== editingKey,
       )
     ) {
-      showError("Environment variable with this key already exists");
+      showError(t("toasts.duplicateKeyExists", { ns: "common" }));
       return;
     }
 
@@ -145,7 +142,14 @@ export const ConfigurePanel = () => {
     setEditingKey(null);
     setEditingKeyValue("");
     setEditingValue("");
-  }, [editingKey, editingKeyValue, editingValue, envVars, saveEnvVarsMutation]);
+  }, [
+    editingKey,
+    editingKeyValue,
+    editingValue,
+    envVars,
+    saveEnvVarsMutation,
+    t,
+  ]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingKey(null);
@@ -174,13 +178,13 @@ export const ConfigurePanel = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              <EnvironmentVariablesTitle />
+              <EnvironmentVariablesTitle t={t} />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
               <div className="text-sm text-muted-foreground">
-                Loading environment variables...
+                {t("labels.loading", { ns: "common" })}...
               </div>
             </div>
           </CardContent>
@@ -196,7 +200,7 @@ export const ConfigurePanel = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              <EnvironmentVariablesTitle />
+              <EnvironmentVariablesTitle t={t} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -218,13 +222,13 @@ export const ConfigurePanel = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              <EnvironmentVariablesTitle />
+              <EnvironmentVariablesTitle t={t} />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
               <div className="text-sm text-muted-foreground">
-                Select an app to manage environment variables
+                {t("preview.selectAppForEnvVars")}
               </div>
             </div>
           </CardContent>
@@ -238,7 +242,7 @@ export const ConfigurePanel = () => {
       <Card>
         <CardHeader>
           <CardTitle>
-            <EnvironmentVariablesTitle />
+            <EnvironmentVariablesTitle t={t} />
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -249,17 +253,19 @@ export const ConfigurePanel = () => {
                 <Label htmlFor="new-key">Key</Label>
                 <Input
                   id="new-key"
-                  placeholder="e.g., API_URL"
+                  placeholder={t("preview.envKeyPlaceholder")}
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
                   autoFocus
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-value">Value</Label>
+                <Label htmlFor="new-value">
+                  {t("labels.value", { ns: "common" })}
+                </Label>
                 <Input
                   id="new-value"
-                  placeholder="e.g., https://api.example.com"
+                  placeholder={t("preview.envValuePlaceholder")}
                   value={newValue}
                   onChange={(e) => setNewValue(e.target.value)}
                 />
@@ -271,11 +277,13 @@ export const ConfigurePanel = () => {
                   disabled={saveEnvVarsMutation.isPending}
                 >
                   <Save size={14} />
-                  {saveEnvVarsMutation.isPending ? "Saving..." : "Save"}
+                  {saveEnvVarsMutation.isPending
+                    ? t("labels.saving", { ns: "common" })
+                    : t("buttons.save", { ns: "common" })}
                 </Button>
                 <Button onClick={handleCancelAdd} variant="outline" size="sm">
                   <X size={14} />
-                  Cancel
+                  {t("buttons.cancel", { ns: "common" })}
                 </Button>
               </div>
             </div>
@@ -286,7 +294,7 @@ export const ConfigurePanel = () => {
               className="w-full"
             >
               <Plus size={14} />
-              Add Environment Variable
+              {t("preview.addEnvironmentVariable")}
             </Button>
           )}
 
@@ -294,7 +302,7 @@ export const ConfigurePanel = () => {
           <div className="space-y-2">
             {envVars.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                No environment variables configured
+                {t("preview.noEnvironmentVariables")}
               </p>
             ) : (
               envVars.map((envVar) => (
@@ -308,13 +316,13 @@ export const ConfigurePanel = () => {
                         <Input
                           value={editingKeyValue}
                           onChange={(e) => setEditingKeyValue(e.target.value)}
-                          placeholder="Key"
+                          placeholder={t("labels.key", { ns: "common" })}
                           className="h-8"
                         />
                         <Input
                           value={editingValue}
                           onChange={(e) => setEditingValue(e.target.value)}
-                          placeholder="Value"
+                          placeholder={t("labels.value", { ns: "common" })}
                           className="h-8"
                         />
                       </div>
@@ -396,12 +404,6 @@ export const ConfigurePanel = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Neon Database Configuration */}
-      {/* Neon Connector */}
-      <div className="grid grid-cols-1 gap-6">
-        <NeonConfigure />
-      </div>
     </div>
   );
 };

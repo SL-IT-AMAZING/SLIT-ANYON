@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Database } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -16,12 +17,13 @@ export function DatabaseSchemaTool({
   children,
   className,
 }: DatabaseSchemaToolProps) {
+  const { t } = useTranslation("chat");
   const content = typeof children === "string" ? children : "";
 
   return (
     <ToolCallCard
       icon={Database}
-      title="Database Schema"
+      title={t("tools.databaseSchema")}
       status={status}
       className={className}
     >

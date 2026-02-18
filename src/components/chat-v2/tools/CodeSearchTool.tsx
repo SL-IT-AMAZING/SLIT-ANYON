@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,12 +19,13 @@ export function CodeSearchTool({
   children,
   className,
 }: CodeSearchToolProps) {
+  const { t } = useTranslation("chat");
   const query = queryProp || node?.properties?.query || "";
 
   return (
     <ToolCallCard
       icon={Search}
-      title="Code Search"
+      title={t("tools.codeSearch")}
       subtitle={query ? `"${query}"` : undefined}
       status={status}
       className={className}

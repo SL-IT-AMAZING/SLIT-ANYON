@@ -14,7 +14,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { CodeView } from "./CodeView";
 import { ConfigurePanel } from "./ConfigurePanel";
 import { Console } from "./Console";
-import { PlanPanel } from "./PlanPanel";
 import { PreviewIframe } from "./PreviewIframe";
 import { Problems } from "./Problems";
 import { PublishPanel } from "./PublishPanel";
@@ -160,8 +159,6 @@ export function PreviewPanel({ minimal = false }: PreviewPanelProps) {
                 <PublishPanel />
               ) : previewMode === "security" ? (
                 <SecurityPanel />
-              ) : previewMode === "plan" ? (
-                <PlanPanel />
               ) : (
                 <Problems />
               )}

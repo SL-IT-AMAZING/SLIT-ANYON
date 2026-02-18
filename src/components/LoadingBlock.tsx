@@ -33,7 +33,6 @@ export const VanillaMarkdownParser = ({ content }: { content: string }) => {
   );
 };
 
-// Chat loader with human-like typing/deleting of rotating messages
 function ChatLoader() {
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
@@ -85,7 +84,7 @@ function ChatLoader() {
   }, [displayText, isDeleting, currentTextIndex, typingSpeed]);
 
   const renderFadingText = () => {
-    return displayText.split("").map((char, index) => {
+    return displayText.split("").map((char: string, index: number) => {
       const opacity = Math.min(
         0.8 + (index / (displayText.length || 1)) * 0.2,
         1,
@@ -129,7 +128,6 @@ interface LoadingBlockProps {
   isStreaming?: boolean;
 }
 
-// Instead of showing raw thinking content, render the chat loader while streaming.
 export function LoadingBlock({ isStreaming = false }: LoadingBlockProps) {
   if (!isStreaming) return null;
   return <ChatLoader />;

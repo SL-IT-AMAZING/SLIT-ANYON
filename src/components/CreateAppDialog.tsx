@@ -12,14 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCheckName } from "@/hooks/useCheckName";
 import { useCreateApp } from "@/hooks/useCreateApp";
-import { NEON_TEMPLATE_IDS, type Template } from "@/shared/templates";
+import type { Template } from "@/shared/templates";
 import { useSetAtom } from "jotai";
 import type React from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useRouter } from "@tanstack/react-router";
 
-import { neonTemplateHook } from "@/client_logic/template_hook";
 import { showError } from "@/lib/toast";
 import { Loader2 } from "lucide-react";
 
@@ -34,6 +34,7 @@ export function CreateAppDialog({
   onOpenChange,
   template,
 }: CreateAppDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const [appName, setAppName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,12 +58,6 @@ export function CreateAppDialog({
         name: appName.trim(),
         templateId: template?.id,
       });
-      if (template && NEON_TEMPLATE_IDS.has(template.id)) {
-        await neonTemplateHook({
-          appId: result.app.id,
-          appName: result.app.name,
-        });
-      }
       setSelectedAppId(result.app.id);
       // Navigate to the new app's first chat
       router.navigate({
@@ -88,27 +83,32 @@ export function CreateAppDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New App</DialogTitle>
+          <DialogTitle>{t("apps.createTitle", { ns: "app" })}</DialogTitle>
           <DialogDescription>
-            {`Create a new app using the ${template?.title} template.`}
+            {t("apps.createWithTemplate", {
+              ns: "app",
+              title: template?.title,
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="appName">App Name</Label>
+              <Label htmlFor="appName">
+                {t("labels.name", { ns: "common" })}
+              </Label>
               <Input
                 id="appName"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
-                placeholder="Enter app name..."
+                placeholder={t("apps.enterAppName", { ns: "app" })}
                 className={nameExists ? "border-red-500" : ""}
                 disabled={isSubmitting}
               />
               {nameExists && (
                 <p className="text-sm text-red-500">
-                  An app with this name already exists
+                  {t("apps.nameExists", { ns: "app" })}
                 </p>
               )}
             </div>
@@ -121,7 +121,7 @@ export function CreateAppDialog({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("buttons.cancel", { ns: "common" })}
             </Button>
             <Button
               type="submit"
@@ -131,7 +131,9 @@ export function CreateAppDialog({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {isSubmitting ? "Creating..." : "Create App"}
+              {isSubmitting
+                ? `${t("buttons.create", { ns: "common" })}...`
+                : t("apps.createApp", { ns: "app" })}
             </Button>
           </DialogFooter>
         </form>

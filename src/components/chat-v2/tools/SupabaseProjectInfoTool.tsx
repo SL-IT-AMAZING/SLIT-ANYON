@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Server } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -16,10 +17,11 @@ export function SupabaseProjectInfoTool({
   children,
   className,
 }: SupabaseProjectInfoToolProps) {
+  const { t } = useTranslation("chat");
   return (
     <ToolCallCard
       icon={Server}
-      title="Supabase Project Info"
+      title={t("tools.supabaseProjectInfo")}
       status={status}
       className={className}
     >

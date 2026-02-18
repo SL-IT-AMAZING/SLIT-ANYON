@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   annotatorModeAtom,
@@ -179,6 +180,7 @@ export const PreviewIframe = ({
   loading: boolean;
   minimal?: boolean;
 }) => {
+  const { t } = useTranslation(["app", "common"]);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const currentApp = useAtomValue(currentAppAtom);
   const { appUrl, originalUrl } = useAtomValue(appUrlAtom);
@@ -1374,7 +1376,7 @@ export const PreviewIframe = ({
                       render={
                         <ToggleGroupItem
                           value="desktop"
-                          aria-label="Desktop view"
+                          aria-label={t("aria.desktopView", { ns: "common" })}
                         />
                       }
                     >
@@ -1387,7 +1389,7 @@ export const PreviewIframe = ({
                       render={
                         <ToggleGroupItem
                           value="tablet"
-                          aria-label="Tablet view"
+                          aria-label={t("aria.tabletView", { ns: "common" })}
                         />
                       }
                     >
@@ -1400,7 +1402,7 @@ export const PreviewIframe = ({
                       render={
                         <ToggleGroupItem
                           value="mobile"
-                          aria-label="Mobile view"
+                          aria-label={t("aria.mobileView", { ns: "common" })}
                         />
                       }
                     >

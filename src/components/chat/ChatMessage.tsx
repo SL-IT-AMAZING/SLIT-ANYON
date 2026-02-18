@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { LogoSpinner } from "../chat-v2/LogoSpinner";
 import {
   INITIAL_VERBS,
@@ -38,6 +39,7 @@ interface ChatMessageProps {
 }
 
 const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
+  const { t } = useTranslation(["chat", "common"]);
   const { isStreaming } = useStreamChat();
   const appId = useAtomValue(selectedAppIdAtom);
   const { versions: liveVersions } = useVersions(appId);
@@ -163,7 +165,9 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                       <span className="hidden sm:inline"></span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {copied ? "Copied!" : "Copy"}
+                      {copied
+                        ? t("common:buttons.copied")
+                        : t("common:buttons.copy")}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -173,12 +177,12 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                     {message.approvalState === "approved" ? (
                       <>
                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                        <span>Approved</span>
+                        <span>{t("messages.approved")}</span>
                       </>
                     ) : message.approvalState === "rejected" ? (
                       <>
                         <XCircle className="h-4 w-4 text-muted-foreground" />
-                        <span>Rejected</span>
+                        <span>{t("messages.rejected")}</span>
                       </>
                     ) : null}
                   </div>
@@ -240,7 +244,7 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                             // noop
                           });
                       }}
-                      aria-label="Copy Request ID"
+                      aria-label={t("common:aria.copyRequestId")}
                       className="flex items-center space-x-1 px-1 py-0.5 hover:bg-accent rounded transition-colors duration-200 cursor-pointer"
                     />
                   }
@@ -251,13 +255,17 @@ const ChatMessage = ({ message, isLastMessage }: ChatMessageProps) => {
                     <Copy className="h-3 w-3" />
                   )}
                   <span className="text-xs">
-                    {copiedRequestId ? "Copied" : "Request ID"}
+                    {copiedRequestId
+                      ? t("common:buttons.copied")
+                      : t("common:aria.copyRequestId")}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
                   {copiedRequestId
-                    ? "Copied!"
-                    : `Copy Request ID: ${message.requestId.slice(0, 8)}...`}
+                    ? t("common:buttons.copied")
+                    : t("messages.copyRequestId", {
+                        id: message.requestId.slice(0, 8),
+                      })}
                 </TooltipContent>
               </Tooltip>
             )}

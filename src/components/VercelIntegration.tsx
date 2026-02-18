@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { showError, showSuccess } from "@/lib/toast";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function VercelIntegration() {
+  const { t } = useTranslation(["app", "common"]);
   const { settings, updateSettings } = useSettings();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
@@ -14,14 +16,12 @@ export function VercelIntegration() {
         vercelAccessToken: undefined,
       });
       if (result) {
-        showSuccess("Successfully disconnected from Vercel");
+        showSuccess(t("connect.vercel.disconnectSuccess"));
       } else {
-        showError("Failed to disconnect from Vercel");
+        showError(t("connect.vercel.disconnectFailed"));
       }
     } catch (err: any) {
-      showError(
-        err.message || "An error occurred while disconnecting from Vercel",
-      );
+      showError(err.message || t("connect.vercel.disconnectError"));
     } finally {
       setIsDisconnecting(false);
     }
@@ -37,10 +37,10 @@ export function VercelIntegration() {
     <div className="flex items-center justify-between">
       <div>
         <h3 className="text-sm font-medium text-muted-foreground">
-          Vercel Integration
+          {t("connect.vercel.title")}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Your account is connected to Vercel.
+          {t("connect.vercel.connectedDescription")}
         </p>
       </div>
 
@@ -51,7 +51,9 @@ export function VercelIntegration() {
         disabled={isDisconnecting}
         className="flex items-center gap-2"
       >
-        {isDisconnecting ? "Disconnecting..." : "Disconnect from Vercel"}
+        {isDisconnecting
+          ? t("connect.common.disconnecting")
+          : t("connect.common.disconnect")}
         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M24 22.525H0l12-21.05 12 21.05z" />
         </svg>

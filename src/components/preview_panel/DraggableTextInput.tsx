@@ -6,6 +6,7 @@ import {
 import { X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface DraggableTextInputProps {
   input: {
@@ -49,6 +50,7 @@ export const DraggableTextInput = ({
   color,
   containerRef,
 }: DraggableTextInputProps) => {
+  const { t } = useTranslation(["common"]);
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const elementRef = useRef<HTMLDivElement>(null);
@@ -118,7 +120,7 @@ export const DraggableTextInput = ({
             e.preventDefault();
             e.stopPropagation();
           }}
-          title="Drag to move"
+          title={t("tooltips.dragToMove")}
         >
           {/* Grip dots icon - smaller and more subtle */}
           <svg
@@ -157,7 +159,7 @@ export const DraggableTextInput = ({
           onKeyDown={(e) => onKeyDown(input.id, e, index)}
           className="pl-8 pr-8 py-2 bg-[var(--background)] border-2 rounded-md shadow-lg text-foreground focus:outline-none min-w-[200px] cursor-text"
           style={{ borderColor: color }}
-          placeholder="Type text..."
+          placeholder={t("placeholders.typeText")}
           ref={(e) => {
             if (e) inputRef.current[index] = e;
           }}
@@ -180,7 +182,7 @@ export const DraggableTextInput = ({
           >
             <X className="w-3 h-3 text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400" />
           </TooltipTrigger>
-          <TooltipContent>Remove text input</TooltipContent>
+          <TooltipContent>{t("tooltips.removeTextInput")}</TooltipContent>
         </Tooltip>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Check, Cpu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BasicTool } from "./BasicTool";
 import { getToolIcon } from "./tools/types";
 
@@ -38,13 +39,20 @@ export function TaskDelegationTool({
   permissionContent,
   className,
 }: TaskDelegationToolProps) {
+  const { t } = useTranslation("app");
+  const baseType = agentType.includes(" (")
+    ? agentType.slice(0, agentType.indexOf(" ("))
+    : agentType;
+  const translated = t(`agents.${baseType}.name`, { defaultValue: "" });
+  const displayName = translated || capitalize(agentType);
+
   return (
     <div className={cn("", className)}>
       <BasicTool
         icon={Cpu}
         defaultOpen={true}
         trigger={{
-          title: `${capitalize(agentType)} Agent`,
+          title: `${displayName} Agent`,
           subtitle: description,
         }}
         onSubtitleClick={onDescriptionClick}

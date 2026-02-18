@@ -21,25 +21,22 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useChats } from "@/hooks/useChats";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
-import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
-import { getEffectiveDefaultChatMode } from "@/lib/schemas";
 import { showError, showSuccess } from "@/lib/toast";
 import { formatDistanceToNow } from "date-fns";
 import { useAtom } from "jotai";
 import { Edit3, MoreVertical, PlusCircle, Search, Trash2 } from "lucide-react";
 
 import { useSelectChat } from "@/hooks/useSelectChat";
+import { useTranslation } from "react-i18next";
 import { ChatSearchDialog } from "./ChatSearchDialog";
 
 export function ChatList() {
+  const { t } = useTranslation("chat");
   const navigate = useNavigate();
   const [selectedChatId, setSelectedChatId] = useAtom(selectedChatIdAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
   const [, setIsDropdownOpen] = useAtom(dropdownOpenAtom);
-  const { settings, updateSettings, envVars } = useSettings();
-  const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
@@ -99,18 +96,6 @@ export function ChatList() {
         // Create a new chat with an empty title for now
         const chatId = await ipc.chat.createChat(effectiveAppId);
 
-        // Set the default chat mode for the new chat
-        // Only consider quota available if it has finished loading and is not exceeded
-        if (settings) {
-          const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
-          const effectiveDefaultMode = getEffectiveDefaultChatMode(
-            settings,
-            envVars,
-            freeAgentQuotaAvailable,
-          );
-          updateSettings({ selectedChatMode: effectiveDefaultMode });
-        }
-
         // Navigate to the new chat
         setSelectedChatId(chatId);
         navigate({
@@ -122,7 +107,9 @@ export function ChatList() {
         await invalidateChats();
       } catch (error) {
         // DO A TOAST
-        showError(`Failed to create new chat: ${(error as any).toString()}`);
+        showError(
+          t("actions.chatCreateFailed", { message: (error as any).toString() }),
+        );
       }
     } else {
       // If no app is selected, navigate to home page
@@ -133,7 +120,7 @@ export function ChatList() {
   const handleDeleteChat = async (chatId: number) => {
     try {
       await ipc.chat.deleteChat(chatId);
-      showSuccess("Chat deleted successfully");
+      showSuccess(t("actions.chatDeleted"));
 
       // If the deleted chat was selected, navigate to home
       if (selectedChatId === chatId) {
@@ -144,7 +131,9 @@ export function ChatList() {
       // Refresh the chat list
       await invalidateChats();
     } catch (error) {
-      showError(`Failed to delete chat: ${(error as any).toString()}`);
+      showError(
+        t("actions.chatDeleteFailed", { message: (error as any).toString() }),
+      );
     }
   };
 

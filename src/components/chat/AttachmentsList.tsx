@@ -1,5 +1,6 @@
 import type { FileAttachment } from "@/ipc/types";
 import { FileText, MessageSquare, Upload, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface AttachmentsListProps {
   attachments: FileAttachment[];
@@ -10,6 +11,7 @@ export function AttachmentsList({
   attachments,
   onRemove,
 }: AttachmentsListProps) {
+  const { t } = useTranslation(["common"]);
   if (attachments.length === 0) return null;
 
   return (
@@ -61,7 +63,7 @@ export function AttachmentsList({
           <button
             onClick={() => onRemove(index)}
             className="hover:bg-muted-foreground/20 rounded-full p-0.5"
-            aria-label="Remove attachment"
+            aria-label={t("aria.removeAttachment")}
           >
             <X size={12} />
           </button>

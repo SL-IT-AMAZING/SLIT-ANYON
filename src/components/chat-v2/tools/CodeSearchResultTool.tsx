@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -24,13 +25,14 @@ export function CodeSearchResultTool({
   children,
   className,
 }: CodeSearchResultToolProps) {
+  const { t } = useTranslation("chat");
   const filePaths = children ? parseFilePaths(children) : [];
   const fileCount = filePaths.length;
 
   return (
     <ToolCallCard
       icon={Search}
-      title="Code Search Result"
+      title={t("tools.codeSearchResult")}
       subtitle={fileCount > 0 ? `Found ${fileCount} files` : undefined}
       status={status}
       className={className}

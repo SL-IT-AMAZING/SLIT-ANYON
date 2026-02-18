@@ -25,6 +25,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BugScreenshotDialog } from "./BugScreenshotDialog";
 import { HelpBotDialog } from "./HelpBotDialog";
 
@@ -34,6 +35,7 @@ interface HelpDialogProps {
 }
 
 export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
@@ -153,7 +155,7 @@ ${debugInfo.logs.slice(-3_500) || "No logs available"}
 
     // Upload feature is currently disabled for ANYON
     // TODO: Implement ANYON-specific chat log upload when backend is ready
-    showError("Upload feature is currently disabled");
+    showError(t("toasts.uploadDisabled", { ns: "common" }));
   };
 
   const handleCancelReview = () => {
@@ -196,14 +198,14 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload Complete</DialogTitle>
+            <DialogTitle>{t("help.uploadComplete", { ns: "app" })}</DialogTitle>
           </DialogHeader>
           <div className="py-6 flex flex-col items-center space-y-4">
             <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-full">
               <CheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-lg font-medium">
-              Chat Logs Uploaded Successfully
+              {t("help.uploadedSuccessfully", { ns: "app" })}
             </h3>
             <div className="bg-muted p-3 rounded flex items-center space-x-2 font-mono text-sm">
               <FileIcon
@@ -219,13 +221,12 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               <span>{sessionId}</span>
             </div>
             <p className="text-center text-sm">
-              You must open a GitHub issue for us to investigate. Without a
-              linked issue, your report will not be reviewed.
+              {t("help.mustOpenGitHubIssue", { ns: "app" })}
             </p>
           </div>
           <DialogFooter>
             <Button onClick={handleOpenGitHubIssue} className="w-full">
-              Open GitHub Issue
+              {t("help.openGitHubIssue", { ns: "app" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -246,18 +247,18 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </Button>
-              OK to upload chat session?
+              {t("help.okToUpload", { ns: "app" })}
             </DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            Please review the information that will be submitted. Your chat
-            messages, system information, and a snapshot of your codebase will
-            be included.
+            {t("help.reviewBeforeSubmit", { ns: "app" })}
           </DialogDescription>
 
           <div className="space-y-4 overflow-y-auto flex-grow">
             <div className="border rounded-md p-3">
-              <h3 className="font-medium mb-2">Chat Messages</h3>
+              <h3 className="font-medium mb-2">
+                {t("help.chatMessages", { ns: "app" })}
+              </h3>
               <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto">
                 {chatLogsData.chat.messages.map((msg) => (
                   <div key={msg.id} className="mb-2">
@@ -271,21 +272,27 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
             </div>
 
             <div className="border rounded-md p-3">
-              <h3 className="font-medium mb-2">Codebase Snapshot</h3>
+              <h3 className="font-medium mb-2">
+                {t("help.codebaseSnapshot", { ns: "app" })}
+              </h3>
               <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto font-mono">
                 {chatLogsData.codebase}
               </div>
             </div>
 
             <div className="border rounded-md p-3">
-              <h3 className="font-medium mb-2">Logs</h3>
+              <h3 className="font-medium mb-2">
+                {t("help.logs", { ns: "app" })}
+              </h3>
               <div className="text-sm bg-muted rounded p-2 max-h-40 overflow-y-auto font-mono">
                 {chatLogsData.debugInfo.logs}
               </div>
             </div>
 
             <div className="border rounded-md p-3">
-              <h3 className="font-medium mb-2">System Information</h3>
+              <h3 className="font-medium mb-2">
+                {t("help.systemInformation", { ns: "app" })}
+              </h3>
               <div className="text-sm bg-muted rounded p-2 max-h-32 overflow-y-auto">
                 <p>ANYON Version: {chatLogsData.debugInfo.anyonVersion}</p>
                 <p>Platform: {chatLogsData.debugInfo.platform}</p>
@@ -304,7 +311,8 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               onClick={handleCancelReview}
               className="flex items-center"
             >
-              <XIcon className="mr-2 h-4 w-4" /> Cancel
+              <XIcon className="mr-2 h-4 w-4" />{" "}
+              {t("buttons.cancel", { ns: "common" })}
             </Button>
             <Button
               onClick={handleSubmitChatLogs}
@@ -312,10 +320,11 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               disabled={isUploading}
             >
               {isUploading ? (
-                "Uploading..."
+                t("help.uploading", { ns: "app" })
               ) : (
                 <>
-                  <CheckIcon className="mr-2 h-4 w-4" /> Upload
+                  <CheckIcon className="mr-2 h-4 w-4" />{" "}
+                  {t("help.upload", { ns: "app" })}
                 </>
               )}
             </Button>
@@ -329,10 +338,10 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Need help with ANYON?</DialogTitle>
+          <DialogTitle>{t("help.needHelp", { ns: "app" })}</DialogTitle>
         </DialogHeader>
         <DialogDescription className="">
-          If you need help or want to report an issue, here are some options:
+          {t("help.description", { ns: "app" })}
         </DialogDescription>
         <div className="flex flex-col space-y-4 w-full">
           {isAnyonProUser ? (
@@ -344,12 +353,11 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
                 }}
                 className="w-full py-6 border-primary/50 shadow-sm shadow-primary/10 transition-all hover:shadow-md hover:shadow-primary/15"
               >
-                <SparklesIcon className="mr-2 h-5 w-5" /> Chat with ANYON help
-                bot (Pro)
+                <SparklesIcon className="mr-2 h-5 w-5" />{" "}
+                {t("help.chatWithBot", { ns: "app" })}
               </Button>
               <p className="text-sm text-muted-foreground px-2">
-                Opens an in-app help chat assistant that searches through
-                ANYON's docs.
+                {t("help.botDescription", { ns: "app" })}
               </p>
             </div>
           ) : (
@@ -361,10 +369,11 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
                 }}
                 className="w-full py-6 bg-(--background-lightest)"
               >
-                <BookOpenIcon className="mr-2 h-5 w-5" /> Open Docs
+                <BookOpenIcon className="mr-2 h-5 w-5" />{" "}
+                {t("help.openDocs", { ns: "app" })}
               </Button>
               <p className="text-sm text-muted-foreground px-2">
-                Get help with common questions and issues.
+                {t("help.docsDescription", { ns: "app" })}
               </p>
             </div>
           )}
@@ -379,12 +388,13 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               disabled={isLoading}
               className="w-full py-6 bg-(--background-lightest)"
             >
-              <BugIcon className="mr-2 h-5 w-5" />{" "}
-              {isLoading ? "Preparing Report..." : "Report a Bug"}
+              <BugIcon className="mr-2 h-5 w-5" />
+              {isLoading
+                ? t("help.preparingReport", { ns: "app" })
+                : t("help.reportBug", { ns: "app" })}
             </Button>
             <p className="text-sm text-muted-foreground px-2">
-              We'll auto-fill your report with system info and logs. You can
-              review it for any sensitive info before submitting.
+              {t("help.bugDescription", { ns: "app" })}
             </p>
           </div>
           <div className="flex flex-col space-y-2">
@@ -394,12 +404,13 @@ Pro User ID: ${userBudget?.redactedUserId || "n/a"}
               disabled={isUploading || !selectedChatId}
               className="w-full py-6 bg-(--background-lightest)"
             >
-              <UploadIcon className="mr-2 h-5 w-5" />{" "}
-              {isUploading ? "Preparing Upload..." : "Upload Chat Session"}
+              <UploadIcon className="mr-2 h-5 w-5" />
+              {isUploading
+                ? t("help.preparingUpload", { ns: "app" })
+                : t("help.uploadSession", { ns: "app" })}
             </Button>
             <p className="text-sm text-muted-foreground px-2">
-              Share chat logs and code for troubleshooting. Data is used only to
-              resolve your issue and auto-deleted after a limited time.
+              {t("help.uploadDescription", { ns: "app" })}
             </p>
           </div>
         </div>

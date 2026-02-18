@@ -1,23 +1,18 @@
-import { McpToolsPicker } from "@/components/McpToolsPicker";
-import { useSettings } from "@/hooks/useSettings";
 import { AgentPicker } from "./AgentPicker";
-import { ChatModeSelector } from "./ChatModeSelector";
+import { BoosterToggle } from "./BoosterToggle";
 import { ContextFilesPicker } from "./ContextFilesPicker";
-import { ModelPicker } from "./ModelPicker";
+import { ThinkingLevelPicker } from "./ThinkingLevelPicker";
 
 export function ChatInputControls({
   showContextFilesPicker = false,
 }: {
   showContextFilesPicker?: boolean;
 }) {
-  const { settings } = useSettings();
-
   return (
     <div className="flex items-center gap-1">
-      <ChatModeSelector />
-      {settings?.selectedChatMode === "agent" && <McpToolsPicker />}
       <AgentPicker />
-      <ModelPicker />
+      <ThinkingLevelPicker />
+      <BoosterToggle />
       {showContextFilesPicker && <ContextFilesPicker />}
     </div>
   );

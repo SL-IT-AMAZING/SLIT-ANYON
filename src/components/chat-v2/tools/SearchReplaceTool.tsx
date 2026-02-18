@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { FileEdit } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 import { parseSearchReplaceBlocks } from "@/pro/shared/search_replace_parser";
@@ -22,6 +23,7 @@ export function SearchReplaceTool({
   children,
   className,
 }: SearchReplaceToolProps) {
+  const { t } = useTranslation("chat");
   const path = pathProp || node?.properties?.path || "";
   const description = descriptionProp || node?.properties?.description || "";
   const fileName = path ? path.split("/").pop() : "";
@@ -38,7 +40,7 @@ export function SearchReplaceTool({
   return (
     <ToolCallCard
       icon={FileEdit}
-      title="Search & Replace"
+      title={t("tools.searchReplace")}
       subtitle={fileName || undefined}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

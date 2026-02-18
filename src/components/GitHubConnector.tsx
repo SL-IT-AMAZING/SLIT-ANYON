@@ -29,6 +29,7 @@ import {
   Github,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type SyncResult =
   | { error: Error; handled?: boolean }
@@ -536,6 +537,7 @@ export function UnconnectedGitHubConnector({
   handleRepoSetupComplete,
   expanded,
 }: UnconnectedGitHubConnectorProps) {
+  const { t } = useTranslation("app");
   // --- Collapsible State ---
   const [isExpanded, setIsExpanded] = useState(expanded || false);
 
@@ -1073,7 +1075,7 @@ export function UnconnectedGitHubConnector({
                       className="w-full"
                       value={customBranchName}
                       onChange={(e) => setCustomBranchName(e.target.value)}
-                      placeholder="Enter branch name (e.g., feature/new-feature)"
+                      placeholder={t("git.branches.enterBranchName")}
                       disabled={isCreatingRepo}
                     />
                   )}

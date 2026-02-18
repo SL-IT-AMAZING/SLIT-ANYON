@@ -1,28 +1,25 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { ipc } from "@/ipc/types";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   chatMessagesByIdAtom,
   chatStreamCountByIdAtom,
   isStreamingByIdAtom,
 } from "../atoms/chatAtoms";
-import { ipc } from "@/ipc/types";
 
-import { ChatHeader } from "./chat/ChatHeader";
-import { MessagesList } from "./chat/MessagesList";
-import { ChatInput } from "./chat/ChatInput";
-import { VersionPane } from "./chat/VersionPane";
-import { ChatError } from "./chat/ChatError";
-import { FreeAgentQuotaBanner } from "./chat/FreeAgentQuotaBanner";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowDown } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
-import { isBasicAgentMode } from "@/lib/schemas";
+import { ArrowDown } from "lucide-react";
+import { ChatError } from "./chat/ChatError";
+import { ChatHeader } from "./chat/ChatHeader";
+import { ChatInput } from "./chat/ChatInput";
+import { MessagesList } from "./chat/MessagesList";
+import { VersionPane } from "./chat/VersionPane";
 
 interface ChatPanelProps {
   chatId?: number;
@@ -41,10 +38,7 @@ export function ChatPanel({
   const [error, setError] = useState<string | null>(null);
   const streamCountById = useAtomValue(chatStreamCountByIdAtom);
   const isStreamingById = useAtomValue(isStreamingByIdAtom);
-  const { settings, updateSettings } = useSettings();
-  const { isQuotaExceeded } = useFreeAgentQuota();
-  const showFreeAgentQuotaBanner =
-    settings && isBasicAgentMode(settings) && isQuotaExceeded;
+  const { settings } = useSettings();
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -191,13 +185,6 @@ export function ChatPanel({
             </div>
 
             <ChatError error={error} onDismiss={() => setError(null)} />
-            {showFreeAgentQuotaBanner && (
-              <FreeAgentQuotaBanner
-                onSwitchToBuildMode={() =>
-                  updateSettings({ selectedChatMode: "build" })
-                }
-              />
-            )}
             <ChatInput chatId={chatId} />
           </div>
         )}

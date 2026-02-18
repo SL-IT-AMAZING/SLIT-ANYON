@@ -1,11 +1,12 @@
-import { useAtom, useAtomValue } from "jotai";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { pendingVisualChangesAtom } from "@/atoms/previewAtoms";
 import { Button } from "@/components/ui/button";
 import { ipc } from "@/ipc/types";
-import { Check, X } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
 import { showError, showSuccess } from "@/lib/toast";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { useAtom, useAtomValue } from "jotai";
+import { Check, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface VisualEditingChangesDialogProps {
   onReset?: () => void;
@@ -16,6 +17,7 @@ export function VisualEditingChangesDialog({
   onReset,
   iframeRef,
 }: VisualEditingChangesDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [pendingChanges, setPendingChanges] = useAtom(pendingVisualChangesAtom);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,11 +75,16 @@ export function VisualEditingChangesDialog({
 
           setPendingChanges(new Map());
           textContentCache.current.clear();
-          showSuccess("Visual changes saved to source files");
+          showSuccess(t("preview.visualChangesSaved", { ns: "app" }));
           onReset?.();
         } catch (error) {
           console.error("Failed to save visual editing changes:", error);
-          showError(`Failed to save changes: ${error}`);
+          showError(
+            t("preview.visualChangesFailed", {
+              message: String(error),
+              ns: "app",
+            }),
+          );
         } finally {
           setIsSaving(false);
           setAllResponsesReceived(false);
@@ -94,6 +101,7 @@ export function VisualEditingChangesDialog({
     selectedAppId,
     onReset,
     setPendingChanges,
+    t,
   ]);
 
   if (pendingChanges.size === 0) return null;
@@ -137,12 +145,14 @@ export function VisualEditingChangesDialog({
 
         setPendingChanges(new Map());
         textContentCache.current.clear();
-        showSuccess("Visual changes saved to source files");
+        showSuccess(t("preview.visualChangesSaved", { ns: "app" }));
         onReset?.();
       }
     } catch (error) {
       console.error("Failed to save visual editing changes:", error);
-      showError(`Failed to save changes: ${error}`);
+      showError(
+        t("preview.visualChangesFailed", { message: String(error), ns: "app" }),
+      );
       setIsSaving(false);
       isWaitingForResponses.current = false;
     }
@@ -156,13 +166,21 @@ export function VisualEditingChangesDialog({
   return (
     <div className="bg-[var(--background)] border-b border-[var(--border)] px-2 lg:px-4 py-1.5 flex flex-col lg:flex-row items-start lg:items-center lg:justify-between gap-1.5 lg:gap-4 flex-wrap">
       <p className="text-xs lg:text-sm w-full lg:w-auto">
-        <span className="font-medium">{pendingChanges.size}</span> component
-        {pendingChanges.size > 1 ? "s" : ""} modified
+        <span className="font-medium">{pendingChanges.size}</span>{" "}
+        {t("preview.pendingChanges", {
+          count: pendingChanges.size,
+          ns: "app",
+        })}{" "}
+        {t("preview.modifiedComponents", { ns: "app" })}
       </p>
       <div className="flex gap-1 lg:gap-2 w-full lg:w-auto flex-wrap">
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
           <Check size={14} className="mr-1" />
-          <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+          <span>
+            {isSaving
+              ? t("preview.savingChanges", { ns: "app" })
+              : t("preview.saveChanges", { ns: "app" })}
+          </span>
         </Button>
         <Button
           size="sm"
@@ -171,7 +189,7 @@ export function VisualEditingChangesDialog({
           disabled={isSaving}
         >
           <X size={14} className="mr-1" />
-          <span>Discard</span>
+          <span>{t("preview.discardChanges", { ns: "app" })}</span>
         </Button>
       </div>
     </div>

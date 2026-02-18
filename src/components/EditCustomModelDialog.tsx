@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ipc } from "@/ipc/types";
 import { useSettings } from "@/hooks/useSettings";
-import { useMutation } from "@tanstack/react-query";
+import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
+import { useMutation } from "@tanstack/react-query";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Model {
   apiName: string;
@@ -40,6 +42,7 @@ export function EditCustomModelDialog({
   providerId,
   model,
 }: EditCustomModelDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [apiName, setApiName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
@@ -67,17 +70,19 @@ export function EditCustomModelDialog({
         providerId,
         description: description || undefined,
         maxOutputTokens: maxOutputTokens
-          ? parseInt(maxOutputTokens, 10)
+          ? Number.parseInt(maxOutputTokens, 10)
           : undefined,
-        contextWindow: contextWindow ? parseInt(contextWindow, 10) : undefined,
+        contextWindow: contextWindow
+          ? Number.parseInt(contextWindow, 10)
+          : undefined,
       };
 
       if (!newParams.apiName) throw new Error("Model API name is required");
       if (!newParams.displayName)
         throw new Error("Model display name is required");
-      if (maxOutputTokens && isNaN(newParams.maxOutputTokens ?? NaN))
+      if (maxOutputTokens && isNaN(newParams.maxOutputTokens ?? Number.NaN))
         throw new Error("Max Output Tokens must be a valid number");
-      if (contextWindow && isNaN(newParams.contextWindow ?? NaN))
+      if (contextWindow && isNaN(newParams.contextWindow ?? Number.NaN))
         throw new Error("Context Window must be a valid number");
 
       // First delete the old model
@@ -108,11 +113,11 @@ export function EditCustomModelDialog({
         try {
           await updateSettings({ selectedModel: newModel });
         } catch {
-          showError("Failed to update settings");
+          showError(t("customModel.updateFailed"));
           return; // stop closing dialog
         }
       }
-      showSuccess("Custom model updated successfully!");
+      showSuccess(t("customModel.updated"));
       onSuccess();
       onClose();
     },
@@ -138,16 +143,14 @@ export function EditCustomModelDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Edit Custom Model</DialogTitle>
-          <DialogDescription>
-            Modify the configuration of the selected language model.
-          </DialogDescription>
+          <DialogTitle>{t("customModel.title")}</DialogTitle>
+          <DialogDescription>{t("customModel.description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-model-id" className="text-right">
-                Model ID*
+                {t("customModel.modelId")}
               </Label>
               <Input
                 id="edit-model-id"
@@ -156,14 +159,14 @@ export function EditCustomModelDialog({
                   setApiName(e.target.value)
                 }
                 className="col-span-3"
-                placeholder="This must match the model expected by the API"
+                placeholder={t("customModel.modelIdPlaceholder")}
                 required
                 disabled={mutation.isPending}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-model-name" className="text-right">
-                Name*
+                {t("customModel.name")}
               </Label>
               <Input
                 id="edit-model-name"
@@ -172,14 +175,14 @@ export function EditCustomModelDialog({
                   setDisplayName(e.target.value)
                 }
                 className="col-span-3"
-                placeholder="Human-friendly name for the model"
+                placeholder={t("customModel.namePlaceholder")}
                 required
                 disabled={mutation.isPending}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-description" className="text-right">
-                Description
+                {t("labels.description", { ns: "common" })}
               </Label>
               <Input
                 id="edit-description"
@@ -188,13 +191,13 @@ export function EditCustomModelDialog({
                   setDescription(e.target.value)
                 }
                 className="col-span-3"
-                placeholder="Optional: Describe the model's capabilities"
+                placeholder={t("customModel.descriptionPlaceholder")}
                 disabled={mutation.isPending}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-max-output-tokens" className="text-right">
-                Max Output Tokens
+                {t("customModel.maxOutputTokens")}
               </Label>
               <Input
                 id="edit-max-output-tokens"
@@ -204,13 +207,13 @@ export function EditCustomModelDialog({
                   setMaxOutputTokens(e.target.value)
                 }
                 className="col-span-3"
-                placeholder="Optional: e.g., 4096"
+                placeholder={t("customModel.maxOutputPlaceholder")}
                 disabled={mutation.isPending}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-context-window" className="text-right">
-                Context Window
+                {t("customModel.contextWindow")}
               </Label>
               <Input
                 id="edit-context-window"
@@ -220,7 +223,7 @@ export function EditCustomModelDialog({
                   setContextWindow(e.target.value)
                 }
                 className="col-span-3"
-                placeholder="Optional: e.g., 8192"
+                placeholder={t("customModel.contextWindowPlaceholder")}
                 disabled={mutation.isPending}
               />
             </div>
@@ -232,10 +235,12 @@ export function EditCustomModelDialog({
               onClick={handleClose}
               disabled={mutation.isPending}
             >
-              Cancel
+              {t("customModel.cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Updating..." : "Update Model"}
+              {mutation.isPending
+                ? t("customModel.updating")
+                : t("customModel.updateModel")}
             </Button>
           </DialogFooter>
         </form>

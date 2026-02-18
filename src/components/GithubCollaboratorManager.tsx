@@ -28,6 +28,7 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Collaborator {
   login: string;
@@ -44,6 +45,7 @@ interface CollaboratorManagerProps {
 }
 
 export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [inviteUsername, setInviteUsername] = useState("");
@@ -60,11 +62,11 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
       setCollaborators(collabs);
     } catch (error: any) {
       console.error("Failed to load collaborators:", error);
-      showError("Failed to load collaborators: " + error.message);
+      showError(t("git.collaborators.loadFailed", { message: error.message }));
     } finally {
       setIsLoading(false);
     }
-  }, [appId]);
+  }, [appId, t]);
 
   // Now the effect depends on loadCollaborators, which only changes when appId changes
   useEffect(() => {
@@ -79,7 +81,9 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
     setIsInviting(true);
     try {
       await ipc.github.inviteCollaborator({ appId, username: trimmedUsername });
-      showSuccess(`Invited ${trimmedUsername} to the project.`);
+      showSuccess(
+        t("git.collaborators.invited", { username: trimmedUsername }),
+      );
       setInviteUsername("");
       // Reload list (though they might be pending)
       loadCollaborators();
@@ -98,7 +102,9 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
         appId,
         username: collaboratorToDelete,
       });
-      showSuccess(`Removed ${collaboratorToDelete} from the project.`);
+      showSuccess(
+        t("git.collaborators.removed", { username: collaboratorToDelete }),
+      );
       loadCollaborators();
     } catch (error: any) {
       showError(error.message);
@@ -118,10 +124,10 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
             <Users className="w-5 h-5" />
             <div>
               <CardTitle className="text-sm" data-testid="collaborators-header">
-                Collaborators
+                {t("git.collaborators.title")}
               </CardTitle>
               <CardDescription className="text-xs">
-                Manage who has access to this project via GitHub.
+                {t("git.collaborators.description")}
               </CardDescription>
             </div>
           </div>
@@ -141,7 +147,7 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
           {/* Invite Form */}
           <form onSubmit={handleInvite} className="flex gap-2">
             <Input
-              placeholder="GitHub username"
+              placeholder={t("common:placeholders.githubUsername")}
               value={inviteUsername}
               onChange={(e) => setInviteUsername(e.target.value)}
               disabled={isInviting}
@@ -153,11 +159,11 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
               disabled={isInviting || !inviteUsername.trim()}
             >
               {isInviting ? (
-                "Inviting..."
+                t("git.collaborators.inviting")
               ) : (
                 <>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Invite
+                  {t("git.collaborators.invite")}
                 </>
               )}
             </Button>
@@ -166,15 +172,15 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
           {/* Collaborators List */}
           <div className="space-y-2 mt-4">
             <h3 className="text-sm font-medium text-muted-foreground">
-              Current Team
+              {t("git.collaborators.currentTeam")}
             </h3>
             {isLoading ? (
               <div className="text-sm text-center py-4 text-muted-foreground">
-                Loading collaborators...
+                {t("common:labels.loading")}
               </div>
             ) : collaborators.length === 0 ? (
               <div className="text-sm text-center py-4 text-muted-foreground bg-muted rounded-md">
-                No collaborators found.
+                {t("git.collaborators.noCollaborators")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -194,10 +200,10 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
                         <p className="text-sm font-medium">{collab.login}</p>
                         <p className="text-xs text-muted-foreground">
                           {collab.permissions?.admin
-                            ? "Admin"
+                            ? t("git.collaborators.permAdmin")
                             : collab.permissions?.push
-                              ? "Editor"
-                              : "Viewer"}
+                              ? t("git.collaborators.permEditor")
+                              : t("git.collaborators.permViewer")}
                         </p>
                       </div>
                     </div>
@@ -226,22 +232,24 @@ export function GithubCollaboratorManager({ appId }: CollaboratorManagerProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove collaborator?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("git.collaborators.removeTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove{" "}
-              <span className="font-medium">{collaboratorToDelete}</span> from
-              this project? This action cannot be undone.
+              {t("git.collaborators.removeDescription", {
+                username: collaboratorToDelete,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="confirm-remove-collaborator-cancel">
-              Cancel
+              {t("common:buttons.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               data-testid="confirm-remove-collaborator"
               onClick={handleRemove}
             >
-              Remove
+              {t("git.collaborators.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

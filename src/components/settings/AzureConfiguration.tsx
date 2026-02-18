@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import type { AzureProviderSetting, UserSettings } from "@/lib/schemas";
 import { CheckCircle2, Info, KeyRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface AzureConfigurationProps {
   settings: UserSettings | null | undefined;
@@ -25,6 +26,7 @@ export function AzureConfiguration({
   envVars,
   updateSettings,
 }: AzureConfigurationProps) {
+  const { t } = useTranslation(["settings", "common"]);
   const existing =
     (settings?.providerSettings?.azure as AzureProviderSetting | undefined) ??
     {};
@@ -99,9 +101,8 @@ export function AzureConfiguration({
     if (hasSavedSettings) {
       return {
         variant: "default" as const,
-        title: "Azure OpenAI Configured",
-        description:
-          "ANYON will use the credentials saved in Settings for Azure OpenAI models.",
+        title: t("providers.azure.configuredTitle"),
+        description: t("providers.azure.configuredDescription"),
         icon: KeyRound,
         titleClassName: "",
         descriptionClassName: "",
@@ -111,9 +112,8 @@ export function AzureConfiguration({
     if (usingEnvironmentOnly) {
       return {
         variant: "default" as const,
-        title: "Using Environment Variables",
-        description:
-          "AZURE_API_KEY and AZURE_RESOURCE_NAME are set. Values saved below will override them.",
+        title: t("providers.azure.envVarsTitle"),
+        description: t("providers.azure.envVarsDescription"),
         icon: Info,
         titleClassName: "",
         descriptionClassName: "",
@@ -122,16 +122,15 @@ export function AzureConfiguration({
     }
     return {
       variant: "destructive" as const,
-      title: "Azure OpenAI Configuration Required",
-      description:
-        "Provide your Azure resource name and API key below, or configure the AZURE_API_KEY and AZURE_RESOURCE_NAME environment variables.",
+      title: t("providers.azure.requiredTitle"),
+      description: t("providers.azure.requiredDescription"),
       icon: Info,
       titleClassName: "text-red-800 dark:text-red-400",
       descriptionClassName: "text-red-800 dark:text-red-400",
       alertClassName:
         "border-red-200 bg-red-100 dark:border-red-800/50 dark:bg-red-800/20",
     };
-  }, [hasSavedSettings, usingEnvironmentOnly]);
+  }, [hasSavedSettings, usingEnvironmentOnly, t]);
 
   const StatusIcon = status.icon;
 
@@ -153,7 +152,7 @@ export function AzureConfiguration({
             htmlFor="azure-resource-name"
             className="block text-sm font-medium mb-1"
           >
-            Resource Name
+            {t("providers.azure.resourceName")}
           </label>
           <Input
             id="azure-resource-name"
@@ -163,7 +162,7 @@ export function AzureConfiguration({
               setSaved(false);
               setError(null);
             }}
-            placeholder="your-azure-openai-resource"
+            placeholder={t("providers.azure.resourceNamePlaceholder")}
             autoComplete="off"
           />
         </div>
@@ -172,7 +171,7 @@ export function AzureConfiguration({
             htmlFor="azure-api-key"
             className="block text-sm font-medium mb-1"
           >
-            API Key
+            {t("providers.azure.apiKeyLabel")}
           </label>
           <Input
             id="azure-api-key"
@@ -182,7 +181,7 @@ export function AzureConfiguration({
               setSaved(false);
               setError(null);
             }}
-            placeholder="Enter your Azure OpenAI API key"
+            placeholder={t("providers.azure.apiKeyPlaceholder")}
             autoComplete="off"
             type="password"
           />
@@ -191,11 +190,14 @@ export function AzureConfiguration({
 
       <div className="flex items-center gap-2">
         <Button onClick={handleSave} disabled={saving || !hasUnsavedChanges}>
-          {saving ? "Saving..." : "Save Settings"}
+          {saving
+            ? t("buttons.saving", { ns: "common" })
+            : t("buttons.save", { ns: "common" })}
         </Button>
         {saved && !error && (
           <span className="flex items-center text-green-600 text-sm">
-            <CheckCircle2 className="h-4 w-4 mr-1" /> Saved
+            <CheckCircle2 className="h-4 w-4 mr-1" />{" "}
+            {t("toasts.settingUpdated", { ns: "common" })}
           </span>
         )}
       </div>
@@ -203,17 +205,16 @@ export function AzureConfiguration({
       {!isConfigured && !error && (
         <Alert variant="default">
           <Info className="h-4 w-4" />
-          <AlertTitle>Configuration Needed</AlertTitle>
+          <AlertTitle>{t("providers.azure.configurationNeeded")}</AlertTitle>
           <AlertDescription>
-            Azure OpenAI requests require both a resource name and API key.
-            Enter them above or supply the environment variables instead.
+            {t("providers.azure.configurationDescription")}
           </AlertDescription>
         </Alert>
       )}
 
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Save Error</AlertTitle>
+          <AlertTitle>{t("providers.azure.saveError")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -224,7 +225,7 @@ export function AzureConfiguration({
           className="border rounded-lg px-4 bg-background"
         >
           <AccordionTrigger className="text-lg font-medium hover:no-underline cursor-pointer">
-            Environment Variables (optional)
+            {t("providers.azure.environmentVariablesTitle")}
           </AccordionTrigger>
           <AccordionContent className="pt-4 space-y-4">
             <div className="space-y-3 text-sm">
@@ -236,7 +237,9 @@ export function AzureConfiguration({
                   data-testid="azure-api-key-status"
                   className={`px-2 py-1 rounded text-xs font-medium ${envApiKey ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400"}`}
                 >
-                  {envApiKey ? "Set" : "Not Set"}
+                  {envApiKey
+                    ? t("providers.azure.envVarSet")
+                    : t("providers.azure.envVarNotSet")}
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-muted rounded border">
@@ -247,20 +250,15 @@ export function AzureConfiguration({
                   data-testid="azure-resource-name-status"
                   className={`px-2 py-1 rounded text-xs font-medium ${envResourceName ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400"}`}
                 >
-                  {envResourceName ? "Set" : "Not Set"}
+                  {envResourceName
+                    ? t("providers.azure.envVarSet")
+                    : t("providers.azure.envVarNotSet")}
                 </span>
               </div>
             </div>
             <div className="text-sm text-muted-foreground space-y-2">
-              <p>
-                You can continue to configure Azure via environment variables.
-                If both variables are present and no settings are saved, ANYON
-                will use them automatically.
-              </p>
-              <p>
-                Values saved in Settings take precedence over environment
-                variables. Restart ANYON after changing environment variables.
-              </p>
+              <p>{t("providers.azure.envVarsContinue")}</p>
+              <p>{t("providers.azure.envVarsOverride")}</p>
             </div>
           </AccordionContent>
         </AccordionItem>

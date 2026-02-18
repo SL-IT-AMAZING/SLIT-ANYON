@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Label } from "@/components/ui/label";
 
@@ -48,6 +49,7 @@ import { isSupabaseConnected } from "@/lib/schemas";
 import { ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 export function SupabaseConnector({ appId }: { appId: number }) {
+  const { t } = useTranslation("app");
   const { settings, refreshSettings } = useSettings();
   const { app, refreshApp } = useLoadApp(appId);
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
@@ -106,10 +108,12 @@ export function SupabaseConnector({ appId }: { appId: number }) {
         appId,
         organizationSlug,
       });
-      toast.success("Project connected to app successfully");
+      toast.success(t("connect.supabase.projectConnected"));
       await refreshApp();
     } catch (error) {
-      toast.error("Failed to connect project to app: " + error);
+      toast.error(
+        t("connect.supabase.projectConnectFailed", { message: String(error) }),
+      );
     }
   };
 
@@ -149,20 +153,22 @@ export function SupabaseConnector({ appId }: { appId: number }) {
   const handleUnsetProject = async () => {
     try {
       await unsetAppProject(appId);
-      toast.success("Project disconnected from app successfully");
+      toast.success(t("connect.supabase.projectDisconnected"));
       await refreshApp();
     } catch (error) {
       console.error("Failed to disconnect project:", error);
-      toast.error("Failed to disconnect project from app");
+      toast.error(t("connect.supabase.projectDisconnectFailed"));
     }
   };
 
   const handleDeleteOrganization = async (organizationSlug: string) => {
     try {
       await deleteOrganization({ organizationSlug });
-      toast.success("Organization disconnected successfully");
+      toast.success(t("connect.supabase.orgDisconnected"));
     } catch (error) {
-      toast.error("Failed to disconnect organization: " + error);
+      toast.error(
+        t("connect.supabase.orgDisconnectFailed", { message: String(error) }),
+      );
     }
   };
 
@@ -221,10 +227,14 @@ export function SupabaseConnector({ appId }: { appId: number }) {
                       appId,
                       organizationSlug: app.supabaseOrganizationSlug,
                     });
-                    toast.success("Branch selected");
+                    toast.success(t("connect.supabase.branchSelected"));
                     await refreshApp();
                   } catch (error) {
-                    toast.error("Failed to set branch: " + error);
+                    toast.error(
+                      t("connect.supabase.branchSelectFailed", {
+                        message: String(error),
+                      }),
+                    );
                   }
                 }}
                 disabled={isLoadingBranches || isSettingAppProject}
@@ -233,7 +243,9 @@ export function SupabaseConnector({ appId }: { appId: number }) {
                   id="supabase-branch-select"
                   data-testid="supabase-branch-select"
                 >
-                  <SelectValue placeholder="Select a branch" />
+                  <SelectValue
+                    placeholder={t("connect.supabase.selectBranch")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {branches.map((branch) => (
@@ -378,7 +390,9 @@ export function SupabaseConnector({ appId }: { appId: number }) {
                     onValueChange={(v) => v && handleProjectSelect(v)}
                   >
                     <SelectTrigger id="project-select">
-                      <SelectValue placeholder="Select a project" />
+                      <SelectValue
+                        placeholder={t("connect.supabase.selectProject")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(groupedProjects).map(

@@ -3,6 +3,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useRouter } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {} from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,11 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  type AzureProviderSetting,
-  type UserSettings,
-  type VertexProviderSetting,
-  hasAnyonProKey,
+import type {
+  AzureProviderSetting,
+  UserSettings,
+  VertexProviderSetting,
 } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 
@@ -27,6 +27,7 @@ interface ProviderSettingsPageProps {
 }
 
 export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
+  const { t } = useTranslation(["settings", "common"]);
   const {
     settings,
     envVars,
@@ -125,10 +126,6 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
     setIsSaving(true);
     setSaveError(null);
     try {
-      // Check if this is the first time user is setting up ANYON Pro
-      const isNewAnyonProSetup =
-        isAnyon && settings && !hasAnyonProKey(settings);
-
       const settingsUpdate: Partial<UserSettings> = {
         providerSettings: {
           ...settings?.providerSettings,
@@ -142,10 +139,6 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
       };
       if (isAnyon) {
         settingsUpdate.enableAnyonPro = true;
-        // Set default chat mode to local-agent when user upgrades to pro
-        if (isNewAnyonProSetup) {
-          settingsUpdate.defaultChatMode = "local-agent";
-        }
       }
       await updateSettings(settingsUpdate);
       setApiKeyInput(""); // Clear input on success
@@ -230,16 +223,18 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
           >
             <ArrowLeft className="h-4 w-4" />
-            Go Back
+            {t("buttons.back", { ns: "common" })}
           </Button>
           <h1 className="text-3xl font-bold text-foreground mr-3 mb-6">
-            Configure Provider
+            {t("providers.configureProvider")}
           </h1>
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error Loading Provider Details</AlertTitle>
+            <AlertTitle>{t("providers.errorLoadingTitle")}</AlertTitle>
             <AlertDescription>
-              Could not load provider data: {providersError.message}
+              {t("providers.errorLoadingDescription", {
+                error: providersError.message,
+              })}
             </AlertDescription>
           </Alert>
         </div>
@@ -259,16 +254,16 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
             className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
           >
             <ArrowLeft className="h-4 w-4" />
-            Go Back
+            {t("buttons.back", { ns: "common" })}
           </Button>
           <h1 className="text-3xl font-bold text-foreground mr-3 mb-6">
-            Provider Not Found
+            {t("providers.notFound")}
           </h1>
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{t("labels.error", { ns: "common" })}</AlertTitle>
             <AlertDescription>
-              The provider with ID "{provider}" could not be found.
+              {t("providers.notFoundDescription", { provider })}
             </AlertDescription>
           </Alert>
         </div>
@@ -295,9 +290,11 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
           </div>
         ) : settingsError ? (
           <Alert variant="destructive">
-            <AlertTitle>Error Loading Settings</AlertTitle>
+            <AlertTitle>{t("providers.errorLoadingSettings")}</AlertTitle>
             <AlertDescription>
-              Could not load configuration data: {settingsError.message}
+              {t("providers.errorLoadingSettingsDescription", {
+                error: settingsError.message,
+              })}
             </AlertDescription>
           </Alert>
         ) : (
@@ -321,13 +318,13 @@ export function ProviderSettingsPage({ provider }: ProviderSettingsPageProps) {
         {isAnyon && !settingsLoading && (
           <div className="mt-6 flex items-center justify-between p-4 bg-(--background-lightest) rounded-lg border">
             <div>
-              <h3 className="font-medium">Enable ANYON Pro</h3>
+              <h3 className="font-medium">{t("providers.enableAnyonPro")}</h3>
               <p className="text-sm text-muted-foreground">
-                Toggle to enable ANYON Pro
+                {t("providers.enableAnyonProDescription")}
               </p>
             </div>
             <Switch
-              aria-label="Enable ANYON Pro"
+              aria-label={t("aria.enableAnyonPro", { ns: "common" })}
               checked={settings?.enableAnyonPro}
               onCheckedChange={handleToggleAnyonPro}
               disabled={isSaving}

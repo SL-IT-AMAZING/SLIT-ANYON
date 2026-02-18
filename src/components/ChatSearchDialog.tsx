@@ -1,14 +1,15 @@
+import { useSearchChats } from "@/hooks/useSearchChats";
+import type { ChatSearchResult, ChatSummary } from "@/lib/schemas";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CommandDialog,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
+  CommandList,
 } from "./ui/command";
-import { useState, useEffect } from "react";
-import { useSearchChats } from "@/hooks/useSearchChats";
-import type { ChatSummary, ChatSearchResult } from "@/lib/schemas";
 
 type ChatSearchDialogProps = {
   open: boolean;
@@ -25,6 +26,7 @@ export function ChatSearchDialog({
   onSelectChat,
   allChats,
 }: ChatSearchDialogProps) {
+  const { t } = useTranslation("chat");
   const [searchQuery, setSearchQuery] = useState<string>("");
   function useDebouncedValue<T>(value: T, delay: number): T {
     const [debounced, setDebounced] = useState<T>(value);
@@ -106,12 +108,12 @@ export function ChatSearchDialog({
       filter={commandFilter}
     >
       <CommandInput
-        placeholder="Search chats"
+        placeholder={t("ui.searchChats")}
         value={searchQuery}
         onValueChange={setSearchQuery}
       />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>{t("ui.noResultsFound")}</CommandEmpty>
         <CommandGroup heading="Chats">
           {chatsToShow.map((chat) => {
             const isSearch = searchQuery.trim() !== "";
@@ -131,14 +133,11 @@ export function ChatSearchDialog({
                 onSelect={() =>
                   onSelectChat({ chatId: chat.id, appId: chat.appId })
                 }
-                value={
-                  (chat.title || "Untitled Chat") +
-                  (snippet ? ` ${snippet.raw}` : "")
-                }
+                value={`${chat.title || t("ui.untitledChat")}${snippet ? ` ${snippet.raw}` : ""}`}
                 keywords={snippet ? [snippet.raw] : []}
               >
                 <div className="flex flex-col">
-                  <span>{chat.title || "Untitled Chat"}</span>
+                  <span>{chat.title || t("ui.untitledChat")}</span>
                   {snippet && (
                     <span className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {snippet.before}

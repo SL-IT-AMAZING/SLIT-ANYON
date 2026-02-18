@@ -109,7 +109,7 @@ export function SessionTurn({
     >
       {hasUserMessage && (
         <div className="sticky top-0 z-10 bg-background pb-1">
-          <div className="ml-auto max-w-[92%] rounded-xl border border-border/70 bg-muted/35 px-3 py-1.5">
+          <div className="ml-auto w-fit max-w-[92%] rounded-xl border border-border/70 bg-muted/35 px-3 py-1.5">
             <div className="text-sm text-foreground whitespace-pre-wrap break-words">
               {userMessage}
             </div>
@@ -131,7 +131,7 @@ export function SessionTurn({
           >
             {working && <LogoSpinner variant="strokeLoop" size={16} />}
 
-            <span className="truncate">
+            <span className={cn("truncate", working && "animate-shimmer")}>
               {working
                 ? statusText || "Thinking"
                 : stepsExpanded
@@ -217,10 +217,6 @@ export function SessionTurn({
 
       {hasResponse && (
         <div className="pt-4 space-y-3">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Response
-          </h3>
-
           {response && (
             <div className="text-sm">
               <MarkdownContent content={response} />

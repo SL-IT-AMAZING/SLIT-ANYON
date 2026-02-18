@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,13 +19,14 @@ export function DeleteTool({
   children,
   className,
 }: DeleteToolProps) {
+  const { t } = useTranslation("chat");
   const path = pathProp || node?.properties?.path || "";
   const fileName = path ? path.split("/").pop() : "";
 
   return (
     <ToolCallCard
       icon={Trash2}
-      title="Delete"
+      title={t("tools.delete")}
       subtitle={fileName || undefined}
       status={status}
       metadata={path ? [{ label: "path", value: path }] : undefined}

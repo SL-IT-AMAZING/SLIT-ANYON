@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
 import { useCustomLanguageModelProvider } from "@/hooks/useCustomLanguageModelProvider";
 import type { LanguageModelProvider } from "@/ipc/types";
+import { Loader2 } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface CreateCustomProviderDialogProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export function CreateCustomProviderDialog({
   onSuccess,
   editingProvider = null,
 }: CreateCustomProviderDialogProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [apiBaseUrl, setApiBaseUrl] = useState("");
@@ -108,72 +111,74 @@ export function CreateCustomProviderDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? "Edit Custom Provider" : "Add Custom Provider"}
+            {isEditMode
+              ? t("customProvider.editTitle")
+              : t("customProvider.title")}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? "Update your custom language model provider configuration."
-              : "Connect to a custom language model provider API."}
+              ? t("customProvider.editDescription")
+              : t("customProvider.createDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="id">Provider ID</Label>
+            <Label htmlFor="id">{t("customProvider.providerId")}</Label>
             <Input
               id="id"
               value={id}
               onChange={(e) => setId(e.target.value)}
-              placeholder="E.g., my-provider"
+              placeholder={t("customProvider.idPlaceholder")}
               required
               disabled={isLoading || isEditMode}
             />
             <p className="text-xs text-muted-foreground">
-              A unique identifier for this provider (no spaces).
+              {t("customProvider.idHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Display Name</Label>
+            <Label htmlFor="name">{t("customProvider.displayName")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="E.g., My Provider"
+              placeholder={t("customProvider.namePlaceholder")}
               required
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              The name that will be displayed in the UI.
+              {t("customProvider.nameHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="apiBaseUrl">API Base URL</Label>
+            <Label htmlFor="apiBaseUrl">{t("customProvider.apiBaseUrl")}</Label>
             <Input
               id="apiBaseUrl"
               value={apiBaseUrl}
               onChange={(e) => setApiBaseUrl(e.target.value)}
-              placeholder="E.g., https://api.example.com/v1"
+              placeholder={t("customProvider.baseUrlPlaceholder")}
               required
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              The base URL for the API endpoint.
+              {t("customProvider.apiBaseUrlHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="envVarName">Environment Variable (Optional)</Label>
+            <Label htmlFor="envVarName">{t("customProvider.envVar")}</Label>
             <Input
               id="envVarName"
               value={envVarName}
               onChange={(e) => setEnvVarName(e.target.value)}
-              placeholder="E.g., MY_PROVIDER_API_KEY"
+              placeholder={t("customProvider.envVarPlaceholder")}
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Environment variable name for the API key.
+              {t("customProvider.envVarHelp")}
             </p>
           </div>
 
@@ -193,17 +198,17 @@ export function CreateCustomProviderDialog({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              {t("customProvider.cancel")}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading
                 ? isEditMode
-                  ? "Updating..."
-                  : "Adding..."
+                  ? t("customProvider.updating")
+                  : t("customProvider.adding")
                 : isEditMode
-                  ? "Update Provider"
-                  : "Add Provider"}
+                  ? t("customProvider.updateButton")
+                  : t("customProvider.addButton")}
             </Button>
           </div>
         </form>

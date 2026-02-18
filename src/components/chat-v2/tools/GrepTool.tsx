@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -26,6 +27,7 @@ export function GrepTool({
   children,
   className,
 }: GrepToolProps) {
+  const { t } = useTranslation("chat");
   const query = queryProp || node?.properties?.query || "";
   const includePattern = includeProp || node?.properties?.include || "";
   const excludePattern = excludeProp || node?.properties?.exclude || "";
@@ -50,7 +52,7 @@ export function GrepTool({
   return (
     <ToolCallCard
       icon={Search}
-      title="Grep"
+      title={t("tools.grep")}
       subtitle={query ? `"${query}"` : undefined}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

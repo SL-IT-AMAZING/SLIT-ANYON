@@ -27,6 +27,7 @@ import {
 } from "lexical-beautiful-mentions";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { forwardRef } from "react";
+import { useTranslation } from "react-i18next";
 import { HISTORY_TRIGGER, HistoryNavigation } from "./HistoryNavigation";
 
 // Define the theme for mentions
@@ -271,11 +272,13 @@ export function LexicalChatInput({
   onSubmit,
   onPaste,
   excludeCurrentApp,
-  placeholder = "Ask ANYON to build...",
+  placeholder: placeholderProp,
   disabled = false,
   disableSendButton,
   messageHistory = [],
 }: LexicalChatInputProps) {
+  const { t } = useTranslation("chat");
+  const placeholder = placeholderProp ?? t("input.placeholder");
   const { apps } = useLoadApps();
   const { prompts } = usePrompts();
   const [shouldClear, setShouldClear] = useState(false);

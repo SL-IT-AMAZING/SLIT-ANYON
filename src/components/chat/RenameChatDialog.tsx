@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { ipc } from "@/ipc/types";
-import { showError, showSuccess } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface RenameChatDialogProps {
   chatId: number;
@@ -28,6 +29,7 @@ export function RenameChatDialog({
   onOpenChange,
   onRename,
 }: RenameChatDialogProps) {
+  const { t } = useTranslation(["chat", "common"]);
   const [newTitle, setNewTitle] = useState("");
 
   // Reset title when dialog opens
@@ -50,7 +52,7 @@ export function RenameChatDialog({
         chatId,
         title: newTitle.trim(),
       });
-      showSuccess("Chat renamed successfully");
+      showSuccess(t("actions.chatRenamed"));
 
       // Call the parent's onRename callback to refresh the chat list
       onRename();
@@ -58,7 +60,9 @@ export function RenameChatDialog({
       // Close the dialog
       handleOpenChange(false);
     } catch (error) {
-      showError(`Failed to rename chat: ${(error as any).toString()}`);
+      showError(
+        t("actions.chatRenameFailed", { message: (error as any).toString() }),
+      );
     }
   };
 
@@ -70,20 +74,20 @@ export function RenameChatDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename Chat</DialogTitle>
-          <DialogDescription>Enter a new name for this chat.</DialogDescription>
+          <DialogTitle>{t("actions.renameChat")}</DialogTitle>
+          <DialogDescription>{t("actions.enterChatTitle")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="chat-title" className="text-right">
-              Title
+              {t("common:labels.title")}
             </Label>
             <Input
               id="chat-title"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               className="col-span-3"
-              placeholder="Enter chat title..."
+              placeholder={t("actions.enterChatTitle")}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSave();
@@ -94,10 +98,10 @@ export function RenameChatDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t("common:buttons.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={!newTitle.trim()}>
-            Save
+            {t("common:buttons.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

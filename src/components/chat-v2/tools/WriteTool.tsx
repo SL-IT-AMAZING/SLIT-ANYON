@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { FilePlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -20,6 +21,7 @@ export function WriteTool({
   children,
   className,
 }: WriteToolProps) {
+  const { t } = useTranslation("chat");
   const path = pathProp || node?.properties?.path || "";
   const description = descriptionProp || node?.properties?.description || "";
   const fileName = path ? path.split("/").pop() : "";
@@ -31,7 +33,7 @@ export function WriteTool({
   return (
     <ToolCallCard
       icon={FilePlus}
-      title="Write"
+      title={t("tools.write")}
       subtitle={fileName || undefined}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { ipc } from "@/ipc/types";
 import { useSettings } from "@/hooks/useSettings";
-import { CommunityCodeConsentDialog } from "./CommunityCodeConsentDialog";
+import { ipc } from "@/ipc/types";
 import type { Template } from "@/shared/templates";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Card, CardContent } from "./ui/card";
-import { showWarning } from "@/lib/toast";
+import { useNavigate } from "@tanstack/react-router";
 import { Github } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { CommunityCodeConsentDialog } from "./CommunityCodeConsentDialog";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 
 interface TemplateCardProps {
   template: Template;
@@ -22,11 +22,6 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
   const handleCardClick = () => {
     if (!template.isOfficial && !settings?.acceptedCommunityCode) {
       setShowConsentDialog(true);
-      return;
-    }
-
-    if (template.requiresNeon && !settings?.neon?.accessToken) {
-      showWarning("Please connect your Neon account to use this template.");
       return;
     }
 

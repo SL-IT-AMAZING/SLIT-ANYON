@@ -1,14 +1,30 @@
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import { SidebarToggle } from "@/components/SidebarToggle";
+import { buttonVariants } from "@/components/ui/button";
+import { useChats } from "@/hooks/useChats";
+import { useCheckoutVersion } from "@/hooks/useCheckoutVersion";
+import { useCurrentBranch } from "@/hooks/useCurrentBranch";
+import { useRenameBranch } from "@/hooks/useRenameBranch";
+import { useStreamChat } from "@/hooks/useStreamChat";
+import { useVersions } from "@/hooks/useVersions";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { isAnyCheckoutVersionInProgressAtom } from "@/store/appAtoms";
+import { useRouter } from "@tanstack/react-router";
+import { useAtom, useAtomValue } from "jotai";
 import {
-  PanelRightOpen,
-  History,
-  PlusCircle,
   GitBranch,
+  History,
   Info,
+  PanelRightOpen,
+  PlusCircle,
 } from "lucide-react";
 import { PanelRightClose } from "lucide-react";
-import { useAtom, useAtomValue } from "jotai";
-import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useVersions } from "@/hooks/useVersions";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { LoadingBar } from "../ui/LoadingBar";
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -16,18 +32,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { ipc } from "@/ipc/types";
-import { useRouter } from "@tanstack/react-router";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
-import { useChats } from "@/hooks/useChats";
-import { showError, showSuccess } from "@/lib/toast";
-import { useEffect } from "react";
-import { useStreamChat } from "@/hooks/useStreamChat";
-import { useCurrentBranch } from "@/hooks/useCurrentBranch";
-import { useCheckoutVersion } from "@/hooks/useCheckoutVersion";
-import { useRenameBranch } from "@/hooks/useRenameBranch";
-import { isAnyCheckoutVersionInProgressAtom } from "@/store/appAtoms";
-import { LoadingBar } from "../ui/LoadingBar";
 import { UncommittedFilesBanner } from "./UncommittedFilesBanner";
 
 interface ChatHeaderProps {
@@ -43,6 +47,7 @@ export function ChatHeader({
   onTogglePreview,
   onVersionClick,
 }: ChatHeaderProps) {
+  const { t } = useTranslation("chat");
   const appId = useAtomValue(selectedAppIdAtom);
   const { versions, loading: versionsLoading } = useVersions(appId);
   const { navigate } = useRouter();
@@ -78,7 +83,7 @@ export function ChatHeader({
     // If this throws, it will automatically show an error toast
     await renameBranch({ oldBranchName: "master", newBranchName: "main" });
 
-    showSuccess("Master branch renamed to main");
+    showSuccess(t("actions.masterRenamed"));
   };
 
   const handleNewChat = async () => {
@@ -92,7 +97,9 @@ export function ChatHeader({
         });
         await invalidateChats();
       } catch (error) {
-        showError(`Failed to create new chat: ${(error as any).toString()}`);
+        showError(
+          t("actions.chatCreateFailed", { message: (error as any).toString() }),
+        );
       }
     } else {
       navigate({ to: "/" });
@@ -123,14 +130,12 @@ export function ChatHeader({
                         <span className="flex items-center  gap-1">
                           {isAnyCheckoutVersionInProgress ? (
                             <>
-                              <span>
-                                Please wait, switching back to latest version...
-                              </span>
+                              <span>{t("ui.pleaseWaitSwitching")}</span>
                             </>
                           ) : (
                             <>
-                              <strong>Warning:</strong>
-                              <span>You are not on a branch</span>
+                              <strong>{t("ui.warning")}:</strong>
+                              <span>{t("ui.notOnBranch")}</span>
                               <Info size={14} />
                             </>
                           )}
@@ -139,8 +144,8 @@ export function ChatHeader({
                       <TooltipContent>
                         <p>
                           {isAnyCheckoutVersionInProgress
-                            ? "Version checkout is currently in progress"
-                            : "Checkout main branch, otherwise changes will not be saved properly"}
+                            ? t("ui.checkoutInProgress")
+                            : t("ui.checkoutMainBranch")}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -149,10 +154,10 @@ export function ChatHeader({
               )}
               {currentBranchName && currentBranchName !== "<no-branch>" && (
                 <span>
-                  You are on branch: <strong>{currentBranchName}</strong>.
+                  {t("ui.youAreOnBranch")} <strong>{currentBranchName}</strong>.
                 </span>
               )}
-              {branchInfoLoading && <span>Checking branch...</span>}
+              {branchInfoLoading && <span>{t("ui.checkingBranch")}</span>}
             </span>
           </div>
           {currentBranchName === "master" ? (
@@ -162,7 +167,7 @@ export function ChatHeader({
               onClick={handleRenameMasterToMain}
               disabled={isRenamingBranch || branchInfoLoading}
             >
-              {isRenamingBranch ? "Renaming..." : "Rename master to main"}
+              {isRenamingBranch ? t("ui.renaming") : t("ui.renameToMain")}
             </Button>
           ) : isAnyCheckoutVersionInProgress && !isCheckingOutVersion ? null : (
             <Button
@@ -172,8 +177,8 @@ export function ChatHeader({
               disabled={isCheckingOutVersion || branchInfoLoading}
             >
               {isCheckingOutVersion
-                ? "Checking out..."
-                : "Switch to main branch"}
+                ? t("ui.checkingOut")
+                : t("ui.switchToMain")}
             </Button>
           )}
         </div>
@@ -188,13 +193,14 @@ export function ChatHeader({
       {/* Why is this pt-0.5? Because the loading bar is h-1 (it always takes space) and we want the vertical spacing to be consistent.*/}
       <div className="@container flex items-center justify-between pb-1.5 pt-0.5">
         <div className="flex items-center space-x-2">
+          <SidebarToggle className="ml-2" />
           <Button
             onClick={handleNewChat}
             variant="ghost"
             className="hidden @2xs:flex items-center justify-start gap-2 mx-2 py-3"
           >
             <PlusCircle size={16} />
-            <span>New Chat</span>
+            <span>{t("ui.newChat")}</span>
           </Button>
           <Button
             onClick={onVersionClick}
@@ -208,17 +214,30 @@ export function ChatHeader({
           </Button>
         </div>
 
-        <button
-          data-testid="toggle-preview-panel-button"
-          onClick={onTogglePreview}
-          className="cursor-pointer p-2 hover:bg-(--background-lightest) rounded-md"
-        >
-          {isPreviewOpen ? (
-            <PanelRightClose size={20} />
-          ) : (
-            <PanelRightOpen size={20} />
-          )}
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            data-testid="toggle-preview-panel-button"
+            onClick={onTogglePreview}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "cursor-pointer size-8 text-muted-foreground hover:text-foreground mr-2",
+            )}
+            aria-label={
+              isPreviewOpen ? t("ui.closePreview") : t("ui.openPreview")
+            }
+          >
+            <div className="transition-transform duration-200 ease-in-out">
+              {isPreviewOpen ? (
+                <PanelRightClose className="size-4" />
+              ) : (
+                <PanelRightOpen className="size-4" />
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {isPreviewOpen ? t("ui.closePreview") : t("ui.openPreview")}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

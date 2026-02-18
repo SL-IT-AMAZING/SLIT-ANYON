@@ -2,7 +2,6 @@ import { AutoApproveSwitch } from "@/components/AutoApproveSwitch";
 import { AutoExpandPreviewSwitch } from "@/components/AutoExpandPreviewSwitch";
 import { AutoFixProblemsSwitch } from "@/components/AutoFixProblemsSwitch";
 import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
-import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
 import { useTranslation } from "react-i18next";
 
 export function WorkflowPanel() {
@@ -15,8 +14,6 @@ export function WorkflowPanel() {
       </h2>
 
       <div className="space-y-4">
-        <DefaultChatModeSelector />
-
         <div className="space-y-1">
           <AutoApproveSwitch showToast={false} />
           <div className="text-sm text-muted-foreground">

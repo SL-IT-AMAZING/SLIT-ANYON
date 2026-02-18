@@ -1,8 +1,8 @@
 import type { Message } from "@/ipc/types";
 import type React from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
-import { OpenRouterSetupBanner } from "../SetupBanner";
 import {
   SessionTurn,
   type StepItem,
@@ -19,7 +19,6 @@ import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { chatMessagesByIdAtom } from "@/atoms/chatAtoms";
 import { Button } from "@/components/ui/button";
-import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
@@ -150,6 +149,10 @@ function summarizeTurn(
         continue;
       }
 
+      if (tagInfo.tag === "anyon-app-name") {
+        continue;
+      }
+
       if (tagInfo.tag === "think") {
         if (tagInfo.content.trim()) {
           steps.push({
@@ -255,11 +258,11 @@ interface FooterContext {
   setMessagesById: ReturnType<typeof useSetAtom<typeof chatMessagesByIdAtom>>;
   settings: ReturnType<typeof useSettings>["settings"];
   userBudget: ReturnType<typeof useUserBudgetInfo>["userBudget"];
-  renderSetupBanner: () => React.ReactNode;
 }
 
 // Footer component for Virtuoso - receives context via props
 function FooterComponent({ context }: { context?: FooterContext }) {
+  const { t } = useTranslation(["chat", "common"]);
   if (!context) return null;
 
   const {
@@ -278,18 +281,18 @@ function FooterComponent({ context }: { context?: FooterContext }) {
     setMessagesById,
     settings,
     userBudget,
-    renderSetupBanner,
   } = context;
 
   return (
     <>
       {!isStreaming && (
-        <div className="flex max-w-3xl mx-auto gap-2">
+        <div className="flex max-w-3xl mx-auto gap-1">
           {!!messages.length &&
             messages[messages.length - 1].role === "assistant" && (
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="xs"
+                className="text-muted-foreground hover:text-foreground"
                 disabled={isUndoLoading}
                 onClick={async () => {
                   if (!selectedChatId || !appId) {
@@ -327,30 +330,29 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                         return next;
                       });
                     } else {
-                      showWarning(
-                        "No source commit hash found for message. Need to manually undo code changes",
-                      );
+                      showWarning(t("actions.undoNoSourceCommit"));
                     }
                   } catch (error) {
                     console.error("Error during undo operation:", error);
-                    showError("Failed to undo changes");
+                    showError(t("actions.undoFailed"));
                   } finally {
                     setIsUndoLoading(false);
                   }
                 }}
               >
                 {isUndoLoading ? (
-                  <Loader2 size={16} className="mr-1 animate-spin" />
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <Undo size={16} />
+                  <Undo size={14} />
                 )}
                 Undo
               </Button>
             )}
           {!!messages.length && (
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="xs"
+              className="text-muted-foreground hover:text-foreground"
               disabled={isRetryLoading}
               onClick={async () => {
                 if (!selectedChatId) {
@@ -396,9 +398,7 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                           versionId: chat.initialCommitHash,
                         });
                       } else {
-                        showWarning(
-                          "No initial commit hash found for chat. Need to manually undo code changes",
-                        );
+                        showWarning(t("actions.retryNoInitialCommit"));
                       }
                     }
                   }
@@ -423,16 +423,16 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                   });
                 } catch (error) {
                   console.error("Error during retry operation:", error);
-                  showError("Failed to retry message");
+                  showError(t("actions.retryFailed"));
                 } finally {
                   setIsRetryLoading(false);
                 }
               }}
             >
               {isRetryLoading ? (
-                <Loader2 size={16} className="mr-1 animate-spin" />
+                <Loader2 size={14} className="animate-spin" />
               ) : (
-                <RefreshCw size={16} />
+                <RefreshCw size={14} />
               )}
               Retry
             </Button>
@@ -449,7 +449,6 @@ function FooterComponent({ context }: { context?: FooterContext }) {
           />
         )}
       <div ref={messagesEndRef} />
-      {renderSetupBanner()}
     </>
   );
 }
@@ -459,7 +458,6 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const appId = useAtomValue(selectedAppIdAtom);
     const { versions, revertVersion } = useVersions(appId);
     const { streamMessage, isStreaming } = useStreamChat();
-    const { isAnyProviderSetup, isProviderSetup } = useLanguageModelProviders();
     const { settings } = useSettings();
     const setMessagesById = useSetAtom(chatMessagesByIdAtom);
     const [isUndoLoading, setIsUndoLoading] = useState(false);
@@ -484,19 +482,6 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const handleSetIsRetryLoading = useCallback((loading: boolean) => {
       setIsRetryLoading(loading);
     }, []);
-
-    const renderSetupBanner = useCallback(() => {
-      const selectedModel = settings?.selectedModel;
-      const needsOpenRouterSetup =
-        (selectedModel?.name === "free" &&
-          selectedModel?.provider === "auto" &&
-          !isProviderSetup("openrouter")) ||
-        !isAnyProviderSetup();
-
-      return needsOpenRouterSetup ? (
-        <OpenRouterSetupBanner className="w-full" />
-      ) : null;
-    }, [settings?.selectedModel, isProviderSetup, isAnyProviderSetup]);
 
     const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages]);
 
@@ -557,7 +542,6 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         setMessagesById,
         settings,
         userBudget,
-        renderSetupBanner,
       }),
       [
         messages,
@@ -575,24 +559,12 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         setMessagesById,
         settings,
         userBudget,
-        renderSetupBanner,
       ],
     );
 
-    // Render empty state or setup banner
+    // Render empty state
     if (messages.length === 0) {
-      const setupBanner = renderSetupBanner();
-      if (setupBanner) {
-        return (
-          <div
-            className="absolute inset-0 overflow-y-auto p-4"
-            ref={ref}
-            data-testid="messages-list"
-          >
-            {setupBanner}
-          </div>
-        );
-      }
+      const { t } = useTranslation(["chat", "common"]);
       return (
         <div
           className="absolute inset-0 overflow-y-auto p-4"
@@ -601,7 +573,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         >
           <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto">
             <div className="flex flex-1 items-center justify-center text-muted-foreground">
-              No messages yet
+              {t("messages.noMessages")}
             </div>
           </div>
         </div>

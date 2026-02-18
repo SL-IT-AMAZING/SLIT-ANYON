@@ -38,6 +38,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const getSeverityColor = (level: SecurityFinding["level"]) => {
   switch (level) {
@@ -467,6 +468,7 @@ function FindingsTable({
   selectedFindings,
   onToggleSelection,
   onToggleSelectAll,
+  t,
 }: {
   findings: SecurityFinding[];
   onOpenDetails: (finding: SecurityFinding) => void;
@@ -475,6 +477,7 @@ function FindingsTable({
   selectedFindings: Set<string>;
   onToggleSelection: (findingKey: string) => void;
   onToggleSelectAll: () => void;
+  t: any;
 }) {
   const sortedFindings = [...findings].sort(
     (a, b) => getSeverityOrder(a.level) - getSeverityOrder(b.level),
@@ -498,7 +501,7 @@ function FindingsTable({
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={onToggleSelectAll}
-                aria-label="Select all issues"
+                aria-label={t("aria.selectAllIssues", { ns: "common" })}
               />
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
@@ -530,7 +533,7 @@ function FindingsTable({
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={() => onToggleSelection(findingKey)}
-                    aria-label={`Select ${finding.title}`}
+                    aria-label={t("aria.selectProblem", { ns: "common" })}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </td>
@@ -691,6 +694,7 @@ function FindingDetailsDialog({
 }
 
 export const SecurityPanel = () => {
+  const { t } = useTranslation(["app", "common"]);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const navigate = useNavigate();
@@ -733,7 +737,7 @@ export const SecurityPanel = () => {
 
   const handleSaveRules = async () => {
     if (!selectedAppId) {
-      showError("No app selected");
+      showError(t("preview.noAppSelected"));
       return;
     }
 
@@ -750,12 +754,14 @@ export const SecurityPanel = () => {
       if (warning) {
         showWarning(warning);
       } else {
-        showSuccess("Security rules saved");
+        showSuccess(t("preview.securityRulesSaved"));
       }
       setIsEditRulesOpen(false);
       refetchRules();
     } catch (err: any) {
-      showError(`Failed to save security rules: ${err.message || err}`);
+      showError(
+        t("preview.securityRulesSaveFailed", { message: err.message || err }),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -768,7 +774,7 @@ export const SecurityPanel = () => {
 
   const handleRunSecurityReview = async () => {
     if (!selectedAppId) {
-      showError("No app selected");
+      showError(t("preview.noAppSelected"));
       return;
     }
 
@@ -792,14 +798,14 @@ export const SecurityPanel = () => {
         },
       });
     } catch (err) {
-      showError(`Failed to run security review: ${err}`);
+      showError(t("preview.securityReviewFailed", { message: String(err) }));
       setIsRunningReview(false);
     }
   };
 
   const handleFixIssue = async (finding: SecurityFinding) => {
     if (!selectedAppId) {
-      showError("No app selected");
+      showError(t("preview.noAppSelected"));
       return;
     }
 
@@ -827,7 +833,7 @@ ${finding.description}`;
         },
       });
     } catch (err) {
-      showError(`Failed to create fix chat: ${err}`);
+      showError(t("preview.fixChatFailed", { message: String(err) }));
       setFixingFindingKey(null);
     }
   };
@@ -863,7 +869,7 @@ ${finding.description}`;
 
   const handleFixSelected = async () => {
     if (!selectedAppId || selectedFindings.size === 0 || !data?.findings) {
-      showError("No issues selected");
+      showError(t("preview.noIssuesSelected"));
       return;
     }
 
@@ -903,7 +909,7 @@ ${issuesList}`;
         },
       });
     } catch (err) {
-      showError(`Failed to create fix chat: ${err}`);
+      showError(t("preview.fixChatFailed", { message: String(err) }));
       setIsFixingSelected(false);
     }
   };
@@ -950,6 +956,7 @@ ${issuesList}`;
             selectedFindings={selectedFindings}
             onToggleSelection={handleToggleSelection}
             onToggleSelectAll={handleToggleSelectAll}
+            t={t}
           />
         ) : (
           <NoIssuesCard data={data} />
@@ -978,7 +985,7 @@ ${issuesList}`;
                 className="w-full h-72 rounded-md border border-border bg-transparent p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 value={rulesContent}
                 onChange={(e) => setRulesContent(e.target.value)}
-                placeholder="# SECURITY_RULES.md\n\nDescribe relevant security context, accepted risks, non-issues, and environment details."
+                placeholder={t("preview.securityRulesPlaceholder")}
               />
             </div>
             <DialogFooter>

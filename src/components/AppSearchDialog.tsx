@@ -1,14 +1,16 @@
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "./ui/command";
-import { useState, useEffect } from "react";
 import { useSearchApps } from "@/hooks/useSearchApps";
 import type { AppSearchResult } from "@/lib/schemas";
+import { getAppDisplayName } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
 
 type AppSearchDialogProps = {
   open: boolean;
@@ -23,6 +25,7 @@ export function AppSearchDialog({
   onSelectApp,
   allApps,
 }: AppSearchDialogProps) {
+  const { t } = useTranslation("app");
   const [searchQuery, setSearchQuery] = useState<string>("");
   function useDebouncedValue<T>(value: T, delay: number): T {
     const [debounced, setDebounced] = useState<T>(value);
@@ -105,7 +108,7 @@ export function AppSearchDialog({
       filter={commandFilter}
     >
       <CommandInput
-        placeholder="Search apps"
+        placeholder={t("apps.search")}
         value={searchQuery}
         onValueChange={setSearchQuery}
         data-testid="app-search-input"
@@ -127,12 +130,14 @@ export function AppSearchDialog({
               <CommandItem
                 key={app.id}
                 onSelect={() => onSelectApp(app.id)}
-                value={app.name + (snippet ? ` ${snippet.raw}` : "")}
+                value={
+                  getAppDisplayName(app) + (snippet ? ` ${snippet.raw}` : "")
+                }
                 keywords={snippet ? [snippet.raw] : []}
                 data-testid={`app-search-item-${app.id}`}
               >
                 <div className="flex flex-col">
-                  <span>{app.name}</span>
+                  <span>{getAppDisplayName(app)}</span>
                   {snippet && (
                     <span className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {snippet.before}

@@ -14,8 +14,10 @@ import { showError, showSuccess } from "@/lib/toast";
 // import { Supabase } from "lucide-react"; // Placeholder
 import { DatabaseZap, Trash2 } from "lucide-react"; // Using DatabaseZap as a placeholder
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function SupabaseIntegration() {
+  const { t } = useTranslation(["app", "common"]);
   const { settings, updateSettings } = useSettings();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
@@ -35,15 +37,13 @@ export function SupabaseIntegration() {
         enableSupabaseWriteSqlMigration: false,
       });
       if (result) {
-        showSuccess("Successfully disconnected all Supabase organizations");
+        showSuccess(t("connect.supabase.allOrgsDisconnected"));
         await refetchOrganizations();
       } else {
-        showError("Failed to disconnect from Supabase");
+        showError(t("connect.supabase.disconnectFailed"));
       }
     } catch (err: any) {
-      showError(
-        err.message || "An error occurred while disconnecting from Supabase",
-      );
+      showError(err.message || t("connect.supabase.disconnectError"));
     } finally {
       setIsDisconnecting(false);
     }
@@ -52,9 +52,12 @@ export function SupabaseIntegration() {
   const handleDeleteOrganization = async (organizationSlug: string) => {
     try {
       await deleteOrganization({ organizationSlug });
-      showSuccess("Organization disconnected successfully");
+      showSuccess(t("connect.supabase.orgDisconnected"));
     } catch (err: any) {
-      showError(err.message || "Failed to disconnect organization");
+      showError(
+        err.message ||
+          t("connect.supabase.orgDisconnectFailed", { message: "" }),
+      );
     }
   };
 
@@ -63,9 +66,9 @@ export function SupabaseIntegration() {
       await updateSettings({
         enableSupabaseWriteSqlMigration: enabled,
       });
-      showSuccess("Setting updated");
+      showSuccess(t("connect.supabase.settingUpdated"));
     } catch (err: any) {
-      showError(err.message || "Failed to update setting");
+      showError(err.message || t("connect.supabase.settingUpdateFailed"));
     }
   };
 
@@ -74,9 +77,9 @@ export function SupabaseIntegration() {
       await updateSettings({
         skipPruneEdgeFunctions: enabled,
       });
-      showSuccess("Setting updated");
+      showSuccess(t("connect.supabase.settingUpdated"));
     } catch (err: any) {
-      showError(err.message || "Failed to update setting");
+      showError(err.message || t("connect.supabase.settingUpdateFailed"));
     }
   };
 
@@ -89,11 +92,10 @@ export function SupabaseIntegration() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium text-muted-foreground">
-            Supabase Integration
+            {t("connect.supabase.integrationTitle")}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            {organizations.length} organization
-            {organizations.length !== 1 ? "s" : ""} connected to Supabase.
+            {t("connect.supabase.orgCount", { count: organizations.length })}
           </p>
         </div>
         <Button
@@ -103,7 +105,9 @@ export function SupabaseIntegration() {
           disabled={isDisconnecting}
           className="flex items-center gap-2"
         >
-          {isDisconnecting ? "Disconnecting..." : "Disconnect All"}
+          {isDisconnecting
+            ? t("connect.supabase.disconnecting")
+            : t("connect.supabase.disconnectAll")}
           <DatabaseZap className="h-4 w-4" />
         </Button>
       </div>
@@ -139,9 +143,13 @@ export function SupabaseIntegration() {
                 }
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1" />
-                <span className="text-xs">Disconnect</span>
+                <span className="text-xs">
+                  {t("connect.supabase.disconnect")}
+                </span>
               </TooltipTrigger>
-              <TooltipContent>Disconnect organization</TooltipContent>
+              <TooltipContent>
+                {t("connect.supabase.disconnectOrg")}
+              </TooltipContent>
             </Tooltip>
           </div>
         ))}
@@ -151,7 +159,7 @@ export function SupabaseIntegration() {
         <div className="flex items-center space-x-3">
           <Switch
             id="supabase-migrations"
-            aria-label="Write SQL migration files"
+            aria-label={t("connect.supabase.writeSqlMigrations")}
             checked={!!settings?.enableSupabaseWriteSqlMigration}
             onCheckedChange={handleMigrationSettingChange}
           />
@@ -160,13 +168,10 @@ export function SupabaseIntegration() {
               htmlFor="supabase-migrations"
               className="text-sm font-medium"
             >
-              Write SQL migration files
+              {t("connect.supabase.writeSqlMigrations")}
             </Label>
             <p className="text-xs text-muted-foreground">
-              Generate SQL migration files when modifying your Supabase schema.
-              This helps you track database changes in version control, though
-              these files aren't used for chat context, which uses the live
-              schema.
+              {t("connect.supabase.writeSqlMigrationsDesc")}
             </p>
           </div>
         </div>
@@ -176,7 +181,7 @@ export function SupabaseIntegration() {
         <div className="flex items-center space-x-3">
           <Switch
             id="skip-prune-edge-functions"
-            aria-label="Keep extra Supabase edge functions"
+            aria-label={t("connect.supabase.keepEdgeFunctions")}
             checked={!!settings?.skipPruneEdgeFunctions}
             onCheckedChange={handleSkipPruneSettingChange}
           />
@@ -185,12 +190,10 @@ export function SupabaseIntegration() {
               htmlFor="skip-prune-edge-functions"
               className="text-sm font-medium"
             >
-              Keep extra Supabase edge functions
+              {t("connect.supabase.keepEdgeFunctions")}
             </Label>
             <p className="text-xs text-muted-foreground">
-              When disabled, edge functions deployed to Supabase but not present
-              in your codebase will be automatically deleted during sync
-              operations (e.g., after reverting or modifying shared modules).
+              {t("connect.supabase.keepEdgeFunctionsDesc")}
             </p>
           </div>
         </div>

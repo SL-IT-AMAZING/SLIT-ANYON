@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Plug } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,12 +19,13 @@ export function AddIntegrationTool({
   children,
   className,
 }: AddIntegrationToolProps) {
+  const { t } = useTranslation("chat");
   const provider = providerProp || node?.properties?.provider || undefined;
 
   return (
     <ToolCallCard
       icon={Plug}
-      title="Add Integration"
+      title={t("tools.addIntegration")}
       subtitle={provider}
       status={status}
       className={className}

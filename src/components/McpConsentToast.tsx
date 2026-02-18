@@ -1,7 +1,8 @@
+import { ShieldAlert, X } from "lucide-react";
 import React from "react";
-import { Button } from "./ui/button";
-import { X, ShieldAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 interface McpConsentToastProps {
   toastId: string | number;
@@ -20,6 +21,7 @@ export function McpConsentToast({
   inputPreview,
   onDecision,
 }: McpConsentToastProps) {
+  const { t } = useTranslation("common");
   const handleClose = () => toast.dismiss(toastId);
 
   const handle = (d: "accept-once" | "accept-always" | "decline") => {
@@ -51,7 +53,7 @@ export function McpConsentToast({
 
     const compute = () => {
       const computedStyle = window.getComputedStyle(element);
-      const lineHeight = parseFloat(computedStyle.lineHeight || "20");
+      const lineHeight = Number.parseFloat(computedStyle.lineHeight || "20");
       const maxLines = 4; // show first few lines by default
       const maxHeightPx = Math.max(0, Math.round(lineHeight * maxLines));
       setCollapsedMaxHeight(maxHeightPx);
@@ -77,7 +79,7 @@ export function McpConsentToast({
 
     const compute = () => {
       const computedStyle = window.getComputedStyle(element);
-      const lineHeight = parseFloat(computedStyle.lineHeight || "16");
+      const lineHeight = Number.parseFloat(computedStyle.lineHeight || "16");
       const maxLines = 6; // show first few lines by default
       const maxHeightPx = Math.max(0, Math.round(lineHeight * maxLines));
       setInputCollapsedMaxHeight(maxHeightPx);
@@ -107,7 +109,7 @@ export function McpConsentToast({
               <button
                 onClick={handleClose}
                 className="ml-auto flex-shrink-0 p-1.5 text-amber-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-slate-200 transition-colors duration-200 rounded-md hover:bg-amber-100/50 dark:hover:bg-slate-700/50"
-                aria-label="Close"
+                aria-label={t("buttons.close")}
               >
                 <X className="w-4 h-4" />
               </button>

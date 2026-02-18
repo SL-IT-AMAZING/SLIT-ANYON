@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -16,10 +17,11 @@ export function WebCrawlTool({
   children,
   className,
 }: WebCrawlToolProps) {
+  const { t } = useTranslation("chat");
   return (
     <ToolCallCard
       icon={Globe}
-      title="Web Crawl"
+      title={t("tools.webCrawl")}
       status={status}
       className={className}
     >

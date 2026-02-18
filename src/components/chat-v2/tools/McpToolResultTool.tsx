@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { Wrench } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -21,6 +22,7 @@ export function McpToolResultTool({
   children,
   className,
 }: McpToolResultToolProps) {
+  const { t } = useTranslation("chat");
   const serverName = serverNameProp || node?.properties?.serverName || "";
   const toolName = toolNameProp || node?.properties?.toolName || "";
 
@@ -39,7 +41,7 @@ export function McpToolResultTool({
   return (
     <ToolCallCard
       icon={Wrench}
-      title="Tool Result"
+      title={t("tools.toolResult")}
       subtitle={subtitle || undefined}
       status={status}
       className={className}

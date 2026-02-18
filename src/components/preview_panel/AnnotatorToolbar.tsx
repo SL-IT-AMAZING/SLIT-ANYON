@@ -14,6 +14,7 @@ import {
   Undo,
   X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolbarColorPicker } from "./ToolbarColorPicker";
 
 interface AnnotatorToolbarProps {
@@ -47,6 +48,7 @@ export const AnnotatorToolbar = ({
   onDeactivate,
   hasSubmitHandler,
 }: AnnotatorToolbarProps) => {
+  const { t } = useTranslation(["app", "common"]);
   return (
     <div className="flex items-center justify-center p-2 border-b space-x-2">
       {/* Tool Selection Buttons */}
@@ -96,7 +98,7 @@ export const AnnotatorToolbar = ({
             render={
               <button
                 onClick={() => onToolChange("text")}
-                aria-label="Text"
+                aria-label={t("preview.annotator.text")}
                 className={cn(
                   "p-1 rounded transition-colors duration-200",
                   tool === "text"
@@ -108,7 +110,7 @@ export const AnnotatorToolbar = ({
           >
             <Type size={16} />
           </TooltipTrigger>
-          <TooltipContent>Text</TooltipContent>
+          <TooltipContent>{t("preview.annotator.text")}</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -179,7 +181,7 @@ export const AnnotatorToolbar = ({
             render={
               <button
                 onClick={onSubmit}
-                aria-label="Add to Chat"
+                aria-label={t("preview.annotator.addToChat")}
                 className="p-1 rounded transition-colors duration-200 text-purple-700 hover:bg-purple-200 dark:text-purple-300 dark:hover:bg-purple-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasSubmitHandler}
               />
@@ -187,21 +189,23 @@ export const AnnotatorToolbar = ({
           >
             <Check size={16} />
           </TooltipTrigger>
-          <TooltipContent>Add to Chat</TooltipContent>
+          <TooltipContent>{t("preview.annotator.addToChat")}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
             render={
               <button
                 onClick={onDeactivate}
-                aria-label="Close Annotator"
+                aria-label={t("preview.annotator.closeAnnotator")}
                 className="p-1 rounded transition-colors duration-200 text-purple-700 hover:bg-purple-200 dark:text-purple-300 dark:hover:bg-purple-900"
               />
             }
           >
             <X size={16} />
           </TooltipTrigger>
-          <TooltipContent>Close Annotator</TooltipContent>
+          <TooltipContent>
+            {t("preview.annotator.closeAnnotator")}
+          </TooltipContent>
         </Tooltip>
       </div>
     </div>

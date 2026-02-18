@@ -1,4 +1,5 @@
 import { LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -14,6 +15,7 @@ export function ExitPlanTool({
   node,
   className,
 }: ExitPlanToolProps) {
+  const { t } = useTranslation("chat");
   const notes = notesProp || node?.properties?.notes || "";
 
   const content = notes ? (
@@ -23,8 +25,8 @@ export function ExitPlanTool({
   return (
     <ToolCallCard
       icon={LogOut}
-      title="Plan Accepted"
-      subtitle="Opening new chat for implementation"
+      title={t("tools.planAccepted")}
+      subtitle={t("tools.openingNewChat")}
       status="completed"
       defaultExpanded={!!content}
       className={className}

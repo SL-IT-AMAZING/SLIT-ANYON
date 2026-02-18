@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Database } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,13 +19,14 @@ export function ExecuteSqlTool({
   children,
   className,
 }: ExecuteSqlToolProps) {
+  const { t } = useTranslation("chat");
   const description =
     descriptionProp || node?.properties?.description || undefined;
 
   return (
     <ToolCallCard
       icon={Database}
-      title="SQL"
+      title={t("tools.sql")}
       subtitle={description}
       status={status}
       className={className}

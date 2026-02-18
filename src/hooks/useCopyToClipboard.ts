@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
 import { getLanguage } from "@/utils/get_language";
+import { useEffect, useRef, useState } from "react";
 
 const CUSTOM_TAG_NAMES = [
   "anyon-write",
@@ -11,6 +11,7 @@ const CUSTOM_TAG_NAMES = [
   "anyon-output",
   "anyon-problem-report",
   "anyon-chat-summary",
+  "anyon-app-name",
   "anyon-edit",
   "anyon-codebase-context",
   "think",
@@ -184,6 +185,7 @@ export const useCopyToClipboard = () => {
       }
 
       case "anyon-chat-summary":
+      case "anyon-app-name":
       case "anyon-command":
         // Don't include these in copy
         return "";

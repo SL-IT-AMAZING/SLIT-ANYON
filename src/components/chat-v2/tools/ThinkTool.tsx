@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Brain } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -14,6 +15,7 @@ interface ThinkToolProps {
 }
 
 export function ThinkTool({ status, children, className }: ThinkToolProps) {
+  const { t } = useTranslation("chat");
   const text = typeof children === "string" ? children : "";
   const tokenMatch = text.match(TOKEN_SAVINGS_PATTERN);
 
@@ -28,7 +30,7 @@ export function ThinkTool({ status, children, className }: ThinkToolProps) {
   return (
     <ToolCallCard
       icon={Brain}
-      title="Thinking"
+      title={t("tools.thinking")}
       status={status}
       defaultExpanded={status === "running"}
       className={className}

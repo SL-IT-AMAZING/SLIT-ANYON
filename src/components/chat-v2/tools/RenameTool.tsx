@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -20,6 +21,7 @@ export function RenameTool({
   children,
   className,
 }: RenameToolProps) {
+  const { t } = useTranslation("chat");
   const from = fromProp || node?.properties?.from || "";
   const to = toProp || node?.properties?.to || "";
 
@@ -38,7 +40,7 @@ export function RenameTool({
   return (
     <ToolCallCard
       icon={ArrowRight}
-      title="Rename"
+      title={t("tools.rename")}
       subtitle={subtitle}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

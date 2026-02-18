@@ -57,6 +57,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Label } from "@/components/ui/label";
 import { showError, showInfo, showSuccess } from "@/lib/toast";
@@ -78,6 +79,7 @@ export function GithubBranchManager({
   appId,
   onBranchChange,
 }: BranchManagerProps) {
+  const { t } = useTranslation("app");
   const { settings } = useSettings();
   const navigate = useNavigate();
   const [branches, setBranches] = useState<string[]>([]);
@@ -122,7 +124,7 @@ export function GithubBranchManager({
       setBranches(Array.from(allBranches).sort());
       setCurrentBranch(localResult.current || null);
     } catch (error: any) {
-      showError(error.message || "Failed to load branches");
+      showError(error.message || t("git.branches.loadFailed"));
     } finally {
       setIsLoading(false);
     }

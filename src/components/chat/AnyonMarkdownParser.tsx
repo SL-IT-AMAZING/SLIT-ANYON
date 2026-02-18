@@ -55,6 +55,7 @@ const ANYON_CUSTOM_TAGS = [
   "anyon-output",
   "anyon-problem-report",
   "anyon-chat-summary",
+  "anyon-app-name",
   "anyon-edit",
   "anyon-grep",
   "anyon-search-replace",
@@ -524,6 +525,9 @@ export function renderCustomTag(
 
     case "anyon-chat-summary":
       // Don't render anything for anyon-chat-summary
+      return null;
+
+    case "anyon-app-name":
       return null;
 
     case "anyon-command":

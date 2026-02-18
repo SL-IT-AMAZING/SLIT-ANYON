@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface QuestionOption {
   label: string;
@@ -28,6 +29,7 @@ export function QuestionPrompt({
   onDismiss,
   className,
 }: QuestionPromptProps) {
+  const { t } = useTranslation("common");
   const [tab, setTab] = useState(0);
   const [answers, setAnswers] = useState<string[][]>(() =>
     questions.map(() => []),
@@ -210,7 +212,7 @@ export function QuestionPrompt({
                 <input
                   autoFocus
                   className="flex-1 px-3 py-1.5 text-sm rounded-md border border-border bg-background outline-none focus:border-foreground/50"
-                  placeholder="Type your answer..."
+                  placeholder={t("placeholders.typeYourAnswer")}
                   value={customInputs[tab]}
                   onChange={(e) => {
                     const newInputs = [...customInputs];

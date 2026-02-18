@@ -17,14 +17,13 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import {
   agentTodosByChatIdAtom,
   chatInputValueAtom,
   chatMessagesByIdAtom,
-  needsFreshPlanChatAtom,
   selectedChatIdAtom,
 } from "@/atoms/chatAtoms";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,7 @@ import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { useRunApp } from "@/hooks/useRunApp";
 import { usePostHog } from "posthog-js/react";
+import { useTranslation } from "react-i18next";
 import { AutoApproveSwitch } from "../AutoApproveSwitch";
 import { CodeHighlight } from "./CodeHighlight";
 import { TokenBar } from "./TokenBar";
@@ -62,13 +62,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAttachments } from "@/hooks/useAttachments";
-import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { useChats } from "@/hooks/useChats";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
 import { useCountTokens } from "@/hooks/useCountTokens";
 import { useVersions } from "@/hooks/useVersions";
 import { queryKeys } from "@/lib/queryKeys";
-import { showExtraFilesToast, showInfo } from "@/lib/toast";
+import { showExtraFilesToast } from "@/lib/toast";
 import { showError as showErrorToast } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
@@ -90,6 +89,7 @@ import { TodoList } from "./TodoList";
 const showTokenBarAtom = atom(false);
 
 export function ChatInput({ chatId }: { chatId?: number }) {
+  const { t } = useTranslation("chat");
   const posthog = usePostHog();
   const [inputValue, setInputValue] = useAtom(chatInputValueAtom);
   const { settings } = useSettings();
@@ -150,11 +150,9 @@ export function ChatInput({ chatId }: { chatId?: number }) {
     refreshProposal,
   } = useProposal(chatId);
   const { proposal, messageId } = proposalResult ?? {};
-  useChatModeToggle();
 
   const lastMessage = (chatId ? (messagesById.get(chatId) ?? []) : []).at(-1);
   const disableSendButton =
-    settings?.selectedChatMode !== "local-agent" &&
     lastMessage?.role === "assistant" &&
     !lastMessage.approvalState &&
     !!proposal &&
@@ -170,25 +168,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       .map((msg) => msg.content)
       .reverse(); // Most recent first
   }, [chatId, messagesById]);
-
-  const [needsFreshPlanChat, setNeedsFreshPlanChat] = useAtom(
-    needsFreshPlanChatAtom,
-  );
-
-  // Detect transition to plan mode from another mode in a chat with messages
-  const prevModeRef = useRef(settings?.selectedChatMode);
-  useEffect(() => {
-    const prevMode = prevModeRef.current;
-    const currentMode = settings?.selectedChatMode;
-    prevModeRef.current = currentMode;
-
-    if (prevMode && prevMode !== "plan" && currentMode === "plan") {
-      const messages = chatId ? (messagesById.get(chatId) ?? []) : [];
-      if (messages.length > 0) {
-        setNeedsFreshPlanChat(true);
-      }
-    }
-  }, [settings?.selectedChatMode, chatId, messagesById, setNeedsFreshPlanChat]);
 
   // Token counting for context limit banner
   const { result: tokenCountResult } = useCountTokens(
@@ -231,30 +210,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       return;
     }
 
-    // If switching to plan mode from another mode in a chat with messages,
-    // create a new chat for a clean context.
-    if (needsFreshPlanChat && settings?.selectedChatMode === "plan" && appId) {
-      const currentInput = inputValue;
-      setInputValue("");
-      setNeedsFreshPlanChat(false);
-
-      const newChatId = await ipc.chat.createChat(appId);
-      setSelectedChatId(newChatId);
-      navigate({ to: "/chat", search: { id: newChatId } });
-      queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
-      showInfo("We've switched you to a new chat for a clean context");
-
-      await streamMessage({
-        prompt: currentInput,
-        chatId: newChatId,
-        attachments,
-        redo: false,
-      });
-      clearAttachments();
-      posthog.capture("chat:submit", { chatMode: settings?.selectedChatMode });
-      return;
-    }
-
     const currentInput = inputValue;
     setInputValue("");
 
@@ -282,7 +237,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       selectedComponents: componentsToSend,
     });
     clearAttachments();
-    posthog.capture("chat:submit", { chatMode: settings?.selectedChatMode });
+    posthog.capture("chat:submit");
   };
 
   const handleCancel = () => {
@@ -396,12 +351,12 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       {/* Display loading or error state for proposal */}
       {isProposalLoading && (
         <div className="p-4 text-sm text-muted-foreground">
-          Loading proposal...
+          {t("ui.loadingProposal")}
         </div>
       )}
       {proposalError && (
         <div className="p-4 text-sm text-red-600">
-          Error loading proposal: {proposalError.message}
+          {t("ui.errorLoadingProposal")} {proposalError.message}
         </div>
       )}
       <div className="px-3 pb-4 md:pb-6" data-testid="chat-input-container">
@@ -426,26 +381,23 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           {/* Show todo list if there are todos for this chat */}
           {chatTodos.length > 0 && <TodoList todos={chatTodos} />}
           {/* Only render ChatInputActions if proposal is loaded */}
-          {proposal &&
-            proposalResult?.chatId === chatId &&
-            settings.selectedChatMode !== "ask" &&
-            settings.selectedChatMode !== "local-agent" && (
-              <ChatInputActions
-                proposal={proposal}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                isApprovable={
-                  !isProposalLoading &&
-                  !!proposal &&
-                  !!messageId &&
-                  !isApproving &&
-                  !isRejecting &&
-                  !isStreaming
-                }
-                isApproving={isApproving}
-                isRejecting={isRejecting}
-              />
-            )}
+          {proposal && proposalResult?.chatId === chatId && (
+            <ChatInputActions
+              proposal={proposal}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              isApprovable={
+                !isProposalLoading &&
+                !!proposal &&
+                !!messageId &&
+                !isApproving &&
+                !isRejecting &&
+                !isStreaming
+              }
+              isApproving={isApproving}
+              isRejecting={isRejecting}
+            />
+          )}
 
           <VisualEditingChangesDialog
             iframeRef={
@@ -488,7 +440,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               onChange={setInputValue}
               onSubmit={handleSubmit}
               onPaste={handlePaste}
-              placeholder="Ask ANYON to build..."
+              placeholder={t("input.placeholder")}
               excludeCurrentApp={true}
               disableSendButton={disableSendButton}
               messageHistory={userMessageHistory}
@@ -501,14 +453,14 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                     <button
                       type="button"
                       onClick={handleCancel}
-                      aria-label="Cancel generation"
+                      aria-label={t("ui.cancelGeneration")}
                       className="flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background transition-colors hover:bg-muted"
                     />
                   }
                 >
                   <Square className="size-2.5 fill-current" />
                 </TooltipTrigger>
-                <TooltipContent>Cancel generation</TooltipContent>
+                <TooltipContent>{t("ui.cancelGeneration")}</TooltipContent>
               </Tooltip>
             ) : (
               <Tooltip>
@@ -521,14 +473,14 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                         (!inputValue.trim() && attachments.length === 0) ||
                         disableSendButton
                       }
-                      aria-label="Send message"
+                      aria-label={t("ui.sendMessage")}
                       className="flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background transition-colors hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none"
                     />
                   }
                 >
                   <ArrowUpIcon size={16} />
                 </TooltipTrigger>
-                <TooltipContent>Send message</TooltipContent>
+                <TooltipContent>{t("ui.sendMessage")}</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -582,11 +534,12 @@ function SuggestionButton({
 }
 
 function SummarizeInNewChatButton() {
+  const { t } = useTranslation("chat");
   const { handleSummarize } = useSummarizeInNewChat();
   return (
     <SuggestionButton
       onClick={handleSummarize}
-      tooltipText="Creating a new chat makes the AI more focused and efficient"
+      tooltipText={t("ui.createNewChat")}
     >
       Summarize to new chat
     </SuggestionButton>
@@ -594,6 +547,7 @@ function SummarizeInNewChatButton() {
 }
 
 function RefactorFileButton({ path }: { path: string }) {
+  const { t } = useTranslation("chat");
   const chatId = useAtomValue(selectedChatIdAtom);
   const { streamMessage } = useStreamChat();
   const onClick = () => {
@@ -608,10 +562,7 @@ function RefactorFileButton({ path }: { path: string }) {
     });
   };
   return (
-    <SuggestionButton
-      onClick={onClick}
-      tooltipText="Refactor the file to improve maintainability"
-    >
+    <SuggestionButton onClick={onClick} tooltipText={t("ui.refactorFile")}>
       <span className="max-w-[180px] overflow-hidden whitespace-nowrap text-ellipsis">
         Refactor {path.split("/").slice(-2).join("/")}
       </span>
@@ -644,6 +595,7 @@ function WriteCodeProperlyButton() {
 }
 
 function RebuildButton() {
+  const { t } = useTranslation("chat");
   const { restartApp } = useRunApp();
   const posthog = usePostHog();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
@@ -656,13 +608,14 @@ function RebuildButton() {
   }, [selectedAppId, posthog, restartApp]);
 
   return (
-    <SuggestionButton onClick={onClick} tooltipText="Rebuild the application">
+    <SuggestionButton onClick={onClick} tooltipText={t("ui.rebuildApp")}>
       Rebuild app
     </SuggestionButton>
   );
 }
 
 function RestartButton() {
+  const { t } = useTranslation("chat");
   const { restartApp } = useRunApp();
   const posthog = usePostHog();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
@@ -675,16 +628,14 @@ function RestartButton() {
   }, [selectedAppId, posthog, restartApp]);
 
   return (
-    <SuggestionButton
-      onClick={onClick}
-      tooltipText="Restart the development server"
-    >
+    <SuggestionButton onClick={onClick} tooltipText={t("ui.restartServer")}>
       Restart app
     </SuggestionButton>
   );
 }
 
 function RefreshButton() {
+  const { t } = useTranslation("chat");
   const { refreshAppIframe } = useRunApp();
   const posthog = usePostHog();
 
@@ -694,31 +645,8 @@ function RefreshButton() {
   }, [posthog, refreshAppIframe]);
 
   return (
-    <SuggestionButton
-      onClick={onClick}
-      tooltipText="Refresh the application preview"
-    >
+    <SuggestionButton onClick={onClick} tooltipText={t("ui.refreshPreview")}>
       Refresh app
-    </SuggestionButton>
-  );
-}
-
-function KeepGoingButton() {
-  const { streamMessage } = useStreamChat();
-  const chatId = useAtomValue(selectedChatIdAtom);
-  const onClick = () => {
-    if (!chatId) {
-      console.error("No chat id found");
-      return;
-    }
-    streamMessage({
-      prompt: "Keep going",
-      chatId,
-    });
-  };
-  return (
-    <SuggestionButton onClick={onClick} tooltipText="Keep going">
-      Keep going
     </SuggestionButton>
   );
 }
@@ -737,8 +665,6 @@ export function mapActionToButton(action: SuggestedAction) {
       return <RestartButton />;
     case "refresh":
       return <RefreshButton />;
-    case "keep-going":
-      return <KeepGoingButton />;
     default:
       console.error(`Unsupported action: ${action.id}`);
       return (
@@ -750,6 +676,10 @@ export function mapActionToButton(action: SuggestedAction) {
 }
 
 function ActionProposalActions({ proposal }: { proposal: ActionProposal }) {
+  if (proposal.actions.length === 0) {
+    return null;
+  }
+
   return (
     <div className="border-b border-border p-2 pb-0 flex items-center justify-between">
       <div className="flex items-center space-x-2 overflow-x-auto pb-2">

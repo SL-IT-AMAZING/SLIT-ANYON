@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ClipboardList } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -22,6 +23,7 @@ export function WritePlanTool({
   children,
   className,
 }: WritePlanToolProps) {
+  const { t } = useTranslation("chat");
   const planTitle = titleProp || node?.properties?.title || "";
   const summary = summaryProp || node?.properties?.summary || "";
   const complete = completeProp || node?.properties?.complete || "";
@@ -41,7 +43,7 @@ export function WritePlanTool({
   return (
     <ToolCallCard
       icon={ClipboardList}
-      title="Write Plan"
+      title={t("tools.writePlan")}
       subtitle={planTitle}
       status={status}
       metadata={metadata}

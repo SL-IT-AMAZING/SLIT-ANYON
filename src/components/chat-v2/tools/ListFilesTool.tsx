@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { List } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -20,6 +21,7 @@ export function ListFilesTool({
   children,
   className,
 }: ListFilesToolProps) {
+  const { t } = useTranslation("chat");
   const directory = directoryProp || node?.properties?.directory || "";
   const recursive = recursiveProp || node?.properties?.recursive || "";
   const isRecursive = recursive === "true";
@@ -31,7 +33,7 @@ export function ListFilesTool({
   return (
     <ToolCallCard
       icon={List}
-      title="List Files"
+      title={t("tools.listFiles")}
       subtitle={directory || undefined}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

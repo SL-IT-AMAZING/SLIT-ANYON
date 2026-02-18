@@ -17,6 +17,7 @@ import { type App, ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
 import { Globe } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 interface VercelConnectorProps {
@@ -49,6 +50,7 @@ function ConnectedVercelConnector({
   app,
   refreshApp,
 }: ConnectedVercelConnectorProps) {
+  const { t } = useTranslation("app");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     deployments,
@@ -85,7 +87,7 @@ function ConnectedVercelConnector({
       data-testid="vercel-connected-project"
     >
       <p className="text-sm text-muted-foreground">
-        Connected to Vercel Project:
+        {t("connect.vercel.connectedToProject")}
       </p>
       <a
         onClick={(e) => {
@@ -103,7 +105,7 @@ function ConnectedVercelConnector({
       {app.vercelDeploymentUrl && (
         <div className="mt-2">
           <p className="text-sm text-muted-foreground">
-            Live URL:{" "}
+            {t("connect.vercel.liveUrl")}{" "}
             <a
               onClick={(e) => {
                 e.preventDefault();
@@ -138,17 +140,17 @@ function ConnectedVercelConnector({
                   r="10"
                   stroke="currentColor"
                   strokeWidth="4"
-                ></circle>
+                />
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                />
               </svg>
-              Refreshing...
+              {t("buttons.refreshing", { ns: "common" })}
             </>
           ) : (
-            "Refresh Deployments"
+            t("connect.vercel.refreshDeployments")
           )}
         </Button>
         <Button
@@ -156,7 +158,9 @@ function ConnectedVercelConnector({
           disabled={isDisconnecting}
           variant="outline"
         >
-          {isDisconnecting ? "Disconnecting..." : "Disconnect from project"}
+          {isDisconnecting
+            ? t("buttons.disconnecting", { ns: "common" })
+            : t("connect.vercel.disconnectFromProject")}
         </Button>
       </div>
       {deploymentsError && (
@@ -219,6 +223,7 @@ function UnconnectedVercelConnector({
   refreshSettings,
   refreshApp,
 }: UnconnectedVercelConnectorProps) {
+  const { t } = useTranslation("app");
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
 
   // --- Manual Token Entry State ---
@@ -264,12 +269,18 @@ function UnconnectedVercelConnector({
       if (lastDeepLink?.type === "vercel-oauth-return") {
         await refreshSettings();
         refreshApp();
-        toast.success("Successfully connected to Vercel!");
+        toast.success(t("connect.vercel.connected"));
         clearLastDeepLink();
       }
     };
     handleDeepLink();
-  }, [lastDeepLink?.timestamp]);
+  }, [
+    lastDeepLink?.timestamp,
+    clearLastDeepLink,
+    refreshApp,
+    refreshSettings,
+    t,
+  ]);
 
   // Load available projects when Vercel is connected
   useEffect(() => {

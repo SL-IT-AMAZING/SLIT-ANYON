@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { FileEdit } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -20,6 +21,7 @@ export function EditTool({
   children,
   className,
 }: EditToolProps) {
+  const { t } = useTranslation("chat");
   const path = pathProp || node?.properties?.path || "";
   const description = descriptionProp || node?.properties?.description || "";
   const fileName = path ? path.split("/").pop() : "";
@@ -31,7 +33,7 @@ export function EditTool({
   return (
     <ToolCallCard
       icon={FileEdit}
-      title="Edit"
+      title={t("tools.edit")}
       subtitle={fileName || undefined}
       status={status}
       metadata={metadata.length > 0 ? metadata : undefined}

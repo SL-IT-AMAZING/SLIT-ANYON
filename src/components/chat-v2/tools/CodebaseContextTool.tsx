@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { FolderTree } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -16,6 +17,7 @@ export function CodebaseContextTool({
   children,
   className,
 }: CodebaseContextToolProps) {
+  const { t } = useTranslation("chat");
   const filesRaw = node?.properties?.files;
   const files: string[] = filesRaw
     ? filesRaw.split(",").filter((f: string) => f.trim())
@@ -26,7 +28,7 @@ export function CodebaseContextTool({
   return (
     <ToolCallCard
       icon={FolderTree}
-      title="Codebase Context"
+      title={t("tools.codebaseContext")}
       subtitle={subtitle}
       status={status}
       defaultExpanded={status === "running"}

@@ -120,7 +120,7 @@ export function ScrambleVerb({ verbs }: ScrambleVerbProps) {
   const display = useScrambleText(verb);
   return (
     <span
-      className="inline-block text-sm text-muted-foreground"
+      className="inline-block text-sm text-muted-foreground animate-shimmer"
       aria-hidden="true"
     >
       {display}

@@ -1,26 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { useAtom, useAtomValue } from "jotai";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { pendingQuestionnaireAtom } from "@/atoms/planAtoms";
-import { useStreamChat } from "@/hooks/useStreamChat";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useStreamChat } from "@/hooks/useStreamChat";
+import { useAtom, useAtomValue } from "jotai";
 import {
-  Send,
   ArrowLeft,
   ArrowRight,
-  ClipboardList,
   ChevronDown,
   ChevronUp,
   Circle,
+  ClipboardList,
+  Send,
 } from "lucide-react";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const MAX_DISPLAYED_OPTIONS = 3;
 
 export function QuestionnaireInput() {
+  const { t } = useTranslation("common");
   const [questionnaire, setQuestionnaire] = useAtom(pendingQuestionnaireAtom);
   const chatId = useAtomValue(selectedChatIdAtom);
   const { streamMessage, isStreaming } = useStreamChat();
@@ -227,7 +230,7 @@ export function QuestionnaireInput() {
                 {currentQuestion.type === "text" && (
                   <Input
                     autoFocus
-                    placeholder="Type your answer..."
+                    placeholder={t("placeholders.typeYourAnswer")}
                     value={(responses[currentQuestion.id] as string) || ""}
                     onChange={(e) =>
                       setResponses((prev) => ({
@@ -284,7 +287,7 @@ export function QuestionnaireInput() {
                           id={`${currentQuestion.id}-custom`}
                         />
                         <Input
-                          placeholder="Other..."
+                          placeholder={t("placeholders.other")}
                           className="flex-1 h-7 text-sm"
                           value={additionalTexts[currentQuestion.id] || ""}
                           onFocus={() => {
@@ -363,7 +366,7 @@ export function QuestionnaireInput() {
                       {/* Free-form text input as an inline row (no checkbox) */}
                       <div className="flex items-center py-1 px-2 rounded hover:bg-muted/50 transition-colors">
                         <Input
-                          placeholder="Other..."
+                          placeholder={t("placeholders.other")}
                           className="flex-1 h-7 text-sm"
                           value={additionalTexts[currentQuestion.id] || ""}
                           onChange={(e) =>

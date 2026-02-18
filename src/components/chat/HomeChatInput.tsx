@@ -3,19 +3,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowUpIcon, StopCircleIcon, Upload } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpIcon, StopCircleIcon } from "lucide-react";
 
 import { homeChatInputValueAtom } from "@/atoms/chatAtoms";
-import { ImportAppDialog } from "@/components/ImportAppDialog";
 import { useAttachments } from "@/hooks/useAttachments";
-import { useChatModeToggle } from "@/hooks/useChatModeToggle";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 import type { HomeSubmitOptions } from "@/pages/home";
 import { useAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
+import { useTranslation } from "react-i18next";
 import { ChatInputControls } from "../ChatInputControls";
 import { AttachmentsList } from "./AttachmentsList";
 import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
@@ -27,21 +25,21 @@ export function HomeChatInput({
 }: {
   onSubmit: (options?: HomeSubmitOptions) => void;
 }) {
+  const { t } = useTranslation("chat");
   const posthog = usePostHog();
   const [inputValue, setInputValue] = useAtom(homeChatInputValueAtom);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
   const { settings } = useSettings();
   const { isStreaming } = useStreamChat({
     hasChatId: false,
   }); // eslint-disable-line @typescript-eslint/no-unused-vars
-  useChatModeToggle();
 
   const typingText = useTypingPlaceholder([
-    "an ecommerce store...",
-    "an information page...",
-    "a landing page...",
+    t("input.typingPhrase_ecommerce"),
+    t("input.typingPhrase_infoPage"),
+    t("input.typingPhrase_landingPage"),
   ]);
-  const placeholder = `Ask ANYON to build ${typingText ?? ""}`;
+  const placeholder = typingText || t("input.placeholder");
 
   // Use the attachments hook
   const {
@@ -67,9 +65,7 @@ export function HomeChatInput({
 
     // Clear attachments as part of submission process
     clearAttachments();
-    posthog.capture("chat:home_submit", {
-      chatMode: settings?.selectedChatMode,
-    });
+    posthog.capture("chat:home_submit");
   };
 
   if (!settings) {
@@ -154,21 +150,6 @@ export function HomeChatInput({
             </div>
 
             <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <button
-                      type="button"
-                      onClick={() => setIsImportDialogOpen(true)}
-                      className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                    />
-                  }
-                >
-                  <Upload size={14} />
-                  <span>Import</span>
-                </TooltipTrigger>
-                <TooltipContent>Import existing project</TooltipContent>
-              </Tooltip>
               <AuxiliaryActionsMenu
                 onFileSelect={handleFileSelect}
                 hideContextFilesPicker
@@ -177,10 +158,6 @@ export function HomeChatInput({
           </div>
         </div>
       </div>
-      <ImportAppDialog
-        isOpen={isImportDialogOpen}
-        onClose={() => setIsImportDialogOpen(false)}
-      />
     </>
   );
 }

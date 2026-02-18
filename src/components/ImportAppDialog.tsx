@@ -1,38 +1,39 @@
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/types";
-import { useMutation } from "@tanstack/react-query";
-import { showError, showSuccess } from "@/lib/toast";
-import { Folder, X, Loader2, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { ipc } from "@/ipc/types";
+import { showError, showSuccess } from "@/lib/toast";
+import { useMutation } from "@tanstack/react-query";
+import { Folder, Info, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "@tanstack/react-router";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import type { GithubRepository } from "@/ipc/types";
+import { useNavigate } from "@tanstack/react-router";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { useSetAtom } from "jotai";
+import { UnconnectedGitHubConnector } from "@/components/GitHubConnector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLoadApps } from "@/hooks/useLoadApps";
+import { useSettings } from "@/hooks/useSettings";
+import { useSetAtom } from "jotai";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSettings } from "@/hooks/useSettings";
-import { UnconnectedGitHubConnector } from "@/components/GitHubConnector";
 
 interface ImportAppDialogProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ interface ImportAppDialogProps {
 export const AI_RULES_PROMPT =
   "Generate an AI_RULES.md file for this app. Describe the tech stack in 5-10 bullet points and describe clear rules about what libraries to use for what.";
 export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
+  const { t } = useTranslation("app");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [hasAiRules, setHasAiRules] = useState<boolean | null>(null);
   const [customAppName, setCustomAppName] = useState<string>("");
@@ -88,7 +90,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       const fetchedRepos = await ipc.github.listRepos();
       setRepos(fetchedRepos);
     } catch (err: unknown) {
-      showError("Failed to fetch repositories.: " + (err as any).toString());
+      showError(
+        t("import.fetchReposFailed", { message: (err as any).toString() }),
+      );
     } finally {
       setLoading(false);
     }
@@ -105,7 +109,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         });
         setGithubNameExists(result.exists);
       } catch (error: unknown) {
-        showError("Failed to check app name: " + (error as any).toString());
+        showError(
+          t("import.checkNameFailed", { message: (error as any).toString() }),
+        );
       } finally {
         setIsCheckingGithubName(false);
       }
@@ -133,7 +139,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         return;
       }
       setSelectedAppId(result.app.id);
-      showSuccess(`Successfully imported ${result.app.name}`);
+      showSuccess(t("import.success", { name: result.app.name }));
       const chatId = await ipc.chat.createChat(result.app.id);
       navigate({ to: "/chat", search: { id: chatId } });
       if (!result.hasAiRules) {
@@ -144,7 +150,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       }
       onClose();
     } catch (error: unknown) {
-      showError("Failed to import repository: " + (error as any).toString());
+      showError(
+        t("import.importFailed", { message: (error as any).toString() }),
+      );
     } finally {
       setImporting(false);
     }
@@ -167,7 +175,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         return;
       }
       setSelectedAppId(result.app.id);
-      showSuccess(`Successfully imported ${result.app.name}`);
+      showSuccess(t("import.success", { name: result.app.name }));
       const chatId = await ipc.chat.createChat(result.app.id);
       navigate({ to: "/chat", search: { id: chatId } });
       if (!result.hasAiRules) {
@@ -178,7 +186,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       }
       onClose();
     } catch (error: unknown) {
-      showError("Failed to import repository: " + (error as any).toString());
+      showError(
+        t("import.importFailed", { message: (error as any).toString() }),
+      );
     } finally {
       setImporting(false);
     }
@@ -197,7 +207,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         });
         setGithubNameExists(result.exists);
       } catch (error: unknown) {
-        showError("Failed to check app name: " + (error as any).toString());
+        showError(
+          t("import.checkNameFailed", { message: (error as any).toString() }),
+        );
       } finally {
         setIsCheckingGithubName(false);
       }
@@ -219,7 +231,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       });
       setNameExists(result.exists);
     } catch (error: unknown) {
-      showError("Failed to check app name: " + (error as any).toString());
+      showError(
+        t("import.checkNameFailed", { message: (error as any).toString() }),
+      );
     } finally {
       setIsCheckingName(false);
     }
@@ -261,8 +275,8 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     onSuccess: async (result) => {
       showSuccess(
         !hasAiRules
-          ? "App imported successfully. Anyon will automatically generate an AI_RULES.md now."
-          : "App imported successfully",
+          ? t("import.successAutoRules")
+          : t("import.success", { name: customAppName }),
       );
       onClose();
 

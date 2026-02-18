@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import type { UserSettings } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 import { Clipboard, Info, KeyRound, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AzureConfiguration } from "./AzureConfiguration";
 import { VertexConfiguration } from "./VertexConfiguration";
 
@@ -51,6 +52,8 @@ export function ApiKeyConfiguration({
   isAnyon,
   updateSettings,
 }: ApiKeyConfigurationProps) {
+  const { t } = useTranslation(["settings", "common"]);
+
   // Special handling for Azure OpenAI which requires environment variables
   if (provider === "azure") {
     return (
@@ -100,14 +103,14 @@ export function ApiKeyConfiguration({
         className="border rounded-lg px-4 bg-(--background-lightest)"
       >
         <AccordionTrigger className="text-lg font-medium hover:no-underline cursor-pointer">
-          API Key from Settings
+          {t("providers.apiKeyFromSettings", { ns: "settings" })}
         </AccordionTrigger>
         <AccordionContent className="pt-4 ">
           {isValidUserKey && (
             <Alert variant="default" className="mb-4">
               <KeyRound className="h-4 w-4" />
               <AlertTitle className="flex justify-between items-center">
-                <span>Current Key (Settings)</span>
+                <span>{t("providers.currentKey", { ns: "settings" })}</span>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -116,14 +119,16 @@ export function ApiKeyConfiguration({
                   className="flex items-center gap-1 h-7 px-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {isSaving ? "Deleting..." : "Delete"}
+                  {isSaving
+                    ? `${t("buttons.delete", { ns: "common" })}...`
+                    : t("buttons.delete", { ns: "common" })}
                 </Button>
               </AlertTitle>
               <AlertDescription>
                 <p className="font-mono text-sm">{userApiKey}</p>
                 {activeKeySource === "settings" && (
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    This key is currently active.
+                    {t("providers.keyIsActive", { ns: "settings" })}
                   </p>
                 )}
               </AlertDescription>
@@ -135,14 +140,20 @@ export function ApiKeyConfiguration({
               htmlFor="apiKeyInput"
               className="block text-sm font-medium text-muted-foreground"
             >
-              {isValidUserKey ? "Update" : "Set"} {providerDisplayName} API Key
+              {isValidUserKey
+                ? t("buttons.update", { ns: "common" })
+                : t("buttons.save", { ns: "common" })}{" "}
+              {providerDisplayName} API Key
             </label>
             <div className="flex items-start space-x-2">
               <Input
                 id="apiKeyInput"
                 value={apiKeyInput}
                 onChange={(e) => onApiKeyInputChange(e.target.value)}
-                placeholder={`Enter new ${providerDisplayName} API Key here`}
+                placeholder={t("providers.enterApiKeyPlaceholder", {
+                  ns: "settings",
+                  provider: providerDisplayName,
+                })}
                 className={`flex-grow ${saveError ? "border-red-500" : ""}`}
               />
               <Button
@@ -153,15 +164,15 @@ export function ApiKeyConfiguration({
                       onSaveKey(text);
                     }
                   } catch (error) {
-                    showError("Failed to paste from clipboard");
+                    showError(t("toasts.pasteFailed", { ns: "common" }));
                     console.error("Failed to paste from clipboard", error);
                   }
                 }}
                 disabled={isSaving}
                 variant="outline"
                 size="icon"
-                title="Paste from clipboard and save"
-                aria-label="Paste from clipboard and save"
+                title={t("aria.pasteAndSave", { ns: "common" })}
+                aria-label={t("aria.pasteAndSave", { ns: "common" })}
               >
                 <Clipboard className="h-4 w-4" />
               </Button>

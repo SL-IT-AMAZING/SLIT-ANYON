@@ -1,6 +1,6 @@
-import React from "react";
+import { AlertTriangle, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { X, AlertTriangle } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface InputRequestToastProps {
@@ -14,6 +14,7 @@ export function InputRequestToast({
   toastId,
   onResponse,
 }: InputRequestToastProps) {
+  const { t } = useTranslation("common");
   const handleClose = () => {
     toast.dismiss(toastId);
   };
@@ -50,7 +51,7 @@ export function InputRequestToast({
               <button
                 onClick={handleClose}
                 className="ml-auto flex-shrink-0 p-1.5 text-amber-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-slate-200 transition-colors duration-200 rounded-md hover:bg-amber-100/50 dark:hover:bg-slate-700/50"
-                aria-label="Close"
+                aria-label={t("buttons.close")}
               >
                 <X className="w-4 h-4" />
               </button>

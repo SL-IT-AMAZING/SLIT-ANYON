@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ScrollText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -11,6 +12,7 @@ interface LogsToolProps {
 }
 
 export function LogsTool({ node, status, children, className }: LogsToolProps) {
+  const { t } = useTranslation("chat");
   const count = node?.properties?.count;
   const type = node?.properties?.type;
   const level = node?.properties?.level;
@@ -29,7 +31,7 @@ export function LogsTool({ node, status, children, className }: LogsToolProps) {
   return (
     <ToolCallCard
       icon={ScrollText}
-      title="Logs"
+      title={t("tools.logs")}
       subtitle={subtitle}
       status={status}
       className={className}

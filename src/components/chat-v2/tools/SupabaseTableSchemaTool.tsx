@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Table } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,12 +19,13 @@ export function SupabaseTableSchemaTool({
   children,
   className,
 }: SupabaseTableSchemaToolProps) {
+  const { t } = useTranslation("chat");
   const table = tableProp || node?.properties?.table || undefined;
 
   return (
     <ToolCallCard
       icon={Table}
-      title="Table Schema"
+      title={t("tools.tableSchema")}
       subtitle={table}
       status={status}
       className={className}

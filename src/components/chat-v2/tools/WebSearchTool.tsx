@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,6 +19,7 @@ export function WebSearchTool({
   children,
   className,
 }: WebSearchToolProps) {
+  const { t } = useTranslation("chat");
   const query =
     queryProp ||
     node?.properties?.query ||
@@ -26,7 +28,7 @@ export function WebSearchTool({
   return (
     <ToolCallCard
       icon={Globe}
-      title="Web Search"
+      title={t("tools.webSearch")}
       subtitle={query || undefined}
       status={status}
       className={className}

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { SidebarMenuItem } from "@/components/ui/sidebar";
 import type { ListedApp } from "@/ipc/types/app";
+import { getAppDisplayName } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { Star } from "lucide-react";
 
@@ -21,7 +22,7 @@ export function AppItem({
 }: AppItemProps) {
   return (
     <SidebarMenuItem className="relative group">
-      <div className="flex w-full items-center" title={app.name}>
+      <div className="flex w-full items-center" title={getAppDisplayName(app)}>
         <Button
           variant="ghost"
           onClick={() => handleAppClick(app.id)}
@@ -33,7 +34,7 @@ export function AppItem({
           data-testid={`app-list-item-${app.name}`}
         >
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="truncate text-sm">{app.name}</span>
+            <span className="truncate text-sm">{getAppDisplayName(app)}</span>
             <span className="text-xs text-muted-foreground truncate">
               {formatDistanceToNow(new Date(app.createdAt), {
                 addSuffix: true,

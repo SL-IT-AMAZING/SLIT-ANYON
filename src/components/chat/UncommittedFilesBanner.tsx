@@ -1,11 +1,3 @@
-import { useState } from "react";
-import {
-  FileWarning,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowRightLeft,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,12 +8,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  useUncommittedFiles,
-  type UncommittedFile,
-} from "@/hooks/useUncommittedFiles";
 import { useCommitChanges } from "@/hooks/useCommitChanges";
+import {
+  type UncommittedFile,
+  useUncommittedFiles,
+} from "@/hooks/useUncommittedFiles";
 import { cn } from "@/lib/utils";
+import {
+  ArrowRightLeft,
+  FileWarning,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface UncommittedFilesBannerProps {
   appId: number | null;
@@ -42,22 +43,27 @@ function getStatusIcon(status: UncommittedFile["status"]) {
   }
 }
 
-function getStatusLabel(status: UncommittedFile["status"]) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getStatusLabel(status: UncommittedFile["status"], t: any) {
   switch (status) {
     case "added":
-      return "Added";
+      return t("git.added");
     case "modified":
-      return "Modified";
+      return t("git.modified");
     case "deleted":
-      return "Deleted";
+      return t("git.deleted");
     case "renamed":
-      return "Renamed";
+      return t("git.renamed");
     default:
       return status;
   }
 }
 
-function generateDefaultCommitMessage(files: UncommittedFile[]): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function generateDefaultCommitMessage(
+  files: UncommittedFile[],
+  t: any,
+): string {
   if (files.length === 0) return "";
 
   const added = files.filter((f) => f.status === "added").length;
@@ -66,15 +72,12 @@ function generateDefaultCommitMessage(files: UncommittedFile[]): string {
   const renamed = files.filter((f) => f.status === "renamed").length;
 
   const parts: string[] = [];
-  if (added > 0) parts.push(`add ${added} file${added > 1 ? "s" : ""}`);
-  if (modified > 0)
-    parts.push(`update ${modified} file${modified > 1 ? "s" : ""}`);
-  if (deleted > 0)
-    parts.push(`remove ${deleted} file${deleted > 1 ? "s" : ""}`);
-  if (renamed > 0)
-    parts.push(`rename ${renamed} file${renamed > 1 ? "s" : ""}`);
+  if (added > 0) parts.push(t("git.commitAddFiles", { count: added }));
+  if (modified > 0) parts.push(t("git.commitUpdateFiles", { count: modified }));
+  if (deleted > 0) parts.push(t("git.commitRemoveFiles", { count: deleted }));
+  if (renamed > 0) parts.push(t("git.commitRenameFiles", { count: renamed }));
 
-  if (parts.length === 0) return "Update files";
+  if (parts.length === 0) return t("git.updateFiles");
 
   // Capitalize first letter
   const message = parts.join(", ");
@@ -82,6 +85,7 @@ function generateDefaultCommitMessage(files: UncommittedFile[]): string {
 }
 
 export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
+  const { t } = useTranslation(["chat", "app", "common"]);
   const { uncommittedFiles, hasUncommittedFiles, isLoading } =
     useUncommittedFiles(appId);
   const { commitChanges, isCommitting } = useCommitChanges();
@@ -95,7 +99,7 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
   const handleOpenDialog = () => {
     // Set default commit message only when opening the dialog
     // This prevents overwriting user's custom message during polling
-    setCommitMessage(generateDefaultCommitMessage(uncommittedFiles));
+    setCommitMessage(generateDefaultCommitMessage(uncommittedFiles, t));
     setIsDialogOpen(true);
   };
 
@@ -116,8 +120,12 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
         <div className="flex items-center gap-2 text-sm">
           <FileWarning size={16} />
           <span>
-            You have <strong>{uncommittedFiles.length}</strong> uncommitted{" "}
-            {uncommittedFiles.length === 1 ? "change" : "changes"}.
+            {t("preview.youHave", { ns: "app" })}{" "}
+            <strong>{uncommittedFiles.length}</strong>{" "}
+            {t("preview.uncommittedLabel", {
+              count: uncommittedFiles.length,
+              ns: "app",
+            })}
           </span>
         </div>
         <Button
@@ -126,7 +134,7 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
           onClick={handleOpenDialog}
           data-testid="review-commit-button"
         >
-          Review & commit
+          {t("preview.reviewCommit", { ns: "app" })}
         </Button>
       </div>
 
@@ -140,9 +148,11 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
       >
         <DialogContent className="sm:max-w-lg" data-testid="commit-dialog">
           <DialogHeader>
-            <DialogTitle>Review & Commit Changes</DialogTitle>
+            <DialogTitle>
+              {t("preview.reviewCommitChanges", { ns: "app" })}
+            </DialogTitle>
             <DialogDescription>
-              Review your changes and enter a commit message.
+              {t("preview.reviewYourChanges", { ns: "app" })}
             </DialogDescription>
           </DialogHeader>
 
@@ -152,20 +162,23 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
                 htmlFor="commit-message"
                 className="text-sm font-medium mb-2 block"
               >
-                Commit message
+                {t("preview.commitMessage", { ns: "app" })}
               </label>
               <Input
                 id="commit-message"
                 value={commitMessage}
                 onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Enter commit message..."
+                placeholder={t("preview.enterCommitMessage", { ns: "app" })}
                 data-testid="commit-message-input"
               />
             </div>
 
             <div>
               <p className="text-sm font-medium mb-2">
-                Changed files ({uncommittedFiles.length})
+                {t("preview.changedFiles", {
+                  count: uncommittedFiles.length,
+                  ns: "app",
+                })}
               </p>
               <div
                 className="max-h-60 overflow-y-auto rounded-md border p-2 space-y-1"
@@ -198,7 +211,7 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
                           "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
                       )}
                     >
-                      {getStatusLabel(file.status)}
+                      {getStatusLabel(file.status, t)}
                     </span>
                   </div>
                 ))}
@@ -212,14 +225,16 @@ export function UncommittedFilesBanner({ appId }: UncommittedFilesBannerProps) {
               onClick={() => setIsDialogOpen(false)}
               disabled={isCommitting}
             >
-              Cancel
+              {t("buttons.cancel", { ns: "common" })}
             </Button>
             <Button
               onClick={handleCommit}
               disabled={!commitMessage.trim() || isCommitting}
               data-testid="commit-button"
             >
-              {isCommitting ? "Committing..." : "Commit"}
+              {isCommitting
+                ? t("preview.committing", { ns: "app" })
+                : t("preview.commit", { ns: "app" })}
             </Button>
           </DialogFooter>
         </DialogContent>

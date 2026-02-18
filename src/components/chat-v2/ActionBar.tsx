@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Check, Copy, RefreshCw } from "lucide-react";
 
@@ -24,6 +25,7 @@ export function ActionBar({
   showReload = false,
   className,
 }: ActionBarProps) {
+  const { t } = useTranslation("chat");
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,7 +78,7 @@ export function ActionBar({
                   variant="ghost"
                   size="icon-xs"
                   onClick={onReload}
-                  aria-label="Regenerate"
+                  aria-label={t("actions.regenerate")}
                 />
               }
             >

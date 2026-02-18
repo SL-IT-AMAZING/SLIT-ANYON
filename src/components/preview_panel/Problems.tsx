@@ -1,23 +1,24 @@
-import { useEffect, useState } from "react";
-import { useAtom, useAtomValue } from "jotai";
-import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import {
-  AlertTriangle,
-  XCircle,
-  FileText,
-  Wrench,
-  RefreshCw,
-  Check,
-} from "lucide-react";
-import { Problem, ProblemReport } from "@/ipc/types";
+import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { Problem, ProblemReport } from "@/ipc/types";
+import { useAtom, useAtomValue } from "jotai";
+import {
+  AlertTriangle,
+  Check,
+  FileText,
+  RefreshCw,
+  Wrench,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useStreamChat } from "@/hooks/useStreamChat";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { createProblemFixPrompt } from "@/shared/problem_prompt";
+import { useStreamChat } from "@/hooks/useStreamChat";
 import { showError } from "@/lib/toast";
+import { createProblemFixPrompt } from "@/shared/problem_prompt";
 
 interface ProblemItemProps {
   problem: Problem;
@@ -26,6 +27,8 @@ interface ProblemItemProps {
 }
 
 const ProblemItem = ({ problem, checked, onToggle }: ProblemItemProps) => {
+  const { t: tCommon } = useTranslation(["common"]);
+
   return (
     <div
       role="checkbox"
@@ -39,7 +42,7 @@ const ProblemItem = ({ problem, checked, onToggle }: ProblemItemProps) => {
         onCheckedChange={onToggle}
         onClick={(e) => e.stopPropagation()}
         className="mt-0.5"
-        aria-label="Select problem"
+        aria-label={tCommon("aria.selectProblem")}
       />
       <div className="flex-shrink-0 mt-0.5">
         <XCircle size={16} className="text-red-500" />
@@ -82,6 +85,7 @@ const RecheckButton = ({
   className = "h-7 px-3 text-xs",
   onBeforeRecheck,
 }: RecheckButtonProps) => {
+  const { t } = useTranslation(["app"]);
   const { checkProblems, isChecking } = useCheckProblems(appId);
   const [showingFeedback, setShowingFeedback] = useState(false);
 
@@ -115,7 +119,7 @@ const RecheckButton = ({
         size={14}
         className={`mr-1 ${isShowingChecking ? "animate-spin" : ""}`}
       />
-      {isShowingChecking ? "Checking..." : "Run checks"}
+      {isShowingChecking ? t("preview.checking") : t("preview.runChecks")}
     </Button>
   );
 };
@@ -137,6 +141,7 @@ const ProblemsSummary = ({
   onFixSelected,
   onSelectAll,
 }: ProblemsSummaryProps) => {
+  const { t: tApp } = useTranslation(["app"]);
   const { problems } = problemReport;
   const totalErrors = problems.length;
 
@@ -146,7 +151,7 @@ const ProblemsSummary = ({
     return (
       <div className="flex flex-col items-center justify-center h-32 text-center">
         <p className="mt-6 text-sm font-medium text-muted-foreground mb-3">
-          No problems found
+          {tApp("preview.noProblems")}
         </p>
         <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mb-3">
           <Check size={20} className="text-green-600 dark:text-green-400" />
@@ -164,7 +169,10 @@ const ProblemsSummary = ({
           <div className="flex items-center gap-2">
             <XCircle size={16} className="text-red-500" />
             <span className="text-sm font-medium">
-              {totalErrors} {totalErrors === 1 ? "error" : "errors"}
+              {totalErrors}{" "}
+              {totalErrors === 1
+                ? tApp("preview.error")
+                : tApp("preview.errors")}
             </span>
           </div>
         )}
@@ -178,7 +186,7 @@ const ProblemsSummary = ({
             onClick={onSelectAll}
             className="h-7 px-3 text-xs"
           >
-            Select all
+            {tApp("preview.selectAll")}
           </Button>
         ) : (
           <Button
@@ -187,7 +195,7 @@ const ProblemsSummary = ({
             onClick={onClearAll}
             className="h-7 px-3 text-xs"
           >
-            Clear all
+            {tApp("preview.clearAll")}
           </Button>
         )}
         <Button
@@ -199,7 +207,7 @@ const ProblemsSummary = ({
           disabled={selectedCount === 0}
         >
           <Wrench size={14} className="mr-1" />
-          {`Fix ${selectedCount} ${selectedCount === 1 ? "problem" : "problems"}`}
+          {tApp("preview.fixProblems", { count: selectedCount })}
         </Button>
       </div>
     </div>
@@ -215,6 +223,7 @@ export function Problems() {
 }
 
 export function _Problems() {
+  const { t: tApp } = useTranslation(["app"]);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const { problemReport } = useCheckProblems(selectedAppId);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -238,9 +247,11 @@ export function _Problems() {
         <div className="w-16 h-16 rounded-full bg-[var(--background-darkest)] flex items-center justify-center mb-4">
           <AlertTriangle size={24} className="text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium mb-2">No App Selected</h3>
+        <h3 className="text-lg font-medium mb-2">
+          {tApp("preview.noAppSelected")}
+        </h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          Select an app to view TypeScript problems and diagnostic information.
+          {tApp("preview.selectAppDescription")}
         </p>
       </div>
     );
@@ -252,9 +263,11 @@ export function _Problems() {
         <div className="w-16 h-16 rounded-full bg-[var(--background-darkest)] flex items-center justify-center mb-4">
           <AlertTriangle size={24} className="text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium mb-2">No Problems Report</h3>
+        <h3 className="text-lg font-medium mb-2">
+          {tApp("preview.noProblemsReport")}
+        </h3>
         <p className="text-sm text-muted-foreground max-w-md mb-4">
-          Run checks to scan your app for TypeScript errors and other problems.
+          {tApp("preview.runChecksDescription")}
         </p>
         <RecheckButton
           appId={selectedAppId}

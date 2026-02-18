@@ -3,6 +3,7 @@ import { useLoadAppFile } from "@/hooks/useLoadAppFile";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { ChevronRight, Circle, Save } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import "@/components/chat/monaco";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,6 +96,7 @@ export const FileEditor = ({
   filePath,
   initialLine = null,
 }: FileEditorProps) => {
+  const { t } = useTranslation(["app", "common"]);
   const { content, loading, error } = useLoadAppFile(appId, filePath);
   const { theme } = useTheme();
   const [value, setValue] = useState<string | undefined>(undefined);
@@ -206,14 +208,14 @@ export const FileEditor = ({
       if (warning) {
         showWarning(warning);
       } else {
-        showSuccess("File saved");
+        showSuccess(t("toasts.fileSaved", { ns: "common" }));
       }
 
       originalValueRef.current = currentValueRef.current;
       needsSaveRef.current = false;
       setDisplayUnsavedChanges(false);
     } catch (error) {
-      showError(error);
+      showError(String(error));
     } finally {
       isSavingRef.current = false;
       setIsSaving(false);
@@ -231,16 +233,26 @@ export const FileEditor = ({
   }, [initialLine, filePath, content, navigateToLine]);
 
   if (loading) {
-    return <div className="p-4">Loading file content...</div>;
+    return (
+      <div className="p-4">
+        {t("labels.loadingFileContent", { ns: "common" })}...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error: {error.message}</div>;
+    return (
+      <div className="p-4 text-red-500">
+        {t("labels.error", { ns: "common" })}: {error.message}
+      </div>
+    );
   }
 
   if (!content) {
     return (
-      <div className="p-4 text-muted-foreground">No content available</div>
+      <div className="p-4 text-muted-foreground">
+        {t("preview.noContentAvailable")}
+      </div>
     );
   }
 

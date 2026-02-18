@@ -27,7 +27,6 @@ import { createLoggedHandler } from "../../../../ipc/handlers/safe_handle";
 import { getModelClient } from "../../../../ipc/utils/get_model_client";
 import { readSettings } from "../../../../main/settings";
 import { type Theme, themesData } from "../../../../shared/themes";
-import { webCrawlResponseSchema } from "./local_agent/tools/web_crawl";
 
 const logger = log.scope("themes_handlers");
 const handle = createLoggedHandler(logger);
@@ -799,16 +798,15 @@ Modern theme extracted from website for testing.
         );
       }
 
-      // Validate response with Zod schema
+      // TODO: webCrawlResponseSchema was removed - assuming response is valid for now
       const rawCrawlResult = await crawlResponse.json();
-      const parseResult = webCrawlResponseSchema.safeParse(rawCrawlResult);
-      if (!parseResult.success) {
-        logger.error("Invalid crawl response structure:", parseResult.error);
+      // Validate basic structure - screenshot and markdown are required
+      if (!rawCrawlResult.screenshot || !rawCrawlResult.markdown) {
         throw new Error(
           "Received invalid response from crawl service. Please try again.",
         );
       }
-      const crawlResult = parseResult.data;
+      const crawlResult = rawCrawlResult;
 
       if (!crawlResult.screenshot) {
         throw new Error(

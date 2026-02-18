@@ -198,7 +198,7 @@ export function useStreamChat({
                   queryKeys.chats.list({ appId: selectedAppId }),
                 );
                 const chat = chats?.find((c) => c.id === chatId);
-                const appName = app?.name ?? "Anyon";
+                const appName = app?.displayName ?? app?.name ?? "Anyon";
                 const rawTitle = response.chatSummary ?? chat?.title;
                 const body = rawTitle
                   ? rawTitle.length > 80
@@ -226,6 +226,15 @@ export function useStreamChat({
                   posthog,
                 });
               }
+              if (response.appDisplayName && selectedAppId) {
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.apps.detail({ appId: selectedAppId }),
+                });
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.apps.all,
+                });
+              }
+
               // Use queryClient directly with the chatId parameter to avoid stale closure issues
               queryClient.invalidateQueries({ queryKey: ["proposal", chatId] });
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -18,6 +19,7 @@ export function AddDependencyTool({
   children,
   className,
 }: AddDependencyToolProps) {
+  const { t } = useTranslation("chat");
   const raw = packagesProp || node?.properties?.packages || "";
   const packageList = raw.split(" ").filter(Boolean);
   const subtitle = packageList.length > 0 ? packageList.join(", ") : undefined;
@@ -25,7 +27,7 @@ export function AddDependencyTool({
   return (
     <ToolCallCard
       icon={Package}
-      title="Add Dependency"
+      title={t("tools.addDependency")}
       subtitle={subtitle}
       status={status}
       className={className}

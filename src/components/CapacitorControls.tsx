@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,6 +35,7 @@ interface CapacitorControlsProps {
 type CapacitorStatus = "idle" | "syncing" | "opening";
 
 export function CapacitorControls({ appId }: CapacitorControlsProps) {
+  const { t } = useTranslation(["app", "common"]);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorDetails, setErrorDetails] = useState<{
     title: string;
@@ -66,11 +69,11 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
     },
     onSuccess: () => {
       setIosStatus("idle");
-      showSuccess("Synced and opened iOS project in Xcode");
+      showSuccess(t("capacitor.syncedIos"));
     },
     onError: (error) => {
       setIosStatus("idle");
-      showErrorDialog("Failed to sync and open iOS project", error);
+      showErrorDialog(t("capacitor.syncIosFailed"), error);
     },
   });
 
@@ -86,11 +89,11 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
     },
     onSuccess: () => {
       setAndroidStatus("idle");
-      showSuccess("Synced and opened Android project in Android Studio");
+      showSuccess(t("capacitor.syncedAndroid"));
     },
     onError: (error) => {
       setAndroidStatus("idle");
-      showErrorDialog("Failed to sync and open Android project", error);
+      showErrorDialog(t("capacitor.syncAndroidFailed"), error);
     },
   });
 
@@ -98,22 +101,40 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
   const getIosButtonText = () => {
     switch (iosStatus) {
       case "syncing":
-        return { main: "Syncing...", sub: "Building app" };
+        return {
+          main: t("capacitor.syncing"),
+          sub: t("capacitor.buildingApp"),
+        };
       case "opening":
-        return { main: "Opening...", sub: "Launching Xcode" };
+        return {
+          main: t("capacitor.opening"),
+          sub: t("capacitor.launchingXcode"),
+        };
       default:
-        return { main: "Sync & Open iOS", sub: "Xcode" };
+        return {
+          main: t("capacitor.syncAndOpenIos"),
+          sub: t("capacitor.xcode"),
+        };
     }
   };
 
   const getAndroidButtonText = () => {
     switch (androidStatus) {
       case "syncing":
-        return { main: "Syncing...", sub: "Building app" };
+        return {
+          main: t("capacitor.syncing"),
+          sub: t("capacitor.buildingApp"),
+        };
       case "opening":
-        return { main: "Opening...", sub: "Launching Android Studio" };
+        return {
+          main: t("capacitor.opening"),
+          sub: t("capacitor.launchingAndroidStudio"),
+        };
       default:
-        return { main: "Sync & Open Android", sub: "Android Studio" };
+        return {
+          main: t("capacitor.syncAndOpenAndroid"),
+          sub: t("capacitor.androidStudio"),
+        };
     }
   };
 
@@ -130,7 +151,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
       <Card className="mt-1" data-testid="capacitor-controls">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            Mobile Development
+            {t("capacitor.title")}
             <Button
               variant="ghost"
               size="sm"
@@ -142,13 +163,11 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               }}
               className="text-sm text-muted-foreground hover:text-accent-foreground flex items-center gap-1"
             >
-              Need help?
+              {t("capacitor.needHelp")}
               <ExternalLink className="h-3 w-3" />
             </Button>
           </CardTitle>
-          <CardDescription>
-            Sync and open your Capacitor mobile projects
-          </CardDescription>
+          <CardDescription>{t("capacitor.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
@@ -205,8 +224,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               {errorDetails?.title}
             </DialogTitle>
             <DialogDescription>
-              An error occurred while running the Capacitor command. See details
-              below:
+              {t("capacitor.errorDialogDescription")}
             </DialogDescription>
           </DialogHeader>
 
@@ -220,7 +238,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               <Button
                 onClick={() => {
                   navigator.clipboard.writeText(errorDetails.message);
-                  showSuccess("Error details copied to clipboard");
+                  showSuccess(t("capacitor.errorCopied"));
                 }}
                 variant="ghost"
                 size="sm"
@@ -236,7 +254,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               onClick={() => {
                 if (errorDetails) {
                   navigator.clipboard.writeText(errorDetails.message);
-                  showSuccess("Error details copied to clipboard");
+                  showSuccess(t("capacitor.errorCopied"));
                 }
               }}
               variant="outline"
@@ -244,14 +262,14 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
               className="flex items-center gap-2"
             >
               <Copy className="h-4 w-4" />
-              Copy Error
+              {t("capacitor.copyError")}
             </Button>
             <Button
               onClick={() => setErrorDialogOpen(false)}
               variant="outline"
               size="sm"
             >
-              Close
+              {t("buttons.close", { ns: "common" })}
             </Button>
           </div>
         </DialogContent>

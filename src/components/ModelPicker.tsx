@@ -1,18 +1,4 @@
-import { useState, useMemo } from "react";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useLanguageModelsByProviders } from "@/hooks/useLanguageModelsByProviders";
-import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
-import { useSettings } from "@/hooks/useSettings";
-import { queryKeys } from "@/lib/queryKeys";
-import { cn } from "@/lib/utils";
-import type { LanguageModel } from "@/ipc/types";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -21,6 +7,21 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
+import { useLanguageModelsByProviders } from "@/hooks/useLanguageModelsByProviders";
+import { useSettings } from "@/hooks/useSettings";
+import type { LanguageModel } from "@/ipc/types";
+import { queryKeys } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function formatContextWindow(tokens: number | undefined): string {
   if (!tokens) return "";
@@ -34,6 +35,7 @@ function formatContextWindow(tokens: number | undefined): string {
 }
 
 export function ModelPicker() {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { settings, updateSettings } = useSettings();
@@ -134,7 +136,7 @@ export function ModelPicker() {
       <PopoverContent className="w-72 p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search models..."
+            placeholder={t("placeholders.searchModels")}
             value={search}
             onValueChange={setSearch}
           />
