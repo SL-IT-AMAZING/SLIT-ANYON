@@ -7,6 +7,31 @@ import { readSettings, writeSettings } from "./settings";
 
 const logger = log.scope("entitlement");
 
+// ── Dev bypass ───────────────────────────────────────────────────────────────
+// Set ANYON_BYPASS_ENTITLEMENT=1 to skip all billing checks during development.
+// Usage:  ANYON_BYPASS_ENTITLEMENT=1 npm start
+// Or use: npm run dev:free
+const BYPASS_ENTITLEMENT = process.env.ANYON_BYPASS_ENTITLEMENT === "1";
+
+if (BYPASS_ENTITLEMENT) {
+  logger.warn("⚠️  Entitlement bypass enabled — all billing checks disabled");
+}
+
+const BYPASS_ENTITLEMENT_STATE: EntitlementState = {
+  plan: "pro",
+  isActive: true,
+  expiresAt: null,
+  polarSubscriptionId: null,
+  syncedAt: new Date().toISOString(),
+};
+
+const BYPASS_USAGE: UsageInfo = {
+  creditsUsed: 0,
+  creditsLimit: 999_999_999,
+  resetAt: null,
+  overageRate: null,
+};
+
 /**
  * Model intelligence tier classification.
  * Light = cost-effective models (Flash, Haiku, Mini variants)
@@ -303,6 +328,8 @@ function saveCachedEntitlements(state: EntitlementState): void {
 }
 
 export async function getEntitlements(): Promise<EntitlementState> {
+  if (BYPASS_ENTITLEMENT) return BYPASS_ENTITLEMENT_STATE;
+
   const cached = getCachedEntitlements();
   if (cached) return cached;
 
@@ -310,6 +337,11 @@ export async function getEntitlements(): Promise<EntitlementState> {
 }
 
 export async function syncEntitlements(): Promise<EntitlementState> {
+  if (BYPASS_ENTITLEMENT) {
+    saveCachedEntitlements(BYPASS_ENTITLEMENT_STATE);
+    return BYPASS_ENTITLEMENT_STATE;
+  }
+
   const accessToken = getAccessToken();
   if (!accessToken) {
     logger.info("No auth token — clearing cache and returning free state");
@@ -427,6 +459,8 @@ export async function openCustomerPortal(): Promise<{ portalUrl: string }> {
 }
 
 export async function getUsage(): Promise<UsageInfo> {
+  if (BYPASS_ENTITLEMENT) return BYPASS_USAGE;
+
   const requestUsage = async (token: string) => {
     return fetch(oauthEndpoints.auth.usage, {
       headers: {
@@ -492,6 +526,16 @@ export interface CreditCheckResult {
 export async function checkCreditsForModel(
   modelName: string,
 ): Promise<CreditCheckResult> {
+  if (BYPASS_ENTITLEMENT) {
+    return {
+      allowed: true,
+      creditsRemaining: Number.POSITIVE_INFINITY,
+      plan: "pro",
+      usagePercent: 0,
+      modelTier: getModelTier(modelName),
+    };
+  }
+
   const plan = getPlanTier();
   const tier = getModelTier(modelName);
 
@@ -589,6 +633,8 @@ export async function reportTokenUsage(
   rawTokens: number,
   modelId: string,
 ): Promise<void> {
+  if (BYPASS_ENTITLEMENT) return;
+
   const accessToken = getAccessToken();
   if (!accessToken) return; // Not logged in, skip
 
