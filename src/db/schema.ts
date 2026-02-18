@@ -45,9 +45,6 @@ export const apps = sqliteTable("apps", {
   supabaseParentProjectId: text("supabase_parent_project_id"),
   // Supabase organization slug for credential lookup
   supabaseOrganizationSlug: text("supabase_organization_slug"),
-  neonProjectId: text("neon_project_id"),
-  neonDevelopmentBranchId: text("neon_development_branch_id"),
-  neonPreviewBranchId: text("neon_preview_branch_id"),
   vercelProjectId: text("vercel_project_id"),
   vercelProjectName: text("vercel_project_name"),
   vercelTeamId: text("vercel_team_id"),
@@ -64,6 +61,10 @@ export const apps = sqliteTable("apps", {
     .default(sql`0`),
   // Theme ID for design system theming (null means "no theme")
   themeId: text("theme_id"),
+  // AI-generated display name (e.g. "Todo App", "Weather Dashboard")
+  // Null until first AI response sets it via <anyon-app-name> tag.
+  // UI shows displayName ?? name as fallback.
+  displayName: text("display_name"),
 });
 
 export const chats = sqliteTable("chats", {
@@ -118,7 +119,6 @@ export const versions = sqliteTable(
       .notNull()
       .references(() => apps.id, { onDelete: "cascade" }),
     commitHash: text("commit_hash").notNull(),
-    neonDbTimestamp: text("neon_db_timestamp"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),

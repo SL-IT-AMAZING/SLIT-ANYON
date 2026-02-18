@@ -1,0 +1,1 @@
+ALTER TABLE `apps` ADD `display_name` text;
