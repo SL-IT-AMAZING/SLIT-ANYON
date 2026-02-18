@@ -27,7 +27,15 @@
     "copy": "복사",
     "paste": "붙여넣기",
     "undo": "실행 취소",
-    "redo": "다시 실행"
+    "redo": "다시 실행",
+    "select": "선택",
+    "draw": "그리기",
+    "copied": "복사됨",
+    "refreshing": "새로고침 중...",
+    "disconnecting": "연결 해제 중...",
+    "connecting": "연결 중...",
+    "saving": "저장 중...",
+    "loading": "로드 중..."
   },
   "labels": {
     "name": "이름",
@@ -57,7 +65,9 @@
     "error": "오류",
     "success": "성공",
     "warning": "경고",
-    "info": "정보"
+    "info": "정보",
+    "saving": "저장 중...",
+    "loadingFileContent": "파일 내용 로딩 중"
   },
   "errors": {
     "generic": "문제가 발생했습니다",
@@ -79,5 +89,49 @@
     "deleteTriggerTitle": "{{itemType}} 삭제",
     "deleteTitle": "{{itemType}} 삭제",
     "deleteDescription": "\"{{itemName}}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+  },
+  "toasts": {
+    "settingUpdated": "설정이 업데이트되었습니다",
+    "fileSaved": "파일이 저장되었습니다",
+    "copiedToClipboard": "클립보드에 복사되었습니다",
+    "bothKeyValueRequired": "키와 값 모두 입력해야 합니다",
+    "duplicateKeyExists": "이 키를 가진 {{itemLabel}}이(가) 이미 존재합니다",
+    "itemsSaved": "{{itemLabel}} 저장 완료",
+    "pasteFailed": "클립보드에서 붙여넣기 실패",
+    "uploadDisabled": "업로드 기능이 현재 비활성화되어 있습니다"
+  },
+  "placeholders": {
+    "searchModels": "모델 검색...",
+    "searchAgents": "에이전트 검색...",
+    "searchFileContents": "파일 내용 검색",
+    "typeYourAnswer": "답변을 입력하세요...",
+    "typeText": "텍스트 입력...",
+    "enterCommitMessage": "커밋 메시지 입력...",
+    "other": "기타...",
+    "githubUsername": "GitHub 사용자 이름"
+  },
+  "tooltips": {
+    "dragToMove": "드래그하여 이동",
+    "removeTextInput": "텍스트 입력 제거"
+  },
+  "aria": {
+    "toggleSidebar": "사이드바 토글",
+    "chooseColor": "색상 선택",
+    "copyToClipboard": "클립보드에 복사",
+    "pasteAndSave": "클립보드에서 붙여넣기 및 저장",
+    "deselectComponent": "컴포넌트 선택 해제",
+    "closeVersionPane": "버전 패널 닫기",
+    "copyRequestId": "요청 ID 복사",
+    "goBack": "뒤로 가기",
+    "dismissError": "오류 닫기",
+    "removeAttachment": "첨부 파일 제거",
+    "selectProblem": "문제 선택",
+    "selectAllIssues": "모든 이슈 선택",
+    "clearSearch": "검색 지우기",
+    "desktopView": "데스크톱 보기",
+    "tabletView": "태블릿 보기",
+    "mobileView": "모바일 보기",
+    "branchActions": "브랜치 작업",
+    "enableAnyonPro": "ANYON Pro 활성화"
   }
 }

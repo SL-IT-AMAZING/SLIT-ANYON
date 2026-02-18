@@ -27,7 +27,15 @@
     "copy": "Copy",
     "paste": "Paste",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "select": "Select",
+    "draw": "Draw",
+    "copied": "Copied",
+    "refreshing": "Refreshing...",
+    "disconnecting": "Disconnecting...",
+    "connecting": "Connecting...",
+    "saving": "Saving...",
+    "loading": "Loading..."
   },
   "labels": {
     "name": "Name",
@@ -57,7 +65,9 @@
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
-    "info": "Info"
+    "info": "Info",
+    "saving": "Saving...",
+    "loadingFileContent": "Loading file content"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -79,5 +89,49 @@
     "deleteTriggerTitle": "Delete {{itemType}}",
     "deleteTitle": "Delete {{itemType}}",
     "deleteDescription": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone."
+  },
+  "toasts": {
+    "settingUpdated": "Setting updated",
+    "fileSaved": "File saved",
+    "copiedToClipboard": "Copied to clipboard",
+    "bothKeyValueRequired": "Both key and value are required",
+    "duplicateKeyExists": "{{itemLabel}} with this key already exists",
+    "itemsSaved": "{{itemLabel}} saved",
+    "pasteFailed": "Failed to paste from clipboard",
+    "uploadDisabled": "Upload feature is currently disabled"
+  },
+  "placeholders": {
+    "searchModels": "Search models...",
+    "searchAgents": "Search agents...",
+    "searchFileContents": "Search file contents",
+    "typeYourAnswer": "Type your answer...",
+    "typeText": "Type text...",
+    "enterCommitMessage": "Enter commit message...",
+    "other": "Other...",
+    "githubUsername": "GitHub username"
+  },
+  "tooltips": {
+    "dragToMove": "Drag to move",
+    "removeTextInput": "Remove text input"
+  },
+  "aria": {
+    "toggleSidebar": "Toggle Sidebar",
+    "chooseColor": "Choose color",
+    "copyToClipboard": "Copy to clipboard",
+    "pasteAndSave": "Paste from clipboard and save",
+    "deselectComponent": "Deselect component",
+    "closeVersionPane": "Close version pane",
+    "copyRequestId": "Copy Request ID",
+    "goBack": "Go back",
+    "dismissError": "Dismiss error",
+    "removeAttachment": "Remove attachment",
+    "selectProblem": "Select problem",
+    "selectAllIssues": "Select all issues",
+    "clearSearch": "Clear search",
+    "desktopView": "Desktop view",
+    "tabletView": "Tablet view",
+    "mobileView": "Mobile view",
+    "branchActions": "Branch actions",
+    "enableAnyonPro": "Enable ANYON Pro"
   }
 }
