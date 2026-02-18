@@ -19,7 +19,6 @@ import { registerImportHandlers } from "./handlers/import_handlers";
 import { registerLanguageModelHandlers } from "./handlers/language_model_handlers";
 import { registerLocalModelHandlers } from "./handlers/local_model_handlers";
 import { registerMcpHandlers } from "./handlers/mcp_handlers";
-import { registerNeonHandlers } from "./handlers/neon_handlers";
 import { registerNodeHandlers } from "./handlers/node_handlers";
 import { registerPlanHandlers } from "./handlers/plan_handlers";
 import { registerPortalHandlers } from "./handlers/portal_handlers";
@@ -56,7 +55,6 @@ export function registerIpcHandlers() {
   registerProposalHandlers();
   registerDebugHandlers();
   registerSupabaseHandlers();
-  registerNeonHandlers();
   registerLocalModelHandlers();
   registerTokenCountHandlers();
   registerWindowHandlers();

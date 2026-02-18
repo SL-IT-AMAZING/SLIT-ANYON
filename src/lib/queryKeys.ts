@@ -256,14 +256,6 @@ export const queryKeys = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Neon
-  // ─────────────────────────────────────────────────────────────────────────────
-  neon: {
-    project: ({ appId }: { appId: number | null }) =>
-      ["neon-project", appId] as const,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   // App Environment Variables
   // ─────────────────────────────────────────────────────────────────────────────
   appEnvVars: {
@@ -328,7 +320,6 @@ export type AppQueryKey =
     >
   | QueryKeyOf<(typeof queryKeys.mcp)[keyof typeof queryKeys.mcp]>
   | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>
-  | QueryKeyOf<(typeof queryKeys.neon)[keyof typeof queryKeys.neon]>
   | QueryKeyOf<
       (typeof queryKeys.appEnvVars)[keyof typeof queryKeys.appEnvVars]
     >;

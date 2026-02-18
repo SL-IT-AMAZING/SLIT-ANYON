@@ -15,10 +15,6 @@ const EDGE_FUNCTIONS_URL =
 export { OAUTH_SERVER_URL };
 
 export const oauthEndpoints = {
-  neon: {
-    login: `${OAUTH_SERVER_URL}/api/oauth/neon/login`,
-    refresh: `${OAUTH_SERVER_URL}/api/oauth/neon/refresh`,
-  },
   supabase: {
     login: `${OAUTH_SERVER_URL}/api/oauth/supabase/login`,
     refresh: `${OAUTH_SERVER_URL}/api/oauth/supabase/refresh`,

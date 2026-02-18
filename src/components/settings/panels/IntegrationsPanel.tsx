@@ -1,5 +1,4 @@
 import { GitHubIntegration } from "@/components/GitHubIntegration";
-import { NeonIntegration } from "@/components/NeonIntegration";
 import { SupabaseIntegration } from "@/components/SupabaseIntegration";
 import { VercelIntegration } from "@/components/VercelIntegration";
 import { useTranslation } from "react-i18next";
@@ -17,7 +16,6 @@ export function IntegrationsPanel() {
         <GitHubIntegration />
         <VercelIntegration />
         <SupabaseIntegration />
-        <NeonIntegration />
       </div>
     </div>
   );
