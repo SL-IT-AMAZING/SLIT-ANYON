@@ -23,12 +23,10 @@ import { AutoExpandPreviewSwitch } from "@/components/AutoExpandPreviewSwitch";
 import { AutoFixProblemsSwitch } from "@/components/AutoFixProblemsSwitch";
 import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
 import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
-import { DefaultChatModeSelector } from "@/components/DefaultChatModeSelector";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { NeonIntegration } from "@/components/NeonIntegration";
 import { NodePathSelector } from "@/components/NodePathSelector";
 import { OpenCodeConnectionModeSelector } from "@/components/OpenCodeConnectionModeSelector";
-import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
+
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
 import { SettingsList } from "@/components/SettingsList";
 import { ZoomSelector } from "@/components/ZoomSelector";
@@ -151,9 +149,6 @@ export default function SettingsPage() {
                 </div>
                 <div id={SETTING_IDS.supabase}>
                   <SupabaseIntegration />
-                </div>
-                <div id={SETTING_IDS.neon}>
-                  <NeonIntegration />
                 </div>
               </div>
             </div>
@@ -311,10 +306,6 @@ export function GeneralSettings({ appVersion }: { appVersion: string | null }) {
         </div>
       </div>
 
-      <div id={SETTING_IDS.releaseChannel} className="mt-4">
-        <ReleaseChannelSelector />
-      </div>
-
       <div id={SETTING_IDS.runtimeMode} className="mt-4">
         <RuntimeModeSelector />
       </div>
@@ -341,10 +332,6 @@ export function WorkflowSettings() {
       <h2 className="text-lg font-medium text-foreground mb-4">
         {t("settings.tabs.workflow", { ns: "app" })}
       </h2>
-
-      <div id={SETTING_IDS.defaultChatMode} className="mt-4">
-        <DefaultChatModeSelector />
-      </div>
 
       <div id={SETTING_IDS.autoApprove} className="space-y-1 mt-4">
         <AutoApproveSwitch showToast={false} />

@@ -9,7 +9,6 @@ import { SidebarToggle } from "@/components/SidebarToggle";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { usePlanEvents } from "@/hooks/usePlanEvents";
 import { useAppOutputSubscription, useRunApp } from "@/hooks/useRunApp";
 import { useSettings } from "@/hooks/useSettings";
 import i18n from "@/i18n";
@@ -85,9 +84,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
   }, [appDetailAppId, navigate, setSelectedAppId]);
 
-  // Initialize plan events listener
-  usePlanEvents();
-
   useEffect(() => {
     const zoomLevel = settings?.zoomLevel ?? DEFAULT_ZOOM_LEVEL;
     const zoomFactor = Number(zoomLevel) / 100;
@@ -157,24 +153,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               id="layout-main-content-container"
               className="flex flex-col h-screenish w-full overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
             >
-              <div className="flex items-center h-10 px-2 shrink-0">
-                <SidebarToggle />
-                {appDetailAppId !== null && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleOpenEditor}
-                    disabled={isOpeningEditor}
-                    className="ml-2 h-8"
-                  >
-                    {isOpeningEditor ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Edit"
-                    )}
-                  </Button>
-                )}
-              </div>
+              {location.pathname !== "/chat" && (
+                <div className="flex items-center h-10 px-2 shrink-0">
+                  <SidebarToggle />
+                  {appDetailAppId !== null && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenEditor}
+                      disabled={isOpeningEditor}
+                      className="ml-2 h-8"
+                    >
+                      {isOpeningEditor ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Edit"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
               <div className="flex flex-1 min-h-0 overflow-auto">
                 {children}
               </div>

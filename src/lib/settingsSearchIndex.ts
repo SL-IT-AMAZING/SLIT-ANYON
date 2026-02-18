@@ -17,7 +17,6 @@ export const SETTING_IDS = {
   releaseChannel: "setting-release-channel",
   runtimeMode: "setting-runtime-mode",
   nodePath: "setting-node-path",
-  defaultChatMode: "setting-default-chat-mode",
   autoApprove: "setting-auto-approve",
   autoFix: "setting-auto-fix",
   autoExpandPreview: "setting-auto-expand-preview",
@@ -28,7 +27,6 @@ export const SETTING_IDS = {
   github: "setting-github",
   vercel: "setting-vercel",
   supabase: "setting-supabase",
-  neon: "setting-neon",
   nativeGit: "setting-native-git",
   reset: "setting-reset",
   language: "setting-language",
@@ -85,14 +83,7 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     sectionId: SECTION_IDS.general,
     sectionLabel: "General",
   },
-  {
-    id: SETTING_IDS.releaseChannel,
-    label: "Release Channel",
-    description: "Choose between stable and beta release channels",
-    keywords: ["stable", "beta", "channel", "release", "version"],
-    sectionId: SECTION_IDS.general,
-    sectionLabel: "General",
-  },
+
   {
     id: SETTING_IDS.runtimeMode,
     label: "Runtime Mode",
@@ -111,14 +102,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
   },
 
   // Workflow Settings
-  {
-    id: SETTING_IDS.defaultChatMode,
-    label: "Default Chat Mode",
-    description: "Choose the default mode for new chats",
-    keywords: ["chat", "mode", "build", "agent", "mcp", "default"],
-    sectionId: SECTION_IDS.workflow,
-    sectionLabel: "Workflow",
-  },
   {
     id: SETTING_IDS.autoApprove,
     label: "Auto-approve",
@@ -237,21 +220,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
       "backend",
       "connect",
       "postgres",
-    ],
-    sectionId: SECTION_IDS.integrations,
-    sectionLabel: "Integrations",
-  },
-  {
-    id: SETTING_IDS.neon,
-    label: "Neon Integration",
-    description: "Connect your Neon database",
-    keywords: [
-      "neon",
-      "database",
-      "integration",
-      "postgres",
-      "connect",
-      "serverless",
     ],
     sectionId: SECTION_IDS.integrations,
     sectionLabel: "Integrations",

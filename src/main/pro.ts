@@ -13,8 +13,6 @@ export function handleAnyonProReturn({ apiKey }: { apiKey: string }) {
       },
     },
     enableAnyonPro: true,
-    // Switch to local-agent mode and auto model for a good default experience
-    selectedChatMode: "local-agent",
     selectedModel: {
       name: "auto",
       provider: "auto",

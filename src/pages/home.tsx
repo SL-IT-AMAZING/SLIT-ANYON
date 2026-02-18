@@ -1,21 +1,22 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
+import { LogoSpinner } from "@/components/chat-v2/LogoSpinner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
 import { useAppVersion } from "@/hooks/useAppVersion";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { ipc } from "@/ipc/types";
-import { generateCuteAppName } from "@/lib/utils";
-import { INSPIRATION_PROMPTS } from "@/prompts/inspiration_prompts";
+import { generateCuteAppName, getAppDisplayName } from "@/lib/utils";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useSetAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { homeChatInputValueAtom } from "../atoms/chatAtoms";
 
 import { ForceCloseDialog } from "@/components/ForceCloseDialog";
+import { ImportAppDialog } from "@/components/ImportAppDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,14 +25,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { invalidateAppQuery } from "@/hooks/useLoadApp";
 import type { FileAttachment } from "@/ipc/types";
-import { getEffectiveDefaultChatMode } from "@/lib/schemas";
 import { showError } from "@/lib/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 // @ts-ignore
 import anyonLogo from "../../img/logo3.svg";
@@ -48,8 +47,7 @@ export default function HomePage() {
   const search = useSearch({ from: "/" });
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const { apps, refreshApps } = useLoadApps();
-  const { settings, updateSettings, envVars } = useSettings();
-  const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
+  const { settings, updateSettings } = useSettings();
 
   const setIsPreviewOpen = useSetAtom(isPreviewOpenAtom);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,20 +110,7 @@ export default function HomePage() {
   // Get the appId from search params
   const appId = search.appId ? Number(search.appId) : null;
 
-  // State for random prompts
-  const [randomPrompts, setRandomPrompts] = useState<
-    typeof INSPIRATION_PROMPTS
-  >([]);
-
-  // Function to get random prompts
-  const getRandomPrompts = useCallback(() => {
-    const shuffled = [...INSPIRATION_PROMPTS].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3);
-  }, []);
-
-  useEffect(() => {
-    setRandomPrompts(getRandomPrompts());
-  }, [getRandomPrompts]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const handleAppClick = (id: number) => {
     setSelectedAppId(id);
@@ -137,24 +122,6 @@ export default function HomePage() {
       navigate({ to: "/app-details", search: { appId } });
     }
   }, [appId, navigate]);
-
-  // Apply default chat mode when navigating to home page
-  // Wait for quota status to load to avoid race condition where we default to Basic Agent
-  // before knowing if quota is actually exceeded
-  const hasAppliedDefaultChatMode = useRef(false);
-  useEffect(() => {
-    if (settings && !hasAppliedDefaultChatMode.current && !isQuotaLoading) {
-      hasAppliedDefaultChatMode.current = true;
-      const effectiveDefaultMode = getEffectiveDefaultChatMode(
-        settings,
-        envVars,
-        !isQuotaExceeded,
-      );
-      if (settings.selectedChatMode !== effectiveDefaultMode) {
-        updateSettings({ selectedChatMode: effectiveDefaultMode });
-      }
-    }
-  }, [settings, updateSettings, isQuotaExceeded, isQuotaLoading, envVars]);
 
   const handleSubmit = async (options?: HomeSubmitOptions) => {
     const attachments = options?.attachments || [];
@@ -207,10 +174,8 @@ export default function HomePage() {
     return (
       <div className="flex flex-col items-center justify-center max-w-3xl m-auto p-8">
         <div className="w-full flex flex-col items-center">
-          {/* Loading Spinner */}
-          <div className="relative w-24 h-24 mb-8">
-            <div className="absolute top-0 left-0 w-full h-full border-8 border-border rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-8 border-t-primary rounded-full animate-spin"></div>
+          <div className="mb-8">
+            <LogoSpinner variant="strokeLoop" size={64} />
           </div>
           <h2 className="text-2xl font-bold mb-2 text-foreground">
             {t("home.loading.title")}
@@ -252,60 +217,29 @@ export default function HomePage() {
         </div>
         <HomeChatInput onSubmit={handleSubmit} />
 
-        <div className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-wrap gap-4 justify-center">
-            {randomPrompts.map((item, index) => (
-              <button
-                type="button"
-                key={index}
-                onClick={() =>
-                  setInputValue(
-                    t("home.inspiration.buildMeTemplate", {
-                      label: item.label,
-                    }),
-                  )
-                }
-                className="flex items-center gap-3 px-4 py-2 rounded-xl border border-border
-                           bg-card/50 backdrop-blur-sm
-                           transition-all duration-200
-                           hover:bg-card hover:shadow-md hover:border-border
-                           active:scale-[0.98]"
-              >
-                <span className="text-muted-foreground">{item.icon}</span>
-                <span className="text-sm font-medium text-muted-foreground">
-                  {item.label}
-                </span>
-              </button>
-            ))}
-          </div>
-
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <p className="text-sm text-muted-foreground">
+            {t("home.importHint")}
+          </p>
           <button
             type="button"
-            onClick={() => setRandomPrompts(getRandomPrompts())}
-            className="self-center flex items-center gap-2 px-4 py-2 rounded-xl border border-border
+            onClick={() => setIsImportDialogOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border
                        bg-card/50 backdrop-blur-sm
                        transition-all duration-200
                        hover:bg-card hover:shadow-md hover:border-border
                        active:scale-[0.98]"
           >
-            <svg
-              className="w-5 h-5 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
+            <Upload className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-medium text-muted-foreground">
-              {t("home.inspiration.moreIdeas")}
+              {t("home.import")}
             </span>
           </button>
         </div>
+        <ImportAppDialog
+          isOpen={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+        />
 
         {apps.length > 0 && (
           <div className="mt-8 w-full">
@@ -325,7 +259,7 @@ export default function HomePage() {
                              active:scale-[0.98]"
                 >
                   <span className="font-medium text-foreground truncate w-full">
-                    {app.name}
+                    {getAppDisplayName(app)}
                   </span>
                   <span className="text-xs text-muted-foreground mt-1">
                     {formatDistanceToNow(new Date(app.createdAt), {

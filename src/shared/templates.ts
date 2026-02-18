@@ -8,7 +8,6 @@ export interface Template {
   githubUrl?: string;
   isOfficial: boolean;
   isExperimental?: boolean;
-  requiresNeon?: boolean;
   category?: TemplateCategory;
   subcategory?: string;
   tags?: string[];
@@ -52,9 +51,6 @@ export const DEFAULT_TEMPLATE: Template = {
   ],
 };
 
-const PORTAL_MINI_STORE_ID = "portal-mini-store";
-export const NEON_TEMPLATE_IDS = new Set<string>([PORTAL_MINI_STORE_ID]);
-
 export const localTemplatesData: Template[] = [
   DEFAULT_TEMPLATE,
   {
@@ -72,27 +68,6 @@ export const localTemplatesData: Template[] = [
       "Shadcn/ui component library",
       "Tailwind CSS for styling",
       "TypeScript support",
-    ],
-  },
-  {
-    id: PORTAL_MINI_STORE_ID,
-    title: "Portal: Mini Store Template",
-    description: "Uses Neon DB, Payload CMS, Next.js",
-    imageUrl:
-      "https://github.com/user-attachments/assets/ed86f322-40bf-4fd5-81dc-3b1d8a16e12b",
-    githubUrl:
-      "https://github.com/SL-IT-AMAZING/anyon-portal-mini-store-template",
-    isOfficial: true,
-    isExperimental: true,
-    requiresNeon: true,
-    category: "saas",
-    techStack: ["Next.js", "Neon", "Payload CMS"],
-    tags: ["ecommerce", "saas", "neon"],
-    features: [
-      "Neon serverless Postgres",
-      "Payload CMS for content management",
-      "Next.js for server-side rendering",
-      "E-commerce ready",
     ],
   },
   {

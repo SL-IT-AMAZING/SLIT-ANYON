@@ -31,7 +31,6 @@ const DEFAULT_SETTINGS: UserSettings = {
   enableAnyonPro: true,
   enableProLazyEditsMode: true,
   enableProSmartFilesContextMode: true,
-  selectedChatMode: "build",
   enableAutoFixProblems: false,
   enableAutoUpdate: true,
   releaseChannel: "stable",
@@ -113,27 +112,6 @@ export function readSettings(): UserSettings {
               };
             }
           }
-        }
-      }
-    }
-    const neon = combinedSettings.neon;
-    if (neon) {
-      if (neon.refreshToken) {
-        const encryptionType = neon.refreshToken.encryptionType;
-        if (encryptionType) {
-          neon.refreshToken = {
-            value: decrypt(neon.refreshToken),
-            encryptionType,
-          };
-        }
-      }
-      if (neon.accessToken) {
-        const encryptionType = neon.accessToken.encryptionType;
-        if (encryptionType) {
-          neon.accessToken = {
-            value: decrypt(neon.accessToken),
-            encryptionType,
-          };
         }
       }
     }
@@ -278,18 +256,6 @@ export function writeSettings(settings: Partial<UserSettings>): void {
             org.refreshToken = encrypt(org.refreshToken.value);
           }
         }
-      }
-    }
-    if (newSettings.neon) {
-      if (newSettings.neon.accessToken) {
-        newSettings.neon.accessToken = encrypt(
-          newSettings.neon.accessToken.value,
-        );
-      }
-      if (newSettings.neon.refreshToken) {
-        newSettings.neon.refreshToken = encrypt(
-          newSettings.neon.refreshToken.value,
-        );
       }
     }
     if (newSettings.vercel) {

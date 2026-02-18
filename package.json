@@ -16,6 +16,7 @@
   "scripts": {
     "clean": "rimraf out scaffold/node_modules",
     "start": "electron-forge start",
+    "dev:free": "cross-env ANYON_BYPASS_ENTITLEMENT=1 npm start",
     "dev:engine": "cross-env ANYON_ENGINE_URL=http://localhost:8080/v1 npm start",
     "package": "npm run clean && electron-forge package",
     "make": "npm run clean && electron-forge make",
@@ -66,8 +67,6 @@
     "@lexical/react": "^0.33.1",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@monaco-editor/react": "^4.7.0-rc.0",
-    "@neondatabase/api-client": "^2.1.0",
-    "@neondatabase/serverless": "^1.0.1",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@sentry/electron": "^7.7.1",
     "@supabase/supabase-js": "^2.95.3",

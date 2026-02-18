@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { useTemplates } from "@/hooks/useTemplates";
 import { ipc } from "@/ipc/types";
-import { showWarning } from "@/lib/toast";
 import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Check, ExternalLink } from "lucide-react";
 import type React from "react";
@@ -52,11 +51,6 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   const handleChoose = () => {
     if (!template.isOfficial && !settings?.acceptedCommunityCode) {
       setShowConsentDialog(true);
-      return;
-    }
-
-    if (template.requiresNeon && !settings?.neon?.accessToken) {
-      showWarning(t("templateDetail.neonRequired", { ns: "app" }));
       return;
     }
 

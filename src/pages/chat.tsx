@@ -121,8 +121,8 @@ export default function ChatPage() {
           }
         }}
         className={cn(
-          "relative bg-border hover:bg-accent dark:bg-border dark:hover:bg-accent transition-colors cursor-col-resize",
-          isChatPanelHidden ? "w-2" : "w-1",
+          "relative bg-transparent hover:bg-accent dark:bg-transparent dark:hover:bg-accent transition-colors cursor-col-resize",
+          isChatPanelHidden ? "w-2" : "w-px",
         )}
       />
 
@@ -133,7 +133,11 @@ export default function ChatPage() {
         minSize={20}
         className={cn(!isResizing && "transition-all duration-100 ease-in-out")}
       >
-        <PreviewPanel />
+        <div className="h-full pr-2 py-2">
+          <div className="h-full rounded-lg border border-border/50 overflow-hidden">
+            <PreviewPanel />
+          </div>
+        </div>
       </Panel>
     </PanelGroup>
   );

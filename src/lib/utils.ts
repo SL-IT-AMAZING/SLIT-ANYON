@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -204,4 +204,11 @@ export function generateCuteAppName(): string {
   const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
   const randomVerb = verbs[Math.floor(Math.random() * verbs.length)];
   return `${randomAdjective}-${randomAnimal}-${randomVerb}`;
+}
+
+export function getAppDisplayName(app: {
+  displayName?: string | null;
+  name: string;
+}): string {
+  return app.displayName ?? app.name;
 }

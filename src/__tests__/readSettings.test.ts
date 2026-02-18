@@ -66,7 +66,6 @@ describe("readSettings", () => {
           "lastKnownPerformance": undefined,
           "providerSettings": {},
           "releaseChannel": "stable",
-          "selectedChatMode": "build",
           "selectedModel": {
             "name": "claude-opus-4-6",
             "provider": "anthropic",
@@ -323,7 +322,6 @@ describe("readSettings", () => {
           "lastKnownPerformance": undefined,
           "providerSettings": {},
           "releaseChannel": "stable",
-          "selectedChatMode": "build",
           "selectedModel": {
             "name": "claude-opus-4-6",
             "provider": "anthropic",

@@ -288,6 +288,22 @@ body[data-scroll-locked] .app-region-drag {
   animation: marquee 2s linear infinite;
 }
 
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted-foreground) 0%,
+    var(--muted-foreground) 35%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 65%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
 @keyframes settings-highlight {
   0% {
     background-color: oklch(0.85 0 0);

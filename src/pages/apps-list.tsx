@@ -1,11 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadApps } from "@/hooks/useLoadApps";
-import { cn } from "@/lib/utils";
+import { cn, getAppDisplayName } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Plus, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function AppsListPage() {
+  const { t } = useTranslation("app");
   const navigate = useNavigate();
   const { apps, loading } = useLoadApps();
 
@@ -72,7 +74,9 @@ export default function AppsListPage() {
               >
                 <Plus className="w-5 h-5" />
               </div>
-              <span className="text-sm font-medium">Create New App</span>
+              <span className="text-sm font-medium">
+                {t("apps.createTitle")}
+              </span>
             </button>
 
             {apps.map((app) => (
@@ -93,7 +97,7 @@ export default function AppsListPage() {
               >
                 <div className="flex items-center justify-between w-full mb-1">
                   <span className="font-medium text-foreground truncate pr-2">
-                    {app.name}
+                    {getAppDisplayName(app)}
                   </span>
                   {app.isFavorite && (
                     <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />

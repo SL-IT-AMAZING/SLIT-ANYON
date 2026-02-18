@@ -30,9 +30,7 @@ import {
   readSettings,
   writeSettings,
 } from "./main/settings";
-import { handleNeonOAuthReturn } from "./neon_admin/neon_return_handler";
 import { getAnyonAppsBaseDirectory } from "./paths/paths";
-import { cleanupOldAiMessagesJson } from "./pro/main/ipc/handlers/local_agent/ai_messages_cleanup";
 import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
 import {
   startPerformanceMonitoring,
@@ -100,9 +98,6 @@ export async function onReady() {
   }
   initializeDatabase();
 
-  // Cleanup old ai_messages_json entries to prevent database bloat
-  cleanupOldAiMessagesJson();
-
   const settings = readSettings();
 
   // Add anyon-apps directory to git safe.directory (required for Windows).
@@ -141,8 +136,7 @@ export async function onReady() {
   logger.info("Auto-update enabled=", settings.enableAutoUpdate);
   if (settings.enableAutoUpdate) {
     // Using GitHub Releases directly, no custom host needed
-    const postfix = settings.releaseChannel === "beta" ? "beta" : "stable";
-    logger.info("Auto-update release channel=", postfix);
+    logger.info("Auto-update release channel=stable");
     updateElectronApp({
       logger,
       updateSource: {
@@ -468,24 +462,6 @@ async function handleDeepLinkReturn(url: string) {
       "Invalid Protocol",
       `Expected anyon://, got ${parsed.protocol}. Full URL: ${url}`,
     );
-    return;
-  }
-  if (parsed.hostname === "neon-oauth-return") {
-    const token = parsed.searchParams.get("token");
-    const refreshToken = parsed.searchParams.get("refreshToken");
-    const expiresIn = Number(parsed.searchParams.get("expiresIn"));
-    if (!token || !refreshToken || !expiresIn) {
-      dialog.showErrorBox(
-        "Invalid URL",
-        "Expected token, refreshToken, and expiresIn",
-      );
-      return;
-    }
-    handleNeonOAuthReturn({ token, refreshToken, expiresIn });
-    // Send message to renderer to trigger re-render
-    mainWindow?.webContents.send("deep-link-received", {
-      type: parsed.hostname,
-    });
     return;
   }
   if (parsed.hostname === "supabase-oauth-return") {
