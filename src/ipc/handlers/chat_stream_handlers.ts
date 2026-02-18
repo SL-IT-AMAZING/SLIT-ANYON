@@ -1,41 +1,28 @@
 import {
-  type ImagePart,
   type ModelMessage,
-  type TextPart,
   type TextStreamPart,
-  type ToolExecutionOptions,
   type ToolSet,
-  hasToolCall,
-  stepCountIs,
   streamText,
 } from "ai";
-import { type IpcMainInvokeEvent, ipcMain } from "electron";
+import { ipcMain } from "electron";
 import { v4 as uuidv4 } from "uuid";
 import { chatContracts } from "../types/chat";
 import { createTypedHandler } from "./base";
 
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import fs from "node:fs";
-import * as os from "os";
-import * as path from "path";
-import { MAX_CHAT_TURNS_IN_CONTEXT } from "@/constants/settings_constants";
+import { readFile, unlink, writeFile } from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
 import log from "electron-log";
-import { readFile, unlink, writeFile } from "fs/promises";
 import { db } from "../../db";
-import { chats, messages } from "../../db/schema";
-import { mcpServers } from "../../db/schema";
-import type { SmartContextMode } from "../../lib/schemas";
+import { apps, chats, messages } from "../../db/schema";
 import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
 import { readSettings } from "../../main/settings";
 import { getAnyonAppPath } from "../../paths/paths";
-import { SECURITY_REVIEW_SYSTEM_PROMPT } from "../../prompts/security_review_prompt";
-import { SUMMARIZE_CHAT_SYSTEM_PROMPT } from "../../prompts/summarize_chat_system_prompt";
-import {
-  SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT,
-  getSupabaseAvailableSystemPrompt,
-} from "../../prompts/supabase_prompt";
+import { getSupabaseAvailableSystemPrompt } from "../../prompts/supabase_prompt";
 import {
   ANYON_MCP_TOOLS_PROMPT,
   constructSystemPrompt,
@@ -45,70 +32,25 @@ import {
   getSupabaseClientCode,
   getSupabaseContext,
 } from "../../supabase_admin/supabase_context";
-import {
-  type CodebaseFile,
-  extractCodebase,
-  readFileWithCache,
-} from "../../utils/codebase";
-import {
-  dryRunSearchReplace,
-  processFullResponseActions,
-} from "../processors/response_processor";
-import { validateChatContext } from "../utils/context_paths_utils";
-import { type ModelClient, getModelClient } from "../utils/get_model_client";
-import { requireMcpToolConsent } from "../utils/mcp_consent";
-import { getAiHeaders, getProviderOptions } from "../utils/provider_options";
-import { sendTelemetryEvent } from "../utils/telemetry";
-import { getThemePromptById } from "../utils/theme_utils";
+import { getModelClient } from "../utils/get_model_client";
 import { getMaxTokens, getTemperature } from "../utils/token_utils";
 import { streamTestResponse } from "./testing_chat_handlers";
 import { getTestResponse } from "./testing_chat_handlers";
 
-import { handleLocalAgentStream } from "../../pro/main/ipc/handlers/local_agent/local_agent_handler";
-
-import {
-  isBasicAgentMode,
-  isSupabaseConnected,
-  isTurboEditsV2Enabled,
-} from "@/lib/schemas";
-import { parseAppMentions } from "@/shared/parse_mention_apps";
-import { createProblemFixPrompt } from "@/shared/problem_prompt";
+import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { inArray } from "drizzle-orm";
-import z from "zod";
-import { AsyncVirtualFileSystem } from "../../../shared/VirtualFilesystem";
-import { escapeXmlAttr, escapeXmlContent } from "../../../shared/xmlEscape";
 import { prompts as promptsTable } from "../../db/schema";
-import { generateProblemReport } from "../processors/tsc";
-import { getAiMessagesJsonIfWithinLimit } from "../utils/ai_messages_utils";
-import {
-  getAnyonAddDependencyTags,
-  getAnyonDeleteTags,
-  getAnyonRenameTags,
-  getAnyonWriteTags,
-} from "../utils/anyon_tag_parser";
 import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
-import { fileExists } from "../utils/file_utils";
 import {
   getCurrentCommitHash,
   getGitUncommittedFiles,
   gitAddAll,
   gitCommit,
 } from "../utils/git_utils";
-import { mcpManager } from "../utils/mcp_manager";
-import { extractMentionedAppsCodebases } from "../utils/mention_apps";
 import { replacePromptReference } from "../utils/replacePromptReference";
 import { safeSend } from "../utils/safe_sender";
-import {
-  type VersionedFiles,
-  processChatMessagesWithVersionedFiles as getVersionedFiles,
-} from "../utils/versioned_codebase_context";
-import {
-  getFreeAgentQuotaStatus,
-  markMessageAsUsingFreeAgentQuota,
-  unmarkMessageAsUsingFreeAgentQuota,
-} from "./free_agent_quota_handlers";
 import { parsePlanFile, validatePlanId } from "./planUtils";
 
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
@@ -455,15 +397,11 @@ ${componentSnippet}
         }
       }
 
-      const [insertedUserMessage] = await db
-        .insert(messages)
-        .values({
-          chatId: req.chatId,
-          role: "user",
-          content: implementPlanDisplayPrompt ?? userPrompt,
-        })
-        .returning({ id: messages.id });
-      const userMessageId = insertedUserMessage.id;
+      await db.insert(messages).values({
+        chatId: req.chatId,
+        role: "user",
+        content: implementPlanDisplayPrompt ?? userPrompt,
+      });
       const settings = readSettings();
       // Only ANYON Pro requests have request ids.
       if (settings.enableAnyonPro) {
@@ -508,7 +446,6 @@ ${componentSnippet}
       });
 
       let fullResponse = "";
-      let maxTokensUsed: number | undefined;
 
       // Check if this is a test prompt
       const testResponse = getTestResponse(req.prompt);
@@ -531,15 +468,14 @@ ${componentSnippet}
           throw new Error(creditCheck.reason ?? "Credits exhausted");
         }
 
-        const {
-          modelClient,
-          isEngineEnabled,
-          isSmartContextEnabled,
-          isOpenCodeMode,
-        } = await getModelClient(settings.selectedModel, settings, {
-          chatId: req.chatId,
-          appPath: getAnyonAppPath(updatedChat.app.path),
-        });
+        const { modelClient, isOpenCodeMode } = await getModelClient(
+          settings.selectedModel,
+          settings,
+          {
+            chatId: req.chatId,
+            appPath: getAnyonAppPath(updatedChat.app.path),
+          },
+        );
 
         // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
         // history assembly, system prompt construction, post-response file processing).
@@ -550,14 +486,8 @@ ${componentSnippet}
           );
           let openCodeSystemPrompt = constructSystemPrompt({
             aiRules,
-            chatMode:
-              settings.selectedChatMode === "agent"
-                ? "build"
-                : settings.selectedChatMode,
-            enableTurboEditsV2: false,
             themePrompt: "",
-            basicAgentMode: false,
-            openCodeMode: true,
+            selectedAgent: settings.selectedAgent,
           });
 
           // Append Supabase context so OpenCode's AI knows about
@@ -583,6 +513,10 @@ ${componentSnippet}
           }
 
           openCodeSystemPrompt += "\n\n" + ANYON_MCP_TOOLS_PROMPT;
+
+          if (settings.enableBooster) {
+            openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
+          }
 
           // Send only the current user prompt — no codebase, no history.
           // OpenCode manages its own session history and reads files via tools.
@@ -654,7 +588,7 @@ ${componentSnippet}
               onError: (error: any) => {
                 const errorMessage = (error as any)?.error?.message;
                 const message = errorMessage || JSON.stringify(error);
-                logger.error(`OpenCode stream error: ${message}`);
+                logger.error(`Stream error: ${message}`);
                 event.sender.send("chat:response:error", {
                   chatId: req.chatId,
                   error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
@@ -690,6 +624,7 @@ ${componentSnippet}
 
           if (!abortController.signal.aborted) {
             let chatSummary: string | undefined;
+            let appDisplayName: string | undefined;
 
             if (fullResponse) {
               const chatTitle = fullResponse.match(
@@ -701,6 +636,17 @@ ${componentSnippet}
                   .update(chats)
                   .set({ title: chatSummary })
                   .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+              }
+
+              const appNameMatch = fullResponse.match(
+                /<anyon-app-name>(.*?)<\/anyon-app-name>/,
+              );
+              appDisplayName = appNameMatch?.[1];
+              if (appDisplayName && !updatedChat.app.displayName) {
+                await db
+                  .update(apps)
+                  .set({ displayName: appDisplayName })
+                  .where(eq(apps.id, updatedChat.app.id));
               }
 
               await db
@@ -717,18 +663,18 @@ ${componentSnippet}
                   await gitAddAll({ path: appPath });
                   const commitHash = await gitCommit({
                     path: appPath,
-                    message: `[anyon/opencode] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                    message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
                   });
                   await db
                     .update(messages)
                     .set({ commitHash })
                     .where(eq(messages.id, placeholderAssistantMessage.id));
                   logger.log(
-                    `OpenCode git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                    `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
                   );
                 }
               } catch (gitError) {
-                logger.error("OpenCode git commit failed:", gitError);
+                logger.error("Git commit failed:", gitError);
               }
             }
 
@@ -736,1136 +682,16 @@ ${componentSnippet}
               chatId: req.chatId,
               updatedFiles: false,
               chatSummary,
+              appDisplayName,
             } satisfies ChatResponseEnd);
           }
 
           return req.chatId;
         }
 
-        const appPath = getAnyonAppPath(updatedChat.app.path);
-        // When we don't have smart context enabled, we
-        // only include the selected components' files for codebase context.
-        //
-        // If we have selected components and smart context is enabled,
-        // we handle this specially below.
-        const chatContext =
-          req.selectedComponents &&
-          req.selectedComponents.length > 0 &&
-          !isSmartContextEnabled
-            ? {
-                contextPaths: req.selectedComponents.map((component) => ({
-                  globPath: component.relativePath,
-                })),
-                smartContextAutoIncludes: [],
-              }
-            : validateChatContext(updatedChat.app.chatContext);
-
-        // Extract codebase for current app
-        const { formattedOutput: codebaseInfo, files } = await extractCodebase({
-          appPath,
-          chatContext,
-        });
-
-        // For smart context and selected components, we will mark the selected components' files as focused.
-        // This means that we don't do the regular smart context handling, but we'll allow fetching
-        // additional files through <anyon-read> as needed.
-        if (
-          isSmartContextEnabled &&
-          req.selectedComponents &&
-          req.selectedComponents.length > 0
-        ) {
-          const selectedPaths = new Set(
-            req.selectedComponents.map((component) => component.relativePath),
-          );
-          for (const file of files) {
-            if (selectedPaths.has(file.path)) {
-              file.focused = true;
-            }
-          }
-        }
-
-        // Parse app mentions from the prompt
-        const mentionedAppNames = parseAppMentions(req.prompt);
-
-        // Extract codebases for mentioned apps
-        const mentionedAppsCodebases = await extractMentionedAppsCodebases(
-          mentionedAppNames,
-          updatedChat.app.id, // Exclude current app
-        );
-        const willUseLocalAgentStream =
-          (settings.selectedChatMode === "local-agent" ||
-            settings.selectedChatMode === "ask") &&
-          !mentionedAppsCodebases.length;
-
-        const isDeepContextEnabled =
-          isEngineEnabled &&
-          settings.enableProSmartFilesContextMode &&
-          // Anything besides balanced will use deep context.
-          settings.proSmartContextOption !== "balanced" &&
-          mentionedAppsCodebases.length === 0;
-        logger.log(`isDeepContextEnabled: ${isDeepContextEnabled}`);
-
-        // Combine current app codebase with mentioned apps' codebases
-        let otherAppsCodebaseInfo = "";
-        if (mentionedAppsCodebases.length > 0) {
-          const mentionedAppsSection = mentionedAppsCodebases
-            .map(
-              ({ appName, codebaseInfo }) =>
-                `\n\n=== Referenced App: ${appName} ===\n${codebaseInfo}`,
-            )
-            .join("");
-
-          otherAppsCodebaseInfo = mentionedAppsSection;
-
-          logger.log(
-            `Added ${mentionedAppsCodebases.length} mentioned app codebases`,
-          );
-        }
-
-        logger.log(`Extracted codebase information from ${appPath}`);
-        logger.log(
-          "codebaseInfo: length",
-          codebaseInfo.length,
-          "estimated tokens",
-          codebaseInfo.length / 4,
-        );
-
-        // Prepare message history for the AI
-        const messageHistory = updatedChat.messages.map((message) => ({
-          role: message.role as "user" | "assistant" | "system",
-          content: message.content,
-          sourceCommitHash: message.sourceCommitHash,
-          commitHash: message.commitHash,
-        }));
-
-        // The DB stores the short /implement-plan= display form; inject the
-        // expanded plan content into the AI message history so the model
-        // receives the full plan.
-        if (implementPlanDisplayPrompt) {
-          for (let i = messageHistory.length - 1; i >= 0; i--) {
-            if (messageHistory[i].role === "user") {
-              messageHistory[i] = {
-                ...messageHistory[i],
-                content: userPrompt,
-              };
-              break;
-            }
-          }
-        }
-
-        // For ANYON Pro + Deep Context, we set to 200 chat turns (+1)
-        // this is to enable more cache hits. Practically, users should
-        // rarely go over this limit because they will hit the model's
-        // context window limit.
-        //
-        // Limit chat history based on maxChatTurnsInContext setting
-        // We add 1 because the current prompt counts as a turn.
-        const maxChatTurns = isDeepContextEnabled
-          ? 201
-          : (settings.maxChatTurnsInContext || MAX_CHAT_TURNS_IN_CONTEXT) + 1;
-
-        // If we need to limit the context, we take only the most recent turns
-        let limitedMessageHistory = messageHistory;
-        if (messageHistory.length > maxChatTurns * 2) {
-          // Each turn is a user + assistant pair
-          // Calculate how many messages to keep (maxChatTurns * 2)
-          let recentMessages = messageHistory
-            .filter((msg) => msg.role !== "system")
-            .slice(-maxChatTurns * 2);
-
-          // Ensure the first message is a user message
-          if (recentMessages.length > 0 && recentMessages[0].role !== "user") {
-            // Find the first user message
-            const firstUserIndex = recentMessages.findIndex(
-              (msg) => msg.role === "user",
-            );
-            if (firstUserIndex > 0) {
-              // Drop assistant messages before the first user message
-              recentMessages = recentMessages.slice(firstUserIndex);
-            } else if (firstUserIndex === -1) {
-              logger.warn(
-                "No user messages found in recent history, set recent messages to empty",
-              );
-              recentMessages = [];
-            }
-          }
-
-          limitedMessageHistory = [...recentMessages];
-
-          logger.log(
-            `Limiting chat history from ${messageHistory.length} to ${limitedMessageHistory.length} messages (max ${maxChatTurns} turns)`,
-          );
-        }
-
-        const aiRules = await readAiRules(
-          getAnyonAppPath(updatedChat.app.path),
-        );
-
-        // Get theme prompt for the app (null themeId means "no theme")
-        const themePrompt = await getThemePromptById(updatedChat.app.themeId);
-        logger.log(
-          `Theme for app ${updatedChat.app.id}: ${updatedChat.app.themeId ?? "none"}, prompt length: ${themePrompt.length} chars`,
-        );
-
-        let systemPrompt = constructSystemPrompt({
-          aiRules,
-          chatMode:
-            settings.selectedChatMode === "agent"
-              ? "build"
-              : settings.selectedChatMode,
-          enableTurboEditsV2: isTurboEditsV2Enabled(settings),
-          themePrompt,
-          basicAgentMode: isBasicAgentMode(settings),
-          openCodeMode: isOpenCodeMode,
-        });
-
-        // Add information about mentioned apps if any
-        if (otherAppsCodebaseInfo) {
-          const mentionedAppsList = mentionedAppsCodebases
-            .map(({ appName }) => appName)
-            .join(", ");
-
-          systemPrompt += `\n\n# Referenced Apps\nThe user has mentioned the following apps in their prompt: ${mentionedAppsList}. Their codebases have been included in the context for your reference. When referring to these apps, you can understand their structure and code to provide better assistance, however you should NOT edit the files in these referenced apps. The referenced apps are NOT part of the current app and are READ-ONLY.`;
-        }
-
-        const isSecurityReviewIntent =
-          req.prompt.startsWith("/security-review");
-        if (isSecurityReviewIntent) {
-          systemPrompt = SECURITY_REVIEW_SYSTEM_PROMPT;
-          try {
-            const appPath = getAnyonAppPath(updatedChat.app.path);
-            const rulesPath = path.join(appPath, "SECURITY_RULES.md");
-            let securityRules = "";
-
-            await fs.promises.access(rulesPath);
-            securityRules = await fs.promises.readFile(rulesPath, "utf8");
-
-            if (securityRules && securityRules.trim().length > 0) {
-              systemPrompt +=
-                "\n\n# Project-specific security rules:\n" + securityRules;
-            }
-          } catch (error) {
-            // Best-effort: if reading rules fails, continue without them
-            logger.info("Failed to read security rules", error);
-          }
-        }
-
-        if (
-          updatedChat.app?.supabaseProjectId &&
-          isSupabaseConnected(settings)
-        ) {
-          const supabaseClientCode = await getSupabaseClientCode({
-            projectId: updatedChat.app.supabaseProjectId,
-            organizationSlug: updatedChat.app.supabaseOrganizationSlug ?? null,
-          });
-          systemPrompt +=
-            "\n\n" +
-            getSupabaseAvailableSystemPrompt(supabaseClientCode) +
-            "\n\n" +
-            // For local agent, we will explicitly fetch the database context when needed.
-            (settings.selectedChatMode === "local-agent"
-              ? ""
-              : await getSupabaseContext({
-                  supabaseProjectId: updatedChat.app.supabaseProjectId,
-                  organizationSlug:
-                    updatedChat.app.supabaseOrganizationSlug ?? null,
-                }));
-        } else if (
-          // Neon projects don't need Supabase.
-          !updatedChat.app?.neonProjectId &&
-          // In local agent mode, we will suggest supabase as part of the add-integration tool
-          settings.selectedChatMode !== "local-agent" &&
-          // If in security review mode, we don't need to mention supabase is available.
-          !isSecurityReviewIntent
-        ) {
-          systemPrompt += "\n\n" + SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT;
-        }
-        const isSummarizeIntent = req.prompt.startsWith(
-          "Summarize from chat-id=",
-        );
-        if (isSummarizeIntent) {
-          systemPrompt = SUMMARIZE_CHAT_SYSTEM_PROMPT;
-        }
-
-        // Update the system prompt for images if there are image attachments
-        const hasImageAttachments =
-          req.attachments &&
-          req.attachments.some((attachment) =>
-            attachment.type.startsWith("image/"),
-          );
-
-        const hasUploadedAttachments =
-          req.attachments &&
-          req.attachments.some(
-            (attachment) => attachment.attachmentType === "upload-to-codebase",
-          );
-        // If there's mixed attachments (e.g. some upload to codebase attachments and some upload images as chat context attachemnts)
-        // we will just include the file upload system prompt, otherwise the AI gets confused and doesn't reliably
-        // print out the anyon-write tags.
-        // Usually, AI models will want to use the image as reference to generate code (e.g. UI mockups) anyways, so
-        // it's not that critical to include the image analysis instructions.
-        const isAskMode = settings.selectedChatMode === "ask";
-        if (hasUploadedAttachments) {
-          if (willUseLocalAgentStream && !isAskMode) {
-            systemPrompt += `
-
-When files are attached to this conversation, upload them to the codebase using the \`write_file\` tool.
-Use the attachment ID (e.g., ANYON_ATTACHMENT_0) as the content, and it will be automatically resolved to the actual file content.
-
-Example for file with id of ANYON_ATTACHMENT_0:
-\`\`\`
-write_file(path="src/components/Button.jsx", content="ANYON_ATTACHMENT_0", description="Upload file to codebase")
-\`\`\`
-
-`;
-          } else if (!isAskMode) {
-            systemPrompt += `
-  
-When files are attached to this conversation, upload them to the codebase using this exact format:
-
-<anyon-write path="path/to/destination/filename.ext" description="Upload file to codebase">
-ANYON_ATTACHMENT_X
-</anyon-write>
-
-Example for file with id of ANYON_ATTACHMENT_0:
-<anyon-write path="src/components/Button.jsx" description="Upload file to codebase">
-ANYON_ATTACHMENT_0
-</anyon-write>
-
-  `;
-          }
-        } else if (hasImageAttachments) {
-          systemPrompt += `
-
-# Image Analysis Instructions
-This conversation includes one or more image attachments. When the user uploads images:
-1. If the user explicitly asks for analysis, description, or information about the image, please analyze the image content.
-2. Describe what you see in the image if asked.
-3. You can use images as references when the user has coding or design-related questions.
-4. For diagrams or wireframes, try to understand the content and structure shown.
-5. For screenshots of code or errors, try to identify the issue or explain the code.
-`;
-        }
-
-        const codebasePrefix = isEngineEnabled
-          ? // No codebase prefix if engine is set, we will take of it there.
-            []
-          : ([
-              {
-                role: "user",
-                content: createCodebasePrompt(codebaseInfo),
-              },
-              {
-                role: "assistant",
-                content: "OK, got it. I'm ready to help",
-              },
-            ] as const);
-
-        // If engine is enabled, we will send the other apps codebase info to the engine
-        // and process it with smart context.
-        const otherCodebasePrefix =
-          otherAppsCodebaseInfo && !isEngineEnabled
-            ? ([
-                {
-                  role: "user",
-                  content: createOtherAppsCodebasePrompt(otherAppsCodebaseInfo),
-                },
-                {
-                  role: "assistant",
-                  content: "OK.",
-                },
-              ] as const)
-            : [];
-
-        const limitedHistoryChatMessages = limitedMessageHistory.map((msg) => ({
-          role: msg.role as "user" | "assistant" | "system",
-          // Why remove thinking tags?
-          // Thinking tags are generally not critical for the context
-          // and eats up extra tokens.
-          content:
-            settings.selectedChatMode === "ask"
-              ? removeAnyonTags(removeNonEssentialTags(msg.content))
-              : removeNonEssentialTags(msg.content),
-          providerOptions: {
-            "anyon-engine": {
-              sourceCommitHash: msg.sourceCommitHash,
-              commitHash: msg.commitHash,
-            },
-          },
-        }));
-
-        let chatMessages: ModelMessage[] = [
-          ...codebasePrefix,
-          ...otherCodebasePrefix,
-          ...limitedHistoryChatMessages,
-        ];
-
-        // Check if the last message should include attachments
-        if (chatMessages.length >= 2) {
-          const lastUserIndex = chatMessages.length - 2;
-          const lastUserMessage = chatMessages[lastUserIndex];
-          if (lastUserMessage.role === "user") {
-            if (attachmentPaths.length > 0) {
-              // Replace the last message with one that includes attachments
-              chatMessages[lastUserIndex] = await prepareMessageWithAttachments(
-                lastUserMessage,
-                attachmentPaths,
-              );
-            }
-            // Save aiMessagesJson for modes that use handleLocalAgentStream
-            // (which reads from DB and needs structured image content)
-
-            if (willUseLocalAgentStream) {
-              // Insert into DB (with size guard)
-              const userAiMessagesJson = getAiMessagesJsonIfWithinLimit([
-                chatMessages[lastUserIndex],
-              ]);
-              if (userAiMessagesJson) {
-                await db
-                  .update(messages)
-                  .set({ aiMessagesJson: userAiMessagesJson })
-                  .where(eq(messages.id, userMessageId));
-              }
-            }
-          }
-        } else {
-          logger.warn(
-            "Unexpected number of chat messages:",
-            chatMessages.length,
-          );
-        }
-
-        if (isSummarizeIntent) {
-          const previousChat = await db.query.chats.findFirst({
-            where: eq(chats.id, Number.parseInt(req.prompt.split("=")[1])),
-            with: {
-              messages: {
-                orderBy: (messages, { asc }) => [asc(messages.createdAt)],
-              },
-            },
-          });
-          chatMessages = [
-            {
-              role: "user",
-              content:
-                "Summarize the following chat: " +
-                formatMessagesForSummary(previousChat?.messages ?? []),
-            } satisfies ModelMessage,
-          ];
-        }
-        const simpleStreamText = async ({
-          chatMessages,
-          modelClient,
-          tools,
-          systemPromptOverride = systemPrompt,
-          anyonDisableFiles = false,
-          files,
-        }: {
-          chatMessages: ModelMessage[];
-          modelClient: ModelClient;
-          files: CodebaseFile[];
-          tools?: ToolSet;
-          systemPromptOverride?: string;
-          anyonDisableFiles?: boolean;
-        }) => {
-          if (isEngineEnabled) {
-            logger.log(
-              "sending AI request to engine with request id:",
-              anyonRequestId,
-            );
-          } else {
-            logger.log("sending AI request");
-          }
-          let versionedFiles: VersionedFiles | undefined;
-          if (isDeepContextEnabled) {
-            versionedFiles = await getVersionedFiles({
-              files,
-              chatMessages,
-              appPath,
-            });
-          }
-          const smartContextMode: SmartContextMode = isDeepContextEnabled
-            ? "deep"
-            : "balanced";
-          const providerOptions = getProviderOptions({
-            anyonAppId: updatedChat.app.id,
-            anyonRequestId,
-            anyonDisableFiles,
-            smartContextMode,
-            files,
-            versionedFiles,
-            mentionedAppsCodebases,
-            builtinProviderId: modelClient.builtinProviderId,
-            settings,
-          });
-
-          const streamResult = streamText({
-            headers: getAiHeaders({
-              builtinProviderId: modelClient.builtinProviderId,
-            }),
-            maxOutputTokens: await getMaxTokens(settings.selectedModel),
-            temperature: await getTemperature(settings.selectedModel),
-            maxRetries: 2,
-            model: modelClient.model,
-            stopWhen: [stepCountIs(20), hasToolCall("edit-code")],
-            providerOptions,
-            system: systemPromptOverride,
-            tools,
-            messages: chatMessages.filter((m) => m.content),
-            onFinish: (response) => {
-              const totalTokens = response.usage?.totalTokens;
-
-              if (typeof totalTokens === "number") {
-                // We use the highest total tokens used (we are *not* accumulating)
-                // since we're trying to figure it out if we're near the context limit.
-                maxTokensUsed = Math.max(maxTokensUsed ?? 0, totalTokens);
-
-                // Persist the aggregated token usage on the placeholder assistant message
-                void db
-                  .update(messages)
-                  .set({ maxTokensUsed: maxTokensUsed })
-                  .where(eq(messages.id, placeholderAssistantMessage.id))
-                  .catch((error) => {
-                    logger.error(
-                      "Failed to save total tokens for assistant message",
-                      error,
-                    );
-                  });
-
-                logger.log(
-                  `Total tokens used (aggregated for message ${placeholderAssistantMessage.id}): ${maxTokensUsed}`,
-                );
-                // Report token usage to Polar for credit metering
-                void reportTokenUsage(totalTokens, settings.selectedModel.name);
-              } else {
-                logger.log("Total tokens used: unknown");
-              }
-            },
-            onError: (error: any) => {
-              let errorMessage = (error as any)?.error?.message;
-              const responseBody = error?.error?.responseBody;
-              if (errorMessage && responseBody) {
-                errorMessage += "\n\nDetails: " + responseBody;
-              }
-              const message = errorMessage || JSON.stringify(error);
-              const requestIdPrefix = isEngineEnabled
-                ? `[Request ID: ${anyonRequestId}] `
-                : "";
-              logger.error(
-                `AI stream text error for request: ${requestIdPrefix} errorMessage=${errorMessage} error=`,
-                error,
-              );
-              event.sender.send("chat:response:error", {
-                chatId: req.chatId,
-                error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${requestIdPrefix}${message}`,
-              });
-              // Clean up the abort controller
-              activeStreams.delete(req.chatId);
-            },
-            abortSignal: abortController.signal,
-          });
-          return {
-            fullStream: streamResult.fullStream,
-            usage: streamResult.usage,
-          };
-        };
-
-        let lastDbSaveAt = 0;
-
-        const processResponseChunkUpdate = async ({
-          fullResponse,
-        }: {
-          fullResponse: string;
-        }) => {
-          // Store the current partial response
-          partialResponses.set(req.chatId, fullResponse);
-          // Save to DB (in case user is switching chats during the stream)
-          const now = Date.now();
-          if (now - lastDbSaveAt >= 150) {
-            await db
-              .update(messages)
-              .set({ content: fullResponse })
-              .where(eq(messages.id, placeholderAssistantMessage.id));
-
-            lastDbSaveAt = now;
-          }
-
-          // Update the placeholder assistant message content in the messages array
-          const currentMessages = [...updatedChat.messages];
-          if (
-            currentMessages.length > 0 &&
-            currentMessages[currentMessages.length - 1].role === "assistant"
-          ) {
-            currentMessages[currentMessages.length - 1].content = fullResponse;
-          }
-
-          // Update the assistant message in the database
-          safeSend(event.sender, "chat:response:chunk", {
-            chatId: req.chatId,
-            messages: currentMessages,
-          });
-          return fullResponse;
-        };
-
-        // Handle ask mode: use local-agent in read-only mode
-        // This gives users access to code reading tools while in ask mode
-        // Ask mode does not consume free agent quota
-        if (
-          settings.selectedChatMode === "ask" &&
-          !mentionedAppsCodebases.length
-        ) {
-          // Reconstruct system prompt for local-agent read-only mode
-          const readOnlySystemPrompt = constructSystemPrompt({
-            aiRules,
-            chatMode: "local-agent",
-            enableTurboEditsV2: false,
-            themePrompt,
-            readOnly: true,
-          });
-
-          // Return value indicates success/failure for quota tracking.
-          // Ask mode doesn't consume quota, but we still capture it for
-          // consistent error handling.
-          const streamSuccess = await handleLocalAgentStream(
-            event,
-            req,
-            abortController,
-            {
-              placeholderMessageId: placeholderAssistantMessage.id,
-              // Note: this is using the read-only system prompt rather than the
-              // regular system prompt which gets overrides for special intents
-              // like summarize chat, security review, etc.
-              //
-              // This is OK because those intents should always happen in a new chat
-              // and new chats will default to non-ask modes.
-              systemPrompt: readOnlySystemPrompt,
-              anyonRequestId: anyonRequestId ?? "[no-request-id]",
-              readOnly: true,
-              messageOverride: isSummarizeIntent ? chatMessages : undefined,
-            },
-          );
-          if (!streamSuccess) {
-            logger.warn(
-              "Ask mode local agent stream did not complete successfully",
-            );
-          }
-          return;
-        }
-
-        // Handle plan mode: use local-agent with plan tools only
-        // Plan mode is for requirements gathering and creating implementation plans
-        if (
-          settings.selectedChatMode === "plan" &&
-          !mentionedAppsCodebases.length
-        ) {
-          // Reconstruct system prompt for plan mode
-          const planModeSystemPrompt = constructSystemPrompt({
-            aiRules,
-            chatMode: "plan",
-            enableTurboEditsV2: false,
-            themePrompt,
-          });
-
-          await handleLocalAgentStream(event, req, abortController, {
-            placeholderMessageId: placeholderAssistantMessage.id,
-            systemPrompt: planModeSystemPrompt,
-            anyonRequestId: anyonRequestId ?? "[no-request-id]",
-            planModeOnly: true,
-            messageOverride: isSummarizeIntent ? chatMessages : undefined,
-          });
-          return;
-        }
-
-        // Handle local-agent mode (Agent v2)
-        // Mentioned apps can't be handled by the local agent (defer to balanced smart context
-        // in build mode)
-        if (
-          settings.selectedChatMode === "local-agent" &&
-          !mentionedAppsCodebases.length
-        ) {
-          // Check quota for Basic Agent mode (non-Pro users)
-          const isBasicAgentModeRequest = isBasicAgentMode(settings);
-          if (isBasicAgentModeRequest) {
-            const quotaStatus = await getFreeAgentQuotaStatus();
-            if (quotaStatus.isQuotaExceeded) {
-              safeSend(event.sender, "chat:response:error", {
-                chatId: req.chatId,
-                error: JSON.stringify({
-                  type: "FREE_AGENT_QUOTA_EXCEEDED",
-                  hoursUntilReset: quotaStatus.hoursUntilReset,
-                  resetTime: quotaStatus.resetTime,
-                }),
-              });
-              return;
-            }
-          }
-
-          // Mark the user message as using quota BEFORE starting the stream
-          // to prevent race conditions with parallel requests
-          if (isBasicAgentModeRequest && userMessageId) {
-            await markMessageAsUsingFreeAgentQuota(userMessageId);
-          }
-
-          let streamSuccess = false;
-          try {
-            streamSuccess = await handleLocalAgentStream(
-              event,
-              req,
-              abortController,
-              {
-                placeholderMessageId: placeholderAssistantMessage.id,
-                systemPrompt,
-                anyonRequestId: anyonRequestId ?? "[no-request-id]",
-                messageOverride: isSummarizeIntent ? chatMessages : undefined,
-              },
-            );
-          } finally {
-            // If the stream failed, was aborted, or threw, refund the quota
-            if (isBasicAgentModeRequest && userMessageId && !streamSuccess) {
-              await unmarkMessageAsUsingFreeAgentQuota(userMessageId);
-            }
-          }
-
-          return;
-        }
-
-        if (settings.selectedChatMode === "agent") {
-          const tools = await getMcpTools(event);
-
-          const { fullStream } = await simpleStreamText({
-            chatMessages: limitedHistoryChatMessages,
-            modelClient,
-            tools: {
-              ...tools,
-              "generate-code": {
-                description:
-                  "ALWAYS use this tool whenever generating or editing code for the codebase.",
-                inputSchema: z.object({}),
-                execute: async () => "",
-              },
-            },
-            systemPromptOverride: constructSystemPrompt({
-              aiRules: await readAiRules(getAnyonAppPath(updatedChat.app.path)),
-              chatMode: "agent",
-              enableTurboEditsV2: false,
-            }),
-            files: files,
-            anyonDisableFiles: true,
-          });
-
-          const result = await processStreamChunks({
-            fullStream,
-            fullResponse,
-            abortController,
-            chatId: req.chatId,
-            processResponseChunkUpdate,
-          });
-          fullResponse = result.fullResponse;
-          chatMessages.push({
-            role: "assistant",
-            content: fullResponse,
-          });
-          chatMessages.push({
-            role: "user",
-            content: "OK.",
-          });
-        }
-
-        // When calling streamText, the messages need to be properly formatted for mixed content
-        const { fullStream } = await simpleStreamText({
-          chatMessages,
-          modelClient,
-          files: files,
-        });
-
-        // Process the stream as before
-        try {
-          const result = await processStreamChunks({
-            fullStream,
-            fullResponse,
-            abortController,
-            chatId: req.chatId,
-            processResponseChunkUpdate,
-          });
-          fullResponse = result.fullResponse;
-
-          if (
-            settings.selectedChatMode !== "ask" &&
-            isTurboEditsV2Enabled(settings)
-          ) {
-            let issues = await dryRunSearchReplace({
-              fullResponse,
-              appPath: getAnyonAppPath(updatedChat.app.path),
-            });
-            sendTelemetryEvent("search_replace:fix", {
-              attemptNumber: 0,
-              success: issues.length === 0,
-              issueCount: issues.length,
-              errors: issues.map((i) => ({
-                filePath: i.filePath,
-                error: i.error,
-              })),
-            });
-
-            let searchReplaceFixAttempts = 0;
-            const originalFullResponse = fullResponse;
-            const previousAttempts: ModelMessage[] = [];
-            while (
-              issues.length > 0 &&
-              searchReplaceFixAttempts < 2 &&
-              !abortController.signal.aborted
-            ) {
-              logger.warn(
-                `Detected search-replace issues (attempt #${searchReplaceFixAttempts + 1}): ${issues.map((i) => i.error).join(", ")}`,
-              );
-              const formattedSearchReplaceIssues = issues
-                .map(({ filePath, error }) => {
-                  return `File path: ${filePath}\nError: ${error}`;
-                })
-                .join("\n\n");
-
-              fullResponse += `<anyon-output type="warning" message="Could not apply Turbo Edits properly for some of the files; re-generating code...">${formattedSearchReplaceIssues}</anyon-output>`;
-              await processResponseChunkUpdate({
-                fullResponse,
-              });
-
-              logger.info(
-                `Attempting to fix search-replace issues, attempt #${searchReplaceFixAttempts + 1}`,
-              );
-
-              const fixSearchReplacePrompt =
-                searchReplaceFixAttempts === 0
-                  ? `There was an issue with the following \`anyon-search-replace\` tags. Make sure you use \`anyon-read\` to read the latest version of the file and then trying to do search & replace again.`
-                  : `There was an issue with the following \`anyon-search-replace\` tags. Please fix the errors by generating the code changes using \`anyon-write\` tags instead.`;
-              searchReplaceFixAttempts++;
-              const userPrompt = {
-                role: "user",
-                content: `${fixSearchReplacePrompt}
-                
-${formattedSearchReplaceIssues}`,
-              } as const;
-
-              const { fullStream: fixSearchReplaceStream } =
-                await simpleStreamText({
-                  // Build messages: reuse chat history and original full response, then ask to fix search-replace issues.
-                  chatMessages: [
-                    ...chatMessages,
-                    { role: "assistant", content: originalFullResponse },
-                    ...previousAttempts,
-                    userPrompt,
-                  ],
-                  modelClient,
-                  files: files,
-                });
-              previousAttempts.push(userPrompt);
-              const result = await processStreamChunks({
-                fullStream: fixSearchReplaceStream,
-                fullResponse,
-                abortController,
-                chatId: req.chatId,
-                processResponseChunkUpdate,
-              });
-              fullResponse = result.fullResponse;
-              previousAttempts.push({
-                role: "assistant",
-                content: removeNonEssentialTags(result.incrementalResponse),
-              });
-
-              // Re-check for issues after the fix attempt
-              issues = await dryRunSearchReplace({
-                fullResponse: result.incrementalResponse,
-                appPath: getAnyonAppPath(updatedChat.app.path),
-              });
-
-              sendTelemetryEvent("search_replace:fix", {
-                attemptNumber: searchReplaceFixAttempts,
-                success: issues.length === 0,
-                issueCount: issues.length,
-                errors: issues.map((i) => ({
-                  filePath: i.filePath,
-                  error: i.error,
-                })),
-              });
-            }
-          }
-
-          if (
-            !abortController.signal.aborted &&
-            settings.selectedChatMode !== "ask" &&
-            hasUnclosedAnyonWrite(fullResponse)
-          ) {
-            let continuationAttempts = 0;
-            while (
-              hasUnclosedAnyonWrite(fullResponse) &&
-              continuationAttempts < 2 &&
-              !abortController.signal.aborted
-            ) {
-              logger.warn(
-                `Received unclosed anyon-write tag, attempting to continue, attempt #${continuationAttempts + 1}`,
-              );
-              continuationAttempts++;
-
-              const { fullStream: contStream } = await simpleStreamText({
-                // Build messages: replay history then pre-fill assistant with current partial.
-                chatMessages: [
-                  ...chatMessages,
-                  { role: "assistant", content: fullResponse },
-                ],
-                modelClient,
-                files: files,
-              });
-              for await (const part of contStream) {
-                // If the stream was aborted, exit early
-                if (abortController.signal.aborted) {
-                  logger.log(`Stream for chat ${req.chatId} was aborted`);
-                  break;
-                }
-                if (part.type !== "text-delta") continue; // ignore reasoning for continuation
-                fullResponse += part.text;
-                fullResponse = cleanFullResponse(fullResponse);
-                fullResponse = await processResponseChunkUpdate({
-                  fullResponse,
-                });
-              }
-            }
-          }
-          const addDependencies = getAnyonAddDependencyTags(fullResponse);
-          if (
-            !abortController.signal.aborted &&
-            // If there are dependencies, we don't want to auto-fix problems
-            // because there's going to be type errors since the packages aren't
-            // installed yet.
-            addDependencies.length === 0 &&
-            settings.enableAutoFixProblems &&
-            settings.selectedChatMode !== "ask"
-          ) {
-            try {
-              // IF auto-fix is enabled
-              let problemReport = await generateProblemReport({
-                fullResponse,
-                appPath: getAnyonAppPath(updatedChat.app.path),
-              });
-
-              let autoFixAttempts = 0;
-              const originalFullResponse = fullResponse;
-              const previousAttempts: ModelMessage[] = [];
-              while (
-                problemReport.problems.length > 0 &&
-                autoFixAttempts < 2 &&
-                !abortController.signal.aborted
-              ) {
-                fullResponse += `<anyon-problem-report summary="${problemReport.problems.length} problems">
-${problemReport.problems
-  .map(
-    (problem) =>
-      `<problem file="${escapeXmlAttr(problem.file)}" line="${problem.line}" column="${problem.column}" code="${problem.code}">${escapeXmlContent(problem.message)}</problem>`,
-  )
-  .join("\n")}
-</anyon-problem-report>`;
-
-                logger.info(
-                  `Attempting to auto-fix problems, attempt #${autoFixAttempts + 1}`,
-                );
-                autoFixAttempts++;
-                const problemFixPrompt = createProblemFixPrompt(problemReport);
-
-                const virtualFileSystem = new AsyncVirtualFileSystem(
-                  getAnyonAppPath(updatedChat.app.path),
-                  {
-                    fileExists: (fileName: string) => fileExists(fileName),
-                    readFile: (fileName: string) => readFileWithCache(fileName),
-                  },
-                );
-                const writeTags = getAnyonWriteTags(fullResponse);
-                const renameTags = getAnyonRenameTags(fullResponse);
-                const deletePaths = getAnyonDeleteTags(fullResponse);
-                virtualFileSystem.applyResponseChanges({
-                  deletePaths,
-                  renameTags,
-                  writeTags,
-                });
-
-                const { formattedOutput: codebaseInfo, files } =
-                  await extractCodebase({
-                    appPath,
-                    chatContext,
-                    virtualFileSystem,
-                  });
-                const creditCheck = await checkCreditsForModel(
-                  settings.selectedModel.name,
-                );
-                if (!creditCheck.allowed) {
-                  throw new Error(creditCheck.reason ?? "Credits exhausted");
-                }
-
-                const { modelClient } = await getModelClient(
-                  settings.selectedModel,
-                  settings,
-                );
-
-                const { fullStream } = await simpleStreamText({
-                  modelClient,
-                  files: files,
-                  chatMessages: [
-                    ...chatMessages.map((msg, index) => {
-                      if (
-                        index === 0 &&
-                        msg.role === "user" &&
-                        typeof msg.content === "string" &&
-                        msg.content.startsWith(CODEBASE_PROMPT_PREFIX)
-                      ) {
-                        return {
-                          role: "user",
-                          content: createCodebasePrompt(codebaseInfo),
-                        } as const;
-                      }
-                      return msg;
-                    }),
-                    {
-                      role: "assistant",
-                      content: removeNonEssentialTags(originalFullResponse),
-                    },
-                    ...previousAttempts,
-                    { role: "user", content: problemFixPrompt },
-                  ],
-                });
-                previousAttempts.push({
-                  role: "user",
-                  content: problemFixPrompt,
-                });
-                const result = await processStreamChunks({
-                  fullStream,
-                  fullResponse,
-                  abortController,
-                  chatId: req.chatId,
-                  processResponseChunkUpdate,
-                });
-                fullResponse = result.fullResponse;
-                previousAttempts.push({
-                  role: "assistant",
-                  content: removeNonEssentialTags(result.incrementalResponse),
-                });
-
-                problemReport = await generateProblemReport({
-                  fullResponse,
-                  appPath: getAnyonAppPath(updatedChat.app.path),
-                });
-              }
-            } catch (error) {
-              logger.error(
-                "Error generating problem report or auto-fixing:",
-                settings.enableAutoFixProblems,
-                error,
-              );
-            }
-          }
-        } catch (streamError) {
-          // Check if this was an abort error
-          if (abortController.signal.aborted) {
-            const chatId = req.chatId;
-            const partialResponse = partialResponses.get(req.chatId);
-            // If we have a partial response, save it to the database
-            if (partialResponse) {
-              try {
-                // Update the placeholder assistant message with the partial content and cancellation note
-                await db
-                  .update(messages)
-                  .set({
-                    content: `${partialResponse}
-
-[Response cancelled by user]`,
-                  })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-
-                logger.log(
-                  `Updated cancelled response for placeholder message ${placeholderAssistantMessage.id} in chat ${chatId}`,
-                );
-                partialResponses.delete(req.chatId);
-              } catch (error) {
-                logger.error(
-                  `Error saving partial response for chat ${chatId}:`,
-                  error,
-                );
-              }
-            }
-            return req.chatId;
-          }
-          throw streamError;
-        }
+        return req.chatId;
       }
 
-      // Only save the response and process it if we weren't aborted
-      if (!abortController.signal.aborted && fullResponse) {
-        // Scrape from: <anyon-chat-summary>Renaming profile file</anyon-chat-title>
-        const chatTitle = fullResponse.match(
-          /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
-        );
-        if (chatTitle) {
-          await db
-            .update(chats)
-            .set({ title: chatTitle[1] })
-            .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
-        }
-        const chatSummary = chatTitle?.[1];
-
-        // Update the placeholder assistant message with the full response
-        await db
-          .update(messages)
-          .set({ content: fullResponse })
-          .where(eq(messages.id, placeholderAssistantMessage.id));
-        const settings = readSettings();
-        if (
-          settings.autoApproveChanges &&
-          settings.selectedChatMode !== "ask"
-        ) {
-          const status = await processFullResponseActions(
-            fullResponse,
-            req.chatId,
-            {
-              chatSummary,
-              messageId: placeholderAssistantMessage.id,
-            }, // Use placeholder ID
-          );
-
-          const chat = await db.query.chats.findFirst({
-            where: eq(chats.id, req.chatId),
-            with: {
-              messages: {
-                orderBy: (messages, { asc }) => [asc(messages.createdAt)],
-              },
-            },
-          });
-
-          safeSend(event.sender, "chat:response:chunk", {
-            chatId: req.chatId,
-            messages: chat!.messages,
-          });
-
-          if (status.error) {
-            safeSend(event.sender, "chat:response:error", {
-              chatId: req.chatId,
-              error: `Sorry, there was an error applying the AI's changes: ${status.error}`,
-            });
-          }
-
-          // Signal that the stream has completed
-          safeSend(event.sender, "chat:response:end", {
-            chatId: req.chatId,
-            updatedFiles: status.updatedFiles ?? false,
-            extraFiles: status.extraFiles,
-            extraFilesError: status.extraFilesError,
-            chatSummary,
-          } satisfies ChatResponseEnd);
-        } else {
-          safeSend(event.sender, "chat:response:end", {
-            chatId: req.chatId,
-            updatedFiles: false,
-            chatSummary,
-          } satisfies ChatResponseEnd);
-        }
-      }
-
-      // Return the chat ID for backwards compatibility
       return req.chatId;
     } catch (error) {
       logger.error("Error calling LLM:", error);
@@ -1960,117 +786,6 @@ export function formatMessagesForSummary(
     .join("\n");
 }
 
-// Helper function to replace text attachment placeholders with full content
-async function replaceTextAttachmentWithContent(
-  text: string,
-  filePath: string,
-  fileName: string,
-): Promise<string> {
-  try {
-    if (await isTextFile(filePath)) {
-      // Read the full content
-      const fullContent = await readFile(filePath, "utf-8");
-
-      // Replace the placeholder tag with the full content
-      const escapedPath = filePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const tagPattern = new RegExp(
-        `<anyon-text-attachment filename="[^"]*" type="[^"]*" path="${escapedPath}">\\s*<\\/anyon-text-attachment>`,
-        "g",
-      );
-
-      const replacedText = text.replace(
-        tagPattern,
-        `Full content of ${fileName}:\n\`\`\`\n${fullContent}\n\`\`\``,
-      );
-
-      logger.log(
-        `Replaced text attachment content for: ${fileName} - length before: ${text.length} - length after: ${replacedText.length}`,
-      );
-      return replacedText;
-    }
-    return text;
-  } catch (error) {
-    logger.error(`Error processing text file: ${error}`);
-    return text;
-  }
-}
-
-// Helper function to convert traditional message to one with proper image attachments
-async function prepareMessageWithAttachments(
-  message: ModelMessage,
-  attachmentPaths: string[],
-): Promise<ModelMessage> {
-  let textContent = message.content;
-  // Get the original text content
-  if (typeof textContent !== "string") {
-    logger.warn(
-      "Message content is not a string - shouldn't happen but using message as-is",
-    );
-    return message;
-  }
-
-  // Process text file attachments - replace placeholder tags with full content
-  for (const filePath of attachmentPaths) {
-    const fileName = path.basename(filePath);
-    textContent = await replaceTextAttachmentWithContent(
-      textContent,
-      filePath,
-      fileName,
-    );
-  }
-
-  // For user messages with attachments, create a content array
-  const contentParts: (TextPart | ImagePart)[] = [];
-
-  // Add the text part first with possibly modified content
-  contentParts.push({
-    type: "text",
-    text: textContent,
-  });
-
-  // Add image parts for any image attachments
-  for (const filePath of attachmentPaths) {
-    const ext = path.extname(filePath).toLowerCase();
-    if ([".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(ext)) {
-      try {
-        // Read the file as a buffer and convert to base64 string
-        // Using base64 strings instead of raw Buffers ensures proper JSON serialization
-        // for storage in aiMessagesJson (raw Buffers serialize inefficiently and exceed size limits)
-        const imageBuffer = await readFile(filePath);
-        const mimeType =
-          ext === ".jpg" ? "image/jpeg" : `image/${ext.slice(1)}`;
-        const base64Data = imageBuffer.toString("base64");
-
-        // Add the image to the content parts with base64 data and mediaType
-        contentParts.push({
-          type: "image",
-          image: base64Data,
-          mediaType: mimeType,
-        });
-
-        logger.log(`Added image attachment: ${filePath}`);
-      } catch (error) {
-        logger.error(`Error reading image file: ${error}`);
-      }
-    }
-  }
-
-  // Return the message with the content array
-  return {
-    role: "user",
-    content: contentParts,
-  };
-}
-
-function removeNonEssentialTags(text: string): string {
-  return removeProblemReportTags(removeThinkingTags(text));
-}
-
-function removeThinkingTags(text: string): string {
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
-  return text.replace(thinkRegex, "").trim();
-}
-
 export function removeProblemReportTags(text: string): string {
   const problemReportRegex =
     /<anyon-problem-report[^>]*>[\s\S]*?<\/anyon-problem-report>/g;
@@ -2086,10 +801,11 @@ export function hasUnclosedAnyonWrite(text: string): boolean {
   // Find the last opening anyon-write tag
   const openRegex = /<anyon-write[^>]*>/g;
   let lastOpenIndex = -1;
-  let match;
+  let match: RegExpExecArray | null = openRegex.exec(text);
 
-  while ((match = openRegex.exec(text)) !== null) {
+  while (match !== null) {
     lastOpenIndex = match.index;
+    match = openRegex.exec(text);
   }
 
   // If no opening tag found, there's nothing unclosed
@@ -2112,63 +828,4 @@ function escapeAnyonTags(text: string): string {
   // 1. FE markdown parser
   // 2. Main process response processor
   return text.replace(/<anyon/g, "＜anyon").replace(/<\/anyon/g, "＜/anyon");
-}
-
-const CODEBASE_PROMPT_PREFIX = "This is my codebase.";
-function createCodebasePrompt(codebaseInfo: string): string {
-  return `${CODEBASE_PROMPT_PREFIX} ${codebaseInfo}`;
-}
-
-function createOtherAppsCodebasePrompt(otherAppsCodebaseInfo: string): string {
-  return `
-# Referenced Apps
-
-These are the other apps that I've mentioned in my prompt. These other apps' codebases are READ-ONLY.
-
-${otherAppsCodebaseInfo}
-`;
-}
-
-async function getMcpTools(event: IpcMainInvokeEvent): Promise<ToolSet> {
-  const mcpToolSet: ToolSet = {};
-  try {
-    const servers = await db
-      .select()
-      .from(mcpServers)
-      .where(eq(mcpServers.enabled, true as any));
-    for (const s of servers) {
-      const client = await mcpManager.getClient(s.id);
-      const toolSet = await client.tools();
-      for (const [name, mcpTool] of Object.entries(toolSet)) {
-        const key = `${String(s.name || "").replace(/[^a-zA-Z0-9_-]/g, "-")}__${String(name).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-        mcpToolSet[key] = {
-          description: mcpTool.description,
-          inputSchema: mcpTool.inputSchema,
-          execute: async (args: unknown, execCtx: ToolExecutionOptions) => {
-            const inputPreview =
-              typeof args === "string"
-                ? args
-                : Array.isArray(args)
-                  ? args.join(" ")
-                  : JSON.stringify(args).slice(0, 500);
-            const ok = await requireMcpToolConsent(event, {
-              serverId: s.id,
-              serverName: s.name,
-              toolName: name,
-              toolDescription: mcpTool.description,
-              inputPreview,
-            });
-
-            if (!ok) throw new Error(`User declined running tool ${key}`);
-            const res = await mcpTool.execute(args, execCtx);
-
-            return typeof res === "string" ? res : JSON.stringify(res);
-          },
-        };
-      }
-    }
-  } catch (e) {
-    logger.warn("Failed building MCP toolset", e);
-  }
-  return mcpToolSet;
 }
