@@ -34,9 +34,8 @@ export { chatContracts, chatStreamContract } from "./chat";
 export { agentEvents } from "./agent";
 export { githubContracts, gitContracts, githubEvents } from "./github";
 export { mcpContracts, mcpEvents } from "./mcp";
-export { vercelContracts } from "./vercel";
+export { vercelContracts, vercelDeployStreamContract } from "./vercel";
 export { supabaseContracts } from "./supabase";
-export { neonContracts } from "./neon";
 export { systemContracts, systemEvents } from "./system";
 export { versionContracts } from "./version";
 export { languageModelContracts } from "./language-model";
@@ -65,9 +64,8 @@ export { chatClient, chatStreamClient } from "./chat";
 export { agentEventClient } from "./agent";
 export { githubClient, gitClient, githubEventClient } from "./github";
 export { mcpClient, mcpEventClient } from "./mcp";
-export { vercelClient } from "./vercel";
+export { vercelClient, vercelDeployStreamClient } from "./vercel";
 export { supabaseClient } from "./supabase";
-export { neonClient } from "./neon";
 export { systemClient, systemEventClient } from "./system";
 export { versionClient } from "./version";
 export { languageModelClient } from "./language-model";
@@ -213,6 +211,10 @@ export type {
   CreateVercelProjectParams,
   GetVercelDeploymentsParams,
   DisconnectVercelProjectParams,
+  DirectDeployParams,
+  DeployProgressChunk,
+  DeployEnd,
+  DeployError,
 } from "./vercel";
 
 // Supabase types
@@ -224,15 +226,6 @@ export type {
   SetSupabaseAppProjectParams,
   ConsoleEntry,
 } from "./supabase";
-
-// Neon types
-export type {
-  NeonProject,
-  NeonBranch,
-  CreateNeonProjectParams,
-  GetNeonProjectParams,
-  GetNeonProjectResponse,
-} from "./neon";
 
 // System types
 export type {
@@ -371,7 +364,6 @@ import { importClient } from "./import";
 import { languageModelClient } from "./language-model";
 import { mcpClient, mcpEventClient } from "./mcp";
 import { miscClient, miscEventClient } from "./misc";
-import { neonClient } from "./neon";
 import { promptClient } from "./prompts";
 import { proposalClient } from "./proposals";
 import { securityClient } from "./security";
@@ -380,7 +372,7 @@ import { supabaseClient } from "./supabase";
 import { systemClient, systemEventClient } from "./system";
 import { templateClient } from "./templates";
 import { upgradeClient } from "./upgrade";
-import { vercelClient } from "./vercel";
+import { vercelClient, vercelDeployStreamClient } from "./vercel";
 import { versionClient } from "./version";
 import { visualEditingClient } from "./visual-editing";
 
@@ -414,6 +406,7 @@ export const ipc = {
   // Streaming clients
   chatStream: chatStreamClient,
   helpStream: helpStreamClient,
+  vercelDeployStream: vercelDeployStreamClient,
 
   // Integrations
   github: githubClient,
@@ -421,7 +414,6 @@ export const ipc = {
   mcp: mcpClient,
   vercel: vercelClient,
   supabase: supabaseClient,
-  neon: neonClient,
 
   // Features
   system: systemClient,

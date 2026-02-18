@@ -54,7 +54,6 @@ import {
   gitListBranches,
   gitRenameBranch,
 } from "../utils/git_utils";
-import { storeDbTimestampAtCurrentVersion } from "../utils/neon_timestamp_utils";
 import { safeSend } from "../utils/safe_sender";
 import { startProxy } from "../utils/start_proxy_server";
 import { getVercelTeamSlug } from "../utils/vercel_utils";
@@ -157,14 +156,12 @@ async function executeApp({
   appPath,
   appId,
   event, // Keep event for local-node case
-  isNeon,
   installCommand,
   startCommand,
 }: {
   appPath: string;
   appId: number;
   event: Electron.IpcMainInvokeEvent;
-  isNeon: boolean;
   installCommand: string;
   startCommand: string;
 }): Promise<void> {
@@ -180,7 +177,6 @@ async function executeApp({
       appPath,
       appId,
       event,
-      isNeon,
       installCommand,
       startCommand,
     });
@@ -189,7 +185,6 @@ async function executeApp({
       appPath,
       appId,
       event,
-      isNeon,
       installCommand,
       startCommand,
     });
@@ -200,14 +195,12 @@ async function executeAppLocalNode({
   appPath,
   appId,
   event,
-  isNeon,
   installCommand,
   startCommand,
 }: {
   appPath: string;
   appId: number;
   event: Electron.IpcMainInvokeEvent;
-  isNeon: boolean;
   installCommand: string;
   startCommand: string;
 }): Promise<void> {
@@ -274,7 +267,6 @@ Details: ${details || "n/a"}
   listenToProcess({
     process: spawnedProcess,
     appId,
-    isNeon,
     event,
   });
 }
@@ -282,12 +274,10 @@ Details: ${details || "n/a"}
 function listenToProcess({
   process: spawnedProcess,
   appId,
-  isNeon,
   event,
 }: {
   process: ChildProcess;
   appId: number;
-  isNeon: boolean;
   event: Electron.IpcMainInvokeEvent;
 }) {
   // Log output
@@ -305,19 +295,6 @@ function listenToProcess({
       timestamp: Date.now(),
       appId,
     });
-
-    // This is a hacky heuristic to pick up when drizzle is asking for user
-    // to select from one of a few choices. We automatically pick the first
-    // option because it's usually a good default choice. We guard this with
-    // isNeon because: 1) only Neon apps (for the official Anyon templates) should
-    // get this template and 2) it's safer to do this with Neon apps because
-    // their databases have point in time restore built-in.
-    if (isNeon && message.includes("created or renamed from another")) {
-      spawnedProcess.stdin?.write(`\r\n`);
-      logger.info(
-        `App ${appId} (PID: ${spawnedProcess.pid}) wrote enter to stdin to automatically respond to drizzle push input`,
-      );
-    }
 
     // Check if this is an interactive prompt requiring user input
     const inputRequestPattern = /\s*›\s*\([yY]\/[nN]\)\s*$/;
@@ -404,14 +381,12 @@ async function executeAppInDocker({
   appPath,
   appId,
   event,
-  isNeon,
   installCommand,
   startCommand,
 }: {
   appPath: string;
   appId: number;
   event: Electron.IpcMainInvokeEvent;
-  isNeon: boolean;
   installCommand: string;
   startCommand: string;
 }): Promise<void> {
@@ -586,7 +561,6 @@ ${errorOutput || "(empty)"}`,
   listenToProcess({
     process,
     appId,
-    isNeon,
     event,
   });
 }
@@ -1062,7 +1036,6 @@ export function registerAppHandlers() {
           appPath,
           appId,
           event,
-          isNeon: !!app.neonProjectId,
           installCommand,
           startCommand,
         });
@@ -1235,7 +1208,6 @@ export function registerAppHandlers() {
           appPath,
           appId,
           event,
-          isNeon: !!app.neonProjectId,
           installCommand,
           startCommand,
         });
@@ -1266,20 +1238,6 @@ export function registerAppHandlers() {
     // Check if the path is within the app directory (security check)
     if (!fullPath.startsWith(appPath)) {
       throw new Error("Invalid file path");
-    }
-
-    if (app.neonProjectId && app.neonDevelopmentBranchId) {
-      try {
-        await storeDbTimestampAtCurrentVersion({
-          appId: app.id,
-        });
-      } catch (error) {
-        logger.error("Error storing Neon timestamp at current version:", error);
-        throw new Error(
-          "Could not store Neon timestamp at current version; database versioning functionality is not working: " +
-            error,
-        );
-      }
     }
 
     // Ensure directory exists

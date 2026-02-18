@@ -1,31 +1,30 @@
+import { eq } from "drizzle-orm";
+import log from "electron-log";
 import { db } from "../../db";
 import { chats } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { getAnyonAppPath } from "../../paths/paths";
+import {
+  SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT,
+  getSupabaseAvailableSystemPrompt,
+} from "../../prompts/supabase_prompt";
 import {
   constructSystemPrompt,
   readAiRules,
 } from "../../prompts/system_prompt";
-import { getThemePromptById } from "../utils/theme_utils";
 import {
-  getSupabaseAvailableSystemPrompt,
-  SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT,
-} from "../../prompts/supabase_prompt";
-import { getAnyonAppPath } from "../../paths/paths";
-import log from "electron-log";
-import { extractCodebase } from "../../utils/codebase";
-import {
-  getSupabaseContext,
   getSupabaseClientCode,
+  getSupabaseContext,
 } from "../../supabase_admin/supabase_context";
+import { extractCodebase } from "../../utils/codebase";
+import { getThemePromptById } from "../utils/theme_utils";
 
-import { TokenCountParams, TokenCountResult } from "@/ipc/types";
+import type { TokenCountParams, TokenCountResult } from "@/ipc/types";
+import { readSettings } from "@/main/settings";
+import { parseAppMentions } from "@/shared/parse_mention_apps";
+import { validateChatContext } from "../utils/context_paths_utils";
+import { extractMentionedAppsCodebases } from "../utils/mention_apps";
 import { estimateTokens, getContextWindow } from "../utils/token_utils";
 import { createLoggedHandler } from "./safe_handle";
-import { validateChatContext } from "../utils/context_paths_utils";
-import { readSettings } from "@/main/settings";
-import { extractMentionedAppsCodebases } from "../utils/mention_apps";
-import { parseAppMentions } from "@/shared/parse_mention_apps";
-import { isTurboEditsV2Enabled } from "@/lib/schemas";
 
 const logger = log.scope("token_count_handlers");
 
@@ -67,14 +66,8 @@ export function registerTokenCountHandlers() {
       const themePrompt = await getThemePromptById(chat.app?.themeId ?? null);
       let systemPrompt = constructSystemPrompt({
         aiRules: await readAiRules(getAnyonAppPath(chat.app.path)),
-        chatMode:
-          settings.selectedChatMode === "agent" ||
-          settings.selectedChatMode === "local-agent"
-            ? "build"
-            : settings.selectedChatMode,
-        enableTurboEditsV2: isTurboEditsV2Enabled(settings),
         themePrompt,
-        openCodeMode: true,
+        selectedAgent: settings.selectedAgent,
       });
       let supabaseContext = "";
 
@@ -89,10 +82,7 @@ export function registerTokenCountHandlers() {
           supabaseProjectId: chat.app.supabaseProjectId,
           organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
         });
-      } else if (
-        // Neon projects don't need Supabase.
-        !chat.app?.neonProjectId
-      ) {
+      } else {
         systemPrompt += "\n\n" + SUPABASE_NOT_AVAILABLE_SYSTEM_PROMPT;
       }
 

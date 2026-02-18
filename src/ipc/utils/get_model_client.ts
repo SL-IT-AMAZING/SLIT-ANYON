@@ -1,8 +1,8 @@
 import type { LanguageModel } from "ai";
-import type { LargeLanguageModel, UserSettings } from "../../lib/schemas";
 import log from "electron-log";
-import { createOpenCodeProvider } from "./opencode_provider";
+import type { LargeLanguageModel, UserSettings } from "../../lib/schemas";
 import { getModelClientUpstream } from "./get_model_client_upstream";
+import { createOpenCodeProvider } from "./opencode_provider";
 import { IS_TEST_BUILD } from "./test_utils";
 
 export interface ModelClient {
@@ -45,6 +45,7 @@ export async function getModelClient(
     agentName: settings.selectedAgent,
     conversationId,
     appPath: options?.appPath,
+    thinkingLevel: settings.thinkingBudget,
   });
   return {
     modelClient: {

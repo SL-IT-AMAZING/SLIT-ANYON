@@ -1,5 +1,5 @@
-import { PROVIDERS_THAT_SUPPORT_THINKING } from "../shared/language_model_constants";
 import type { UserSettings } from "../../lib/schemas";
+import { PROVIDERS_THAT_SUPPORT_THINKING } from "../shared/language_model_constants";
 
 function getThinkingBudgetTokens(
   thinkingBudget?: "low" | "medium" | "high",
@@ -16,6 +16,19 @@ function getThinkingBudgetTokens(
   }
 }
 
+function getReasoningEffort(
+  thinkingBudget?: "low" | "medium" | "high",
+): "low" | "medium" | "high" {
+  switch (thinkingBudget) {
+    case "low":
+      return "low";
+    case "high":
+      return "high";
+    default:
+      return "medium";
+  }
+}
+
 export function getExtraProviderOptions(
   providerId: string | undefined,
   settings: UserSettings,
@@ -24,16 +37,7 @@ export function getExtraProviderOptions(
     return {};
   }
   if (providerId === "openai") {
-    if (settings.selectedChatMode === "local-agent") {
-      return {
-        reasoning: {
-          summary: "detailed",
-          effort: "medium",
-        },
-        include: ["reasoning.encrypted_content"],
-      };
-    }
-    return { reasoning_effort: "medium" };
+    return { reasoning_effort: getReasoningEffort(settings?.thinkingBudget) };
   }
   if (PROVIDERS_THAT_SUPPORT_THINKING.includes(providerId)) {
     const budgetTokens = getThinkingBudgetTokens(settings?.thinkingBudget);

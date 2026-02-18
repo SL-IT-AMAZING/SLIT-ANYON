@@ -1,12 +1,11 @@
-import { createLoggedHandler } from "./safe_handle";
+import { spawn } from "child_process";
+import { eq } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
 import { apps } from "../../db/schema";
-import { eq } from "drizzle-orm";
 import { getAnyonAppPath } from "../../paths/paths";
-import { spawn } from "child_process";
-import { gitCommit, gitAdd } from "../utils/git_utils";
-import { storeDbTimestampAtCurrentVersion } from "../utils/neon_timestamp_utils";
+import { gitAdd, gitCommit } from "../utils/git_utils";
+import { createLoggedHandler } from "./safe_handle";
 
 const logger = log.scope("portal_handlers");
 const handle = createLoggedHandler(logger);
@@ -94,23 +93,6 @@ export function registerPortalHandlers() {
           reject(new Error(errorMessage));
         });
       });
-
-      if (app.neonProjectId && app.neonDevelopmentBranchId) {
-        try {
-          await storeDbTimestampAtCurrentVersion({
-            appId: app.id,
-          });
-        } catch (error) {
-          logger.error(
-            "Error storing Neon timestamp at current version:",
-            error,
-          );
-          throw new Error(
-            "Could not store Neon timestamp at current version; database versioning functionality is not working: " +
-              error,
-          );
-        }
-      }
 
       // Stage all changes and commit
       try {

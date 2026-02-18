@@ -81,6 +81,7 @@ export interface OpenCodeProviderSettings {
   agentName?: string;
   conversationId?: string;
   appPath?: string;
+  thinkingLevel?: "low" | "medium" | "high";
 }
 
 export type OpenCodeProvider = (
@@ -260,6 +261,16 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const systemPrompt = this.extractSystemPrompt(options);
     const serverInfo = await this.getServerInfo();
 
+    // Map thinkingLevel to OpenCode variant name.
+    // OpenCode's variant system handles provider-specific mapping internally:
+    //   "low"    → OpenAI: reasoningEffort "low"   | Claude: default (no extended thinking)
+    //   "medium" → OpenAI: reasoningEffort "medium" | Claude: default (no extended thinking)
+    //   "high"   → OpenAI: reasoningEffort "high"   | Claude: thinking budgetTokens 16000
+    const variant =
+      this.settings.thinkingLevel && this.settings.thinkingLevel !== "medium"
+        ? this.settings.thinkingLevel
+        : undefined;
+
     const promptPayload = {
       parts: [{ type: "text", text: userMessage }],
       ...(systemPrompt && { system: systemPrompt }),
@@ -271,6 +282,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           },
         }),
       ...(this.settings.agentName && { agent: this.settings.agentName }),
+      ...(variant && { variant }),
     };
 
     logger.debug(`Starting SSE stream for session ${session.id}...`);
@@ -282,6 +294,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
     const emittedToolStates = new Map<string, string>();
     let inReasoningBlock = false;
+    const partTypes = new Map<string, string>();
+    const partBuffers = new Map<string, string>();
 
     const ensureTextStarted = (
       ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
@@ -396,15 +410,24 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   const delta = props.delta ?? "";
                   if (!delta) continue;
 
-                  if (props.field === "text") {
-                    closeReasoningBlock(controller);
-                    emitDelta(controller, delta);
-                  } else if (props.field === "reasoning") {
+                  const partId = props.partID ?? "";
+                  const knownType = partTypes.get(partId);
+
+                  if (
+                    knownType === "reasoning" ||
+                    props.field === "reasoning"
+                  ) {
                     if (!inReasoningBlock) {
                       emitDelta(controller, "\n<think>\n");
                       inReasoningBlock = true;
                     }
                     emitDelta(controller, delta);
+                  } else if (knownType) {
+                    closeReasoningBlock(controller);
+                    emitDelta(controller, delta);
+                  } else {
+                    const existing = partBuffers.get(partId) ?? "";
+                    partBuffers.set(partId, existing + delta);
                   }
                 } else if (
                   event.type === "message.part.updated" &&
@@ -414,9 +437,22 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
                   if (part.sessionID !== session.id) continue;
 
-                  logger.debug(
-                    `Part updated: type=${part.type}, hasText=${!!part.text}`,
-                  );
+                  partTypes.set(part.id, part.type);
+
+                  const buffered = partBuffers.get(part.id);
+                  if (buffered) {
+                    partBuffers.delete(part.id);
+                    if (part.type === "reasoning") {
+                      if (!inReasoningBlock) {
+                        emitDelta(controller, "\n<think>\n");
+                        inReasoningBlock = true;
+                      }
+                      emitDelta(controller, buffered);
+                    } else {
+                      closeReasoningBlock(controller);
+                      emitDelta(controller, buffered);
+                    }
+                  }
 
                   if (part.type === "tool" && part.state && part.tool) {
                     closeReasoningBlock(controller);

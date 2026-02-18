@@ -1,9 +1,9 @@
 import { z } from "zod";
 import {
-  defineContract,
-  defineStream,
   createClient,
   createStreamClient,
+  defineContract,
+  defineStream,
 } from "../contracts/core";
 
 // =============================================================================
@@ -109,6 +109,7 @@ export const ChatResponseEndSchema = z.object({
   totalTokens: z.number().optional(),
   contextWindow: z.number().optional(),
   chatSummary: z.string().optional(),
+  appDisplayName: z.string().optional(),
 });
 
 export type ChatResponseEnd = z.infer<typeof ChatResponseEndSchema>;

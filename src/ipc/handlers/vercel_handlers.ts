@@ -1,12 +1,12 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { retryWithRateLimit } from "@/ipc/utils/retryWithRateLimit";
 import { getAnyonAppPath } from "@/paths/paths";
 import { getSupabaseClient } from "@/supabase_admin/supabase_management_client";
 import { Vercel } from "@vercel/sdk";
 import type { CreateProjectFramework } from "@vercel/sdk/models/createprojectop.js";
 import { eq } from "drizzle-orm";
-import type { IpcMainInvokeEvent } from "electron";
+import { type IpcMainInvokeEvent, ipcMain } from "electron";
 import log from "electron-log";
 import { db } from "../../db";
 import * as schema from "../../db/schema";
@@ -16,6 +16,8 @@ import { getVercelAccessToken } from "../../vercel_admin/vercel_management_clien
 import {
   type ConnectToExistingVercelProjectParams,
   type CreateVercelProjectParams,
+  type DirectDeployParams,
+  DirectDeployParamsSchema,
   type DisconnectVercelProjectParams,
   type GetVercelDeploymentsParams,
   type IsVercelProjectAvailableParams,
@@ -24,7 +26,12 @@ import {
   type VercelDeployment,
   type VercelProject,
   vercelContracts,
+  vercelDeployStreamContract,
 } from "../types/vercel";
+import {
+  type CollectedFile,
+  collectDeployFiles,
+} from "../utils/file_collector";
 import { IS_TEST_BUILD } from "../utils/test_utils";
 import { createTypedHandler } from "./base";
 
@@ -429,12 +436,7 @@ async function handleCreateProject(
       throw new Error("App not found.");
     }
 
-    // Check if app has GitHub repository configured
-    if (!app.githubOrg || !app.githubRepo) {
-      throw new Error(
-        "App must be connected to a GitHub repository before creating a Vercel project.",
-      );
-    }
+    const hasGitHub = !!(app.githubOrg && app.githubRepo);
 
     // Detect the framework from the app's directory
     const detectedFramework = await detectFramework(getAnyonAppPath(app.path));
@@ -445,16 +447,23 @@ async function handleCreateProject(
 
     const vercel = createVercelClient(accessToken);
 
-    const projectData = await vercel.projects.createProject({
-      requestBody: {
-        name: name,
-        gitRepository: {
-          type: "github",
-          repo: `${app.githubOrg}/${app.githubRepo}`,
-        },
-        framework: detectedFramework,
-      },
-    });
+    const projectData = hasGitHub
+      ? await vercel.projects.createProject({
+          requestBody: {
+            name: name,
+            gitRepository: {
+              type: "github",
+              repo: `${app.githubOrg}/${app.githubRepo}`,
+            },
+            framework: detectedFramework,
+          },
+        })
+      : await vercel.projects.createProject({
+          requestBody: {
+            name: name,
+            framework: detectedFramework,
+          },
+        });
     if (!projectData.id) {
       throw new Error("Failed to create project: No project ID returned.");
     }
@@ -480,40 +489,300 @@ async function handleCreateProject(
 
     await autoSyncSupabaseEnvVarsIfConnected(appId);
 
-    logger.info(
-      `Successfully created Vercel project: ${projectData.id} with GitHub repo: ${app.githubOrg}/${app.githubRepo}`,
-    );
+    logger.info(`Successfully created Vercel project: ${projectData.id}`);
 
-    // Trigger the first deployment
-    logger.info(`Triggering first deployment for project: ${projectData.id}`);
-    try {
-      // Create deployment via Vercel SDK using the project settings we just created
-      const deploymentData = await vercel.deployments.createDeployment({
-        requestBody: {
-          name: projectData.name,
-          project: projectData.id,
-          target: "production",
-          gitSource: {
-            type: "github",
-            org: app.githubOrg,
-            repo: app.githubRepo,
-            ref: app.githubBranch || "main",
+    if (hasGitHub) {
+      logger.info(`Triggering first deployment for project: ${projectData.id}`);
+      try {
+        const deploymentData = await vercel.deployments.createDeployment({
+          requestBody: {
+            name: projectData.name,
+            project: projectData.id,
+            target: "production",
+            gitSource: {
+              type: "github",
+              org: app.githubOrg!,
+              repo: app.githubRepo!,
+              ref: app.githubBranch || "main",
+            },
           },
-        },
-      });
+        });
 
-      if (deploymentData.url) {
-        logger.info(`First deployment successful: ${deploymentData.url}`);
-      } else {
-        logger.warn("First deployment failed: No deployment URL returned");
+        if (deploymentData.url) {
+          logger.info(`First deployment successful: ${deploymentData.url}`);
+        } else {
+          logger.warn("First deployment failed: No deployment URL returned");
+        }
+      } catch (deployError: unknown) {
+        const message =
+          deployError instanceof Error
+            ? deployError.message
+            : String(deployError);
+        logger.warn(`First deployment failed with error: ${message}`);
       }
-    } catch (deployError: any) {
-      logger.warn(`First deployment failed with error: ${deployError.message}`);
-      // Don't throw here - project creation was successful, deployment failure is non-critical
+    } else {
+      logger.info(
+        `Project ${projectData.id} created without GitHub — use direct deploy to publish.`,
+      );
     }
   } catch (err: any) {
     logger.error("[Vercel Handler] Failed to create project:", err);
     throw new Error(err.message || "Failed to create Vercel project.");
+  }
+}
+
+async function uploadFilesToVercel(
+  accessToken: string,
+  teamId: string | null,
+  files: CollectedFile[],
+  onProgress: (uploaded: number) => void,
+): Promise<void> {
+  let uploaded = 0;
+  const BATCH_SIZE = 10;
+
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+
+    await Promise.all(
+      batch.map(async (file) => {
+        const url = new URL(`${VERCEL_API_BASE}/v2/files`);
+        if (teamId) {
+          url.searchParams.set("teamId", teamId);
+        }
+
+        const response = await fetch(url.toString(), {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Length": String(file.size),
+            "x-vercel-digest": file.sha1,
+            "Content-Type": "application/octet-stream",
+          },
+          body: new Uint8Array(file.content),
+        });
+
+        if (!response.ok && response.status !== 409) {
+          const errorText = await response.text();
+          throw new Error(
+            `File upload failed for ${file.filePath}: ${response.status} ${errorText}`,
+          );
+        }
+
+        uploaded++;
+        onProgress(uploaded);
+      }),
+    );
+  }
+}
+
+async function pollDeploymentStatus(
+  vercel: Vercel,
+  deploymentId: string,
+  onStatusChange: (readyState: string) => void,
+): Promise<{ readyState: string; url: string | null }> {
+  const MAX_ATTEMPTS = 120;
+  const POLL_INTERVAL = 5000;
+  let lastState = "";
+
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    const deployment = await vercel.deployments.getDeployment({
+      idOrUrl: deploymentId,
+    });
+
+    const readyState = deployment.readyState || "UNKNOWN";
+
+    if (readyState !== lastState) {
+      lastState = readyState;
+      onStatusChange(readyState);
+    }
+
+    if (readyState === "READY") {
+      return { readyState, url: deployment.url || null };
+    }
+
+    if (readyState === "ERROR" || readyState === "CANCELED") {
+      const errorMessage =
+        "errorMessage" in deployment &&
+        typeof deployment.errorMessage === "string"
+          ? deployment.errorMessage
+          : "Unknown error";
+      throw new Error(
+        `Deployment ${readyState.toLowerCase()}: ${errorMessage}`,
+      );
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+  }
+
+  throw new Error("Deployment timed out after 10 minutes.");
+}
+
+async function handleDirectDeploy(
+  event: IpcMainInvokeEvent,
+  { appId, production }: DirectDeployParams,
+): Promise<void> {
+  const sendProgress = (data: Record<string, unknown>) => {
+    event.sender.send(vercelDeployStreamContract.events.chunk.channel, data);
+  };
+  const sendEnd = (data: Record<string, unknown>) => {
+    event.sender.send(vercelDeployStreamContract.events.end.channel, data);
+  };
+  const sendError = (data: Record<string, unknown>) => {
+    event.sender.send(vercelDeployStreamContract.events.error.channel, data);
+  };
+
+  try {
+    const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
+    if (!app) {
+      throw new Error("App not found.");
+    }
+    if (!app.vercelProjectId) {
+      throw new Error("App must have a Vercel project. Create one first.");
+    }
+
+    const accessToken = await getVercelAccessToken();
+    const vercel = createVercelClient(accessToken);
+    const appPath = getAnyonAppPath(app.path);
+
+    sendProgress({
+      appId,
+      phase: "collecting",
+      message: "Scanning project files...",
+      progress: 0,
+    });
+
+    const { files, totalSize, fileCount } = await collectDeployFiles(
+      appPath,
+      (progress) => {
+        sendProgress({
+          appId,
+          phase: "collecting",
+          message: `Scanning files... (${progress.filesScanned} found)`,
+          progress:
+            progress.phase === "hashing" && progress.totalFiles > 0
+              ? Math.round((progress.filesHashed / progress.totalFiles) * 100)
+              : 0,
+          totalFiles: progress.totalFiles,
+        });
+      },
+    );
+
+    logger.info(
+      `Collected ${fileCount} files (${(totalSize / 1024 / 1024).toFixed(2)} MB) for direct deploy of app ${appId}`,
+    );
+
+    if (fileCount === 0) {
+      throw new Error(
+        "No files found to deploy. Check your project directory.",
+      );
+    }
+
+    sendProgress({
+      appId,
+      phase: "uploading",
+      message: `Uploading ${fileCount} files...`,
+      progress: 0,
+      totalFiles: fileCount,
+      filesUploaded: 0,
+    });
+
+    await uploadFilesToVercel(
+      accessToken,
+      app.vercelTeamId,
+      files,
+      (uploaded) => {
+        sendProgress({
+          appId,
+          phase: "uploading",
+          message: `Uploading files... (${uploaded}/${fileCount})`,
+          progress: Math.round((uploaded / fileCount) * 100),
+          totalFiles: fileCount,
+          filesUploaded: uploaded,
+        });
+      },
+    );
+
+    sendProgress({
+      appId,
+      phase: "creating",
+      message: "Creating deployment...",
+      progress: 0,
+    });
+
+    const detectedFramework = await detectFramework(appPath);
+
+    const deploymentFiles = files.map((f) => ({
+      file: f.filePath,
+      sha: f.sha1,
+      size: f.size,
+    }));
+
+    const deploymentResponse = await vercel.deployments.createDeployment({
+      ...(app.vercelTeamId && { teamId: app.vercelTeamId }),
+      requestBody: {
+        name: app.vercelProjectName || app.vercelProjectId,
+        project: app.vercelProjectId,
+        target: production !== false ? "production" : "preview",
+        files: deploymentFiles,
+        projectSettings: {
+          framework: detectedFramework || null,
+        },
+      },
+    });
+
+    if (!deploymentResponse.id) {
+      throw new Error("Deployment creation failed: no deployment ID returned.");
+    }
+
+    logger.info(`Deployment created: ${deploymentResponse.id}`);
+
+    sendProgress({
+      appId,
+      phase: "building",
+      message: "Building your app on Vercel...",
+      progress: 0,
+    });
+
+    const result = await pollDeploymentStatus(
+      vercel,
+      deploymentResponse.id,
+      (readyState) => {
+        sendProgress({
+          appId,
+          phase: "building",
+          message: `Build status: ${readyState}...`,
+          progress:
+            readyState === "BUILDING"
+              ? 50
+              : readyState === "INITIALIZING"
+                ? 25
+                : 10,
+        });
+      },
+    );
+
+    if (result.url) {
+      const deploymentUrl = `https://${result.url}`;
+      await db
+        .update(apps)
+        .set({ vercelDeploymentUrl: deploymentUrl })
+        .where(eq(apps.id, appId));
+    }
+
+    sendEnd({
+      appId,
+      url: result.url ? `https://${result.url}` : "",
+      deploymentId: deploymentResponse.id,
+      readyState: result.readyState,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("[Vercel Direct Deploy] Failed:", err);
+    sendError({
+      appId,
+      error: message,
+      phase: "unknown",
+    });
   }
 }
 
@@ -693,6 +962,15 @@ export function registerVercelHandlers() {
 
   createTypedHandler(vercelContracts.syncSupabaseEnv, async (event, params) => {
     await handleSyncSupabaseEnvVars(event, params);
+  });
+
+  ipcMain.handle(vercelDeployStreamContract.channel, async (event, params) => {
+    const parsed = DirectDeployParamsSchema.parse(params);
+    await handleDirectDeploy(event, parsed);
+  });
+
+  createTypedHandler(vercelContracts.triggerDeploy, async (event, params) => {
+    await handleDirectDeploy(event, { ...params, production: true });
   });
 
   logger.debug("Registered Vercel IPC handlers");

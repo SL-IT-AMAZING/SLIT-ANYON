@@ -27,7 +27,6 @@ import { importContracts } from "../types/import";
 import { languageModelContracts } from "../types/language-model";
 import { mcpContracts, mcpEvents } from "../types/mcp";
 import { miscContracts, miscEvents } from "../types/misc";
-import { neonContracts } from "../types/neon";
 import { planContracts, planEvents } from "../types/plan";
 import { promptContracts } from "../types/prompts";
 import { proposalContracts } from "../types/proposals";
@@ -38,7 +37,7 @@ import { supabaseContracts } from "../types/supabase";
 import { systemContracts, systemEvents } from "../types/system";
 import { templateContracts } from "../types/templates";
 import { upgradeContracts } from "../types/upgrade";
-import { vercelContracts } from "../types/vercel";
+import { vercelContracts, vercelDeployStreamContract } from "../types/vercel";
 import { versionContracts } from "../types/version";
 import { visualEditingContracts } from "../types/visual-editing";
 
@@ -48,6 +47,9 @@ import { visualEditingContracts } from "../types/visual-editing";
 
 const CHAT_STREAM_CHANNELS = getStreamChannels(chatStreamContract);
 const HELP_STREAM_CHANNELS = getStreamChannels(helpStreamContract);
+const VERCEL_DEPLOY_STREAM_CHANNELS = getStreamChannels(
+  vercelDeployStreamContract,
+);
 
 // Test-only channels (handler only registered in E2E test builds, but channel always allowed)
 const TEST_INVOKE_CHANNELS = [
@@ -68,6 +70,7 @@ export const VALID_INVOKE_CHANNELS = [
   // Stream invoke channels
   CHAT_STREAM_CHANNELS.invoke,
   HELP_STREAM_CHANNELS.invoke,
+  VERCEL_DEPLOY_STREAM_CHANNELS.invoke,
 
   // Integrations
   ...getInvokeChannels(githubContracts),
@@ -75,7 +78,6 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(mcpContracts),
   ...getInvokeChannels(vercelContracts),
   ...getInvokeChannels(supabaseContracts),
-  ...getInvokeChannels(neonContracts),
 
   // Features
   ...getInvokeChannels(systemContracts),
@@ -113,6 +115,7 @@ export const VALID_RECEIVE_CHANNELS = [
   // Stream receive channels
   ...CHAT_STREAM_CHANNELS.receive,
   ...HELP_STREAM_CHANNELS.receive,
+  ...VERCEL_DEPLOY_STREAM_CHANNELS.receive,
 
   // Event channels
   ...getReceiveChannels(agentEvents),

@@ -1,39 +1,39 @@
-import { type IpcMainInvokeEvent } from "electron";
+import path from "node:path"; // Import path for basename
+import type { ApproveProposalResult } from "@/ipc/types";
+import { readSettings } from "@/main/settings";
+import { and, desc, eq } from "drizzle-orm";
+import type { IpcMainInvokeEvent } from "electron";
+import log from "electron-log";
+import { db } from "../../db";
+import { chats, messages } from "../../db/schema";
 import type {
+  ActionProposal,
   CodeProposal,
   ProposalResult,
-  ActionProposal,
 } from "../../lib/schemas";
-import { db } from "../../db";
-import { messages, chats } from "../../db/schema";
-import { desc, eq, and } from "drizzle-orm";
-import path from "node:path"; // Import path for basename
+import { getAnyonAppPath } from "../../paths/paths";
+import { isServerFunction } from "../../supabase_admin/supabase_utils";
+import { extractCodebase } from "../../utils/codebase";
 // Import tag parsers
 import { processFullResponseActions } from "../processors/response_processor";
 import {
-  getAnyonWriteTags,
-  getAnyonRenameTags,
-  getAnyonDeleteTags,
-  getAnyonExecuteSqlTags,
   getAnyonAddDependencyTags,
   getAnyonChatSummaryTag,
   getAnyonCommandTags,
+  getAnyonDeleteTags,
+  getAnyonExecuteSqlTags,
+  getAnyonRenameTags,
   getAnyonSearchReplaceTags,
+  getAnyonWriteTags,
 } from "../utils/anyon_tag_parser";
-import log from "electron-log";
-import { isServerFunction } from "../../supabase_admin/supabase_utils";
+import { validateChatContext } from "../utils/context_paths_utils";
+import { withLock } from "../utils/lock_utils";
 import {
   estimateMessagesTokens,
   estimateTokens,
   getContextWindow,
 } from "../utils/token_utils";
-import { extractCodebase } from "../../utils/codebase";
-import { getAnyonAppPath } from "../../paths/paths";
-import { withLock } from "../utils/lock_utils";
 import { createLoggedHandler } from "./safe_handle";
-import { ApproveProposalResult } from "@/ipc/types";
-import { validateChatContext } from "../utils/context_paths_utils";
-import { readSettings } from "@/main/settings";
 
 const logger = log.scope("proposal_handlers");
 const handle = createLoggedHandler(logger);
@@ -313,9 +313,6 @@ const getProposalHandler = async (
         }
       }
       if (latestAssistantMessage) {
-        actions.push({
-          id: "keep-going",
-        });
         return {
           proposal: {
             type: "action-proposal",

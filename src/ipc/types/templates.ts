@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineContract, createClient } from "../contracts/core";
+import { createClient, defineContract } from "../contracts/core";
 
 // =============================================================================
 // Template Schemas
@@ -16,7 +16,6 @@ export const TemplateSchema = z.object({
   githubUrl: z.string().optional(),
   isOfficial: z.boolean(),
   isExperimental: z.boolean().optional(),
-  requiresNeon: z.boolean().optional(),
 });
 
 export type Template = z.infer<typeof TemplateSchema>;

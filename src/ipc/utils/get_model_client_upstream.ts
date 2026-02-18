@@ -29,7 +29,6 @@ import {
 import { getEnvVar } from "./read_env";
 
 import { getOllamaApiUrl } from "../handlers/local_model_ollama_handler";
-import { createFallback } from "./fallback_ai_model";
 import { LM_STUDIO_BASE_URL } from "./lm_studio_utils";
 import { createOllamaProvider } from "./ollama_provider";
 
@@ -93,10 +92,8 @@ export async function getModelClientUpstream(
         baseURL: anyonEngineUrl ?? "https://engine.any-on.dev/v1",
         anyonOptions: {
           enableLazyEdits:
-            settings.selectedChatMode === "ask"
-              ? false
-              : settings.enableProLazyEditsMode &&
-                settings.proLazyEditsMode !== "v2",
+            settings.enableProLazyEditsMode &&
+            settings.proLazyEditsMode !== "v2",
           enableSmartFilesContext,
           enableWebSearch: settings.enableProWebSearch,
         },
@@ -115,7 +112,6 @@ export async function getModelClientUpstream(
       const modelName = model.name.split(":free")[0];
       const proModelClient = getProModelClient({
         model,
-        settings,
         provider,
         modelId: `${providerConfig.gatewayPrefix || ""}${modelName}`,
       });
@@ -141,18 +137,14 @@ export async function getModelClientUpstream(
       if (!openRouterProvider) {
         throw new Error("OpenRouter provider not found");
       }
+      // TODO: fallback_ai_model was removed - use first model from FREE_OPENROUTER_MODEL_NAMES for now
       return {
         modelClient: {
-          model: createFallback({
-            models: FREE_OPENROUTER_MODEL_NAMES.map(
-              (name: string) =>
-                getRegularModelClient(
-                  { provider: "openrouter", name },
-                  settings,
-                  openRouterProvider,
-                ).modelClient.model,
-            ),
-          }),
+          model: getRegularModelClient(
+            { provider: "openrouter", name: FREE_OPENROUTER_MODEL_NAMES[0] },
+            settings,
+            openRouterProvider,
+          ).modelClient.model,
           builtinProviderId: "openrouter",
         },
         isEngineEnabled: false,
@@ -192,46 +184,13 @@ export async function getModelClientUpstream(
 
 function getProModelClient({
   model,
-  settings,
   provider,
   modelId,
 }: {
   model: LargeLanguageModel;
-  settings: UserSettings;
   provider: AnyonEngineProvider;
   modelId: string;
 }): ModelClient {
-  if (
-    settings.selectedChatMode === "local-agent" &&
-    model.provider === "auto" &&
-    model.name === "auto"
-  ) {
-    return {
-      // We need to do the fallback here (and not server-side)
-      // because GPT-5* models need to use responses API to get
-      // full functionality (e.g. thinking summaries).
-      model: createFallback({
-        models: [
-          // openai requires no prefix.
-          provider.responses(`${GPT_5_2_MODEL_NAME}`, { providerId: "openai" }),
-          provider(`anthropic/${SONNET_4_5}`, { providerId: "anthropic" }),
-          provider(`gemini/${GEMINI_3_FLASH}`, { providerId: "google" }),
-        ],
-      }),
-      // Using openAI as the default provider.
-      // TODO: we should remove this and rely on the provider id passed into the provider().
-      builtinProviderId: "openai",
-    };
-  }
-  if (
-    settings.selectedChatMode === "local-agent" &&
-    model.provider === "openai"
-  ) {
-    return {
-      model: provider.responses(modelId, { providerId: model.provider }),
-      builtinProviderId: model.provider,
-    };
-  }
   return {
     model: provider(modelId, { providerId: model.provider }),
     builtinProviderId: model.provider,

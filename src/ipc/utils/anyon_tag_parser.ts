@@ -1,7 +1,7 @@
+import log from "electron-log";
 import { normalizePath } from "../../../shared/normalizePath";
 import { unescapeXmlAttr, unescapeXmlContent } from "../../../shared/xmlEscape";
-import log from "electron-log";
-import { SqlQuery } from "../../lib/schemas";
+import type { SqlQuery } from "../../lib/schemas";
 
 const logger = log.scope("anyon_tag_parser");
 
@@ -93,6 +93,15 @@ export function getAnyonChatSummaryTag(fullResponse: string): string | null {
   const anyonChatSummaryRegex =
     /<anyon-chat-summary>([\s\S]*?)<\/anyon-chat-summary>/g;
   const match = anyonChatSummaryRegex.exec(fullResponse);
+  if (match && match[1]) {
+    return unescapeXmlContent(match[1].trim());
+  }
+  return null;
+}
+
+export function getAnyonAppNameTag(fullResponse: string): string | null {
+  const anyonAppNameRegex = /<anyon-app-name>([\s\S]*?)<\/anyon-app-name>/g;
+  const match = anyonAppNameRegex.exec(fullResponse);
   if (match && match[1]) {
     return unescapeXmlContent(match[1].trim());
   }
