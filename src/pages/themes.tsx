@@ -1,8 +1,12 @@
+import { CreateAppDialog } from "@/components/CreateAppDialog";
 import { CustomThemeDialog } from "@/components/CustomThemeDialog";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import { DesignSystemGallery } from "@/components/DesignSystemGallery";
+import { DesignSystemPreviewDialog } from "@/components/DesignSystemPreviewDialog";
 import { EditThemeDialog } from "@/components/EditThemeDialog";
 import { LibraryList } from "@/components/LibraryList";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   useCustomThemes,
   useDeleteCustomTheme,
@@ -18,6 +22,12 @@ export default function ThemesPage() {
   const { t } = useTranslation(["app", "common"]);
   const { customThemes, isLoading } = useCustomThemes();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [previewDesignSystemId, setPreviewDesignSystemId] = useState<
+    string | null
+  >(null);
+  const [createWithDesignSystem, setCreateWithDesignSystem] = useState<
+    string | null
+  >(null);
 
   return (
     <div className="flex min-h-screen">
@@ -27,11 +37,21 @@ export default function ThemesPage() {
 
       <div className="flex-1 px-8 py-6 overflow-y-auto">
         <div className="max-w-5xl">
+          <h1 className="text-3xl font-bold mb-6">
+            <Palette className="inline-block h-8 w-8 mr-2" />
+            {t("library.themes.title", { ns: "app" })}
+          </h1>
+
+          <DesignSystemGallery
+            onPreview={(id) => setPreviewDesignSystemId(id)}
+            onUse={(id) => setCreateWithDesignSystem(id)}
+          />
+
+          <Separator className="my-8" />
+
+          {/* Custom Themes */}
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold mr-4">
-              <Palette className="inline-block h-8 w-8 mr-2" />
-              {t("library.themes.title", { ns: "app" })}
-            </h1>
+            <h2 className="text-2xl font-bold">Custom Themes</h2>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               {t("library.themes.new", { ns: "app" })}
@@ -55,6 +75,27 @@ export default function ThemesPage() {
           <CustomThemeDialog
             open={createDialogOpen}
             onOpenChange={setCreateDialogOpen}
+          />
+
+          <DesignSystemPreviewDialog
+            designSystemId={previewDesignSystemId}
+            open={previewDesignSystemId !== null}
+            onOpenChange={(open) => {
+              if (!open) setPreviewDesignSystemId(null);
+            }}
+            onUseDesignSystem={(id) => {
+              setPreviewDesignSystemId(null);
+              setCreateWithDesignSystem(id);
+            }}
+          />
+
+          <CreateAppDialog
+            open={createWithDesignSystem !== null}
+            onOpenChange={(open) => {
+              if (!open) setCreateWithDesignSystem(null);
+            }}
+            template={undefined}
+            initialDesignSystemId={createWithDesignSystem ?? undefined}
           />
         </div>
       </div>
