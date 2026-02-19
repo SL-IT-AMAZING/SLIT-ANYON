@@ -24,6 +24,10 @@ import type { UserSettings } from "./lib/schemas";
 import { initSentryMain } from "./lib/sentry";
 import { handleAuthCallback } from "./main/auth";
 import { syncEntitlements } from "./main/entitlement";
+import {
+  registerPreviewProtocol,
+  registerPreviewScheme,
+} from "./main/preview-protocol";
 import { handleAnyonProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
@@ -51,6 +55,9 @@ initSentryMain();
 
 // Register IPC handlers before app is ready
 registerIpcHandlers();
+
+// FIX #D: Must be called BEFORE app.whenReady()
+registerPreviewScheme();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -130,6 +137,7 @@ export async function onReady() {
   await setupOpenCodeConfig().catch((err) => {
     logger.error("OpenCode config setup failed:", err);
   });
+  registerPreviewProtocol();
   createWindow();
   createApplicationMenu();
 
