@@ -1,20 +1,21 @@
 import { POLAR_METER_ID, polar } from "./polar";
 
-/**
- * Model weight multipliers for adjusted token tracking.
- * Opus costs 2x, Sonnet 1x, Haiku and free models 0x.
- */
 const MODEL_WEIGHTS: Record<string, number> = {
-  // Opus models (2x weight)
-  "claude-opus-4": 2,
-  "claude-opus-4-0514": 2,
-  // Sonnet models (1x weight)
+  "claude-opus-4-6": 5,
+  "claude-opus-4": 5,
+  "claude-opus-4-0514": 5,
+  "claude-sonnet-4-5": 1,
   "claude-sonnet-4": 1,
   "claude-sonnet-4-0514": 1,
-  "claude-sonnet-4.5": 1,
-  // Haiku models (free)
-  "claude-haiku-3.5": 0,
-  // Free/local models (0x - no metering)
+  "claude-haiku-4-5": 0.3,
+  "claude-haiku-3.5": 0.3,
+  "gpt-5.2": 1,
+  "gpt-5.2-codex": 1,
+  "gemini-3-pro": 0.5,
+  "gemini-3-pro-preview": 0.5,
+  "gemini-3-flash": 0.1,
+  "gemini-3-flash-preview": 0.1,
+  "grok-code-fast-1": 0.1,
   "big-pickle": 0,
   "glm-4-flash": 0,
 };
@@ -27,9 +28,11 @@ export function getModelWeight(modelId: string): number {
   if (modelId in MODEL_WEIGHTS) return MODEL_WEIGHTS[modelId];
 
   const lower = modelId.toLowerCase();
-  if (lower.includes("opus")) return 2;
+  if (lower.includes("opus")) return 5;
   if (lower.includes("sonnet")) return 1;
-  if (lower.includes("haiku")) return 0;
+  if (lower.includes("haiku")) return 0.3;
+  if (lower.includes("flash") || lower.includes("grok")) return 0.1;
+  if (lower.includes("gemini") && lower.includes("pro")) return 0.5;
 
   return 1;
 }
