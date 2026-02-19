@@ -1,4 +1,5 @@
 import path from "path";
+import { DESIGN_SYSTEMS } from "@/shared/designSystems";
 import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
 import { app } from "electron";
 import log from "electron-log";
@@ -12,10 +13,32 @@ const logger = log.scope("createFromTemplate");
 export async function createFromTemplate({
   fullAppPath,
   templateId = DEFAULT_TEMPLATE_ID,
+  designSystemId,
 }: {
   fullAppPath: string;
   templateId?: string;
+  designSystemId?: string;
 }) {
+  if (designSystemId) {
+    const designSystem = DESIGN_SYSTEMS.find((ds) => ds.id === designSystemId);
+    if (!designSystem) {
+      throw new Error(`Unknown design system: ${designSystemId}`);
+    }
+    const scaffoldPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      designSystem.scaffoldDir,
+    );
+    if (!fs.existsSync(scaffoldPath)) {
+      throw new Error(
+        `Scaffold directory not found for design system: ${designSystemId}`,
+      );
+    }
+    await copyDirectoryRecursive(scaffoldPath, fullAppPath);
+    return;
+  }
+
   if (templateId === "react") {
     await copyDirectoryRecursive(
       path.join(__dirname, "..", "..", "scaffold"),

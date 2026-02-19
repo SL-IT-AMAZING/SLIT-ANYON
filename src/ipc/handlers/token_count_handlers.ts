@@ -16,7 +16,7 @@ import {
   getSupabaseContext,
 } from "../../supabase_admin/supabase_context";
 import { extractCodebase } from "../../utils/codebase";
-import { getThemePromptById } from "../utils/theme_utils";
+import { getFullSystemPrompt } from "../utils/theme_utils";
 
 import type { TokenCountParams, TokenCountResult } from "@/ipc/types";
 import { readSettings } from "@/main/settings";
@@ -63,7 +63,10 @@ export function registerTokenCountHandlers() {
       const mentionedAppNames = parseAppMentions(req.input);
 
       // Count system prompt tokens
-      const themePrompt = await getThemePromptById(chat.app?.themeId ?? null);
+      const themePrompt = await getFullSystemPrompt(
+        chat.app?.designSystemId ?? null,
+        chat.app?.themeId ?? null,
+      );
       let systemPrompt = constructSystemPrompt({
         aiRules: await readAiRules(getAnyonAppPath(chat.app.path)),
         themePrompt,

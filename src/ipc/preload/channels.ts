@@ -19,6 +19,7 @@ import { authContracts } from "../types/auth";
 import { capacitorContracts } from "../types/capacitor";
 import { chatContracts, chatStreamContract } from "../types/chat";
 import { contextContracts } from "../types/context";
+import { designSystemContracts } from "../types/design_systems";
 import { entitlementContracts } from "../types/entitlement";
 import { freeAgentQuotaContracts } from "../types/free_agent_quota";
 import { gitContracts, githubContracts, githubEvents } from "../types/github";
@@ -90,6 +91,7 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(helpContracts),
   ...getInvokeChannels(capacitorContracts),
   ...getInvokeChannels(contextContracts),
+  ...getInvokeChannels(designSystemContracts),
   ...getInvokeChannels(upgradeContracts),
   ...getInvokeChannels(visualEditingContracts),
   ...getInvokeChannels(securityContracts),

@@ -1,6 +1,6 @@
 import { registerThemesHandlers } from "../pro/main/ipc/handlers/themes_handlers";
 import { registerVisualEditingHandlers } from "../pro/main/ipc/handlers/visual_editing_handlers";
-import { registerAppEnvVarsHandlers } from "./handlers/app_env_vars_handlers";
+
 import { registerAppHandlers } from "./handlers/app_handlers";
 import { registerAppUpgradeHandlers } from "./handlers/app_upgrade_handlers";
 import { registerAuthHandlers } from "./handlers/auth_handlers";
@@ -10,6 +10,7 @@ import { registerChatStreamHandlers } from "./handlers/chat_stream_handlers";
 import { registerContextPathsHandlers } from "./handlers/context_paths_handlers";
 import { registerDebugHandlers } from "./handlers/debug_handlers";
 import { registerDependencyHandlers } from "./handlers/dependency_handlers";
+import { registerDesignSystemHandlers } from "./handlers/design_system_handlers";
 import { registerEntitlementHandlers } from "./handlers/entitlement_handlers";
 import { registerFreeAgentQuotaHandlers } from "./handlers/free_agent_quota_handlers";
 import { registerGithubBranchHandlers } from "./handlers/git_branch_handlers";
@@ -68,7 +69,7 @@ export function registerIpcHandlers() {
   registerContextPathsHandlers();
   registerAppUpgradeHandlers();
   registerCapacitorHandlers();
-  registerAppEnvVarsHandlers();
+
   registerTemplateHandlers();
   registerThemesHandlers();
   registerPortalHandlers();
@@ -81,4 +82,5 @@ export function registerIpcHandlers() {
   registerPlanHandlers();
   registerAuthHandlers();
   registerEntitlementHandlers();
+  registerDesignSystemHandlers();
 }

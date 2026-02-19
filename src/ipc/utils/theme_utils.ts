@@ -1,8 +1,9 @@
+import { eq } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
 import { customThemes } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import { themesData, type Theme } from "../../shared/themes";
+import { getDesignSystemPrompt } from "../../shared/designSystemPrompts";
+import { type Theme, themesData } from "../../shared/themes";
 
 const logger = log.scope("theme_utils");
 
@@ -20,7 +21,7 @@ export function isCustomThemeId(themeId: string | null): boolean {
  */
 export function getCustomThemeNumericId(themeId: string): number | null {
   if (!isCustomThemeId(themeId)) return null;
-  const numericId = parseInt(themeId.replace("custom:", ""), 10);
+  const numericId = Number.parseInt(themeId.replace("custom:", ""), 10);
   return isNaN(numericId) ? null : numericId;
 }
 
@@ -32,10 +33,17 @@ export function getBuiltinThemeById(themeId: string | null): Theme | null {
   return themesData.find((t) => t.id === themeId) ?? null;
 }
 
-/**
- * Async function to resolve theme prompt by ID.
- * Handles both built-in themes (by ID) and custom themes (prefixed with "custom:")
- */
+export async function getFullSystemPrompt(
+  designSystemId: string | null,
+  themeId: string | null,
+): Promise<string> {
+  const designSystemPrompt = designSystemId
+    ? getDesignSystemPrompt(designSystemId)
+    : "";
+  const themePrompt = await getThemePromptById(themeId);
+  return [designSystemPrompt, themePrompt].filter(Boolean).join("\n\n");
+}
+
 export async function getThemePromptById(
   themeId: string | null,
 ): Promise<string> {

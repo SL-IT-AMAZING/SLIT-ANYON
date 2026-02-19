@@ -256,11 +256,12 @@ export const queryKeys = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // App Environment Variables
+  // Design Systems
   // ─────────────────────────────────────────────────────────────────────────────
-  appEnvVars: {
-    byApp: ({ appId }: { appId: number | null }) =>
-      ["app-env-vars", appId] as const,
+  designSystems: {
+    all: ["design-systems"] as const,
+    previewUrl: ({ designSystemId }: { designSystemId: string }) =>
+      ["design-systems", "preview-url", designSystemId] as const,
   },
 } as const;
 
@@ -319,7 +320,4 @@ export type AppQueryKey =
       (typeof queryKeys.appUpgrades)[keyof typeof queryKeys.appUpgrades]
     >
   | QueryKeyOf<(typeof queryKeys.mcp)[keyof typeof queryKeys.mcp]>
-  | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>
-  | QueryKeyOf<
-      (typeof queryKeys.appEnvVars)[keyof typeof queryKeys.appEnvVars]
-    >;
+  | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>;

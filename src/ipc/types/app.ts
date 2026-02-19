@@ -31,6 +31,7 @@ export const AppBaseSchema = z.object({
   profileLearned: z.boolean(),
   profileSource: z.string().nullable(),
   isFavorite: z.boolean(),
+  designSystemId: z.string().nullable().optional(),
 });
 
 /**
@@ -52,6 +53,7 @@ export type App = z.infer<typeof AppSchema>;
 export const CreateAppParamsSchema = z.object({
   name: z.string().min(1),
   templateId: z.string().optional(),
+  designSystemId: z.string().optional(),
 });
 
 /**

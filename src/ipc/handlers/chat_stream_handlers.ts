@@ -33,6 +33,7 @@ import {
   getSupabaseContext,
 } from "../../supabase_admin/supabase_context";
 import { getModelClient } from "../utils/get_model_client";
+import { getFullSystemPrompt } from "../utils/theme_utils";
 import { getMaxTokens, getTemperature } from "../utils/token_utils";
 import { streamTestResponse } from "./testing_chat_handlers";
 import { getTestResponse } from "./testing_chat_handlers";
@@ -207,16 +208,15 @@ export function registerChatStreamHandlers() {
         throw new Error(`Chat not found: ${req.chatId}`);
       }
 
+      const streamBaseMessages = [...chat.messages];
+
       // Handle redo option: remove the most recent messages if needed
       if (req.redo) {
-        // Get the most recent messages
-        const chatMessages = [...chat.messages];
-
         // Find the most recent user message
-        let lastUserMessageIndex = chatMessages.length - 1;
+        let lastUserMessageIndex = streamBaseMessages.length - 1;
         while (
           lastUserMessageIndex >= 0 &&
-          chatMessages[lastUserMessageIndex].role !== "user"
+          streamBaseMessages[lastUserMessageIndex].role !== "user"
         ) {
           lastUserMessageIndex--;
         }
@@ -225,18 +225,22 @@ export function registerChatStreamHandlers() {
           // Delete the user message
           await db
             .delete(messages)
-            .where(eq(messages.id, chatMessages[lastUserMessageIndex].id));
+            .where(
+              eq(messages.id, streamBaseMessages[lastUserMessageIndex].id),
+            );
+          streamBaseMessages.splice(lastUserMessageIndex, 1);
 
           // If there's an assistant message after the user message, delete it too
           if (
-            lastUserMessageIndex < chatMessages.length - 1 &&
-            chatMessages[lastUserMessageIndex + 1].role === "assistant"
+            lastUserMessageIndex < streamBaseMessages.length &&
+            streamBaseMessages[lastUserMessageIndex].role === "assistant"
           ) {
             await db
               .delete(messages)
               .where(
-                eq(messages.id, chatMessages[lastUserMessageIndex + 1].id),
+                eq(messages.id, streamBaseMessages[lastUserMessageIndex].id),
               );
+            streamBaseMessages.splice(lastUserMessageIndex, 1);
           }
         }
       }
@@ -397,12 +401,31 @@ ${componentSnippet}
         }
       }
 
-      await db.insert(messages).values({
-        chatId: req.chatId,
-        role: "user",
-        content: implementPlanDisplayPrompt ?? userPrompt,
-      });
+      const [insertedUserMessage] = await db
+        .insert(messages)
+        .values({
+          chatId: req.chatId,
+          role: "user",
+          content: implementPlanDisplayPrompt ?? userPrompt,
+        })
+        .returning();
       const settings = readSettings();
+      const testResponse = getTestResponse(req.prompt);
+      const chatAppPath = getAnyonAppPath(chat.app.path);
+
+      const modelClientPromise = testResponse
+        ? null
+        : getModelClient(settings.selectedModel, settings, {
+            chatId: req.chatId,
+            appPath: chatAppPath,
+          });
+      const creditCheckPromise = testResponse
+        ? null
+        : checkCreditsForModel(settings.selectedModel.name);
+      const sourceCommitHashPromise = getCurrentCommitHash({
+        path: chatAppPath,
+      });
+
       // Only ANYON Pro requests have request ids.
       if (settings.enableAnyonPro) {
         // Generate requestId early so it can be saved with the message
@@ -418,37 +441,23 @@ ${componentSnippet}
           content: "", // Start with empty content
           requestId: anyonRequestId,
           model: settings.selectedModel.name,
-          sourceCommitHash: await getCurrentCommitHash({
-            path: getAnyonAppPath(chat.app.path),
-          }),
+          sourceCommitHash: await sourceCommitHashPromise,
         })
         .returning();
 
-      // Fetch updated chat data after possible deletions and additions
-      const updatedChat = await db.query.chats.findFirst({
-        where: eq(chats.id, req.chatId),
-        with: {
-          messages: {
-            orderBy: (messages, { asc }) => [asc(messages.createdAt)],
-          },
-          app: true, // Include app information
-        },
-      });
-
-      if (!updatedChat) {
-        throw new Error(`Chat not found: ${req.chatId}`);
-      }
+      const streamMessages = [
+        ...streamBaseMessages,
+        insertedUserMessage,
+        placeholderAssistantMessage,
+      ];
 
       // Send the messages right away so that the loading state is shown for the message.
       safeSend(event.sender, "chat:response:chunk", {
         chatId: req.chatId,
-        messages: updatedChat.messages,
+        messages: streamMessages,
       });
 
       let fullResponse = "";
-
-      // Check if this is a test prompt
-      const testResponse = getTestResponse(req.prompt);
 
       if (testResponse) {
         // For test prompts, use the dedicated function
@@ -457,62 +466,57 @@ ${componentSnippet}
           req.chatId,
           testResponse,
           abortController,
-          updatedChat,
+          { messages: streamMessages },
         );
       } else {
         // Normal AI processing for non-test prompts
-        const creditCheck = await checkCreditsForModel(
-          settings.selectedModel.name,
-        );
+        if (!creditCheckPromise || !modelClientPromise) {
+          throw new Error("Failed to initialize streaming dependencies");
+        }
+
+        const [creditCheck, modelClientResult] = await Promise.all([
+          creditCheckPromise,
+          modelClientPromise,
+        ]);
+
         if (!creditCheck.allowed) {
           throw new Error(creditCheck.reason ?? "Credits exhausted");
         }
 
-        const { modelClient, isOpenCodeMode } = await getModelClient(
-          settings.selectedModel,
-          settings,
-          {
-            chatId: req.chatId,
-            appPath: getAnyonAppPath(updatedChat.app.path),
-          },
-        );
+        const { modelClient, isOpenCodeMode } = modelClientResult;
 
         // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
         // history assembly, system prompt construction, post-response file processing).
         // OpenCode handles everything internally via its own tools and sessions.
         if (isOpenCodeMode) {
-          const aiRules = await readAiRules(
-            getAnyonAppPath(updatedChat.app.path),
+          const aiRules = await readAiRules(chatAppPath);
+          const themePrompt = await getFullSystemPrompt(
+            chat.app?.designSystemId ?? null,
+            chat.app?.themeId ?? null,
           );
           let openCodeSystemPrompt = constructSystemPrompt({
             aiRules,
-            themePrompt: "",
+            themePrompt,
             selectedAgent: settings.selectedAgent,
           });
 
           // Append Supabase context so OpenCode's AI knows about
           // the connected project, tables, and client code.
-          if (
-            updatedChat.app?.supabaseProjectId &&
-            isSupabaseConnected(settings)
-          ) {
-            const supabaseClientCode = await getSupabaseClientCode({
-              projectId: updatedChat.app.supabaseProjectId,
-              organizationSlug:
-                updatedChat.app.supabaseOrganizationSlug ?? null,
-            });
-            openCodeSystemPrompt +=
-              "\n\n" +
-              getSupabaseAvailableSystemPrompt(supabaseClientCode) +
-              "\n\n" +
-              (await getSupabaseContext({
-                supabaseProjectId: updatedChat.app.supabaseProjectId,
-                organizationSlug:
-                  updatedChat.app.supabaseOrganizationSlug ?? null,
-              }));
+          if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
+            const [supabaseClientCode, supabaseContext] = await Promise.all([
+              getSupabaseClientCode({
+                projectId: chat.app.supabaseProjectId,
+                organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+              }),
+              getSupabaseContext({
+                supabaseProjectId: chat.app.supabaseProjectId,
+                organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+              }),
+            ]);
+            openCodeSystemPrompt += `\n\n${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseContext}`;
           }
 
-          openCodeSystemPrompt += "\n\n" + ANYON_MCP_TOOLS_PROMPT;
+          openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
 
           if (settings.enableBooster) {
             openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
@@ -540,7 +544,7 @@ ${componentSnippet}
               lastDbSaveAt = now;
             }
 
-            const currentMessages = [...updatedChat.messages];
+            const currentMessages = [...streamMessages];
             if (
               currentMessages.length > 0 &&
               currentMessages[currentMessages.length - 1].role === "assistant"
@@ -557,9 +561,14 @@ ${componentSnippet}
           };
 
           try {
+            const [maxOutputTokens, temperature] = await Promise.all([
+              getMaxTokens(settings.selectedModel),
+              getTemperature(settings.selectedModel),
+            ]);
+
             const streamResult = streamText({
-              maxOutputTokens: await getMaxTokens(settings.selectedModel),
-              temperature: await getTemperature(settings.selectedModel),
+              maxOutputTokens,
+              temperature,
               maxRetries: 2,
               model: modelClient.model,
               system: openCodeSystemPrompt,
@@ -642,11 +651,11 @@ ${componentSnippet}
                 /<anyon-app-name>(.*?)<\/anyon-app-name>/,
               );
               appDisplayName = appNameMatch?.[1];
-              if (appDisplayName && !updatedChat.app.displayName) {
+              if (appDisplayName && !chat.app.displayName) {
                 await db
                   .update(apps)
                   .set({ displayName: appDisplayName })
-                  .where(eq(apps.id, updatedChat.app.id));
+                  .where(eq(apps.id, chat.app.id));
               }
 
               await db
@@ -654,15 +663,14 @@ ${componentSnippet}
                 .set({ content: fullResponse })
                 .where(eq(messages.id, placeholderAssistantMessage.id));
 
-              const appPath = getAnyonAppPath(updatedChat.app.path);
               try {
                 const uncommittedFiles = await getGitUncommittedFiles({
-                  path: appPath,
+                  path: chatAppPath,
                 });
                 if (uncommittedFiles.length > 0) {
-                  await gitAddAll({ path: appPath });
+                  await gitAddAll({ path: chatAppPath });
                   const commitHash = await gitCommit({
-                    path: appPath,
+                    path: chatAppPath,
                     message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
                   });
                   await db

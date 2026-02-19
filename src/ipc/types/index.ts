@@ -51,6 +51,7 @@ export { visualEditingContracts } from "./visual-editing";
 export { securityContracts } from "./security";
 export { miscContracts, miscEvents } from "./misc";
 export { freeAgentQuotaContracts } from "./free_agent_quota";
+export { designSystemContracts } from "./design_systems";
 
 // =============================================================================
 // Client Exports
@@ -81,6 +82,7 @@ export { visualEditingClient } from "./visual-editing";
 export { securityClient } from "./security";
 export { miscClient, miscEventClient } from "./misc";
 export { freeAgentQuotaClient } from "./free_agent_quota";
+export { designSystemClient } from "./design_systems";
 
 // =============================================================================
 // Type Exports
@@ -250,8 +252,6 @@ export type {
   LanguageModelProvider,
   LanguageModel,
   LocalModel,
-  CreateCustomLanguageModelProviderParams,
-  CreateCustomLanguageModelParams,
 } from "./language-model";
 
 // Prompt types
@@ -309,10 +309,13 @@ export type {
 export type { SecurityReviewResult } from "./security";
 
 // Misc types
-export type { ChatLogsData, DeepLinkData, AppOutput, EnvVar } from "./misc";
+export type { ChatLogsData, DeepLinkData, AppOutput } from "./misc";
 
 // Free agent quota types
 export type { FreeAgentQuotaStatus } from "./free_agent_quota";
+
+// Design system types
+export type { DesignSystemType } from "./design_systems";
 
 // =============================================================================
 // Schema Exports (for validation in handlers/components)
@@ -356,6 +359,7 @@ import { authClient } from "./auth";
 import { capacitorClient } from "./capacitor";
 import { chatClient, chatStreamClient } from "./chat";
 import { contextClient } from "./context";
+import { designSystemClient as dsClient } from "./design_systems";
 import { entitlementClient } from "./entitlement";
 import { freeAgentQuotaClient } from "./free_agent_quota";
 import { gitClient, githubClient, githubEventClient } from "./github";
@@ -431,6 +435,7 @@ export const ipc = {
   security: securityClient,
   misc: miscClient,
   freeAgentQuota: freeAgentQuotaClient,
+  designSystem: dsClient,
 
   // Event clients for main->renderer pub/sub
   events: {

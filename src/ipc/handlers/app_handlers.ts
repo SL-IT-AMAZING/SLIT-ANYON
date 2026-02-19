@@ -746,13 +746,12 @@ export function registerAppHandlers() {
     if (fs.existsSync(fullAppPath)) {
       throw new Error(`App already exists at: ${fullAppPath}`);
     }
-    // Create a new app
     const [app] = await db
       .insert(apps)
       .values({
         name: params.name,
-        // Use the name as the path for now
         path: appPath,
+        designSystemId: params.designSystemId ?? null,
       })
       .returning();
 
@@ -767,6 +766,7 @@ export function registerAppHandlers() {
     await createFromTemplate({
       fullAppPath,
       templateId: params.templateId,
+      designSystemId: params.designSystemId,
     });
 
     // Initialize git repo and create first commit
