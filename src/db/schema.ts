@@ -61,6 +61,7 @@ export const apps = sqliteTable("apps", {
     .default(sql`0`),
   // Theme ID for design system theming (null means "no theme")
   themeId: text("theme_id"),
+  designSystemId: text("design_system_id"),
   // AI-generated display name (e.g. "Todo App", "Weather Dashboard")
   // Null until first AI response sets it via <anyon-app-name> tag.
   // UI shows displayName ?? name as fallback.
