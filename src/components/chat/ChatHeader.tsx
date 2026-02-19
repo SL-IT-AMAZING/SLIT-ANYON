@@ -51,7 +51,7 @@ export function ChatHeader({
   const appId = useAtomValue(selectedAppIdAtom);
   const { versions, loading: versionsLoading } = useVersions(appId);
   const { navigate } = useRouter();
-  const [selectedChatId, setSelectedChatId] = useAtom(selectedChatIdAtom);
+  const [, setSelectedChatId] = useAtom(selectedChatIdAtom);
   const { invalidateChats } = useChats(appId);
   const { isStreaming } = useStreamChat();
   const isAnyCheckoutVersionInProgress = useAtomValue(
@@ -71,7 +71,7 @@ export function ChatHeader({
     if (appId) {
       refetchBranchInfo();
     }
-  }, [appId, selectedChatId, isStreaming, refetchBranchInfo]);
+  }, [appId, refetchBranchInfo]);
 
   const handleCheckoutMainBranch = async () => {
     if (!appId) return;
@@ -107,7 +107,7 @@ export function ChatHeader({
   };
 
   // REMINDER: KEEP UP TO DATE WITH app_handlers.ts
-  const versionPostfix = versions.length === 100_000 ? `+` : "";
+  const versionPostfix = versions.length === 100_000 ? "+" : "";
 
   const isNotMainBranch = branchInfo && branchInfo.branch !== "main";
 
@@ -123,34 +123,32 @@ export function ChatHeader({
             <GitBranch size={16} />
             <span>
               {currentBranchName === "<no-branch>" && (
-                <>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="flex items-center  gap-1">
-                          {isAnyCheckoutVersionInProgress ? (
-                            <>
-                              <span>{t("ui.pleaseWaitSwitching")}</span>
-                            </>
-                          ) : (
-                            <>
-                              <strong>{t("ui.warning")}:</strong>
-                              <span>{t("ui.notOnBranch")}</span>
-                              <Info size={14} />
-                            </>
-                          )}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {isAnyCheckoutVersionInProgress
-                            ? t("ui.checkoutInProgress")
-                            : t("ui.checkoutMainBranch")}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={<span className="flex items-center gap-1" />}
+                    >
+                      <span className="flex items-center  gap-1">
+                        {isAnyCheckoutVersionInProgress ? (
+                          <span>{t("ui.pleaseWaitSwitching")}</span>
+                        ) : (
+                          <>
+                            <strong>{t("ui.warning")}:</strong>
+                            <span>{t("ui.notOnBranch")}</span>
+                            <Info size={14} />
+                          </>
+                        )}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {isAnyCheckoutVersionInProgress
+                          ? t("ui.checkoutInProgress")
+                          : t("ui.checkoutMainBranch")}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {currentBranchName && currentBranchName !== "<no-branch>" && (
                 <span>

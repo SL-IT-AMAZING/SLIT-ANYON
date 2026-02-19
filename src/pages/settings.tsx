@@ -2,7 +2,6 @@ import { AutoApproveSwitch } from "@/components/AutoApproveSwitch";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { GitHubIntegration } from "@/components/GitHubIntegration";
 import { MaxChatTurnsSelector } from "@/components/MaxChatTurnsSelector";
-import { ProviderSettingsGrid } from "@/components/ProviderSettings";
 import { SupabaseIntegration } from "@/components/SupabaseIntegration";
 import { TelemetrySwitch } from "@/components/TelemetrySwitch";
 import { ThinkingBudgetSelector } from "@/components/ThinkingBudgetSelector";
@@ -96,13 +95,6 @@ export default function SettingsPage() {
             <GeneralSettings appVersion={appVersion} />
             <WorkflowSettings />
             <AISettings />
-
-            <div
-              id={SECTION_IDS.providers}
-              className="bg-card rounded-xl shadow-sm"
-            >
-              <ProviderSettingsGrid />
-            </div>
 
             <div className="space-y-6">
               <div

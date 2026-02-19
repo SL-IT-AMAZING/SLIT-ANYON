@@ -361,7 +361,6 @@
       "general": "일반 설정",
       "workflow": "워크플로우",
       "ai": "AI",
-      "providers": "모델 제공자",
       "integrations": "연동",
       "toolsMcp": "도구 (MCP)",
       "experiments": "실험실",
@@ -662,6 +661,20 @@
     "importFailed": "가져오기 실패: {{message}}",
     "success": "{{name}}을(를) 성공적으로 가져왔습니다",
     "successAutoRules": "보안 규칙이 자동 적용되었습니다"
+  },
+  "agents": {
+    "Sisyphus": {
+      "name": "만능 빌더",
+      "description": "앱을 만들어주는 강력한 AI 빌더"
+    },
+    "Hephaestus": {
+      "name": "전문가",
+      "description": "목표 지향적 문제 해결을 위한 자율형 딥 에이전트"
+    },
+    "Atlas": {
+      "name": "플래너",
+      "description": "아이디어를 정리하고 명확한 계획을 세워주는 에이전트"
+    }
   },
   "thinkingLevel": {
     "high": "높음",

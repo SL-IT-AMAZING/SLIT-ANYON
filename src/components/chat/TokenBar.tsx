@@ -53,7 +53,7 @@ export function TokenBar({ chatId }: TokenBarProps) {
     <div className="px-4 pb-2 text-xs" data-testid="token-bar">
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger render={<div className="w-full" />}>
             <div className="w-full">
               <div className="flex justify-between mb-1 text-xs text-muted-foreground">
                 <span>Tokens: {totalTokens.toLocaleString()}</span>
@@ -132,7 +132,8 @@ export function TokenBar({ chatId }: TokenBarProps) {
         !settings?.enableAnyonPro) && (
         <div className="text-xs text-center text-muted-foreground mt-2">
           Optimize your tokens with{" "}
-          <a
+          <button
+            type="button"
             onClick={() =>
               settings?.enableAnyonPro
                 ? ipc.system.openExternalUrl(
@@ -143,7 +144,7 @@ export function TokenBar({ chatId }: TokenBarProps) {
             className="text-blue-500 dark:text-blue-400 cursor-pointer hover:underline"
           >
             ANYON Pro's Smart Context
-          </a>
+          </button>
         </div>
       )}
     </div>

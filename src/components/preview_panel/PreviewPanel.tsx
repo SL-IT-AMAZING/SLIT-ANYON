@@ -12,10 +12,9 @@ import { ChevronDown, ChevronUp, Logs } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { CodeView } from "./CodeView";
-import { ConfigurePanel } from "./ConfigurePanel";
+
 import { Console } from "./Console";
 import { PreviewIframe } from "./PreviewIframe";
-import { Problems } from "./Problems";
 import { PublishPanel } from "./PublishPanel";
 import { SecurityPanel } from "./SecurityPanel";
 
@@ -153,15 +152,11 @@ export function PreviewPanel({ minimal = false }: PreviewPanelProps) {
                 <PreviewIframe key={key} loading={loading} />
               ) : previewMode === "code" ? (
                 <CodeView loading={loading} app={app} />
-              ) : previewMode === "configure" ? (
-                <ConfigurePanel />
               ) : previewMode === "publish" ? (
                 <PublishPanel />
               ) : previewMode === "security" ? (
                 <SecurityPanel />
-              ) : (
-                <Problems />
-              )}
+              ) : null}
             </div>
           </Panel>
           {!minimal && isConsoleOpen && (

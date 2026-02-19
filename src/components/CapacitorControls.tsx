@@ -26,7 +26,7 @@ import {
   Smartphone,
   TabletSmartphone,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface CapacitorControlsProps {
   appId: number;
@@ -146,6 +146,20 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
   const iosButtonText = getIosButtonText();
   const androidButtonText = getAndroidButtonText();
 
+  const handleSyncAndOpenIos = useCallback(() => {
+    if (syncAndOpenIosMutation.isPending) {
+      return;
+    }
+    syncAndOpenIosMutation.mutate();
+  }, [syncAndOpenIosMutation]);
+
+  const handleSyncAndOpenAndroid = useCallback(() => {
+    if (syncAndOpenAndroidMutation.isPending) {
+      return;
+    }
+    syncAndOpenAndroidMutation.mutate();
+  }, [syncAndOpenAndroidMutation]);
+
   return (
     <>
       <Card className="mt-1" data-testid="capacitor-controls">
@@ -172,7 +186,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() => syncAndOpenIosMutation.mutate()}
+              onClick={handleSyncAndOpenIos}
               disabled={syncAndOpenIosMutation.isPending}
               variant="outline"
               size="sm"
@@ -192,7 +206,7 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
             </Button>
 
             <Button
-              onClick={() => syncAndOpenAndroidMutation.mutate()}
+              onClick={handleSyncAndOpenAndroid}
               disabled={syncAndOpenAndroidMutation.isPending}
               variant="outline"
               size="sm"

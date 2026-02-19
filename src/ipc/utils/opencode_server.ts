@@ -2,9 +2,9 @@ import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import log from "electron-log";
-import { toolGateway } from "@/opencode/tool_gateway";
 import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
+import { toolGateway } from "@/opencode/tool_gateway";
+import log from "electron-log";
 import { readSettings } from "../../main/settings";
 import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
@@ -191,12 +191,12 @@ class OpenCodeServerManager {
     };
 
     if (useProxy && anyonApiKey) {
-      // OPENCODE_CONFIG_CONTENT overrides all other config sources (Antigravity auth, global, project)
-      const anthropicBaseUrl =
-        process.env.ANYON_PROXY_URL || "https://engine.any-on.dev/v1/anthropic";
-      const openaiBaseUrl = process.env.ANYON_PROXY_URL
-        ? `${process.env.ANYON_PROXY_URL}/openai`
-        : "https://engine.any-on.dev/v1/openai";
+      const proxyBase =
+        process.env.ANYON_PROXY_URL || "https://engine.any-on.dev/v1";
+      const anthropicBaseUrl = `${proxyBase}/anthropic`;
+      const openaiBaseUrl = `${proxyBase}/openai`;
+      const googleBaseUrl = `${proxyBase}/google`;
+      const xaiBaseUrl = `${proxyBase}/xai`;
 
       opencodeConfig["provider"] = {
         anthropic: {
@@ -211,19 +211,33 @@ class OpenCodeServerManager {
             baseURL: openaiBaseUrl,
           },
         },
+        google: {
+          options: {
+            apiKey: anyonApiKey,
+            baseURL: googleBaseUrl,
+          },
+        },
+        xai: {
+          options: {
+            apiKey: anyonApiKey,
+            baseURL: xaiBaseUrl,
+          },
+        },
       };
 
       opencodeEnv.ANTHROPIC_API_KEY = anyonApiKey;
       opencodeEnv.OPENAI_API_KEY = anyonApiKey;
+      opencodeEnv.GOOGLE_API_KEY = anyonApiKey;
+      opencodeEnv.XAI_API_KEY = anyonApiKey;
       opencodeEnv.ANTHROPIC_BASE_URL = anthropicBaseUrl;
       opencodeEnv.OPENAI_BASE_URL = openaiBaseUrl;
+      opencodeEnv.GOOGLE_BASE_URL = googleBaseUrl;
+      opencodeEnv.XAI_BASE_URL = xaiBaseUrl;
 
-      // Disable Antigravity OAuth plugin so our proxy apiKey is used
-      // instead of the user's personal OAuth token (sk-ant-oat-...)
       opencodeEnv.OPENCODE_DISABLE_DEFAULT_PLUGINS = "true";
 
       logger.info(
-        `Proxy config: anthropic → ${anthropicBaseUrl}, openai → ${openaiBaseUrl}`,
+        `Proxy config: anthropic → ${anthropicBaseUrl}, openai → ${openaiBaseUrl}, google → ${googleBaseUrl}, xai → ${xaiBaseUrl}`,
       );
     }
 

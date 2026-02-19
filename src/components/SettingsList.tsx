@@ -44,10 +44,6 @@ export function SettingsList() {
       },
       { id: SECTION_IDS.ai, label: t("sections.ai", { ns: "settings" }) },
       {
-        id: SECTION_IDS.providers,
-        label: t("sections.providers", { ns: "settings" }),
-      },
-      {
         id: SECTION_IDS.telemetry,
         label: t("sections.telemetry", { ns: "settings" }),
       },

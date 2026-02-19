@@ -13,7 +13,6 @@ import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { ipc } from "@/ipc/types";
 import type { UserBudgetInfo } from "@/ipc/types";
 import { cn } from "@/lib/utils";
-import { providerSettingsRoute } from "@/routes/settings/providers/$provider";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -37,21 +36,17 @@ export const TitleBar = () => {
     checkPlatform();
   }, []);
 
-  const showAnyonProSuccessDialog = () => {
-    setIsSuccessDialogOpen(true);
-  };
-
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
   useEffect(() => {
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "anyon-pro-return") {
         await refreshSettings();
-        showAnyonProSuccessDialog();
+        setIsSuccessDialogOpen(true);
         clearLastDeepLink();
       }
     };
     handleDeepLink();
-  }, [lastDeepLink?.timestamp]);
+  }, [lastDeepLink, refreshSettings, clearLastDeepLink]);
 
   const isAnyonPro = !!settings?.providerSettings?.auto?.apiKey?.value;
   const isAnyonProEnabled = Boolean(settings?.enableAnyonPro);
@@ -59,7 +54,7 @@ export const TitleBar = () => {
   return (
     <>
       <div className="@container z-11 w-full h-11 bg-(--sidebar) absolute top-0 left-0 app-region-drag flex items-center">
-        <div className={`${showWindowControls ? "pl-2" : "pl-18"}`}></div>
+        <div className={`${showWindowControls ? "pl-2" : "pl-18"}`} />
 
         {isAnyonPro && <AnyonProButton isAnyonProEnabled={isAnyonProEnabled} />}
 
@@ -173,8 +168,7 @@ export function AnyonProButton({
       data-testid="title-bar-anyon-pro-button"
       onClick={() => {
         navigate({
-          to: providerSettingsRoute.id,
-          params: { provider: "auto" },
+          to: "/settings",
         });
       }}
       variant="outline"
@@ -206,7 +200,7 @@ export function AICreditStatus({
   );
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger render={<div className="text-xs pl-1 mt-0.5" />}>
         <div className="text-xs pl-1 mt-0.5">{remaining} credits</div>
       </TooltipTrigger>
       <TooltipContent>

@@ -295,6 +295,10 @@ function FooterComponent({ context }: { context?: FooterContext }) {
                 className="text-muted-foreground hover:text-foreground"
                 disabled={isUndoLoading}
                 onClick={async () => {
+                  if (isUndoLoading) {
+                    return;
+                  }
+
                   if (!selectedChatId || !appId) {
                     console.error("No chat selected or app ID not available");
                     return;
@@ -355,6 +359,10 @@ function FooterComponent({ context }: { context?: FooterContext }) {
               className="text-muted-foreground hover:text-foreground"
               disabled={isRetryLoading}
               onClick={async () => {
+                if (isRetryLoading) {
+                  return;
+                }
+
                 if (!selectedChatId) {
                   console.error("No chat selected");
                   return;
@@ -455,6 +463,7 @@ function FooterComponent({ context }: { context?: FooterContext }) {
 
 export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
   function MessagesList({ messages, messagesEndRef, onAtBottomChange }, ref) {
+    const { t } = useTranslation(["chat", "common"]);
     const appId = useAtomValue(selectedAppIdAtom);
     const { versions, revertVersion } = useVersions(appId);
     const { streamMessage, isStreaming } = useStreamChat();
@@ -564,7 +573,6 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
 
     // Render empty state
     if (messages.length === 0) {
-      const { t } = useTranslation(["chat", "common"]);
       return (
         <div
           className="absolute inset-0 overflow-y-auto p-4"

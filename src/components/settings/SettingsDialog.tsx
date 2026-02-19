@@ -4,39 +4,16 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlement } from "@/hooks/useEntitlement";
 import { cn } from "@/lib/utils";
-import {
-  Brain,
-  Cpu,
-  CreditCard,
-  FlaskConical,
-  Plug,
-  Settings,
-  Sparkles,
-  Workflow,
-  Wrench,
-} from "lucide-react";
+import { Brain, CreditCard, Settings, Sparkles, Workflow } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AIPanel } from "./panels/AIPanel";
 import { BillingPanel } from "./panels/BillingPanel";
-import { ExperimentsPanel } from "./panels/ExperimentsPanel";
 import { GeneralPanel } from "./panels/GeneralPanel";
-import { IntegrationsPanel } from "./panels/IntegrationsPanel";
 import { PricingPlansPanel } from "./panels/PricingPlansPanel";
-import { ProvidersPanel } from "./panels/ProvidersPanel";
-import { ToolsMcpPanel } from "./panels/ToolsMcpPanel";
 import { WorkflowPanel } from "./panels/WorkflowPanel";
 
-type SettingsTab =
-  | "general"
-  | "workflow"
-  | "ai"
-  | "providers"
-  | "integrations"
-  | "toolsMcp"
-  | "experiments"
-  | "billing"
-  | "pricingPlans";
+type SettingsTab = "general" | "workflow" | "ai" | "billing" | "pricingPlans";
 
 const NAV_SECTIONS = [
   {
@@ -53,33 +30,9 @@ const NAV_SECTIONS = [
         labelKey: "settings.tabs.workflow" as const,
       },
       { id: "ai" as const, icon: Brain, labelKey: "settings.tabs.ai" as const },
-      {
-        id: "providers" as const,
-        icon: Cpu,
-        labelKey: "settings.tabs.providers" as const,
-      },
     ],
   },
-  {
-    titleKey: "settings.sections.advanced" as const,
-    items: [
-      {
-        id: "integrations" as const,
-        icon: Plug,
-        labelKey: "settings.tabs.integrations" as const,
-      },
-      {
-        id: "toolsMcp" as const,
-        icon: Wrench,
-        labelKey: "settings.tabs.toolsMcp" as const,
-      },
-      {
-        id: "experiments" as const,
-        icon: FlaskConical,
-        labelKey: "settings.tabs.experiments" as const,
-      },
-    ],
-  },
+
   {
     titleKey: "settings.sections.account" as const,
     items: [
@@ -101,10 +54,6 @@ const TAB_PANELS: Record<SettingsTab, React.ComponentType> = {
   general: GeneralPanel,
   workflow: WorkflowPanel,
   ai: AIPanel,
-  providers: ProvidersPanel,
-  integrations: IntegrationsPanel,
-  toolsMcp: ToolsMcpPanel,
-  experiments: ExperimentsPanel,
   billing: BillingPanel,
   pricingPlans: PricingPlansPanel,
 };

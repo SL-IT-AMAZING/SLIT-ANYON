@@ -7,6 +7,8 @@
   "rules": {
     "eslint/no-unused-vars": "error",
     "eslint/no-empty-pattern": "off",
-    "eslint/no-control-regex": "off"
+    "eslint/no-control-regex": "off",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error"
   }
 }

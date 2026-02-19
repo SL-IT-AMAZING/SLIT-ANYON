@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineContract, createClient } from "../contracts/core";
+import { createClient, defineContract } from "../contracts/core";
 
 // =============================================================================
 // Language Model Schemas
@@ -45,35 +45,6 @@ export const LocalModelSchema = z.object({
 
 export type LocalModel = z.infer<typeof LocalModelSchema>;
 
-export const CreateCustomLanguageModelProviderParamsSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  apiBaseUrl: z.string(),
-  envVarName: z.string().optional(),
-});
-
-export type CreateCustomLanguageModelProviderParams = z.infer<
-  typeof CreateCustomLanguageModelProviderParamsSchema
->;
-
-export const CreateCustomLanguageModelParamsSchema = z.object({
-  apiName: z.string(),
-  displayName: z.string(),
-  providerId: z.string(),
-  description: z.string().optional(),
-  maxOutputTokens: z.number().optional(),
-  contextWindow: z.number().optional(),
-});
-
-export type CreateCustomLanguageModelParams = z.infer<
-  typeof CreateCustomLanguageModelParamsSchema
->;
-
-export const DeleteCustomModelParamsSchema = z.object({
-  providerId: z.string(),
-  modelApiName: z.string(),
-});
-
 // =============================================================================
 // Language Model Contracts
 // =============================================================================
@@ -95,42 +66,6 @@ export const languageModelContracts = {
     channel: "get-language-models-by-providers",
     input: z.void(),
     output: z.record(z.string(), z.array(LanguageModelSchema)),
-  }),
-
-  createCustomProvider: defineContract({
-    channel: "create-custom-language-model-provider",
-    input: CreateCustomLanguageModelProviderParamsSchema,
-    output: LanguageModelProviderSchema,
-  }),
-
-  editCustomProvider: defineContract({
-    channel: "edit-custom-language-model-provider",
-    input: CreateCustomLanguageModelProviderParamsSchema,
-    output: LanguageModelProviderSchema,
-  }),
-
-  deleteCustomProvider: defineContract({
-    channel: "delete-custom-language-model-provider",
-    input: z.object({ providerId: z.string() }),
-    output: z.void(),
-  }),
-
-  createCustomModel: defineContract({
-    channel: "create-custom-language-model",
-    input: CreateCustomLanguageModelParamsSchema,
-    output: z.void(),
-  }),
-
-  deleteCustomModel: defineContract({
-    channel: "delete-custom-language-model",
-    input: z.string(), // modelId
-    output: z.void(),
-  }),
-
-  deleteModel: defineContract({
-    channel: "delete-custom-model",
-    input: DeleteCustomModelParamsSchema,
-    output: z.void(),
   }),
 
   listOllamaModels: defineContract({

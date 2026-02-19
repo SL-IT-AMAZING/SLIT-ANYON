@@ -361,7 +361,6 @@
       "general": "General",
       "workflow": "Workflow",
       "ai": "AI",
-      "providers": "Model Providers",
       "integrations": "Integrations",
       "toolsMcp": "Tools (MCP)",
       "experiments": "Experiments",
@@ -661,6 +660,20 @@
     "importFailed": "Import failed: {{message}}",
     "success": "{{name}} imported successfully",
     "successAutoRules": "Auto-generated security rules applied"
+  },
+  "agents": {
+    "Sisyphus": {
+      "name": "Builder",
+      "description": "Powerful all-around AI builder for your apps"
+    },
+    "Hephaestus": {
+      "name": "Expert",
+      "description": "Autonomous deep agent for goal-oriented problem solving"
+    },
+    "Atlas": {
+      "name": "Planner",
+      "description": "Helps you think through ideas and create clear plans"
+    }
   },
   "thinkingLevel": {
     "high": "High",

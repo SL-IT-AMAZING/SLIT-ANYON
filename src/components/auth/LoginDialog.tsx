@@ -34,6 +34,7 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPending) return;
     if (!email.trim() || !password.trim()) return;
 
     try {
@@ -49,6 +50,8 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   };
 
   const handleGoogleLogin = async () => {
+    if (isPending) return;
+
     try {
       await loginWithGoogle();
       onClose();

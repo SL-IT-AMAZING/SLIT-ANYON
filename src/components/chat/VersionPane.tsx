@@ -101,6 +101,9 @@ export function VersionPane({ isVisible, onClose }: VersionPaneProps) {
 
   const versions = cachedVersions.length > 0 ? cachedVersions : liveVersions;
 
+  const isVersionInteractionDisabled =
+    isCheckingOutVersion || isRevertingVersion;
+
   return (
     <div className="h-full flex flex-col border-t border-border w-full bg-(--background-lighter) animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Header */}
@@ -146,14 +149,14 @@ export function VersionPane({ isVisible, onClose }: VersionPaneProps) {
                     isLoading && "opacity-60 cursor-not-allowed",
                   )}
                   onClick={() => {
-                    if (!isCheckingOutVersion) {
+                    if (!isVersionInteractionDisabled) {
                       handleVersionClick(version);
                     }
                   }}
                   onKeyDown={(e) => {
                     if (
                       (e.key === "Enter" || e.key === " ") &&
-                      !isCheckingOutVersion
+                      !isVersionInteractionDisabled
                     ) {
                       e.preventDefault();
                       handleVersionClick(version);
@@ -208,7 +211,18 @@ export function VersionPane({ isVisible, onClose }: VersionPaneProps) {
                               Date.now() - timestampMs > 24 * 60 * 60 * 1000;
                             return (
                               <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger
+                                  render={
+                                    <div
+                                      className={cn(
+                                        "inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-colors duration-150",
+                                        isExpired
+                                          ? "bg-muted text-muted-foreground"
+                                          : "bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400",
+                                      )}
+                                    />
+                                  }
+                                >
                                   <div
                                     className={cn(
                                       "inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-colors duration-150",
@@ -278,6 +292,10 @@ export function VersionPane({ isVisible, onClose }: VersionPaneProps) {
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
+
+                          if (isRevertingVersion) {
+                            return;
+                          }
 
                           await revertVersion({
                             versionId: version.oid,

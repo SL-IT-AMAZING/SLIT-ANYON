@@ -1,12 +1,12 @@
 import { z } from "zod";
 import {
-  defineContract,
-  defineEvent,
   createClient,
   createEventClient,
+  defineContract,
+  defineEvent,
 } from "../contracts/core";
-import { ConsoleEntrySchema } from "./supabase";
 import { ProblemReportSchema } from "./agent";
+import { ConsoleEntrySchema } from "./supabase";
 
 // =============================================================================
 // Portal Schemas
@@ -18,26 +18,6 @@ export const PortalMigrateCreateParamsSchema = z.object({
 
 export const PortalMigrateCreateResultSchema = z.object({
   output: z.string(),
-});
-
-// =============================================================================
-// Env Vars Schemas
-// =============================================================================
-
-export const GetAppEnvVarsParamsSchema = z.object({
-  appId: z.number(),
-});
-
-export const EnvVarSchema = z.object({
-  key: z.string(),
-  value: z.string(),
-});
-
-export type EnvVar = z.infer<typeof EnvVarSchema>;
-
-export const SetAppEnvVarsParamsSchema = z.object({
-  appId: z.number(),
-  envVars: z.array(EnvVarSchema),
 });
 
 // =============================================================================
@@ -118,19 +98,6 @@ export const miscContracts = {
     channel: "get-env-vars",
     input: z.void(),
     output: z.record(z.string(), z.string().optional()),
-  }),
-
-  // App-specific env vars
-  getAppEnvVars: defineContract({
-    channel: "get-app-env-vars",
-    input: GetAppEnvVarsParamsSchema,
-    output: z.array(EnvVarSchema),
-  }),
-
-  setAppEnvVars: defineContract({
-    channel: "set-app-env-vars",
-    input: SetAppEnvVarsParamsSchema,
-    output: z.void(),
   }),
 
   // Chat logs

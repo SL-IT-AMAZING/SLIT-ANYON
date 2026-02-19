@@ -1,20 +1,14 @@
-import { atom } from "jotai";
-import type { App, Version, ConsoleEntry } from "@/ipc/types";
+import type { App, ConsoleEntry, Version } from "@/ipc/types";
 import type { ListedApp } from "@/ipc/types/app";
 import type { UserSettings } from "@/lib/schemas";
+import { atom } from "jotai";
 
 export const currentAppAtom = atom<App | null>(null);
 export const selectedAppIdAtom = atom<number | null>(null);
 export const appsListAtom = atom<ListedApp[]>([]);
 export const versionsListAtom = atom<Version[]>([]);
 export const previewModeAtom = atom<
-  | "preview"
-  | "code"
-  | "problems"
-  | "configure"
-  | "publish"
-  | "security"
-  | "plan"
+  "preview" | "code" | "publish" | "security" | "plan"
 >("preview");
 export const selectedVersionIdAtom = atom<string | null>(null);
 

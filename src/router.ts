@@ -9,7 +9,6 @@ import { hubRoute } from "./routes/hub";
 import { libraryRoute } from "./routes/library";
 import { rootRoute } from "./routes/root";
 import { settingsRoute } from "./routes/settings";
-import { providerSettingsRoute } from "./routes/settings/providers/$provider";
 import { templateDetailRoute } from "./routes/template-detail";
 import { themesRoute } from "./routes/themes";
 
@@ -24,7 +23,7 @@ const routeTree = rootRoute.addChildren([
   appDetailsRoute,
   appsRoute,
   appDetailRoute,
-  settingsRoute.addChildren([providerSettingsRoute]),
+  settingsRoute,
 ]);
 
 import { useNavigate } from "@tanstack/react-router";

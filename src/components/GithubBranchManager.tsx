@@ -373,6 +373,10 @@ export function GithubBranchManager({
   };
 
   const handleGitPull = async () => {
+    if (isPulling) {
+      return;
+    }
+
     setIsPulling(true);
     try {
       await ipc.github.pull({ appId });

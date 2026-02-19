@@ -2,7 +2,6 @@ export const SECTION_IDS = {
   general: "general-settings",
   workflow: "workflow-settings",
   ai: "ai-settings",
-  providers: "provider-settings",
   telemetry: "telemetry",
   integrations: "integrations",
   toolsMcp: "tools-mcp",
@@ -153,26 +152,6 @@ export const SETTINGS_SEARCH_INDEX: SearchableSettingItem[] = [
     keywords: ["turns", "max", "conversation", "limit", "chat"],
     sectionId: SECTION_IDS.ai,
     sectionLabel: "AI",
-  },
-
-  // Provider Settings
-  {
-    id: SECTION_IDS.providers,
-    label: "Model Providers",
-    description: "Configure AI model providers and API keys",
-    keywords: [
-      "provider",
-      "model",
-      "api key",
-      "openai",
-      "anthropic",
-      "claude",
-      "gpt",
-      "gemini",
-      "llm",
-    ],
-    sectionId: SECTION_IDS.providers,
-    sectionLabel: "Model Providers",
   },
 
   // Telemetry

@@ -29,6 +29,18 @@ const AGENT_ICONS: Record<string, string> = {
   Atlas: plannerIcon,
 };
 
+const FALLBACK_AGENTS: {
+  name: string;
+  description: string;
+  mode: "primary" | "subagent" | "all";
+  native: boolean;
+  color?: string;
+}[] = [
+  { name: "Sisyphus", description: "", mode: "primary", native: false },
+  { name: "Hephaestus", description: "", mode: "primary", native: false },
+  { name: "Atlas", description: "", mode: "primary", native: false },
+];
+
 function getBaseAgentName(name: string): string {
   const idx = name.indexOf(" (");
   return idx === -1 ? name : name.slice(0, idx);
@@ -67,16 +79,21 @@ export function AgentPicker() {
   const getDisplayName = useAgentDisplayName();
   const getDescription = useAgentDescription();
 
-  const { data: agents = [] } = useQuery({
+  const { data: serverAgents } = useQuery({
     queryKey: ["opencode-agents"] as const,
     queryFn: () => languageModelClient.getOpenCodeAgents(),
   });
 
+  const agents = serverAgents?.length ? serverAgents : FALLBACK_AGENTS;
+
   const selectedAgent = useMemo(() => {
     const agentName = settings?.selectedAgent;
     if (agentName) {
-      const match = agents.find((a) => a.name === agentName);
-      if (match) return match;
+      const exact = agents.find((a) => a.name === agentName);
+      if (exact) return exact;
+      const baseName = getBaseAgentName(agentName);
+      const base = agents.find((a) => getBaseAgentName(a.name) === baseName);
+      if (base) return base;
     }
     return agents[0];
   }, [agents, settings?.selectedAgent]);

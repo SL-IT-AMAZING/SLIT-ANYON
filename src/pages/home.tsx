@@ -93,12 +93,12 @@ export default function HomePage() {
           });
 
           if (result.exists && result.url) {
-            setReleaseUrl(result.url + "?hideHeader=true&theme=" + theme);
+            setReleaseUrl(`${result.url}?hideHeader=true&theme=${theme}`);
             setReleaseNotesOpen(true);
           }
         } catch (err) {
           console.warn(
-            "Unable to check if release note exists for: " + appVersion,
+            `Unable to check if release note exists for: ${appVersion}`,
             err,
           );
         }
@@ -149,17 +149,15 @@ export default function HomePage() {
         chatId: result.chatId,
         attachments,
       });
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings?.isTestMode ? 0 : 2000),
-      );
 
       setInputValue("");
       setSelectedAppId(result.app.id);
       setIsPreviewOpen(false);
-      await refreshApps(); // Ensure refreshApps is awaited if it's async
-      await invalidateAppQuery(queryClient, { appId: result.app.id });
       posthog.capture("home:chat-submit");
       navigate({ to: "/chat", search: { id: result.chatId } });
+
+      void refreshApps();
+      void invalidateAppQuery(queryClient, { appId: result.app.id });
     } catch (error) {
       console.error("Failed to create chat:", error);
       const message = error instanceof Error ? error.message : String(error);
@@ -287,7 +285,7 @@ export default function HomePage() {
               className="absolute right-10 top-2 focus-visible:ring-0 focus-visible:ring-offset-0"
               onClick={() =>
                 window.open(
-                  releaseUrl.replace("?hideHeader=true&theme=" + theme, ""),
+                  releaseUrl.replace(`?hideHeader=true&theme=${theme}`, ""),
                   "_blank",
                 )
               }

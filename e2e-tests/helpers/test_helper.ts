@@ -1,15 +1,15 @@
-import { test as base, Page, expect } from "@playwright/test";
-import * as eph from "electron-playwright-helpers";
-import { ElectronApplication, _electron as electron } from "playwright";
-import fs from "fs";
-import path from "path";
-import os from "os";
 import { execSync } from "child_process";
-import { generateAppFilesSnapshotData } from "./generateAppFilesSnapshotData";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import {
   BUILD_SYSTEM_POSTFIX,
   BUILD_SYSTEM_PREFIX,
 } from "@/prompts/system_prompt";
+import { type Page, test as base, expect } from "@playwright/test";
+import * as eph from "electron-playwright-helpers";
+import { type ElectronApplication, _electron as electron } from "playwright";
+import { generateAppFilesSnapshotData } from "./generateAppFilesSnapshotData";
 
 const showDebugLogs = process.env.DEBUG_LOGS === "true";
 
@@ -349,12 +349,10 @@ export class PageObject {
   async setUp({
     autoApprove = false,
     disableNativeGit = false,
-    enableAutoFixProblems = false,
     enableBasicAgent = false,
   }: {
     autoApprove?: boolean;
     disableNativeGit?: boolean;
-    enableAutoFixProblems?: boolean;
     enableBasicAgent?: boolean;
   } = {}) {
     await this.baseSetup();
@@ -364,9 +362,6 @@ export class PageObject {
     }
     if (disableNativeGit) {
       await this.toggleNativeGit();
-    }
-    if (enableAutoFixProblems) {
-      await this.toggleAutoFixProblems();
     }
     await this.setUpTestProvider();
     await this.setUpTestModel();
@@ -670,21 +665,6 @@ export class PageObject {
     await expect(
       this.page.getByTestId("chat-activity-list"),
     ).toMatchAriaSnapshot();
-  }
-
-  async clickRecheckProblems() {
-    await this.page.getByTestId("recheck-button").click();
-  }
-
-  async clickFixAllProblems() {
-    await this.page.getByTestId("fix-all-button").click();
-    await this.waitForChatCompletion();
-  }
-
-  async snapshotProblemsPane() {
-    await expect(this.page.getByTestId("problems-pane")).toMatchAriaSnapshot({
-      timeout: Timeout.MEDIUM,
-    });
   }
 
   async clickRebuild() {
@@ -1285,10 +1265,6 @@ export class PageObject {
 
   async toggleNativeGit() {
     await this.page.getByRole("switch", { name: "Enable Native Git" }).click();
-  }
-
-  async toggleAutoFixProblems() {
-    await this.page.getByRole("switch", { name: "Auto-fix problems" }).click();
   }
 
   /**
