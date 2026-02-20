@@ -226,7 +226,9 @@ export async function handleProxyRequest(
           extractGoogleUsage(parsed);
         if (usage) {
           const totalTokens = usage.inputTokens + usage.outputTokens;
-          ingestTokenUsage(user.id, totalTokens, model).catch(() => {});
+          ingestTokenUsage(user.id, totalTokens, model).catch((e) =>
+            console.error("Usage ingestion failed:", e),
+          );
         }
       } catch {
         void 0;
@@ -274,7 +276,9 @@ export async function handleProxyRequest(
         const totalTokens =
           accumulatedUsage.inputTokens + accumulatedUsage.outputTokens;
         if (totalTokens > 0) {
-          ingestTokenUsage(userId, totalTokens, modelId).catch(() => {});
+          ingestTokenUsage(userId, totalTokens, modelId).catch((e) =>
+            console.error("Usage ingestion failed:", e),
+          );
         }
       }
     },
