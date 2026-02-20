@@ -298,7 +298,8 @@
     "features": "기능",
     "techStack": "기술 스택",
     "screenshots": "스크린샷",
-    "screenshotAlt": "{{title}} 스크린샷 {{index}}"
+    "screenshotAlt": "{{title}} 스크린샷 {{index}}",
+    "tags": "태그"
   },
   "appDetails": {
     "locationUpdated": "앱 위치가 업데이트되었습니다",

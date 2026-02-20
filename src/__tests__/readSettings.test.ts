@@ -66,6 +66,7 @@ describe("readSettings", () => {
           "lastKnownPerformance": undefined,
           "providerSettings": {},
           "releaseChannel": "stable",
+          "selectedDesignSystemId": "",
           "selectedModel": {
             "name": "claude-opus-4-6",
             "provider": "anthropic",
@@ -322,6 +323,7 @@ describe("readSettings", () => {
           "lastKnownPerformance": undefined,
           "providerSettings": {},
           "releaseChannel": "stable",
+          "selectedDesignSystemId": "",
           "selectedModel": {
             "name": "claude-opus-4-6",
             "provider": "anthropic",

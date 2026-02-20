@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useCustomThemes } from "@/hooks/useCustomThemes";
+import { useDesignSystems } from "@/hooks/useDesignSystems";
 import { useSettings } from "@/hooks/useSettings";
 import { useThemes } from "@/hooks/useThemes";
 import { ipc } from "@/ipc/types";
@@ -25,6 +26,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Ban,
+  Blocks,
   Brush,
   ChartColumnIncreasing,
   Check,
@@ -60,6 +62,7 @@ export function AuxiliaryActionsMenu({
   const [allThemesDialogOpen, setAllThemesDialogOpen] = useState(false);
   const { themes } = useThemes();
   const { customThemes } = useCustomThemes();
+  const { designSystems } = useDesignSystems();
   const { themeId: appThemeId } = useAppTheme(appId);
   const { settings, updateSettings } = useSettings();
   const queryClient = useQueryClient();
@@ -68,6 +71,7 @@ export function AuxiliaryActionsMenu({
   // Note: settings stores empty string for "no theme", convert to null
   const currentThemeId =
     appId != null ? appThemeId : settings?.selectedThemeId || null;
+  const currentDesignSystemId = settings?.selectedDesignSystemId || null;
 
   // Compute visible custom themes: selected custom theme + up to 3 others
   const visibleCustomThemes = useMemo(() => {
@@ -116,6 +120,13 @@ export function AuxiliaryActionsMenu({
   const handleCreateCustomTheme = () => {
     setIsOpen(false);
     setCustomThemeDialogOpen(true);
+  };
+
+  const handleDesignSystemSelect = async (designSystemId: string | null) => {
+    if (appId != null) {
+      return;
+    }
+    await updateSettings({ selectedDesignSystemId: designSystemId ?? "" });
   };
 
   const handleCustomThemeDialogClose = (open: boolean) => {
@@ -205,6 +216,51 @@ export function AuxiliaryActionsMenu({
                   </DropdownMenuItem>
                 );
               })}
+
+              {appId == null && designSystems.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => handleDesignSystemSelect(null)}
+                    className={`py-2 px-3 ${currentDesignSystemId === null ? "bg-primary/10" : ""}`}
+                    data-testid="design-system-option-none"
+                  >
+                    <div className="flex items-center w-full">
+                      <Ban size={16} className="mr-2 text-muted-foreground" />
+                      <span className="flex-1">No Design System</span>
+                      {currentDesignSystemId === null && (
+                        <Check size={16} className="text-primary ml-2" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                  {designSystems.map((designSystem) => {
+                    const isSelected =
+                      currentDesignSystemId === designSystem.id;
+                    return (
+                      <DropdownMenuItem
+                        key={`design-system-${designSystem.id}`}
+                        onClick={() =>
+                          handleDesignSystemSelect(designSystem.id)
+                        }
+                        className={`py-2 px-3 ${isSelected ? "bg-primary/10" : ""}`}
+                        data-testid={`design-system-option-${designSystem.id}`}
+                        title={designSystem.description}
+                      >
+                        <div className="flex items-center w-full">
+                          <Blocks
+                            size={16}
+                            className="mr-2 text-muted-foreground"
+                          />
+                          <span className="flex-1">{designSystem.displayName}</span>
+                          {isSelected && (
+                            <Check size={16} className="text-primary ml-2" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
+              )}
 
               {/* Custom Themes Section (limited) */}
               {visibleCustomThemes.length > 0 && (
@@ -324,7 +380,8 @@ export function AuxiliaryActionsMenu({
               const themeId = `custom:${theme.id}`;
               const isSelected = currentThemeId === themeId;
               return (
-                <div
+                <button
+                  type="button"
                   key={themeId}
                   onClick={() => {
                     handleThemeSelect(themeId);
@@ -344,7 +401,7 @@ export function AuxiliaryActionsMenu({
                     )}
                   </div>
                   {isSelected && <Check size={18} className="text-primary" />}
-                </div>
+                </button>
               );
             })}
           </div>

@@ -1,5 +1,5 @@
-import { test } from "./helpers/test_helper";
 import { expect } from "@playwright/test";
+import { test } from "./helpers/test_helper";
 
 test("theme selection - anyon-wide default theme is persisted", async ({
   po,
@@ -9,6 +9,7 @@ test("theme selection - anyon-wide default theme is persisted", async ({
   // Verify initial settings state
   const initialSettings = po.recordSettings();
   expect(initialSettings.selectedThemeId).toBe("default");
+  expect(initialSettings.selectedDesignSystemId ?? "").toBe("");
 
   // Open menu and select "No Theme"
   await po
@@ -37,6 +38,30 @@ test("theme selection - anyon-wide default theme is persisted", async ({
 
   // Verify settings file was updated back to default
   expect(po.recordSettings().selectedThemeId).toBe("default");
+
+  await po
+    .getHomeChatInputContainer()
+    .getByTestId("auxiliary-actions-menu")
+    .click();
+  await po.page.getByRole("menuitem", { name: "Themes" }).click();
+  await expect(po.page.getByTestId("design-system-option-mui")).toBeVisible();
+  await po.page.getByTestId("design-system-option-mui").click();
+  await expect(po.page.getByTestId("design-system-option-mui")).not.toBeVisible();
+
+  expect(po.recordSettings().selectedDesignSystemId).toBe("mui");
+
+  await po
+    .getHomeChatInputContainer()
+    .getByTestId("auxiliary-actions-menu")
+    .click();
+  await po.page.getByRole("menuitem", { name: "Themes" }).click();
+  await expect(po.page.getByTestId("design-system-option-mui")).toHaveClass(
+    /bg-primary/,
+  );
+  await po.page.getByTestId("design-system-option-none").click();
+  await expect(po.page.getByTestId("design-system-option-none")).not.toBeVisible();
+
+  expect(po.recordSettings().selectedDesignSystemId).toBe("");
 });
 
 test("theme selection - app-specific theme is persisted", async ({ po }) => {

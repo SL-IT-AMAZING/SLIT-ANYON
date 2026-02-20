@@ -292,6 +292,7 @@ export const UserSettingsSchema = z
     proSmartContextOption: SmartContextModeSchema.optional(),
     selectedTemplateId: z.string(),
     selectedThemeId: z.string().optional(),
+    selectedDesignSystemId: z.string().optional(),
     enableSupabaseWriteSqlMigration: z.boolean().optional(),
     skipPruneEdgeFunctions: z.boolean().optional(),
     selectedAgent: z.string().optional(),

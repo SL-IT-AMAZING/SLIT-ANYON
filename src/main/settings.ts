@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   releaseChannel: "stable",
   selectedTemplateId: DEFAULT_TEMPLATE_ID,
   selectedThemeId: DEFAULT_THEME_ID,
+  selectedDesignSystemId: "",
   isRunning: false,
   lastKnownPerformance: undefined,
   // Enabled by default in 0.33.0-beta.1

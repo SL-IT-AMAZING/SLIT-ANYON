@@ -298,7 +298,8 @@
     "features": "Features",
     "techStack": "Tech Stack",
     "screenshots": "Screenshots",
-    "screenshotAlt": "{{title}} screenshot {{index}}"
+    "screenshotAlt": "{{title}} screenshot {{index}}",
+    "tags": "Tags"
   },
   "appDetails": {
     "locationUpdated": "App location updated",
