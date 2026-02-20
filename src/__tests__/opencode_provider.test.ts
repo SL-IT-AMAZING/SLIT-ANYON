@@ -145,4 +145,109 @@ describe("OpenCode provider session caching", () => {
     );
     expect(createCalls).toHaveLength(2);
   });
+
+  it("does not recreate session on transient cached-session lookup failure", async () => {
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (url.endsWith("/session") && init?.method === "POST") {
+          return createJsonResponse({ id: "sess-1" });
+        }
+
+        if (url.endsWith("/session/sess-1")) {
+          throw new TypeError("fetch failed");
+        }
+
+        throw new Error(
+          `Unexpected fetch call: ${url} ${init?.method ?? "GET"}`,
+        );
+      },
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const firstModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-11",
+      agentName: "Sisyphus",
+    })("dummy-model") as unknown as SessionLookupModel;
+
+    const secondModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-11",
+      agentName: "Atlas",
+    })("dummy-model") as unknown as SessionLookupModel;
+
+    const firstSession = await firstModel.getOrCreateSession("anyon-chat-11");
+    expect(firstSession.id).toBe("sess-1");
+
+    await expect(
+      secondModel.getOrCreateSession("anyon-chat-11"),
+    ).rejects.toThrow("fetch failed");
+
+    const createCalls = fetchMock.mock.calls.filter(
+      ([input, init]) =>
+        (typeof input === "string" ? input : input.toString()).endsWith(
+          "/session",
+        ) && init?.method === "POST",
+    );
+
+    expect(createCalls).toHaveLength(1);
+  });
+
+  it("reuses cached session across agent switches for the same chat", async () => {
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (url.endsWith("/session") && init?.method === "POST") {
+          return createJsonResponse({ id: "sess-shared" });
+        }
+
+        if (url.endsWith("/session/sess-shared")) {
+          return createJsonResponse({ id: "sess-shared" });
+        }
+
+        throw new Error(
+          `Unexpected fetch call: ${url} ${init?.method ?? "GET"}`,
+        );
+      },
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const sisyphusModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-12",
+      agentName: "Sisyphus",
+    })("dummy-model") as unknown as SessionLookupModel;
+
+    const atlasModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-12",
+      agentName: "Atlas",
+    })("dummy-model") as unknown as SessionLookupModel;
+
+    const firstSession = await sisyphusModel.getOrCreateSession("anyon-chat-12");
+    const secondSession = await atlasModel.getOrCreateSession("anyon-chat-12");
+
+    expect(firstSession.id).toBe("sess-shared");
+    expect(secondSession.id).toBe("sess-shared");
+
+    const createCalls = fetchMock.mock.calls.filter(
+      ([input, init]) =>
+        (typeof input === "string" ? input : input.toString()).endsWith(
+          "/session",
+        ) && init?.method === "POST",
+    );
+
+    expect(createCalls).toHaveLength(1);
+  });
 });

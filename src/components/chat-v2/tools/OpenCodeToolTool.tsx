@@ -14,6 +14,7 @@ import {
   Terminal,
   Wrench,
 } from "lucide-react";
+import { TaskDelegationTool } from "../TaskDelegationTool";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
 
@@ -28,6 +29,29 @@ interface OpenCodeToolToolProps {
 interface ToolInfo {
   icon: LucideIcon;
   label: string;
+}
+
+interface TaskProgressPayload {
+  kind: "task-progress";
+  agentType?: string;
+  description?: string;
+  childTools?: Array<{
+    id: string;
+    toolName: string;
+    title: string;
+    subtitle?: string;
+    status: "running" | "completed" | "error";
+  }>;
+}
+
+function parseTaskProgressPayload(raw: string): TaskProgressPayload | null {
+  try {
+    const parsed = JSON.parse(raw) as TaskProgressPayload;
+    if (parsed?.kind !== "task-progress") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 function getToolInfo(name: string): ToolInfo {
@@ -88,6 +112,8 @@ export function OpenCodeToolTool({
     title && title !== name && title !== label ? title : undefined;
 
   const raw = typeof children === "string" ? children : String(children ?? "");
+  const taskProgress =
+    name.toLowerCase() === "task" ? parseTaskProgressPayload(raw.trim()) : null;
   const renderedContent = useMemo(() => {
     if (!raw.trim()) {
       if (mappedStatus === "running") {
@@ -120,7 +146,14 @@ export function OpenCodeToolTool({
       status={mappedStatus}
       className={className}
     >
-      {renderedContent.monospace ? (
+      {taskProgress ? (
+        <TaskDelegationTool
+          agentType={taskProgress.agentType ?? "Subagent"}
+          description={taskProgress.description ?? subtitle}
+          childTools={taskProgress.childTools ?? []}
+          running={mappedStatus === "running"}
+        />
+      ) : renderedContent.monospace ? (
         <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
           {renderedContent.text}
         </pre>
