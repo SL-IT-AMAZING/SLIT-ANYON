@@ -66,18 +66,18 @@ export type ModelPreset = {
 export const PRO_PRESET: ModelPreset = {
   agents: {
     Sisyphus: { model: "anthropic/claude-opus-4-6" },
-    oracle: { model: "openai/gpt-5.2", variant: "high" },
+    oracle: { model: "openai/gpt-5.3", variant: "high" },
     explore: { model: "opencode/grok-code-fast-1" },
     librarian: { model: "anthropic/claude-haiku-4-5" },
     "multimodal-looker": { model: "google/gemini-3-pro-preview" },
     "Prometheus (Planner)": { model: "anthropic/claude-opus-4-6" },
     "Metis (Plan Consultant)": { model: "anthropic/claude-opus-4-6" },
-    "Momus (Plan Reviewer)": { model: "openai/gpt-5.2", variant: "medium" },
+    "Momus (Plan Reviewer)": { model: "openai/gpt-5.3", variant: "medium" },
     Atlas: { model: "anthropic/claude-opus-4-6" },
   },
   categories: {
     "visual-engineering": { model: "google/gemini-3-pro-preview" },
-    ultrabrain: { model: "openai/gpt-5.2-codex" },
+    ultrabrain: { model: "openai/gpt-5.3-codex" },
     artistry: { model: "google/gemini-3-pro-preview", variant: "max" },
     quick: { model: "anthropic/claude-haiku-4-5" },
     "unspecified-low": { model: "anthropic/claude-sonnet-4-5" },
@@ -94,18 +94,18 @@ export const PRO_PRESET: ModelPreset = {
 export const LIGHT_PRESET: ModelPreset = {
   agents: {
     Sisyphus: { model: "anthropic/claude-sonnet-4-5" },
-    oracle: { model: "openai/gpt-5.2", variant: "high" },
+    oracle: { model: "openai/gpt-5.3", variant: "high" },
     explore: { model: "opencode/grok-code-fast-1" },
     librarian: { model: "anthropic/claude-haiku-4-5" },
     "multimodal-looker": { model: "google/gemini-3-pro-preview" },
     "Prometheus (Planner)": { model: "anthropic/claude-sonnet-4-5" },
     "Metis (Plan Consultant)": { model: "anthropic/claude-sonnet-4-5" },
-    "Momus (Plan Reviewer)": { model: "openai/gpt-5.2", variant: "medium" },
+    "Momus (Plan Reviewer)": { model: "openai/gpt-5.3", variant: "medium" },
     Atlas: { model: "anthropic/claude-sonnet-4-5" },
   },
   categories: {
     "visual-engineering": { model: "google/gemini-3-pro-preview" },
-    ultrabrain: { model: "openai/gpt-5.2-codex" },
+    ultrabrain: { model: "openai/gpt-5.3-codex" },
     artistry: { model: "google/gemini-3-pro-preview", variant: "max" },
     quick: { model: "anthropic/claude-haiku-4-5" },
     "unspecified-low": { model: "anthropic/claude-sonnet-4-5" },

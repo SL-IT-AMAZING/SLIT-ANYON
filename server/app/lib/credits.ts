@@ -1,23 +1,35 @@
 import { POLAR_METER_ID, polar } from "./polar";
 
 const MODEL_WEIGHTS: Record<string, number> = {
+  // Opus models (5x weight)
   "claude-opus-4-6": 5,
   "claude-opus-4": 5,
   "claude-opus-4-0514": 5,
+  // Sonnet models (1x weight)
   "claude-sonnet-4-5": 1,
   "claude-sonnet-4": 1,
   "claude-sonnet-4-0514": 1,
+  // Haiku models (0.3x weight)
   "claude-haiku-4-5": 0.3,
   "claude-haiku-3.5": 0.3,
+  // OpenAI models
+  "gpt-5.3": 1,
+  "gpt-5.3-codex": 1,
+  "gpt-5.3-codex-spark": 0.3,
   "gpt-5.2": 1,
   "gpt-5.2-codex": 1,
+  "gpt-5.1-codex-mini": 0.3,
+  // Google models
   "gemini-3-pro": 0.5,
   "gemini-3-pro-preview": 0.5,
   "gemini-3-flash": 0.1,
   "gemini-3-flash-preview": 0.1,
+  // Lightweight models
   "grok-code-fast-1": 0.1,
+  // Free models (0x - no metering)
   "big-pickle": 0,
   "glm-4-flash": 0,
+  "glm-4.7": 0,
 };
 
 /**
