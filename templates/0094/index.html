@@ -1,0 +1,2069 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AVANT-GARDE STUDIO</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@200;400;700&family=Playfair+Display:ital,wght@0,400;0,900;1,400&family=Inter:wght@100;400;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-black: #1a1a1a;
+        --soft-beige: #f0e6d8;
+        --accent-bronze: #b87333;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--soft-beige);
+        color: var(--primary-black);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--accent-bronze);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.1s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-bronze);
+        opacity: 0.3;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        transition: transform 0.3s ease;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        background: rgba(240, 230, 216, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 20px 50px;
+        transition: all 0.3s ease;
+      }
+
+      nav.scrolled {
+        padding: 15px 50px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2.5rem;
+        color: var(--primary-black);
+        text-decoration: none;
+        letter-spacing: 3px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: var(--accent-bronze);
+        transition: left 0.3s ease;
+      }
+
+      .logo:hover::after {
+        left: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        list-style: none;
+        gap: 40px;
+      }
+
+      .nav-links a {
+        font-family: "Oswald", sans-serif;
+        font-weight: 400;
+        font-size: 1rem;
+        color: var(--primary-black);
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a::before {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 1px;
+        bottom: -5px;
+        left: 50%;
+        background-color: var(--accent-bronze);
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover::before {
+        width: 100%;
+        left: 0;
+      }
+
+      /* Mobile Menu */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-toggle span {
+        width: 30px;
+        height: 2px;
+        background: var(--primary-black);
+        margin: 3px 0;
+        transition: 0.3s;
+      }
+
+      /* Sections */
+      section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 100px 50px;
+      }
+
+      /* Hero Section */
+      #hero {
+        background: var(--soft-beige);
+        overflow: hidden;
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+        position: relative;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 10vw, 8rem);
+        font-weight: 900;
+        line-height: 0.9;
+        margin-bottom: 30px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        animation: titleReveal 1s ease-out forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+        opacity: 0;
+        transform: translateY(100px) rotateX(90deg);
+      }
+
+      @keyframes titleReveal {
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateX(0);
+        }
+      }
+
+      .hero-subtitle {
+        font-family: "Oswald", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 200;
+        letter-spacing: 5px;
+        color: var(--accent-bronze);
+        opacity: 0;
+        animation: fadeInUp 1s ease-out 1s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero-image {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        opacity: 0.1;
+        z-index: 1;
+      }
+
+      .hero-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* About Section */
+      #about {
+        background: var(--primary-black);
+        color: var(--soft-beige);
+      }
+
+      .about-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        max-width: 1200px;
+        width: 100%;
+        align-items: center;
+      }
+
+      .about-text {
+        position: relative;
+      }
+
+      .about-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        margin-bottom: 30px;
+        color: var(--accent-bronze);
+        letter-spacing: 3px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .about-title::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        color: var(--soft-beige);
+        overflow: hidden;
+        transition: width 0.5s ease;
+      }
+
+      .about-title:hover::after {
+        width: 100%;
+      }
+
+      .about-description {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 30px;
+        opacity: 0.9;
+      }
+
+      .about-images {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        position: relative;
+      }
+
+      .about-image {
+        overflow: hidden;
+        position: relative;
+        height: 250px;
+      }
+
+      .about-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .about-image:hover img {
+        transform: scale(1.1);
+      }
+
+      .about-image::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--accent-bronze);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        mix-blend-mode: multiply;
+      }
+
+      .about-image:hover::after {
+        opacity: 0.3;
+      }
+
+      /* Portfolio Section */
+      #portfolio {
+        background: var(--soft-beige);
+      }
+
+      .portfolio-container {
+        max-width: 1400px;
+        width: 100%;
+      }
+
+      .portfolio-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .portfolio-title {
+        font-family: "Playfair Display", serif;
+        font-size: 5rem;
+        font-weight: 900;
+        color: var(--primary-black);
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .portfolio-title::before,
+      .portfolio-title::after {
+        content: "";
+        position: absolute;
+        width: 100px;
+        height: 2px;
+        background: var(--accent-bronze);
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .portfolio-title::before {
+        left: -120px;
+      }
+
+      .portfolio-title::after {
+        right: -120px;
+      }
+
+      .portfolio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+      }
+
+      .portfolio-item {
+        position: relative;
+        overflow: hidden;
+        height: 500px;
+        background: var(--primary-black);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .portfolio-item:hover {
+        transform: translateY(-10px);
+      }
+
+      .portfolio-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease;
+      }
+
+      .portfolio-item:hover img {
+        opacity: 0.7;
+        transform: scale(1.05);
+      }
+
+      .portfolio-overlay {
+        position: absolute;
+        bottom: -100%;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        padding: 40px 30px;
+        transition: bottom 0.3s ease;
+      }
+
+      .portfolio-item:hover .portfolio-overlay {
+        bottom: 0;
+      }
+
+      .portfolio-overlay h3 {
+        font-family: "Oswald", sans-serif;
+        font-size: 2rem;
+        color: var(--soft-beige);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .portfolio-overlay p {
+        color: var(--accent-bronze);
+        font-size: 1rem;
+        letter-spacing: 1px;
+      }
+
+      /* Services Section */
+      #services {
+        background: var(--primary-black);
+        color: var(--soft-beige);
+      }
+
+      .services-container {
+        max-width: 1200px;
+        width: 100%;
+      }
+
+      .services-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 5rem;
+        text-align: center;
+        margin-bottom: 80px;
+        color: var(--accent-bronze);
+        letter-spacing: 5px;
+        position: relative;
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 50px;
+      }
+
+      .service-card {
+        background: rgba(240, 230, 216, 0.05);
+        padding: 50px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.3s ease,
+          background 0.3s ease;
+        border: 1px solid rgba(184, 115, 51, 0.3);
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--accent-bronze) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        transform: rotate(45deg);
+      }
+
+      .service-card:hover::before {
+        opacity: 0.1;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        background: rgba(240, 230, 216, 0.1);
+      }
+
+      .service-icon {
+        font-size: 3rem;
+        color: var(--accent-bronze);
+        margin-bottom: 30px;
+      }
+
+      .service-title {
+        font-family: "Oswald", sans-serif;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .service-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        opacity: 0.8;
+      }
+
+      /* Gallery Section */
+      #gallery {
+        background: var(--soft-beige);
+        padding: 100px 0;
+      }
+
+      .gallery-container {
+        max-width: 100%;
+        position: relative;
+      }
+
+      .gallery-title {
+        font-family: "Playfair Display", serif;
+        font-size: 6rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 80px;
+        color: var(--primary-black);
+        position: relative;
+      }
+
+      .gallery-title span {
+        display: inline-block;
+        transition: transform 0.3s ease;
+      }
+
+      .gallery-title:hover span:nth-child(odd) {
+        transform: translateY(-10px) rotate(-5deg);
+      }
+
+      .gallery-title:hover span:nth-child(even) {
+        transform: translateY(10px) rotate(5deg);
+      }
+
+      .gallery-masonry {
+        column-count: 4;
+        column-gap: 20px;
+        padding: 0 50px;
+      }
+
+      .gallery-item {
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        break-inside: avoid;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition:
+          transform 0.5s ease,
+          filter 0.5s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.05);
+        filter: brightness(0.8);
+      }
+
+      .gallery-item::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, var(--accent-bronze), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      .gallery-item:hover::after {
+        opacity: 0.3;
+      }
+
+      /* Video Section */
+      #videos {
+        background: var(--primary-black);
+        color: var(--soft-beige);
+        padding: 100px 50px;
+      }
+
+      .video-container {
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .video-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 5rem;
+        text-align: center;
+        margin-bottom: 80px;
+        color: var(--accent-bronze);
+        letter-spacing: 5px;
+        animation: glow 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes glow {
+        from {
+          text-shadow:
+            0 0 10px var(--accent-bronze),
+            0 0 20px var(--accent-bronze);
+        }
+        to {
+          text-shadow:
+            0 0 20px var(--accent-bronze),
+            0 0 30px var(--accent-bronze);
+        }
+      }
+
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 40px;
+      }
+
+      .video-item {
+        position: relative;
+        overflow: hidden;
+        background: rgba(240, 230, 216, 0.05);
+        border: 1px solid rgba(184, 115, 51, 0.3);
+        transition: transform 0.3s ease;
+      }
+
+      .video-item:hover {
+        transform: scale(1.02);
+      }
+
+      .video-item video {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+      }
+
+      .video-info {
+        padding: 30px;
+        text-align: center;
+      }
+
+      .video-info h3 {
+        font-family: "Oswald", sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .video-info p {
+        color: var(--accent-bronze);
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+      }
+
+      /* Contact Section */
+      #contact {
+        background: var(--soft-beige);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .contact-container {
+        max-width: 1200px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .contact-info {
+        position: relative;
+      }
+
+      .contact-title {
+        font-family: "Playfair Display", serif;
+        font-size: 4rem;
+        font-weight: 900;
+        margin-bottom: 30px;
+        color: var(--primary-black);
+        position: relative;
+        display: inline-block;
+      }
+
+      .contact-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100px;
+        height: 3px;
+        background: var(--accent-bronze);
+      }
+
+      .contact-text {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        margin-bottom: 40px;
+        color: var(--primary-black);
+      }
+
+      .contact-details {
+        list-style: none;
+      }
+
+      .contact-details li {
+        font-family: "Oswald", sans-serif;
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--primary-black);
+      }
+
+      .contact-details li::before {
+        content: "◆";
+        color: var(--accent-bronze);
+        font-size: 1.5rem;
+      }
+
+      .contact-form {
+        background: var(--primary-black);
+        padding: 60px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contact-form::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--accent-bronze) 0%,
+          transparent 70%
+        );
+        opacity: 0.05;
+        animation: rotate 20s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+        position: relative;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(240, 230, 216, 0.3);
+        color: var(--soft-beige);
+        font-size: 1rem;
+        font-family: "Inter", sans-serif;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-bottom-color: var(--accent-bronze);
+      }
+
+      .form-group label {
+        position: absolute;
+        top: 15px;
+        left: 0;
+        color: rgba(240, 230, 216, 0.7);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+
+      .form-group input:focus + label,
+      .form-group input:not(:placeholder-shown) + label,
+      .form-group textarea:focus + label,
+      .form-group textarea:not(:placeholder-shown) + label {
+        top: -10px;
+        font-size: 0.8rem;
+        color: var(--accent-bronze);
+      }
+
+      .submit-btn {
+        background: transparent;
+        border: 2px solid var(--accent-bronze);
+        color: var(--accent-bronze);
+        padding: 15px 50px;
+        font-family: "Oswald", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--accent-bronze);
+        transition: left 0.3s ease;
+        z-index: -1;
+      }
+
+      .submit-btn:hover {
+        color: var(--primary-black);
+      }
+
+      .submit-btn:hover::before {
+        left: 0;
+      }
+
+      /* Footer */
+      footer {
+        background: var(--primary-black);
+        color: var(--soft-beige);
+        padding: 50px;
+        text-align: center;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 3rem;
+        color: var(--accent-bronze);
+        margin-bottom: 30px;
+        letter-spacing: 3px;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .social-links a {
+        color: var(--soft-beige);
+        font-size: 1.5rem;
+        transition:
+          color 0.3s ease,
+          transform 0.3s ease;
+      }
+
+      .social-links a:hover {
+        color: var(--accent-bronze);
+        transform: translateY(-5px);
+      }
+
+      .footer-text {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        letter-spacing: 1px;
+      }
+
+      /* Page Transitions */
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background: var(--accent-bronze);
+        z-index: 10000;
+        transition: left 0.5s ease;
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      /* Scroll Animations */
+      .reveal {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.8s ease;
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--primary-black);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        transition:
+          opacity 0.5s ease,
+          visibility 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--accent-bronze);
+        letter-spacing: 5px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-text::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--soft-beige);
+        animation: loaderLine 2s ease-in-out infinite;
+      }
+
+      @keyframes loaderLine {
+        0%,
+        100% {
+          width: 0;
+          left: 0;
+        }
+        50% {
+          width: 100%;
+          left: 0;
+        }
+        51% {
+          width: 100%;
+          left: 100%;
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .gallery-masonry {
+          column-count: 3;
+        }
+      }
+
+      @media (max-width: 968px) {
+        .nav-links {
+          position: fixed;
+          top: 0;
+          right: -100%;
+          width: 100%;
+          height: 100vh;
+          background: var(--primary-black);
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          transition: right 0.3s ease;
+        }
+
+        .nav-links.active {
+          right: 0;
+        }
+
+        .nav-links a {
+          color: var(--soft-beige);
+          font-size: 2rem;
+          margin: 20px 0;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        .menu-toggle.active span:nth-child(1) {
+          transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .menu-toggle.active span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .menu-toggle.active span:nth-child(3) {
+          transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 8vw, 6rem);
+        }
+
+        .about-container {
+          grid-template-columns: 1fr;
+          gap: 50px;
+        }
+
+        .portfolio-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery-masonry {
+          column-count: 2;
+          padding: 0 20px;
+        }
+
+        .video-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 50px;
+        }
+
+        .contact-form {
+          padding: 40px;
+        }
+
+        section {
+          padding: 80px 30px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero-title {
+          font-size: 3rem;
+        }
+
+        .hero-subtitle {
+          font-size: 1.2rem;
+        }
+
+        .about-title,
+        .portfolio-title,
+        .services-title,
+        .gallery-title,
+        .video-title,
+        .contact-title {
+          font-size: 3rem;
+        }
+
+        .gallery-masonry {
+          column-count: 1;
+        }
+
+        nav {
+          padding: 15px 20px;
+        }
+
+        .logo {
+          font-size: 2rem;
+        }
+
+        .cursor,
+        .cursor-follower {
+          display: none;
+        }
+
+        body {
+          cursor: auto;
+        }
+      }
+
+      /* Smooth Scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Text Selection */
+      ::selection {
+        background: var(--accent-bronze);
+        color: var(--primary-black);
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--soft-beige);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent-bronze);
+        transition: background 0.3s ease;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-black);
+      }
+
+      /* Additional Typography Effects */
+      .glitch {
+        position: relative;
+        color: var(--primary-black);
+        font-size: 4rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-shadow:
+          0.05em 0 0 var(--accent-bronze),
+          -0.05em -0.025em 0 var(--soft-beige);
+        animation: glitch 725ms infinite;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch::before {
+        animation: glitch-1 651ms infinite;
+        clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        transform: translate(-0.025em, -0.0125em);
+        opacity: 0.8;
+      }
+
+      .glitch::after {
+        animation: glitch-2 375ms infinite;
+        clip-path: polygon(0 80%, 100% 20%, 100% 100%, 0 100%);
+        transform: translate(0.0125em, 0.025em);
+        opacity: 0.8;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            0.05em 0 0 var(--accent-bronze),
+            -0.05em -0.025em 0 var(--soft-beige);
+        }
+        14%,
+        86% {
+          text-shadow:
+            0.05em -0.025em 0 var(--accent-bronze),
+            -0.05em 0.025em 0 var(--soft-beige);
+        }
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%);
+        }
+        25% {
+          clip-path: polygon(0 15%, 100% 15%, 100% 15%, 0 15%);
+        }
+        50% {
+          clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%);
+        }
+        75% {
+          clip-path: polygon(0 1%, 100% 1%, 100% 2%, 0 2%);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: polygon(0 25%, 100% 25%, 100% 30%, 0 30%);
+        }
+        25% {
+          clip-path: polygon(0 3%, 100% 3%, 100% 3%, 0 3%);
+        }
+        50% {
+          clip-path: polygon(0 5%, 100% 5%, 100% 20%, 0 20%);
+        }
+        75% {
+          clip-path: polygon(0 20%, 100% 20%, 100% 20%, 0 20%);
+        }
+      }
+
+      /* Parallax Effects */
+      .parallax-element {
+        transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      /* Magnetic Button Effect */
+      .magnetic-btn {
+        position: relative;
+        display: inline-block;
+        padding: 20px 40px;
+        background: transparent;
+        border: 2px solid var(--accent-bronze);
+        color: var(--accent-bronze);
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        overflow: hidden;
+        transition: color 0.3s ease;
+      }
+
+      .magnetic-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--accent-bronze);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        transition:
+          width 0.6s ease,
+          height 0.6s ease;
+      }
+
+      .magnetic-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .magnetic-btn:hover {
+        color: var(--primary-black);
+      }
+
+      .magnetic-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Hover Effects */
+      .hover-effect {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hover-effect::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(184, 115, 51, 0.4),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .hover-effect:hover::before {
+        left: 100%;
+      }
+
+      /* Text Animations */
+      .text-reveal {
+        overflow: hidden;
+      }
+
+      .text-reveal span {
+        display: inline-block;
+        transform: translateY(100%);
+        transition: transform 0.5s ease;
+        transition-delay: calc(var(--index) * 0.05s);
+      }
+
+      .text-reveal.active span {
+        transform: translateY(0);
+      }
+
+      /* Noise Background */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.02;
+        z-index: 1;
+      }
+
+      .noise::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgbnVtT2N0YXZlcz0iMTAiLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDEgMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==");
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Noise Background -->
+    <div class="noise"></div>
+
+    <!-- Page Transition -->
+    <div class="page-transition"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <a href="#hero" class="logo">AVANT-GARDE</a>
+        <ul class="nav-links">
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#portfolio">Portfolio</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#videos">Videos</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span style="--i: 0">C</span><span style="--i: 1">R</span
+          ><span style="--i: 2">E</span><span style="--i: 3">A</span
+          ><span style="--i: 4">T</span><span style="--i: 5">I</span
+          ><span style="--i: 6">V</span><span style="--i: 7">E</span>
+          <br />
+          <span style="--i: 8">S</span><span style="--i: 9">T</span
+          ><span style="--i: 10">U</span><span style="--i: 11">D</span
+          ><span style="--i: 12">I</span><span style="--i: 13">O</span>
+        </h1>
+        <p class="hero-subtitle">WHERE ART MEETS INNOVATION</p>
+      </div>
+      <div class="hero-image">
+        <img
+          src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+          alt="Hero Background"
+        />
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="reveal">
+      <div class="about-container">
+        <div class="about-text">
+          <h2 class="about-title" data-text="ABOUT US">ABOUT US</h2>
+          <p class="about-description">
+            We are a cutting-edge creative studio specializing in innovative
+            design solutions that push the boundaries of visual communication.
+            Our team combines artistic vision with technical expertise to
+            deliver exceptional results that captivate and inspire.
+          </p>
+          <p class="about-description">
+            With a passion for typography, motion design, and digital
+            experiences, we transform ideas into powerful visual narratives that
+            resonate with audiences worldwide.
+          </p>
+          <a href="#portfolio" class="magnetic-btn">
+            <span>VIEW OUR WORK</span>
+          </a>
+        </div>
+        <div class="about-images">
+          <div class="about-image">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="About Image 1"
+            />
+          </div>
+          <div class="about-image">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="About Image 2"
+            />
+          </div>
+          <div class="about-image">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="About Image 3"
+            />
+          </div>
+          <div class="about-image">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+              alt="About Image 4"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="reveal">
+      <div class="portfolio-container">
+        <div class="portfolio-header">
+          <h2 class="portfolio-title">PORTFOLIO</h2>
+          <p class="hero-subtitle">SELECTED WORKS</p>
+        </div>
+        <div class="portfolio-grid">
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Portfolio 1"
+            />
+            <div class="portfolio-overlay">
+              <h3>Digital Dreams</h3>
+              <p>Experimental Typography</p>
+            </div>
+          </div>
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+              alt="Portfolio 2"
+            />
+            <div class="portfolio-overlay">
+              <h3>Urban Visions</h3>
+              <p>Brand Identity</p>
+            </div>
+          </div>
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+              alt="Portfolio 3"
+            />
+            <div class="portfolio-overlay">
+              <h3>Future Forward</h3>
+              <p>Motion Design</p>
+            </div>
+          </div>
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+              alt="Portfolio 4"
+            />
+            <div class="portfolio-overlay">
+              <h3>Abstract Reality</h3>
+              <p>Digital Art</p>
+            </div>
+          </div>
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Portfolio 5"
+            />
+            <div class="portfolio-overlay">
+              <h3>Minimal Elegance</h3>
+              <p>Web Design</p>
+            </div>
+          </div>
+          <div class="portfolio-item">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+              alt="Portfolio 6"
+            />
+            <div class="portfolio-overlay">
+              <h3>Creative Chaos</h3>
+              <p>Art Direction</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="reveal">
+      <div class="services-container">
+        <h2 class="services-title">OUR SERVICES</h2>
+        <div class="services-grid">
+          <div class="service-card">
+            <div class="service-icon">◆</div>
+            <h3 class="service-title">Brand Identity</h3>
+            <p class="service-description">
+              Creating distinctive visual identities that capture the essence of
+              your brand and resonate with your target audience.
+            </p>
+          </div>
+          <div class="service-card">
+            <div class="service-icon">◈</div>
+            <h3 class="service-title">Typography Design</h3>
+            <p class="service-description">
+              Crafting custom typefaces and typographic solutions that elevate
+              your message and create lasting impressions.
+            </p>
+          </div>
+          <div class="service-card">
+            <div class="service-icon">◊</div>
+            <h3 class="service-title">Motion Graphics</h3>
+            <p class="service-description">
+              Bringing ideas to life through dynamic animations and motion
+              design that captivate and engage audiences.
+            </p>
+          </div>
+          <div class="service-card">
+            <div class="service-icon">◉</div>
+            <h3 class="service-title">Web Design</h3>
+            <p class="service-description">
+              Designing immersive digital experiences that combine aesthetics
+              with functionality for maximum impact.
+            </p>
+          </div>
+          <div class="service-card">
+            <div class="service-icon">◎</div>
+            <h3 class="service-title">Art Direction</h3>
+            <p class="service-description">
+              Providing creative vision and strategic direction to ensure
+              cohesive and compelling visual narratives.
+            </p>
+          </div>
+          <div class="service-card">
+            <div class="service-icon">◐</div>
+            <h3 class="service-title">Digital Strategy</h3>
+            <p class="service-description">
+              Developing comprehensive digital strategies that align with your
+              business goals and drive meaningful results.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="reveal">
+      <div class="gallery-container">
+        <h2 class="gallery-title">
+          <span>G</span><span>A</span><span>L</span><span>L</span><span>E</span
+          ><span>R</span><span>Y</span>
+        </h2>
+        <div class="gallery-masonry">
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+              alt="Gallery 1"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+              alt="Gallery 2"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+              alt="Gallery 3"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png"
+              alt="Gallery 4"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+              alt="Gallery 5"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+              alt="Gallery 6"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+              alt="Gallery 7"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png"
+              alt="Gallery 8"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+              alt="Gallery 9"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png"
+              alt="Gallery 10"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png"
+              alt="Gallery 11"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png"
+              alt="Gallery 12"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Video Section -->
+    <section id="videos" class="reveal">
+      <div class="video-container">
+        <h2 class="video-title">MOTION SHOWCASE</h2>
+        <div class="video-grid">
+          <div class="video-item">
+            <video autoplay muted loop>
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="video-info">
+              <h3>Dynamic Flow</h3>
+              <p>Experimental Motion</p>
+            </div>
+          </div>
+          <div class="video-item">
+            <video autoplay muted loop>
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="video-info">
+              <h3>Abstract Waves</h3>
+              <p>Fluid Animation</p>
+            </div>
+          </div>
+          <div class="video-item">
+            <video autoplay muted loop>
+              <source
+                src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="video-info">
+              <h3>Digital Pulse</h3>
+              <p>Rhythmic Visuals</p>
+            </div>
+          </div>
+          <div class="video-item">
+            <video autoplay muted loop>
+              <source
+                src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="video-info">
+              <h3>Neon Dreams</h3>
+              <p>Light Exploration</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="reveal">
+      <div class="contact-container">
+        <div class="contact-info">
+          <h2 class="contact-title">GET IN TOUCH</h2>
+          <p class="contact-text">
+            Ready to bring your creative vision to life? Let's collaborate and
+            create something extraordinary together.
+          </p>
+          <ul class="contact-details">
+            <li>hello@avantgarde.studio</li>
+            <li>+1 (555) 123-4567</li>
+            <li>123 Creative Street, Design District</li>
+            <li>New York, NY 10001</li>
+          </ul>
+        </div>
+        <div class="contact-form">
+          <form>
+            <div class="form-group">
+              <input type="text" id="name" placeholder=" " required />
+              <label for="name">Your Name</label>
+            </div>
+            <div class="form-group">
+              <input type="email" id="email" placeholder=" " required />
+              <label for="email">Email Address</label>
+            </div>
+            <div class="form-group">
+              <input type="text" id="subject" placeholder=" " required />
+              <label for="subject">Subject</label>
+            </div>
+            <div class="form-group">
+              <textarea
+                id="message"
+                rows="5"
+                placeholder=" "
+                required
+              ></textarea>
+              <label for="message">Your Message</label>
+            </div>
+            <button type="submit" class="submit-btn">SEND MESSAGE</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="footer-logo">AVANT-GARDE</div>
+        <div class="social-links">
+          <a href="#">◆</a>
+          <a href="#">◈</a>
+          <a href="#">◊</a>
+          <a href="#">◉</a>
+        </div>
+        <p class="footer-text">
+          © 2025 AVANT-GARDE STUDIO. ALL RIGHTS RESERVED.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Loading Screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 10 + "px";
+          cursorFollower.style.top = e.clientY - 10 + "px";
+        }, 100);
+      });
+
+      document.addEventListener("mousedown", () => {
+        cursor.style.transform = "scale(0.8)";
+        cursorFollower.style.transform = "scale(0.8)";
+      });
+
+      document.addEventListener("mouseup", () => {
+        cursor.style.transform = "scale(1)";
+        cursorFollower.style.transform = "scale(1)";
+      });
+
+      // Navigation Scroll Effect
+      const navbar = document.getElementById("navbar");
+      let lastScroll = 0;
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 100) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+
+        lastScroll = currentScroll;
+      });
+
+      // Mobile Menu Toggle
+      const menuToggle = document.querySelector(".menu-toggle");
+      const navLinks = document.querySelector(".nav-links");
+
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("active");
+        navLinks.classList.toggle("active");
+      });
+
+      // Close mobile menu when link is clicked
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", () => {
+          menuToggle.classList.remove("active");
+          navLinks.classList.remove("active");
+        });
+      });
+
+      // Smooth Scroll for Navigation Links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Reveal Animation on Scroll
+      const revealElements = document.querySelectorAll(".reveal");
+
+      const revealOnScroll = () => {
+        revealElements.forEach((element) => {
+          const elementTop = element.getBoundingClientRect().top;
+          const elementBottom = element.getBoundingClientRect().bottom;
+          const windowHeight = window.innerHeight;
+
+          if (elementTop < windowHeight - 100 && elementBottom > 0) {
+            element.classList.add("active");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", revealOnScroll);
+      revealOnScroll(); // Initial check
+
+      // Parallax Effect
+      const parallaxElements = document.querySelectorAll(".parallax-element");
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+
+        parallaxElements.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+
+      // Page Transition Effect
+      const pageTransition = document.querySelector(".page-transition");
+      const links = document.querySelectorAll('a:not([href^="#"])');
+
+      links.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const href = link.getAttribute("href");
+
+          pageTransition.classList.add("active");
+
+          setTimeout(() => {
+            window.location.href = href;
+          }, 500);
+        });
+      });
+
+      // Form Submission
+      const contactForm = document.querySelector(".contact-form form");
+
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Add your form submission logic here
+        alert("Thank you for your message! We will get back to you soon.");
+        contactForm.reset();
+      });
+
+      // Magnetic Button Effect
+      const magneticBtns = document.querySelectorAll(".magnetic-btn");
+
+      magneticBtns.forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "translate(0, 0)";
+        });
+      });
+
+      // Random Page Transition Effects
+      const transitionEffects = ["slide", "fade", "rotate", "scale", "flip"];
+
+      function getRandomTransition() {
+        return transitionEffects[
+          Math.floor(Math.random() * transitionEffects.length)
+        ];
+      }
+
+      // Apply random transition when navigating
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", () => {
+          const effect = getRandomTransition();
+          document.body.style.animation = `${effect}Out 0.5s ease`;
+
+          setTimeout(() => {
+            document.body.style.animation = `${effect}In 0.5s ease`;
+          }, 500);
+        });
+      });
+
+      // Gallery Masonry Layout Adjustment
+      function adjustMasonryLayout() {
+        const gallery = document.querySelector(".gallery-masonry");
+        if (gallery) {
+          const items = gallery.querySelectorAll(".gallery-item");
+          items.forEach((item) => {
+            const img = item.querySelector("img");
+            img.addEventListener("load", () => {
+              // Masonry layout will auto-adjust
+            });
+          });
+        }
+      }
+
+      adjustMasonryLayout();
+
+      // Video Play/Pause on Hover
+      const videos = document.querySelectorAll(".video-item video");
+
+      videos.forEach((video) => {
+        video.addEventListener("mouseenter", () => {
+          video.play();
+        });
+
+        video.addEventListener("mouseleave", () => {
+          video.pause();
+        });
+      });
+
+      // Typography Animation on Scroll
+      const animateTypography = () => {
+        const typographyElements = document.querySelectorAll(
+          ".hero-title span, .glitch",
+        );
+
+        typographyElements.forEach((element, index) => {
+          const elementTop = element.getBoundingClientRect().top;
+          const windowHeight = window.innerHeight;
+
+          if (elementTop < windowHeight - 50) {
+            element.style.animationDelay = `${index * 0.05}s`;
+            element.classList.add("animate");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", animateTypography);
+
+      // Image Lazy Loading
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            img.src = img.dataset.src || img.src;
+            img.classList.add("loaded");
+            observer.unobserve(img);
+          }
+        });
+      });
+
+      document.querySelectorAll("img").forEach((img) => {
+        imageObserver.observe(img);
+      });
+
+      // Smooth Parallax Scrolling
+      let ticking = false;
+
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+
+        document.querySelectorAll(".parallax-element").forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translate3d(0, ${yPos}px, 0)`;
+        });
+
+        ticking = false;
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener("scroll", requestTick);
+
+      // Performance Optimization
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        document.body.classList.add("resize-animation-stopper");
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          document.body.classList.remove("resize-animation-stopper");
+        }, 400);
+      });
+
+      // Add resize animation stopper CSS
+      const style = document.createElement("style");
+      style.textContent = `
+            .resize-animation-stopper * {
+                animation: none !important;
+                transition: none !important;
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS STUDIO - Dimensional Portfolio</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;700;900&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #ff0080;
+        --secondary: #00ff88;
+        --accent: #8000ff;
+        --bg: #0a0a0a;
+        --text: #ffffff;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow: hidden;
+        position: relative;
+        cursor: crosshair;
+      }
+
+      /* Grid System */
+      .grid-container {
+        position: fixed;
+        width: 300vw;
+        height: 300vh;
+        display: grid;
+        grid-template-columns: repeat(3, 100vw);
+        grid-template-rows: repeat(3, 100vh);
+        transition: transform 1.2s cubic-bezier(0.86, 0, 0.07, 1);
+        will-change: transform;
+      }
+
+      .page {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Navigation System */
+      .nav-system {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        width: 200px;
+        height: 200px;
+        pointer-events: none;
+      }
+
+      .nav-btn {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--primary);
+        cursor: pointer;
+        transition: all 0.3s;
+        pointer-events: all;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 24px;
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-btn:hover {
+        background: var(--primary);
+        transform: scale(1.1);
+        box-shadow: 0 0 30px var(--primary);
+      }
+
+      .nav-btn.up {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-btn.down {
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-btn.left {
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .nav-btn.right {
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      /* Quick Menu */
+      .quick-menu {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .menu-item {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .menu-item::before {
+        content: attr(data-page);
+        position: absolute;
+        right: 60px;
+        white-space: nowrap;
+        background: var(--accent);
+        padding: 8px 15px;
+        border-radius: 25px;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.3s;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      .menu-item:hover::before {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .menu-item.active {
+        background: var(--secondary);
+        border-color: var(--secondary);
+        color: var(--bg);
+      }
+
+      /* Typography */
+      .mega-title {
+        font-family: "Archivo Black", sans-serif;
+        font-size: clamp(6rem, 18vw, 20rem);
+        line-height: 0.85;
+        letter-spacing: -0.05em;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 10;
+      }
+
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% 200%;
+        animation: gradient-shift 5s ease infinite;
+      }
+
+      @keyframes gradient-shift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* Mathematical Background */
+      .math-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        z-index: 1;
+      }
+
+      /* Page 1 - Hero */
+      .hero-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .hero-image {
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        max-width: 1200px;
+        max-height: 800px;
+        object-fit: cover;
+        z-index: 5;
+        filter: brightness(0.8) contrast(1.2);
+        clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+        transition: all 0.8s;
+      }
+
+      .hero-image:hover {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+        filter: brightness(1) contrast(1.2);
+      }
+
+      .hero-text {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        mix-blend-mode: difference;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-weight: 300;
+        letter-spacing: 0.5em;
+        margin-top: 20px;
+        opacity: 0.8;
+      }
+
+      /* Page 2 - About with Kinetic Typography */
+      .kinetic-text {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        position: relative;
+        display: inline-block;
+      }
+
+      .kinetic-text span {
+        display: inline-block;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .kinetic-text span:hover {
+        transform: scale(1.5) rotate(var(--rotation));
+        color: var(--primary);
+        text-shadow: 0 0 30px currentColor;
+      }
+
+      /* Page 3 - Gallery Grid */
+      .gallery-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 2px;
+        width: 90%;
+        height: 90%;
+        max-width: 1400px;
+        position: relative;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.5s;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover {
+        z-index: 10;
+        transform: scale(1.05);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      /* Page 4 - Interactive Particle Field */
+      .particle-field {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        cursor: none;
+      }
+
+      .particle-cursor {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        opacity: 0.5;
+        filter: blur(20px);
+      }
+
+      /* Page 5 - 3D Card Showcase */
+      .card-showcase {
+        display: flex;
+        gap: 40px;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+      }
+
+      .showcase-card {
+        width: 300px;
+        height: 400px;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        border-radius: 20px;
+        padding: 40px;
+        transform: rotateY(var(--rotate-y)) translateZ(var(--translate-z));
+        transition: all 0.5s;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .showcase-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transform: rotate(45deg);
+        transition: all 0.5s;
+        opacity: 0;
+      }
+
+      .showcase-card:hover::before {
+        animation: shine 0.5s ease;
+      }
+
+      @keyframes shine {
+        0% {
+          transform: translateX(-100%) translateY(-100%) rotate(45deg);
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateX(100%) translateY(100%) rotate(45deg);
+          opacity: 0;
+        }
+      }
+
+      /* Page 6 - Data Visualization */
+      .data-viz {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .viz-element {
+        position: absolute;
+        width: var(--size);
+        height: var(--size);
+        background: var(--color);
+        border-radius: 50%;
+        opacity: 0.7;
+        animation: orbit var(--duration) linear infinite;
+        transform-origin: var(--origin);
+      }
+
+      @keyframes orbit {
+        from {
+          transform: rotate(0deg) translateX(var(--radius)) rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg) translateX(var(--radius)) rotate(-360deg);
+        }
+      }
+
+      /* Page 7 - Video Background */
+      .video-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .bg-video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        transform: translate(-50%, -50%);
+        object-fit: cover;
+      }
+
+      .video-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 60px;
+        backdrop-filter: blur(10px);
+        border-radius: 30px;
+      }
+
+      /* Page 8 - Contact Form */
+      .contact-container {
+        width: 100%;
+        max-width: 800px;
+        padding: 60px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 30px;
+        border: 2px solid var(--secondary);
+      }
+
+      .form-title {
+        font-size: clamp(3rem, 6vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 40px;
+        text-align: center;
+      }
+
+      .form-field {
+        margin-bottom: 30px;
+        position: relative;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 20px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid var(--primary);
+        color: var(--text);
+        font-size: 18px;
+        transition: all 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--secondary);
+        transform: translateY(-5px);
+      }
+
+      .form-label {
+        position: absolute;
+        left: 0;
+        top: 20px;
+        transition: all 0.3s;
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
+      .form-input:focus + .form-label,
+      .form-input:not(:placeholder-shown) + .form-label {
+        top: -10px;
+        font-size: 14px;
+        color: var(--secondary);
+        opacity: 1;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        border: none;
+        border-radius: 50px;
+        color: var(--text);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.6s;
+      }
+
+      .submit-btn:hover::before {
+        width: 600px;
+        height: 600px;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(128, 0, 255, 0.4);
+      }
+
+      /* Page 9 - Team */
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        width: 90%;
+        max-width: 1200px;
+      }
+
+      .team-member {
+        position: relative;
+        height: 500px;
+        overflow: hidden;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.5s;
+      }
+
+      .team-member img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.5s;
+      }
+
+      .team-member:hover img {
+        transform: scale(1.1);
+        filter: brightness(0.7);
+      }
+
+      .team-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(70%);
+        transition: transform 0.3s;
+      }
+
+      .team-member:hover .team-info {
+        transform: translateY(0);
+      }
+
+      .team-name {
+        font-size: 2rem;
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+
+      .team-role {
+        font-size: 1.2rem;
+        color: var(--secondary);
+        margin-bottom: 20px;
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-text {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: pulse 1.5s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.05);
+          opacity: 0.8;
+        }
+      }
+
+      .loader-bar {
+        width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        margin-top: 30px;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .loader-progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        animation: load 2s ease-out;
+      }
+
+      @keyframes load {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .mega-title {
+          font-size: clamp(4rem, 15vw, 8rem);
+        }
+
+        .nav-btn {
+          width: 50px;
+          height: 50px;
+          font-size: 20px;
+        }
+
+        .gallery-container {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .card-showcase {
+          flex-direction: column;
+        }
+
+        .quick-menu {
+          top: auto;
+          bottom: 100px;
+          right: 20px;
+          flex-direction: row;
+          flex-wrap: wrap;
+          max-width: 200px;
+        }
+      }
+
+      /* Noise texture overlay */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.03;
+        z-index: 1;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgbnVtT2N0YXZlcz0iMTAiLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDEgMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==");
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">NEXUS</div>
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Noise Overlay -->
+    <div class="noise"></div>
+
+    <!-- Grid Container -->
+    <div class="grid-container" id="gridContainer">
+      <!-- Page 1: Hero (Center) -->
+      <div
+        class="page"
+        data-row="1"
+        data-col="1"
+        style="grid-row: 2; grid-column: 2"
+      >
+        <canvas class="math-canvas" id="mathCanvas1"></canvas>
+        <div class="hero-container">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Hero"
+            class="hero-image"
+          />
+          <div class="hero-text">
+            <h1 class="mega-title gradient-text">NEXUS</h1>
+            <p class="hero-subtitle">DIMENSIONAL CREATIVE STUDIO</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 2: About (Top) -->
+      <div
+        class="page"
+        data-row="0"
+        data-col="1"
+        style="grid-row: 1; grid-column: 2"
+      >
+        <canvas class="math-canvas" id="mathCanvas2"></canvas>
+        <div style="text-align: center; padding: 60px">
+          <h2 class="kinetic-text">
+            <span style="--rotation: -10deg">WE</span>
+            <span style="--rotation: 5deg">CREATE</span>
+            <span style="--rotation: -5deg">DIGITAL</span>
+            <span style="--rotation: 10deg">MAGIC</span>
+          </h2>
+          <p
+            style="
+              font-size: 1.5rem;
+              margin-top: 40px;
+              max-width: 800px;
+              margin-left: auto;
+              margin-right: auto;
+              line-height: 1.8;
+            "
+          >
+            Pushing boundaries through mathematical precision and creative
+            chaos. Every pixel calculated, every interaction designed to
+            transcend reality.
+          </p>
+        </div>
+      </div>
+
+      <!-- Page 3: Gallery (Right) -->
+      <div
+        class="page"
+        data-row="1"
+        data-col="2"
+        style="grid-row: 2; grid-column: 3"
+      >
+        <div class="gallery-container">
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+              alt="Gallery 1"
+            />
+            <div class="gallery-overlay">
+              <h3>QUANTUM DREAMS</h3>
+              <p>Exploring parallel dimensions</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              alt="Gallery 2"
+            />
+            <div class="gallery-overlay">
+              <h3>NEURAL NETWORKS</h3>
+              <p>AI-driven creativity</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+              alt="Gallery 3"
+            />
+            <div class="gallery-overlay">
+              <h3>DIGITAL GENESIS</h3>
+              <p>Birth of new realities</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Gallery 4"
+            />
+            <div class="gallery-overlay">
+              <h3>FRACTAL UNIVERSE</h3>
+              <p>Infinite complexity</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="Gallery 5"
+            />
+            <div class="gallery-overlay">
+              <h3>TIME DILATION</h3>
+              <p>Bending spacetime</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="Gallery 6"
+            />
+            <div class="gallery-overlay">
+              <h3>COSMIC DUST</h3>
+              <p>Stardust memories</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+              alt="Gallery 7"
+            />
+            <div class="gallery-overlay">
+              <h3>VOID WALKER</h3>
+              <p>Beyond the edge</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Gallery 8"
+            />
+            <div class="gallery-overlay">
+              <h3>SYNTH WAVE</h3>
+              <p>Retro futures</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+              alt="Gallery 9"
+            />
+            <div class="gallery-overlay">
+              <h3>NEON NIGHTS</h3>
+              <p>Urban dreams</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+              alt="Gallery 10"
+            />
+            <div class="gallery-overlay">
+              <h3>CYBER PUNK</h3>
+              <p>Future noir</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+              alt="Gallery 11"
+            />
+            <div class="gallery-overlay">
+              <h3>MATRIX CODE</h3>
+              <p>Digital rain</p>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Gallery 12"
+            />
+            <div class="gallery-overlay">
+              <h3>AURORA BOREALIS</h3>
+              <p>Northern lights</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 4: Interactive (Bottom) -->
+      <div
+        class="page"
+        data-row="2"
+        data-col="1"
+        style="grid-row: 3; grid-column: 2"
+      >
+        <div class="particle-field" id="particleField">
+          <div class="particle-cursor"></div>
+          <canvas
+            id="particleCanvas"
+            style="width: 100%; height: 100%"
+          ></canvas>
+          <div
+            style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              z-index: 10;
+            "
+          >
+            <h2 class="mega-title" style="font-size: clamp(3rem, 8vw, 6rem)">
+              INTERACT
+            </h2>
+            <p style="font-size: 1.5rem; opacity: 0.8">
+              Move your cursor to create magic
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 5: Services (Left) -->
+      <div
+        class="page"
+        data-row="1"
+        data-col="0"
+        style="grid-row: 2; grid-column: 1"
+      >
+        <div class="card-showcase">
+          <div
+            class="showcase-card"
+            style="--rotate-y: -15deg; --translate-z: -50px"
+          >
+            <h3 style="font-size: 2.5rem; margin-bottom: 20px">DESIGN</h3>
+            <p style="font-size: 1.1rem; line-height: 1.6">
+              Visual languages that speak directly to the subconscious through
+              golden ratios and Fibonacci sequences
+            </p>
+          </div>
+          <div
+            class="showcase-card"
+            style="--rotate-y: 0deg; --translate-z: 0px"
+          >
+            <h3 style="font-size: 2.5rem; margin-bottom: 20px">CODE</h3>
+            <p style="font-size: 1.1rem; line-height: 1.6">
+              Quantum algorithms and parallel processing across multiple
+              dimensional planes
+            </p>
+          </div>
+          <div
+            class="showcase-card"
+            style="--rotate-y: 15deg; --translate-z: -50px"
+          >
+            <h3 style="font-size: 2.5rem; margin-bottom: 20px">EXPERIENCE</h3>
+            <p style="font-size: 1.1rem; line-height: 1.6">
+              Neural pathway optimization for unforgettable digital journeys
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 6: Data Viz (Top-Right) -->
+      <div
+        class="page"
+        data-row="0"
+        data-col="2"
+        style="grid-row: 1; grid-column: 3"
+      >
+        <div class="data-viz" id="dataViz">
+          <h2
+            style="
+              position: absolute;
+              top: 50px;
+              left: 50%;
+              transform: translateX(-50%);
+              font-size: 3rem;
+              font-weight: 900;
+              z-index: 10;
+            "
+          >
+            ANALYTICS
+          </h2>
+        </div>
+      </div>
+
+      <!-- Page 7: Video (Top-Left) -->
+      <div
+        class="page"
+        data-row="0"
+        data-col="0"
+        style="grid-row: 1; grid-column: 1"
+      >
+        <div class="video-container">
+          <video class="bg-video" autoplay muted loop>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="video-content">
+            <h2 class="mega-title" style="font-size: clamp(3rem, 8vw, 5rem)">
+              MOTION
+            </h2>
+            <p style="font-size: 1.5rem; margin-top: 20px">
+              Where static becomes kinetic
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 8: Contact (Bottom-Right) -->
+      <div
+        class="page"
+        data-row="2"
+        data-col="2"
+        style="grid-row: 3; grid-column: 3"
+      >
+        <div class="contact-container">
+          <h2 class="form-title gradient-text">CONNECT</h2>
+          <form id="contactForm">
+            <div class="form-field">
+              <input type="text" class="form-input" placeholder=" " required />
+              <label class="form-label">Your Name</label>
+            </div>
+            <div class="form-field">
+              <input type="email" class="form-input" placeholder=" " required />
+              <label class="form-label">Email Address</label>
+            </div>
+            <div class="form-field">
+              <input type="text" class="form-input" placeholder=" " required />
+              <label class="form-label">Project Description</label>
+            </div>
+            <button type="submit" class="submit-btn">TRANSMIT MESSAGE</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Page 9: Team (Bottom-Left) -->
+      <div
+        class="page"
+        data-row="2"
+        data-col="0"
+        style="grid-row: 3; grid-column: 1"
+      >
+        <div class="team-grid">
+          <div class="team-member">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+              alt="Team 1"
+            />
+            <div class="team-info">
+              <h3 class="team-name">NOVA</h3>
+              <p class="team-role">Creative Director</p>
+              <p>
+                Quantum artist exploring the intersection of technology and
+                consciousness
+              </p>
+            </div>
+          </div>
+          <div class="team-member">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+              alt="Team 2"
+            />
+            <div class="team-info">
+              <h3 class="team-name">CIPHER</h3>
+              <p class="team-role">Tech Lead</p>
+              <p>Architect of digital dimensions and algorithmic beauty</p>
+            </div>
+          </div>
+          <div class="team-member">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+              alt="Team 3"
+            />
+            <div class="team-info">
+              <h3 class="team-name">ECHO</h3>
+              <p class="team-role">UX Designer</p>
+              <p>
+                Crafting experiences that resonate across parallel universes
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation System -->
+    <div class="nav-system">
+      <button class="nav-btn up" data-direction="up">↑</button>
+      <button class="nav-btn down" data-direction="down">↓</button>
+      <button class="nav-btn left" data-direction="left">←</button>
+      <button class="nav-btn right" data-direction="right">→</button>
+    </div>
+
+    <!-- Quick Menu -->
+    <div class="quick-menu">
+      <div class="menu-item active" data-page="HOME" data-position="1,1">H</div>
+      <div class="menu-item" data-page="ABOUT" data-position="0,1">A</div>
+      <div class="menu-item" data-page="GALLERY" data-position="1,2">G</div>
+      <div class="menu-item" data-page="INTERACT" data-position="2,1">I</div>
+      <div class="menu-item" data-page="SERVICES" data-position="1,0">S</div>
+      <div class="menu-item" data-page="DATA" data-position="0,2">D</div>
+      <div class="menu-item" data-page="VIDEO" data-position="0,0">V</div>
+      <div class="menu-item" data-page="CONTACT" data-position="2,2">C</div>
+      <div class="menu-item" data-page="TEAM" data-position="2,0">T</div>
+    </div>
+
+    <script>
+      // Generate random colors
+      function generateRandomColors() {
+        const colorSchemes = [
+          ["#FF006E", "#8338EC", "#3A86FF"],
+          ["#F72585", "#7209B7", "#4361EE"],
+          ["#FF4365", "#00D9FF", "#FFFD82"],
+          ["#FF1744", "#00E676", "#FFEA00"],
+          ["#E91E63", "#00BCD4", "#8BC34A"],
+        ];
+
+        const scheme =
+          colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+        document.documentElement.style.setProperty("--primary", scheme[0]);
+        document.documentElement.style.setProperty("--secondary", scheme[1]);
+        document.documentElement.style.setProperty("--accent", scheme[2]);
+      }
+
+      // Grid navigation
+      let currentRow = 1;
+      let currentCol = 1;
+      const gridContainer = document.getElementById("gridContainer");
+      const navButtons = document.querySelectorAll(".nav-btn");
+      const menuItems = document.querySelectorAll(".menu-item");
+
+      function updateGridPosition() {
+        const translateX = -currentCol * 100;
+        const translateY = -currentRow * 100;
+        gridContainer.style.transform = `translate(${translateX}vw, ${translateY}vh)`;
+
+        // Update menu
+        menuItems.forEach((item) => {
+          const position = item.dataset.position.split(",");
+          item.classList.toggle(
+            "active",
+            parseInt(position[0]) === currentRow &&
+              parseInt(position[1]) === currentCol,
+          );
+        });
+
+        // Update navigation buttons
+        navButtons.forEach((btn) => {
+          btn.style.display = "flex";
+          if (btn.classList.contains("up") && currentRow === 0)
+            btn.style.display = "none";
+          if (btn.classList.contains("down") && currentRow === 2)
+            btn.style.display = "none";
+          if (btn.classList.contains("left") && currentCol === 0)
+            btn.style.display = "none";
+          if (btn.classList.contains("right") && currentCol === 2)
+            btn.style.display = "none";
+        });
+      }
+
+      // Navigation controls
+      navButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const direction = btn.dataset.direction;
+          switch (direction) {
+            case "up":
+              if (currentRow > 0) currentRow--;
+              break;
+            case "down":
+              if (currentRow < 2) currentRow++;
+              break;
+            case "left":
+              if (currentCol > 0) currentCol--;
+              break;
+            case "right":
+              if (currentCol < 2) currentCol++;
+              break;
+          }
+          updateGridPosition();
+        });
+      });
+
+      // Quick menu navigation
+      menuItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const position = item.dataset.position.split(",");
+          currentRow = parseInt(position[0]);
+          currentCol = parseInt(position[1]);
+          updateGridPosition();
+        });
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        switch (e.key) {
+          case "ArrowUp":
+            if (currentRow > 0) {
+              currentRow--;
+              updateGridPosition();
+            }
+            break;
+          case "ArrowDown":
+            if (currentRow < 2) {
+              currentRow++;
+              updateGridPosition();
+            }
+            break;
+          case "ArrowLeft":
+            if (currentCol > 0) {
+              currentCol--;
+              updateGridPosition();
+            }
+            break;
+          case "ArrowRight":
+            if (currentCol < 2) {
+              currentCol++;
+              updateGridPosition();
+            }
+            break;
+        }
+      });
+
+      // Mathematical canvas animations
+      function initMathCanvas(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let time = 0;
+        const particles = [];
+
+        // Create particles with complex mathematical properties
+        for (let i = 0; i < 50; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            radius: Math.random() * 3 + 1,
+            phase: Math.random() * Math.PI * 2,
+            frequency: Math.random() * 0.02 + 0.01,
+          });
+        }
+
+        function animate() {
+          ctx.fillStyle = "rgba(10, 10, 10, 0.05)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          particles.forEach((p, i) => {
+            // Complex movement using Lissajous curves
+            p.x += p.vx + Math.sin(time * p.frequency + p.phase) * 2;
+            p.y += p.vy + Math.cos(time * p.frequency * 1.5 + p.phase) * 2;
+
+            // Boundary collision with damping
+            if (p.x < 0 || p.x > canvas.width) p.vx *= -0.9;
+            if (p.y < 0 || p.y > canvas.height) p.vy *= -0.9;
+
+            // Keep particles in bounds
+            p.x = Math.max(0, Math.min(canvas.width, p.x));
+            p.y = Math.max(0, Math.min(canvas.height, p.y));
+
+            // Draw particle
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(time * 0.01 + i) * 0.3})`;
+            ctx.fill();
+
+            // Draw connections
+            particles.forEach((p2, j) => {
+              if (i < j) {
+                const distance = Math.hypot(p.x - p2.x, p.y - p2.y);
+                if (distance < 150) {
+                  ctx.beginPath();
+                  ctx.moveTo(p.x, p.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / 150) * 0.2})`;
+                  ctx.stroke();
+                }
+              }
+            });
+          });
+
+          time++;
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+      }
+
+      // Particle field interaction
+      function initParticleField() {
+        const field = document.getElementById("particleField");
+        const cursor = field.querySelector(".particle-cursor");
+        const canvas = document.getElementById("particleCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 200;
+
+        for (let i = 0; i < particleCount; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            baseX: Math.random() * canvas.width,
+            baseY: Math.random() * canvas.height,
+            size: Math.random() * 3 + 1,
+            speed: Math.random() * 0.5 + 0.5,
+          });
+        }
+
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+
+        field.addEventListener("mousemove", (e) => {
+          const rect = field.getBoundingClientRect();
+          mouseX = e.clientX - rect.left;
+          mouseY = e.clientY - rect.top;
+          cursor.style.left = mouseX + "px";
+          cursor.style.top = mouseY + "px";
+        });
+
+        function animate() {
+          ctx.fillStyle = "rgba(10, 10, 10, 0.05)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          particles.forEach((p) => {
+            const dx = mouseX - p.x;
+            const dy = mouseY - p.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = 200;
+
+            if (distance < maxDistance) {
+              const force = (1 - distance / maxDistance) * 50;
+              p.x -= (dx / distance) * force * 0.05;
+              p.y -= (dy / distance) * force * 0.05;
+            } else {
+              p.x += (p.baseX - p.x) * 0.05;
+              p.y += (p.baseY - p.y) * 0.05;
+            }
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.fill();
+          });
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+      }
+
+      // Data visualization
+      function initDataViz() {
+        const container = document.getElementById("dataViz");
+        const colors = ["var(--primary)", "var(--secondary)", "var(--accent)"];
+
+        for (let i = 0; i < 20; i++) {
+          const element = document.createElement("div");
+          element.className = "viz-element";
+          element.style.setProperty("--size", `${Math.random() * 100 + 50}px`);
+          element.style.setProperty(
+            "--color",
+            colors[Math.floor(Math.random() * colors.length)],
+          );
+          element.style.setProperty(
+            "--duration",
+            `${Math.random() * 20 + 10}s`,
+          );
+          element.style.setProperty(
+            "--radius",
+            `${Math.random() * 200 + 100}px`,
+          );
+          element.style.setProperty(
+            "--origin",
+            `${Math.random() * 100 - 50}% ${Math.random() * 100 - 50}%`,
+          );
+          element.style.animationDelay = `${Math.random() * 10}s`;
+          container.appendChild(element);
+        }
+      }
+
+      // Kinetic typography
+      document.querySelectorAll(".kinetic-text span").forEach((span, index) => {
+        span.addEventListener("mouseenter", () => {
+          span.style.animationDelay = `${index * 0.1}s`;
+        });
+      });
+
+      // Form handling
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Message transmitted through quantum channels!");
+      });
+
+      // Initialize
+      window.addEventListener("load", () => {
+        generateRandomColors();
+        initMathCanvas("mathCanvas1");
+        initMathCanvas("mathCanvas2");
+        initParticleField();
+        initDataViz();
+        updateGridPosition();
+
+        // Hide loader
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Handle resize
+      window.addEventListener("resize", () => {
+        const canvases = ["mathCanvas1", "mathCanvas2", "particleCanvas"];
+        canvases.forEach((id) => {
+          const canvas = document.getElementById(id);
+          if (canvas) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

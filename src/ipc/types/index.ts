@@ -264,9 +264,12 @@ export type {
 // Template types
 export type {
   Template,
+  TemplateType,
   Theme,
   SetAppThemeParams,
   GetAppThemeParams,
+  GetTemplateContentParams,
+  GetTemplateContentResult,
   CustomTheme,
   CreateCustomThemeParams,
   UpdateCustomThemeParams,

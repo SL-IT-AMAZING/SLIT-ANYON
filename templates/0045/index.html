@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VISION - Digital Art Gallery</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #fff;
+        --bg-color: #000;
+        --accent-color: #ff0040;
+        --text-secondary: rgba(255, 255, 255, 0.6);
+        --transition: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-color);
+        color: var(--primary-color);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Magnetic Cursor */
+      .magnetic-cursor {
+        width: 20px;
+        height: 20px;
+        background: var(--accent-color);
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transition: transform 0.2s var(--transition);
+        mix-blend-mode: screen;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.3s var(--transition);
+      }
+
+      .magnetic-cursor.hover {
+        transform: scale(2);
+        background: var(--primary-color);
+      }
+
+      /* Floating Navigation */
+      .floating-nav {
+        position: fixed;
+        top: 50%;
+        right: 30px;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-color);
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      .nav-dot.active {
+        background: var(--accent-color);
+        transform: scale(1.5);
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 30px 50px;
+        mix-blend-mode: difference;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -2px;
+        cursor: pointer;
+      }
+
+      .menu-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .menu-icon {
+        width: 24px;
+        height: 2px;
+        background: var(--primary-color);
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .menu-icon::before,
+      .menu-icon::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        transition: all 0.3s;
+      }
+
+      .menu-icon::before {
+        transform: translateY(-8px);
+      }
+
+      .menu-icon::after {
+        transform: translateY(8px);
+      }
+
+      /* Fullscreen Menu */
+      .fullscreen-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--bg-color);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s var(--transition);
+      }
+
+      .fullscreen-menu.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-content {
+        text-align: center;
+      }
+
+      .menu-links {
+        list-style: none;
+      }
+
+      .menu-links li {
+        margin: 30px 0;
+        overflow: hidden;
+      }
+
+      .menu-links a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 700;
+        display: inline-block;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .menu-links a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--accent-color);
+        transition: width 0.3s;
+      }
+
+      .menu-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Main Container */
+      .main-container {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      /* Hero Section - Horizontal Gallery */
+      .hero-gallery {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      .gallery-track {
+        display: flex;
+        transition: transform 1s var(--transition);
+        will-change: transform;
+      }
+
+      .gallery-item {
+        flex: 0 0 100vw;
+        height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .gallery-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.7;
+      }
+
+      .gallery-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.7;
+      }
+
+      .gallery-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 800px;
+        padding: 0 40px;
+      }
+
+      .gallery-number {
+        font-size: 200px;
+        font-weight: 900;
+        line-height: 1;
+        opacity: 0.1;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .gallery-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        margin-bottom: 20px;
+        letter-spacing: -3px;
+        line-height: 0.9;
+      }
+
+      .gallery-subtitle {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        color: var(--text-secondary);
+        font-weight: 300;
+      }
+
+      /* Gallery Navigation */
+      .gallery-nav {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 10;
+      }
+
+      .gallery-nav-item {
+        width: 60px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gallery-nav-item::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 3s linear;
+      }
+
+      .gallery-nav-item.active::after {
+        width: 100%;
+      }
+
+      /* Grid Section */
+      .grid-section {
+        padding: 150px 50px;
+        position: relative;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 100px;
+      }
+
+      .section-title {
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 20px;
+        letter-spacing: -2px;
+      }
+
+      .section-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+      }
+
+      .masonry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .grid-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transform: translateY(50px);
+        opacity: 0;
+        animation: fadeInUp 0.8s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      .grid-item:nth-child(odd) {
+        margin-top: 50px;
+      }
+
+      .grid-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s var(--transition);
+      }
+
+      .grid-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 50%,
+          rgba(0, 0, 0, 0.8) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: flex-end;
+        padding: 30px;
+      }
+
+      .grid-item:hover .grid-overlay {
+        opacity: 1;
+      }
+
+      .grid-info h3 {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+      }
+
+      .grid-info p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      /* Split Section */
+      .split-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 100vh;
+        position: relative;
+      }
+
+      .split-content {
+        padding: 100px 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: #0a0a0a;
+      }
+
+      .split-image {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .split-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .split-title {
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        font-weight: 900;
+        margin-bottom: 30px;
+        letter-spacing: -1px;
+      }
+
+      .split-text {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 40px;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cta-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        transition: left 0.3s;
+        z-index: -1;
+      }
+
+      .cta-button:hover {
+        color: var(--bg-color);
+      }
+
+      .cta-button:hover::before {
+        left: 0;
+      }
+
+      .cta-arrow {
+        transition: transform 0.3s;
+      }
+
+      .cta-button:hover .cta-arrow {
+        transform: translateX(5px);
+      }
+
+      /* Video Section */
+      .video-section {
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .bg-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.5;
+      }
+
+      .video-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 1000px;
+        padding: 0 40px;
+      }
+
+      .video-title {
+        font-size: clamp(3rem, 7vw, 6rem);
+        font-weight: 900;
+        margin-bottom: 30px;
+        letter-spacing: -3px;
+        text-transform: uppercase;
+      }
+
+      /* Contact Section */
+      .contact-section {
+        padding: 150px 50px;
+        background: #050505;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contact-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 100px;
+        align-items: center;
+      }
+
+      .contact-info h2 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        margin-bottom: 30px;
+        letter-spacing: -2px;
+      }
+
+      .contact-info p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 50px;
+        line-height: 1.8;
+      }
+
+      .contact-links {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .contact-link {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s;
+      }
+
+      .contact-link::after {
+        content: "→";
+        position: absolute;
+        right: -30px;
+        opacity: 0;
+        transition: all 0.3s;
+      }
+
+      .contact-link:hover {
+        padding-left: 10px;
+        color: var(--accent-color);
+      }
+
+      .contact-link:hover::after {
+        opacity: 1;
+        right: -40px;
+      }
+
+      .contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .form-group {
+        position: relative;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 20px 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        transition: all 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-bottom-color: var(--primary-color);
+      }
+
+      .form-label {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      .form-input:focus + .form-label,
+      .form-input:not(:placeholder-shown) + .form-label {
+        top: -10px;
+        font-size: 0.9rem;
+        color: var(--primary-color);
+      }
+
+      .submit-btn {
+        padding: 20px 60px;
+        background: var(--primary-color);
+        color: var(--bg-color);
+        border: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        align-self: flex-start;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--accent-color);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.5s;
+      }
+
+      .submit-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .submit-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 50px;
+        text-align: center;
+        background: #000;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .social-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 1rem;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .social-link::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--accent-color);
+        transition: width 0.3s;
+      }
+
+      .social-link:hover::after {
+        width: 100%;
+      }
+
+      .copyright {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      /* Animations */
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Loading Screen */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--bg-color);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+
+      .loading-screen.loaded {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader {
+        width: 60px;
+        height: 60px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .split-section {
+          grid-template-columns: 1fr;
+        }
+
+        .split-content {
+          padding: 80px 50px;
+        }
+
+        .split-image {
+          height: 400px;
+        }
+
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 60px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          padding: 20px 30px;
+        }
+
+        .floating-nav {
+          display: none;
+        }
+
+        .gallery-title {
+          font-size: clamp(2.5rem, 10vw, 4rem);
+        }
+
+        .gallery-nav {
+          bottom: 30px;
+        }
+
+        .grid-section {
+          padding: 100px 30px;
+        }
+
+        .masonry-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .grid-item:nth-child(odd) {
+          margin-top: 0;
+        }
+
+        .split-content {
+          padding: 60px 30px;
+        }
+
+        .contact-section {
+          padding: 100px 30px;
+        }
+
+        .video-title {
+          font-size: clamp(2rem, 10vw, 4rem);
+        }
+
+        .menu-links a {
+          font-size: 2rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .gallery-number {
+          font-size: 120px;
+        }
+
+        .section-title {
+          font-size: 2rem;
+        }
+
+        .contact-info h2 {
+          font-size: 2rem;
+        }
+
+        .cta-button {
+          padding: 15px 30px;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loader"></div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="magnetic-cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav" id="floatingNav">
+      <div class="nav-dot active" data-title="Gallery"></div>
+      <div class="nav-dot" data-title="Collection"></div>
+      <div class="nav-dot" data-title="Vision"></div>
+      <div class="nav-dot" data-title="Motion"></div>
+      <div class="nav-dot" data-title="Contact"></div>
+    </nav>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">VISION</div>
+        <div class="menu-btn" id="menuBtn">
+          <div class="menu-icon"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Fullscreen Menu -->
+    <div class="fullscreen-menu" id="fullscreenMenu">
+      <div class="menu-content">
+        <ul class="menu-links">
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#collection">Collection</a></li>
+          <li><a href="#vision">Our Vision</a></li>
+          <li><a href="#motion">Motion</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-container">
+      <!-- Hero Gallery Section -->
+      <section class="hero-gallery" id="gallery">
+        <div class="gallery-track" id="galleryTrack">
+          <!-- Gallery items will be dynamically generated -->
+        </div>
+        <div class="gallery-nav" id="galleryNav"></div>
+      </section>
+
+      <!-- Grid Section -->
+      <section class="grid-section" id="collection">
+        <div class="section-header">
+          <h2 class="section-title">Curated Collection</h2>
+          <p class="section-subtitle">A journey through digital artistry</p>
+        </div>
+        <div class="masonry-grid" id="masonryGrid">
+          <!-- Grid items will be dynamically generated -->
+        </div>
+      </section>
+
+      <!-- Split Section -->
+      <section class="split-section" id="vision">
+        <div class="split-content">
+          <h2 class="split-title">Redefining Digital Aesthetics</h2>
+          <p class="split-text">
+            We believe in the power of visual storytelling. Our work transcends
+            traditional boundaries, creating immersive experiences that
+            captivate and inspire. Every pixel is carefully crafted to evoke
+            emotion and drive engagement.
+          </p>
+          <a href="#" class="cta-button">
+            Explore Our Process
+            <span class="cta-arrow">→</span>
+          </a>
+        </div>
+        <div class="split-image">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+            alt="Vision"
+          />
+        </div>
+      </section>
+
+      <!-- Video Section -->
+      <section class="video-section" id="motion">
+        <video class="bg-video" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="video-content">
+          <h2 class="video-title">Motion in Design</h2>
+          <p class="section-subtitle">Where static meets dynamic</p>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section class="contact-section" id="contact">
+        <div class="contact-container">
+          <div class="contact-info">
+            <h2>Let's Create Something Extraordinary</h2>
+            <p>
+              Ready to transform your vision into reality? We're here to help
+              bring your ideas to life with cutting-edge design and technology.
+            </p>
+            <div class="contact-links">
+              <a href="mailto:hello@vision.studio" class="contact-link"
+                >hello@vision.studio</a
+              >
+              <a href="tel:+1234567890" class="contact-link"
+                >+1 (234) 567-890</a
+              >
+            </div>
+          </div>
+          <form class="contact-form" id="contactForm">
+            <div class="form-group">
+              <input type="text" class="form-input" placeholder=" " required />
+              <label class="form-label">Your Name</label>
+            </div>
+            <div class="form-group">
+              <input type="email" class="form-input" placeholder=" " required />
+              <label class="form-label">Email Address</label>
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" placeholder=" " required />
+              <label class="form-label">Project Details</label>
+            </div>
+            <button type="submit" class="submit-btn">
+              <span>Send Message</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="social-links">
+            <a href="#" class="social-link">Instagram</a>
+            <a href="#" class="social-link">Behance</a>
+            <a href="#" class="social-link">Dribbble</a>
+            <a href="#" class="social-link">LinkedIn</a>
+          </div>
+          <p class="copyright">© 2025 VISION Studio. All rights reserved.</p>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      // Gallery Data
+      const galleryData = [
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Abstract Reality",
+          subtitle: "Where imagination meets form",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+          title: "Dynamic Flow",
+          subtitle: "Motion in perpetual harmony",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Digital Dreams",
+          subtitle: "Pixels painting possibilities",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+          title: "Fluid Motion",
+          subtitle: "Seamless transitions of thought",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Color Theory",
+          subtitle: "Emotions through spectrum",
+        },
+      ];
+
+      // Grid Images
+      const gridImages = [
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+      ];
+
+      // Initialize
+      let currentSlide = 0;
+      let isScrolling = false;
+
+      // Custom Cursor
+      const cursor = document.getElementById("cursor");
+      const cursorFollower = document.getElementById("cursorFollower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 10 + "px";
+        cursor.style.top = e.clientY - 10 + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 20 + "px";
+          cursorFollower.style.top = e.clientY - 20 + "px";
+        }, 100);
+      });
+
+      // Hover effects
+      const hoverElements = document.querySelectorAll(
+        "a, button, .nav-dot, .gallery-nav-item, .grid-item, .menu-btn",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => cursor.classList.add("hover"));
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("hover"),
+        );
+      });
+
+      // Create Gallery
+      function createGallery() {
+        const galleryTrack = document.getElementById("galleryTrack");
+        const galleryNav = document.getElementById("galleryNav");
+
+        galleryData.forEach((item, index) => {
+          // Create gallery item
+          const galleryItem = document.createElement("div");
+          galleryItem.className = "gallery-item";
+
+          if (item.type === "video") {
+            galleryItem.innerHTML = `
+                        <video class="gallery-video" autoplay muted loop playsinline>
+                            <source src="${item.src}" type="video/mp4">
+                        </video>
+                        <div class="gallery-content">
+                            <div class="gallery-number">${String(index + 1).padStart(2, "0")}</div>
+                            <h1 class="gallery-title">${item.title}</h1>
+                            <p class="gallery-subtitle">${item.subtitle}</p>
+                        </div>
+                    `;
+          } else {
+            galleryItem.innerHTML = `
+                        <img class="gallery-image" src="${item.src}" alt="${item.title}">
+                        <div class="gallery-content">
+                            <div class="gallery-number">${String(index + 1).padStart(2, "0")}</div>
+                            <h1 class="gallery-title">${item.title}</h1>
+                            <p class="gallery-subtitle">${item.subtitle}</p>
+                        </div>
+                    `;
+          }
+
+          galleryTrack.appendChild(galleryItem);
+
+          // Create nav item
+          const navItem = document.createElement("div");
+          navItem.className = "gallery-nav-item";
+          if (index === 0) navItem.classList.add("active");
+          navItem.addEventListener("click", () => goToSlide(index));
+          galleryNav.appendChild(navItem);
+        });
+      }
+
+      // Gallery Navigation
+      function goToSlide(index) {
+        currentSlide = index;
+        const galleryTrack = document.getElementById("galleryTrack");
+        galleryTrack.style.transform = `translateX(-${currentSlide * 100}vw)`;
+
+        // Update nav
+        document.querySelectorAll(".gallery-nav-item").forEach((item, i) => {
+          item.classList.toggle("active", i === currentSlide);
+        });
+      }
+
+      // Auto-play gallery
+      let autoPlayInterval;
+      function startAutoPlay() {
+        autoPlayInterval = setInterval(() => {
+          currentSlide = (currentSlide + 1) % galleryData.length;
+          goToSlide(currentSlide);
+        }, 5000);
+      }
+
+      function stopAutoPlay() {
+        clearInterval(autoPlayInterval);
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") {
+          stopAutoPlay();
+          currentSlide = (currentSlide + 1) % galleryData.length;
+          goToSlide(currentSlide);
+          startAutoPlay();
+        } else if (e.key === "ArrowLeft") {
+          stopAutoPlay();
+          currentSlide =
+            (currentSlide - 1 + galleryData.length) % galleryData.length;
+          goToSlide(currentSlide);
+          startAutoPlay();
+        }
+      });
+
+      // Touch/Swipe support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+          // Swipe left
+          currentSlide = (currentSlide + 1) % galleryData.length;
+          goToSlide(currentSlide);
+        }
+        if (touchEndX > touchStartX + 50) {
+          // Swipe right
+          currentSlide =
+            (currentSlide - 1 + galleryData.length) % galleryData.length;
+          goToSlide(currentSlide);
+        }
+      }
+
+      // Create Masonry Grid
+      function createMasonryGrid() {
+        const masonryGrid = document.getElementById("masonryGrid");
+
+        gridImages.forEach((src, index) => {
+          const gridItem = document.createElement("div");
+          gridItem.className = "grid-item";
+          gridItem.style.setProperty("--index", index);
+          gridItem.innerHTML = `
+                    <img src="${src}" alt="Gallery ${index + 1}">
+                    <div class="grid-overlay">
+                        <div class="grid-info">
+                            <h3>Project ${index + 1}</h3>
+                            <p>Digital Art Collection</p>
+                        </div>
+                    </div>
+                `;
+          masonryGrid.appendChild(gridItem);
+        });
+      }
+
+      // Menu Toggle
+      const menuBtn = document.getElementById("menuBtn");
+      const fullscreenMenu = document.getElementById("fullscreenMenu");
+      let menuOpen = false;
+
+      menuBtn.addEventListener("click", () => {
+        menuOpen = !menuOpen;
+        fullscreenMenu.classList.toggle("active");
+        menuBtn.classList.toggle("active");
+      });
+
+      // Close menu on link click
+      document.querySelectorAll(".menu-links a").forEach((link) => {
+        link.addEventListener("click", () => {
+          menuOpen = false;
+          fullscreenMenu.classList.remove("active");
+          menuBtn.classList.remove("active");
+        });
+      });
+
+      // Smooth Scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Floating Navigation
+      const sections = document.querySelectorAll("section[id]");
+      const navDots = document.querySelectorAll(".nav-dot");
+
+      function updateFloatingNav() {
+        const scrollPosition = window.scrollY + window.innerHeight / 2;
+
+        sections.forEach((section, index) => {
+          const sectionTop = section.offsetTop;
+          const sectionBottom = sectionTop + section.offsetHeight;
+
+          if (scrollPosition >= sectionTop && scrollPosition <= sectionBottom) {
+            navDots.forEach((dot) => dot.classList.remove("active"));
+            if (navDots[index]) {
+              navDots[index].classList.add("active");
+            }
+          }
+        });
+      }
+
+      // Nav dot click
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          if (sections[index]) {
+            sections[index].scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = "running";
+          }
+        });
+      }, observerOptions);
+
+      // Form Submission
+      const contactForm = document.getElementById("contactForm");
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        // Add your form submission logic here
+        alert("Thank you for your message. We will get back to you soon!");
+        contactForm.reset();
+      });
+
+      // Loading Screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loadingScreen").classList.add("loaded");
+        }, 1000);
+      });
+
+      // Scroll Events
+      let lastScrollTop = 0;
+      window.addEventListener("scroll", () => {
+        updateFloatingNav();
+
+        // Hide/show header on scroll
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+        const header = document.querySelector(".header");
+
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+          header.style.transform = "translateY(-100%)";
+        } else {
+          header.style.transform = "translateY(0)";
+        }
+
+        lastScrollTop = scrollTop;
+      });
+
+      // Initialize everything
+      document.addEventListener("DOMContentLoaded", () => {
+        createGallery();
+        createMasonryGrid();
+        startAutoPlay();
+
+        // Observe grid items
+        document.querySelectorAll(".grid-item").forEach((item) => {
+          observer.observe(item);
+        });
+      });
+
+      // Pause video when not in viewport
+      const videos = document.querySelectorAll("video");
+      const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.play();
+          } else {
+            entry.target.pause();
+          }
+        });
+      });
+
+      videos.forEach((video) => {
+        videoObserver.observe(video);
+      });
+    </script>
+  </body>
+</html>

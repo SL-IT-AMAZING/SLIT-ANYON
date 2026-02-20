@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATELIER — Digital Art Studio</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-font: "Playfair Display", serif;
+        --secondary-font: "Inter", sans-serif;
+        --bg-dark: #0a0a0a;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --accent: #ff6b6b;
+      }
+
+      body {
+        font-family: var(--secondary-font);
+        background: var(--bg-dark);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* Smooth Scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 2px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--text-secondary);
+      }
+
+      /* Magnetic Cursor */
+      .magnetic-cursor {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--bg-dark);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-family: var(--primary-font);
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-text::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-dark);
+        animation: reveal 2s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+      }
+
+      @keyframes reveal {
+        to {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        padding: 2rem 4rem;
+        mix-blend-mode: difference;
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: var(--primary-font);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .menu-trigger {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-trigger span {
+        width: 30px;
+        height: 1px;
+        background: var(--text-primary);
+        transition: all 0.3s;
+      }
+
+      .menu-trigger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+
+      .menu-trigger.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-trigger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+      }
+
+      /* Fullscreen Menu */
+      .fullscreen-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--bg-dark);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+      }
+
+      .fullscreen-menu.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-content {
+        text-align: center;
+      }
+
+      .menu-links {
+        list-style: none;
+      }
+
+      .menu-links li {
+        margin: 2rem 0;
+        overflow: hidden;
+      }
+
+      .menu-links a {
+        font-family: var(--primary-font);
+        font-size: clamp(3rem, 6vw, 5rem);
+        font-weight: 700;
+        color: var(--text-primary);
+        text-decoration: none;
+        display: inline-block;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .menu-links a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+
+      .menu-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Hero Section with Typography */
+      .hero {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+        width: 90%;
+        max-width: 1400px;
+      }
+
+      .hero-title {
+        font-family: var(--primary-font);
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+        margin-bottom: 2rem;
+        position: relative;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(100px) rotateY(90deg);
+        animation: titleReveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      @keyframes titleReveal {
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateY(0);
+        }
+      }
+
+      .hero-subtitle {
+        font-family: var(--secondary-font);
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        opacity: 0;
+        animation: fadeInUp 1s 1s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Floating Typography Background */
+      .floating-text {
+        position: absolute;
+        font-family: var(--primary-font);
+        font-size: 20vw;
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.02);
+        z-index: 1;
+        user-select: none;
+        animation: float 20s infinite linear;
+      }
+
+      .floating-text:nth-child(1) {
+        top: -10%;
+        left: -20%;
+        animation-duration: 25s;
+      }
+
+      .floating-text:nth-child(2) {
+        bottom: -10%;
+        right: -20%;
+        animation-duration: 30s;
+        animation-direction: reverse;
+      }
+
+      @keyframes float {
+        from {
+          transform: translateX(-10%) translateY(-10%) rotate(-5deg);
+        }
+        to {
+          transform: translateX(10%) translateY(10%) rotate(5deg);
+        }
+      }
+
+      /* Gallery Section with Masonry Layout */
+      .gallery {
+        padding: 10rem 4rem;
+        position: relative;
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 6rem;
+      }
+
+      .gallery-title {
+        font-family: var(--primary-font);
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        margin-bottom: 1rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .gallery-title::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: transparent;
+        -webkit-text-stroke: 1px var(--text-primary);
+        z-index: -1;
+        transform: translate(5px, 5px);
+      }
+
+      .masonry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 0.8s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      .gallery-item:nth-child(3n + 1) {
+        grid-row: span 2;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .gallery-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.05);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 50%,
+          rgba(0, 0, 0, 0.9) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: flex-end;
+        padding: 2rem;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-info h3 {
+        font-family: var(--primary-font);
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        transform: translateY(20px);
+        transition: transform 0.3s;
+      }
+
+      .gallery-info p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        transform: translateY(20px);
+        transition: transform 0.3s 0.1s;
+      }
+
+      .gallery-item:hover .gallery-info h3,
+      .gallery-item:hover .gallery-info p {
+        transform: translateY(0);
+      }
+
+      /* Typography Showcase Section */
+      .typography-showcase {
+        padding: 10rem 4rem;
+        background: #111;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 4rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .type-block {
+        padding: 3rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .type-block:hover {
+        border-color: var(--accent);
+        transform: translateY(-10px);
+      }
+
+      .type-block::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          transparent 0%,
+          rgba(255, 107, 107, 0.1) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .type-block:hover::before {
+        opacity: 1;
+      }
+
+      .type-number {
+        font-family: var(--primary-font);
+        font-size: 8rem;
+        font-weight: 900;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.1);
+        position: absolute;
+        top: -2rem;
+        right: 2rem;
+      }
+
+      .type-heading {
+        font-family: var(--primary-font);
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .type-description {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Contact Section with Split Layout */
+      .contact {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+      }
+
+      .contact-info {
+        background: var(--accent);
+        padding: 6rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: var(--bg-dark);
+      }
+
+      .contact-info h2 {
+        font-family: var(--primary-font);
+        font-size: clamp(3rem, 6vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 2rem;
+        letter-spacing: -0.03em;
+      }
+
+      .contact-info p {
+        font-size: 1.2rem;
+        margin-bottom: 3rem;
+        opacity: 0.8;
+      }
+
+      .contact-details {
+        font-size: 1.1rem;
+        line-height: 2;
+      }
+
+      .contact-form-section {
+        background: #0f0f0f;
+        padding: 6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .contact-form {
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 1.5rem 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .form-group label {
+        position: absolute;
+        top: 1.5rem;
+        left: 0;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        pointer-events: none;
+        transition: all 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus,
+      .form-group input:valid,
+      .form-group textarea:valid {
+        border-bottom-color: var(--accent);
+      }
+
+      .form-group input:focus ~ label,
+      .form-group textarea:focus ~ label,
+      .form-group input:valid ~ label,
+      .form-group textarea:valid ~ label {
+        top: -0.5rem;
+        font-size: 0.8rem;
+        color: var(--accent);
+      }
+
+      .submit-btn {
+        font-family: var(--primary-font);
+        font-size: 1.2rem;
+        font-weight: 700;
+        padding: 1.5rem 4rem;
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--text-primary);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--text-primary);
+        transition: left 0.3s;
+        z-index: -1;
+      }
+
+      .submit-btn:hover {
+        color: var(--bg-dark);
+      }
+
+      .submit-btn:hover::before {
+        left: 0;
+      }
+
+      /* Footer */
+      footer {
+        padding: 4rem;
+        text-align: center;
+        background: #000;
+        position: relative;
+      }
+
+      .footer-text {
+        font-family: var(--primary-font);
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 2rem;
+      }
+
+      .social-links {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+
+      .social-links a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .social-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+
+      .social-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .masonry-grid {
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .type-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-info,
+        .contact-form-section {
+          padding: 4rem 2rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        nav {
+          padding: 1.5rem 2rem;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .gallery {
+          padding: 5rem 2rem;
+        }
+
+        .masonry-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery-item:nth-child(3n + 1) {
+          grid-row: span 1;
+        }
+
+        .typography-showcase {
+          padding: 5rem 2rem;
+        }
+
+        .type-block {
+          padding: 2rem;
+        }
+
+        .type-number {
+          font-size: 5rem;
+        }
+
+        .type-heading {
+          font-size: 2rem;
+        }
+
+        footer {
+          padding: 3rem 2rem;
+        }
+
+        .magnetic-cursor {
+          display: none;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: clamp(2.5rem, 12vw, 4rem);
+        }
+
+        .hero-subtitle {
+          font-size: 0.8rem;
+        }
+
+        .gallery-title {
+          font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .menu-links a {
+          font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .contact-info h2 {
+          font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .floating-text {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <h1 class="loader-text">ATELIER</h1>
+    </div>
+
+    <!-- Magnetic Cursor -->
+    <div class="magnetic-cursor" id="cursor"></div>
+
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">ATELIER</div>
+        <div class="menu-trigger" id="menuTrigger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Fullscreen Menu -->
+    <div class="fullscreen-menu" id="fullscreenMenu">
+      <div class="menu-content">
+        <ul class="menu-links">
+          <li><a href="#home" class="menu-link">Home</a></li>
+          <li><a href="#gallery" class="menu-link">Gallery</a></li>
+          <li><a href="#typography" class="menu-link">Typography</a></li>
+          <li><a href="#contact" class="menu-link">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <div class="floating-text">ART</div>
+      <div class="floating-text">DESIGN</div>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span style="--index: 0">Where</span>
+          <span style="--index: 1">Art</span>
+          <span style="--index: 2">Meets</span><br />
+          <span style="--index: 3">Digital</span>
+          <span style="--index: 4">Innovation</span>
+        </h1>
+        <p class="hero-subtitle">Crafting Experiences Beyond Imagination</p>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-header">
+        <h2 class="gallery-title" data-text="Selected Works">Selected Works</h2>
+      </div>
+      <div class="masonry-grid" id="masonryGrid">
+        <!-- Gallery items will be dynamically generated -->
+      </div>
+    </section>
+
+    <!-- Typography Showcase -->
+    <section class="typography-showcase" id="typography">
+      <div class="type-grid">
+        <div class="type-block">
+          <span class="type-number">01</span>
+          <h3 class="type-heading">Bold<br />Statements</h3>
+          <p class="type-description">
+            Typography that commands attention and creates lasting impressions
+            through powerful visual hierarchy.
+          </p>
+        </div>
+        <div class="type-block">
+          <span class="type-number">02</span>
+          <h3 class="type-heading">Elegant<br />Minimalism</h3>
+          <p class="type-description">
+            Less is more. Clean lines and thoughtful spacing create
+            sophisticated digital experiences.
+          </p>
+        </div>
+        <div class="type-block">
+          <span class="type-number">03</span>
+          <h3 class="type-heading">Dynamic<br />Motion</h3>
+          <p class="type-description">
+            Bringing type to life through fluid animations and interactive
+            storytelling.
+          </p>
+        </div>
+        <div class="type-block">
+          <span class="type-number">04</span>
+          <h3 class="type-heading">Creative<br />Expression</h3>
+          <p class="type-description">
+            Pushing boundaries with experimental layouts and unconventional
+            design approaches.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+      <div class="contact-info">
+        <h2>Let's Create<br />Something<br />Extraordinary</h2>
+        <p>Ready to transform your vision into reality?</p>
+        <div class="contact-details">
+          <p>hello@atelier.studio</p>
+          <p>+1 (555) 123-4567</p>
+          <p>New York, NY</p>
+        </div>
+      </div>
+      <div class="contact-form-section">
+        <form class="contact-form" id="contactForm">
+          <div class="form-group">
+            <input type="text" id="name" required />
+            <label for="name">Your Name</label>
+          </div>
+          <div class="form-group">
+            <input type="email" id="email" required />
+            <label for="email">Your Email</label>
+          </div>
+          <div class="form-group">
+            <textarea id="message" rows="5" required></textarea>
+            <label for="message">Your Message</label>
+          </div>
+          <button type="submit" class="submit-btn">Send Message</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p class="footer-text">ATELIER © 2024</p>
+      <div class="social-links">
+        <a href="#">Instagram</a>
+        <a href="#">Behance</a>
+        <a href="#">Dribbble</a>
+        <a href="#">LinkedIn</a>
+      </div>
+      <p
+        style="
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          margin-top: 2rem;
+        "
+      >
+        Crafted with passion in New York
+      </p>
+    </footer>
+
+    <script>
+      // Gallery Data
+      const galleryData = [
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Abstract Dreams",
+          category: "Digital Art",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "Color Theory",
+          category: "Visual Design",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "Geometric Patterns",
+          category: "Illustration",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Fluid Dynamics",
+          category: "Motion Design",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+          title: "Motion Study 01",
+          category: "Animation",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Urban Landscapes",
+          category: "Photography",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "Minimalist Form",
+          category: "Architecture",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+          title: "Motion Study 02",
+          category: "Animation",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "Light Studies",
+          category: "Experimental",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "Texture Exploration",
+          category: "Material Design",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Nature Inspired",
+          category: "Organic Design",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+          title: "Motion Study 03",
+          category: "Animation",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "Digital Sculpture",
+          category: "3D Art",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+          title: "Abstract Reality",
+          category: "Conceptual",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+          title: "Color Gradients",
+          category: "Visual Art",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4",
+          title: "Motion Study 04",
+          category: "Animation",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+          title: "Ethereal Spaces",
+          category: "Environment",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+          title: "Dynamic Forms",
+          category: "Sculpture",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+          title: "Light & Shadow",
+          category: "Photography",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+          title: "Geometric Beauty",
+          category: "Pattern Design",
+        },
+      ];
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Magnetic Cursor
+      const cursor = document.getElementById("cursor");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+
+        cursor.style.left = cursorX - 10 + "px";
+        cursor.style.top = cursorY - 10 + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Menu Toggle
+      const menuTrigger = document.getElementById("menuTrigger");
+      const fullscreenMenu = document.getElementById("fullscreenMenu");
+      const menuLinks = document.querySelectorAll(".menu-link");
+
+      menuTrigger.addEventListener("click", () => {
+        menuTrigger.classList.toggle("active");
+        fullscreenMenu.classList.toggle("active");
+      });
+
+      menuLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          menuTrigger.classList.remove("active");
+          fullscreenMenu.classList.remove("active");
+        });
+      });
+
+      // Create Gallery Items
+      function createGallery() {
+        const masonryGrid = document.getElementById("masonryGrid");
+
+        galleryData.forEach((item, index) => {
+          const galleryItem = document.createElement("div");
+          galleryItem.className = "gallery-item";
+          galleryItem.style.setProperty("--index", index);
+
+          if (item.type === "video") {
+            galleryItem.innerHTML = `
+                        <video autoplay muted loop playsinline>
+                            <source src="${item.src}" type="video/mp4">
+                        </video>
+                        <div class="gallery-overlay">
+                            <div class="gallery-info">
+                                <h3>${item.title}</h3>
+                                <p>${item.category}</p>
+                            </div>
+                        </div>
+                    `;
+          } else {
+            galleryItem.innerHTML = `
+                        <img src="${item.src}" alt="${item.title}">
+                        <div class="gallery-overlay">
+                            <div class="gallery-info">
+                                <h3>${item.title}</h3>
+                                <p>${item.category}</p>
+                            </div>
+                        </div>
+                    `;
+          }
+
+          masonryGrid.appendChild(galleryItem);
+        });
+      }
+
+      // Initialize Gallery
+      createGallery();
+
+      // Smooth Scroll for Menu Links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Form Submission
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for your message! We'll get back to you soon.");
+        e.target.reset();
+      });
+
+      // Parallax Effect on Scroll
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".floating-text");
+
+        parallaxElements.forEach((el, index) => {
+          const speed = index === 0 ? 0.5 : -0.3;
+          el.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+
+        ticking = false;
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener("scroll", requestTick);
+
+      // Intersection Observer for Animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = "running";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document.querySelectorAll(".gallery-item, .type-block").forEach((el) => {
+        el.style.animationPlayState = "paused";
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RETRO STUDIO - Typography & Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&family=Space+Mono:wght@400;700&display=swap");
+
+      /* Custom color scheme - Electric Blue (#00D9FF), Hot Pink (#FF006E), Lime Green (#ADFF00) */
+      :root {
+        --color-primary: #00d9ff;
+        --color-secondary: #ff006e;
+        --color-accent: #adff00;
+      }
+
+      /* Custom animations */
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            2px 2px 0 var(--color-secondary),
+            -2px -2px 0 var(--color-accent);
+        }
+        25% {
+          text-shadow:
+            -2px 2px 0 var(--color-secondary),
+            2px -2px 0 var(--color-accent);
+        }
+        50% {
+          text-shadow:
+            2px -2px 0 var(--color-secondary),
+            -2px 2px 0 var(--color-accent);
+        }
+        75% {
+          text-shadow:
+            -2px -2px 0 var(--color-secondary),
+            2px 2px 0 var(--color-accent);
+        }
+      }
+
+      @keyframes neon-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          filter: brightness(1);
+        }
+        50% {
+          opacity: 0.8;
+          filter: brightness(1.2);
+        }
+      }
+
+      @keyframes text-slide {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      @keyframes bounce-rotate {
+        0%,
+        100% {
+          transform: rotate(0deg) scale(1);
+        }
+        50% {
+          transform: rotate(5deg) scale(1.1);
+        }
+      }
+
+      @keyframes typewriter {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Typography effects */
+      .glitch-text {
+        animation: glitch 0.5s infinite;
+      }
+
+      .neon-text {
+        text-shadow:
+          0 0 10px var(--color-primary),
+          0 0 20px var(--color-primary),
+          0 0 30px var(--color-primary);
+        animation: neon-pulse 2s infinite;
+      }
+
+      .retro-grid {
+        background-image:
+          linear-gradient(rgba(0, 217, 255, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 217, 255, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: grid-move 10s linear infinite;
+      }
+
+      @keyframes grid-move {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 50px 50px;
+        }
+      }
+
+      .typewriter {
+        overflow: hidden;
+        white-space: nowrap;
+        animation: typewriter 3s steps(40, end);
+      }
+
+      .cursor::after {
+        content: "|";
+        animation: blink 1s infinite;
+      }
+
+      /* Smooth scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Hide scrollbar but keep functionality */
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      body {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Image container styles */
+      .image-frame {
+        position: relative;
+        overflow: hidden;
+        transform: perspective(1000px) rotateY(0deg);
+        transition: all 0.5s ease;
+      }
+
+      .image-frame:hover {
+        transform: perspective(1000px) rotateY(5deg);
+      }
+
+      /* Retro button styles */
+      .retro-btn {
+        position: relative;
+        background: var(--color-secondary);
+        color: white;
+        border: 3px solid var(--color-accent);
+        box-shadow: 5px 5px 0 var(--color-accent);
+        transition: all 0.2s;
+      }
+
+      .retro-btn:hover {
+        transform: translate(-5px, -5px);
+        box-shadow: 10px 10px 0 var(--color-accent);
+      }
+
+      .retro-btn:active {
+        transform: translate(0, 0);
+        box-shadow: 0 0 0 var(--color-accent);
+      }
+
+      /* Video background fix */
+      video {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Text stroke effect */
+      .text-stroke {
+        -webkit-text-stroke: 2px var(--color-primary);
+        color: transparent;
+      }
+
+      /* Marquee effect */
+      .marquee {
+        animation: text-slide 20s linear infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white font-['Space_Mono'] overflow-x-hidden">
+    <!-- Fixed Navigation -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 bg-black border-b-4 border-[#00D9FF] backdrop-blur-md"
+    >
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-['Bebas_Neue'] text-[#ADFF00] glitch-text">
+            RETRO STUDIO
+          </h1>
+          <ul class="hidden md:flex space-x-8 font-bold">
+            <li>
+              <a href="#home" class="hover:text-[#00D9FF] transition-colors"
+                >HOME</a
+              >
+            </li>
+            <li>
+              <a href="#about" class="hover:text-[#00D9FF] transition-colors"
+                >ABOUT</a
+              >
+            </li>
+            <li>
+              <a href="#gallery" class="hover:text-[#00D9FF] transition-colors"
+                >GALLERY</a
+              >
+            </li>
+            <li>
+              <a href="#services" class="hover:text-[#00D9FF] transition-colors"
+                >SERVICES</a
+              >
+            </li>
+            <li>
+              <a
+                href="#portfolio"
+                class="hover:text-[#00D9FF] transition-colors"
+                >PORTFOLIO</a
+              >
+            </li>
+            <li>
+              <a href="#team" class="hover:text-[#00D9FF] transition-colors"
+                >TEAM</a
+              >
+            </li>
+            <li>
+              <a href="#contact" class="hover:text-[#00D9FF] transition-colors"
+                >CONTACT</a
+              >
+            </li>
+          </ul>
+          <button class="md:hidden text-[#00D9FF]" onclick="toggleMenu()">
+            <svg
+              class="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- Mobile Menu -->
+      <div
+        id="mobileMenu"
+        class="hidden md:hidden bg-black border-t-2 border-[#00D9FF]"
+      >
+        <ul class="py-4 space-y-4 text-center font-bold">
+          <li><a href="#home" class="block hover:text-[#00D9FF]">HOME</a></li>
+          <li><a href="#about" class="block hover:text-[#00D9FF]">ABOUT</a></li>
+          <li>
+            <a href="#gallery" class="block hover:text-[#00D9FF]">GALLERY</a>
+          </li>
+          <li>
+            <a href="#services" class="block hover:text-[#00D9FF]">SERVICES</a>
+          </li>
+          <li>
+            <a href="#portfolio" class="block hover:text-[#00D9FF]"
+              >PORTFOLIO</a
+            >
+          </li>
+          <li><a href="#team" class="block hover:text-[#00D9FF]">TEAM</a></li>
+          <li>
+            <a href="#contact" class="block hover:text-[#00D9FF]">CONTACT</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Section 1: HOME -->
+    <section
+      id="home"
+      class="min-h-screen flex items-center justify-center relative retro-grid pt-20"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black"
+      ></div>
+      <div class="container mx-auto px-4 z-10 text-center">
+        <h1 class="text-7xl md:text-9xl font-['Bebas_Neue'] mb-4">
+          <span class="text-[#00D9FF] neon-text">WELCOME</span><br />
+          <span class="text-[#FF006E] glitch-text">TO THE</span><br />
+          <span class="text-stroke text-8xl md:text-[12rem]">FUTURE</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-[#ADFF00] typewriter cursor mt-8">
+          Retro meets tomorrow in perfect harmony
+        </p>
+        <div class="mt-12 space-x-4">
+          <button class="retro-btn px-8 py-4 text-lg font-bold">EXPLORE</button>
+          <button
+            class="retro-btn bg-[#00D9FF] border-[#FF006E] px-8 py-4 text-lg font-bold"
+          >
+            CONNECT
+          </button>
+        </div>
+      </div>
+      <div class="absolute bottom-10 left-0 right-0">
+        <p class="text-[#00D9FF] text-sm marquee whitespace-nowrap">
+          ★ INNOVATIVE DESIGN ★ CREATIVE SOLUTIONS ★ DIGITAL EXCELLENCE ★ FUTURE
+          FORWARD ★
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 2: ABOUT -->
+    <section
+      id="about"
+      class="min-h-screen flex items-center justify-center bg-[#FF006E] relative overflow-hidden py-20"
+    >
+      <div class="absolute inset-0 opacity-20">
+        <img
+          src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <div class="container mx-auto px-4 z-10">
+        <h2 class="text-6xl md:text-8xl font-['Oswald'] text-center mb-12">
+          <span class="text-black">WHO</span>
+          <span class="text-[#ADFF00] glitch-text">WE</span>
+          <span class="text-black">ARE</span>
+        </h2>
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <p class="text-2xl font-bold text-black">
+              We are digital rebels, creative pioneers, and typography
+              enthusiasts.
+            </p>
+            <p class="text-lg text-black/80">
+              Born from the collision of retro aesthetics and futuristic vision,
+              we craft experiences that transcend time.
+            </p>
+            <div class="flex space-x-4 text-4xl font-['Bebas_Neue']">
+              <span class="text-[#00D9FF] animate-pulse">BOLD</span>
+              <span class="text-black">•</span>
+              <span class="text-[#ADFF00] animate-bounce">BRAVE</span>
+              <span class="text-black">•</span>
+              <span class="text-white glitch-text">BRILLIANT</span>
+            </div>
+          </div>
+          <div
+            class="image-frame rounded-lg overflow-hidden border-4 border-[#ADFF00] shadow-2xl"
+          >
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: GALLERY -->
+    <section id="gallery" class="min-h-screen bg-black py-20">
+      <div class="container mx-auto px-4">
+        <h2 class="text-6xl md:text-8xl font-['Bebas_Neue'] text-center mb-16">
+          <span class="text-[#ADFF00]">VISUAL</span>
+          <span class="text-[#00D9FF] neon-text">GALLERY</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Gallery items with retro frames -->
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#FF006E] transform rotate-3 group-hover:rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-[#00D9FF] font-bold text-center">NEON DREAMS</p>
+          </div>
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#00D9FF] transform -rotate-3 group-hover:-rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-[#FF006E] font-bold text-center">CYBER PUNK</p>
+          </div>
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#ADFF00] transform rotate-3 group-hover:rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-[#00D9FF] font-bold text-center">RETRO WAVE</p>
+          </div>
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#00D9FF] transform -rotate-3 group-hover:-rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-[#ADFF00] font-bold text-center">DIGITAL ART</p>
+          </div>
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#FF006E] transform rotate-3 group-hover:rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-white font-bold text-center">FUTURE VISION</p>
+          </div>
+          <div class="group relative">
+            <div
+              class="absolute inset-0 bg-[#ADFF00] transform -rotate-3 group-hover:-rotate-6 transition-transform"
+            ></div>
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+              class="relative z-10 w-full h-64 object-cover border-4 border-white"
+            />
+            <p class="mt-4 text-[#FF006E] font-bold text-center">NEON NIGHTS</p>
+          </div>
+        </div>
+        <!-- Video Gallery -->
+        <div class="mt-16">
+          <h3
+            class="text-4xl font-['Oswald'] text-[#00D9FF] text-center mb-8 glitch-text"
+          >
+            MOTION GRAPHICS
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="relative group">
+              <video
+                autoplay
+                muted
+                loop
+                class="w-full h-64 object-cover border-4 border-[#FF006E]"
+              >
+                <source
+                  src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div
+                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              >
+                <p class="text-2xl font-bold text-[#ADFF00]">KINETIC TYPE</p>
+              </div>
+            </div>
+            <div class="relative group">
+              <video
+                autoplay
+                muted
+                loop
+                class="w-full h-64 object-cover border-4 border-[#00D9FF]"
+              >
+                <source
+                  src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/1.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div
+                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              >
+                <p class="text-2xl font-bold text-[#FF006E]">FLUID MOTION</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: SERVICES -->
+    <section
+      id="services"
+      class="min-h-screen bg-[#ADFF00] py-20 relative overflow-hidden"
+    >
+      <div class="absolute inset-0 retro-grid opacity-20"></div>
+      <div class="container mx-auto px-4 relative z-10">
+        <h2
+          class="text-6xl md:text-8xl font-['Bebas_Neue'] text-center mb-16 text-black"
+        >
+          WHAT WE <span class="text-[#FF006E] glitch-text">DO</span>
+        </h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div
+            class="bg-black p-8 transform hover:scale-105 transition-transform"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-[#00D9FF] mb-4">
+              BRAND IDENTITY
+            </h3>
+            <p class="text-white mb-4">
+              Crafting unique visual identities that scream personality
+            </p>
+            <ul class="space-y-2 text-[#ADFF00]">
+              <li>→ Logo Design</li>
+              <li>→ Typography Systems</li>
+              <li>→ Color Schemes</li>
+            </ul>
+          </div>
+          <div
+            class="bg-[#FF006E] p-8 transform hover:scale-105 transition-transform"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-white mb-4">WEB DESIGN</h3>
+            <p class="text-black mb-4">
+              Retro-futuristic websites that break the internet
+            </p>
+            <ul class="space-y-2 text-white">
+              <li>→ UI/UX Design</li>
+              <li>→ Interactive Elements</li>
+              <li>→ Responsive Layouts</li>
+            </ul>
+          </div>
+          <div
+            class="bg-[#00D9FF] p-8 transform hover:scale-105 transition-transform"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-black mb-4">
+              MOTION DESIGN
+            </h3>
+            <p class="text-white mb-4">
+              Typography that moves, grooves, and improves
+            </p>
+            <ul class="space-y-2 text-black">
+              <li>→ Kinetic Typography</li>
+              <li>→ Logo Animation</li>
+              <li>→ Video Graphics</li>
+            </ul>
+          </div>
+          <div
+            class="bg-white p-8 transform hover:scale-105 transition-transform border-4 border-black"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-[#FF006E] mb-4">
+              PRINT DESIGN
+            </h3>
+            <p class="text-black mb-4">
+              Tangible designs that you can actually touch
+            </p>
+            <ul class="space-y-2 text-[#00D9FF]">
+              <li>→ Poster Design</li>
+              <li>→ Business Cards</li>
+              <li>→ Packaging</li>
+            </ul>
+          </div>
+          <div
+            class="bg-[#FF006E] p-8 transform hover:scale-105 transition-transform border-4 border-white"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-[#ADFF00] mb-4">
+              CONSULTING
+            </h3>
+            <p class="text-white mb-4">
+              Strategic advice for maximum visual impact
+            </p>
+            <ul class="space-y-2 text-black">
+              <li>→ Brand Strategy</li>
+              <li>→ Design Systems</li>
+              <li>→ Creative Direction</li>
+            </ul>
+          </div>
+          <div
+            class="bg-black p-8 transform hover:scale-105 transition-transform border-4 border-[#00D9FF]"
+          >
+            <h3 class="text-3xl font-['Oswald'] text-[#ADFF00] mb-4">
+              WORKSHOPS
+            </h3>
+            <p class="text-white mb-4">
+              Learn the secrets of retro-futuristic design
+            </p>
+            <ul class="space-y-2 text-[#00D9FF]">
+              <li>→ Typography Basics</li>
+              <li>→ Color Theory</li>
+              <li>→ Design Trends</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: PORTFOLIO -->
+    <section id="portfolio" class="min-h-screen bg-black py-20">
+      <div class="container mx-auto px-4">
+        <h2 class="text-6xl md:text-8xl font-['Bebas_Neue'] text-center mb-16">
+          <span class="text-[#FF006E]">SELECTED</span>
+          <span class="text-[#00D9FF] neon-text">WORKS</span>
+        </h2>
+        <div class="space-y-16">
+          <!-- Project 1 -->
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div class="order-2 md:order-1">
+              <h3 class="text-4xl font-['Oswald'] text-[#ADFF00] mb-4">
+                NEON DREAMS FESTIVAL
+              </h3>
+              <p class="text-lg mb-4">
+                A complete visual identity for the biggest retro-wave music
+                festival. Typography that dances to the beat.
+              </p>
+              <div class="flex space-x-4">
+                <span class="text-[#FF006E] font-bold">#BRANDING</span>
+                <span class="text-[#00D9FF] font-bold">#MOTION</span>
+                <span class="text-[#ADFF00] font-bold">#PRINT</span>
+              </div>
+            </div>
+            <div class="order-1 md:order-2 image-frame">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+                class="w-full h-96 object-cover border-4 border-[#ADFF00]"
+              />
+            </div>
+          </div>
+          <!-- Project 2 -->
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div class="image-frame">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+                class="w-full h-96 object-cover border-4 border-[#FF006E]"
+              />
+            </div>
+            <div>
+              <h3 class="text-4xl font-['Oswald'] text-[#00D9FF] mb-4">
+                CYBER BOUTIQUE
+              </h3>
+              <p class="text-lg mb-4">
+                E-commerce platform with a retro-futuristic twist. Shopping has
+                never looked this rad.
+              </p>
+              <div class="flex space-x-4">
+                <span class="text-[#ADFF00] font-bold">#WEB</span>
+                <span class="text-[#FF006E] font-bold">#UI/UX</span>
+                <span class="text-[#00D9FF] font-bold">#INTERACTIVE</span>
+              </div>
+            </div>
+          </div>
+          <!-- Project 3 -->
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div class="order-2 md:order-1">
+              <h3 class="text-4xl font-['Oswald'] text-[#FF006E] mb-4">
+                RETRO ARCADE BAR
+              </h3>
+              <p class="text-lg mb-4">
+                Complete brand identity for a gaming bar. Where pixels meet
+                pints in perfect harmony.
+              </p>
+              <div class="flex space-x-4">
+                <span class="text-[#00D9FF] font-bold">#IDENTITY</span>
+                <span class="text-[#ADFF00] font-bold">#SIGNAGE</span>
+                <span class="text-[#FF006E] font-bold">#MERCH</span>
+              </div>
+            </div>
+            <div class="order-1 md:order-2 image-frame">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+                class="w-full h-96 object-cover border-4 border-[#00D9FF]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: TEAM -->
+    <section
+      id="team"
+      class="min-h-screen bg-[#00D9FF] py-20 relative overflow-hidden"
+    >
+      <div class="absolute inset-0 opacity-10">
+        <div
+          class="absolute text-[20rem] font-['Bebas_Neue'] text-black -top-20 -left-20 transform rotate-12"
+        >
+          TEAM
+        </div>
+        <div
+          class="absolute text-[20rem] font-['Bebas_Neue'] text-black -bottom-20 -right-20 transform -rotate-12"
+        >
+          CREW
+        </div>
+      </div>
+      <div class="container mx-auto px-4 relative z-10">
+        <h2
+          class="text-6xl md:text-8xl font-['Bebas_Neue'] text-center mb-16 text-black"
+        >
+          THE <span class="text-[#FF006E] glitch-text">DREAM</span> TEAM
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div
+            class="bg-black p-8 transform hover:rotate-3 transition-transform"
+          >
+            <img
+              src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+              class="w-full h-64 object-cover mb-4 border-4 border-[#ADFF00]"
+            />
+            <h3 class="text-2xl font-['Oswald'] text-[#ADFF00] mb-2">
+              ALEX NEON
+            </h3>
+            <p class="text-[#00D9FF] font-bold mb-2">Creative Director</p>
+            <p class="text-white">
+              Master of pixels, wizard of vectors, champion of Comic Sans (just
+              kidding).
+            </p>
+          </div>
+          <div
+            class="bg-[#FF006E] p-8 transform hover:-rotate-3 transition-transform"
+          >
+            <img
+              src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+              class="w-full h-64 object-cover mb-4 border-4 border-white"
+            />
+            <h3 class="text-2xl font-['Oswald'] text-white mb-2">MAYA RETRO</h3>
+            <p class="text-[#ADFF00] font-bold mb-2">Lead Designer</p>
+            <p class="text-black">
+              Typography enthusiast who dreams in kerning and wakes up in
+              leading.
+            </p>
+          </div>
+          <div
+            class="bg-white p-8 transform hover:rotate-3 transition-transform border-4 border-black"
+          >
+            <img
+              src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png"
+              class="w-full h-64 object-cover mb-4 border-4 border-[#FF006E]"
+            />
+            <h3 class="text-2xl font-['Oswald'] text-[#FF006E] mb-2">
+              KAI FUTURE
+            </h3>
+            <p class="text-[#00D9FF] font-bold mb-2">Motion Designer</p>
+            <p class="text-black">
+              Making things move since 2019. Believes every letter deserves to
+              dance.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: CONTACT -->
+    <section id="contact" class="min-h-screen bg-black py-20 relative">
+      <div class="absolute inset-0 retro-grid opacity-10"></div>
+      <div class="container mx-auto px-4 relative z-10">
+        <h2 class="text-6xl md:text-8xl font-['Bebas_Neue'] text-center mb-16">
+          <span class="text-[#ADFF00]">LET'S</span>
+          <span class="text-[#FF006E] glitch-text">CONNECT</span>
+        </h2>
+        <div class="max-w-2xl mx-auto">
+          <form class="space-y-6">
+            <div>
+              <input
+                type="text"
+                placeholder="YOUR NAME"
+                class="w-full p-4 bg-transparent border-4 border-[#00D9FF] text-white placeholder-[#00D9FF] font-bold focus:border-[#ADFF00] transition-colors"
+              />
+            </div>
+            <div>
+              <input
+                type="email"
+                placeholder="YOUR EMAIL"
+                class="w-full p-4 bg-transparent border-4 border-[#FF006E] text-white placeholder-[#FF006E] font-bold focus:border-[#00D9FF] transition-colors"
+              />
+            </div>
+            <div>
+              <textarea
+                placeholder="YOUR MESSAGE"
+                rows="6"
+                class="w-full p-4 bg-transparent border-4 border-[#ADFF00] text-white placeholder-[#ADFF00] font-bold focus:border-[#FF006E] transition-colors"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="retro-btn w-full py-4 text-xl font-['Oswald'] font-bold"
+            >
+              SEND MESSAGE
+            </button>
+          </form>
+          <div class="mt-12 text-center">
+            <p class="text-2xl font-bold text-[#00D9FF] mb-4">OR FIND US AT</p>
+            <div class="flex justify-center space-x-8 text-xl">
+              <a
+                href="#"
+                class="text-[#FF006E] hover:text-[#ADFF00] transition-colors"
+                >INSTAGRAM</a
+              >
+              <a
+                href="#"
+                class="text-[#00D9FF] hover:text-[#FF006E] transition-colors"
+                >TWITTER</a
+              >
+              <a
+                href="#"
+                class="text-[#ADFF00] hover:text-[#00D9FF] transition-colors"
+                >BEHANCE</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="absolute bottom-0 left-0 right-0 p-8 text-center">
+        <p class="text-[#00D9FF] font-bold">
+          © 2024 RETRO STUDIO • DESIGNED WITH
+          <span class="text-[#FF006E]">♥</span> AND
+          <span class="text-[#ADFF00]">PIXELS</span>
+        </p>
+      </div>
+    </section>
+
+    <script>
+      // Mobile menu toggle
+      function toggleMenu() {
+        const menu = document.getElementById("mobileMenu");
+        menu.classList.toggle("hidden");
+      }
+
+      // Close mobile menu when clicking links
+      document.querySelectorAll("#mobileMenu a").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.getElementById("mobileMenu").classList.add("hidden");
+        });
+      });
+
+      // Parallax effect on scroll
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelectorAll(".retro-grid");
+        parallax.forEach((element) => {
+          element.style.backgroundPosition = `0 ${scrolled * 0.5}px`;
+        });
+      });
+
+      // Random glitch effect
+      setInterval(() => {
+        const glitchElements = document.querySelectorAll(".glitch-text");
+        glitchElements.forEach((el) => {
+          el.style.animation = "none";
+          setTimeout(() => {
+            el.style.animation = "glitch 0.5s infinite";
+          }, 10);
+        });
+      }, 5000);
+
+      // Form submission
+      document.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Message sent to the future! We'll get back to you yesterday.");
+      });
+    </script>
+  </body>
+</html>

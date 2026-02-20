@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typography Portfolio - Experimental Design</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@200;400;700&family=Playfair+Display:ital,wght@0,400;0,900;1,400&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Oswald", sans-serif;
+        background: #0a0a0a;
+        color: #fff;
+        overflow-x: hidden;
+      }
+
+      /* 로딩 화면 */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-size: 8rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.2em;
+        animation: glitch 2s infinite;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            2px 2px 0 #ff00ff,
+            -2px -2px 0 #00ffff;
+        }
+        50% {
+          text-shadow:
+            -2px 2px 0 #ff00ff,
+            2px -2px 0 #00ffff;
+        }
+      }
+
+      /* 글자 비 효과 */
+      .letter-rain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 100;
+        overflow: hidden;
+      }
+
+      .falling-letter {
+        position: absolute;
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: rgba(255, 255, 255, 0.1);
+        animation: fall linear infinite;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+
+      @keyframes fall {
+        to {
+          transform: translateY(110vh) rotate(360deg);
+        }
+      }
+
+      /* 히어로 섹션 - 강렬한 타이포그래피 */
+      .hero {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+      }
+
+      .hero-title {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .hero-title h1 {
+        font-size: clamp(5rem, 20vw, 25rem);
+        font-family: "Bebas Neue", cursive;
+        line-height: 0.8;
+        letter-spacing: -0.05em;
+        margin: 0;
+        position: relative;
+        display: inline-block;
+      }
+
+      .hero-title h1 span {
+        display: inline-block;
+        animation: letterFloat 3s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes letterFloat {
+        0%,
+        100% {
+          transform: translateY(0) rotateZ(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotateZ(-5deg);
+        }
+      }
+
+      .subtitle {
+        font-size: clamp(1rem, 3vw, 2rem);
+        font-weight: 200;
+        letter-spacing: 0.5em;
+        margin-top: 2rem;
+        opacity: 0;
+        animation: fadeInUp 1s 1s forwards;
+        text-transform: uppercase;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 텍스트 왜곡 효과 */
+      .distorted-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 30vw;
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        font-style: italic;
+        opacity: 0.05;
+        z-index: 1;
+        white-space: nowrap;
+        animation: distort 10s ease-in-out infinite;
+      }
+
+      @keyframes distort {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) skewX(0deg) scaleY(1);
+        }
+        25% {
+          transform: translate(-50%, -50%) skewX(10deg) scaleY(1.2);
+        }
+        50% {
+          transform: translate(-50%, -50%) skewX(-10deg) scaleY(0.8);
+        }
+        75% {
+          transform: translate(-50%, -50%) skewX(5deg) scaleY(1.1);
+        }
+      }
+
+      /* 네비게이션 - 미니멀 */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 2rem 4rem;
+        mix-blend-mode: difference;
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 2rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.1em;
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 3rem;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        position: relative;
+        padding: 0.5rem 0;
+      }
+
+      /* 텍스트 갤러리 섹션 */
+      .text-gallery {
+        position: relative;
+        min-height: 100vh;
+        padding: 10rem 0;
+        background: #000;
+      }
+
+      .scrolling-text {
+        font-size: 15vw;
+        font-family: "Bebas Neue", cursive;
+        white-space: nowrap;
+        text-transform: uppercase;
+        line-height: 1;
+        margin: 2rem 0;
+      }
+
+      .scroll-left {
+        animation: scrollLeft 20s linear infinite;
+      }
+
+      .scroll-right {
+        animation: scrollRight 20s linear infinite;
+      }
+
+      @keyframes scrollLeft {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      @keyframes scrollRight {
+        0% {
+          transform: translateX(-50%);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+
+      /* 이미지 그리드 - 타이포그래피 오버레이 */
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2px;
+        padding: 0 2px;
+        background: #000;
+      }
+
+      .grid-item {
+        position: relative;
+        height: 60vh;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .grid-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .grid-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.6s;
+      }
+
+      .grid-item:hover .grid-overlay {
+        opacity: 1;
+      }
+
+      .grid-text {
+        text-align: center;
+        transform: scale(0.8);
+        transition: transform 0.6s;
+      }
+
+      .grid-item:hover .grid-text {
+        transform: scale(1);
+      }
+
+      .grid-text h3 {
+        font-size: 3rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+      }
+
+      .grid-text p {
+        font-size: 1rem;
+        font-weight: 200;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      /* 타이포그래피 애니메이션 섹션 */
+      .typo-section {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+        overflow: hidden;
+      }
+
+      .rotating-text {
+        position: relative;
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .rotating-text span {
+        display: block;
+        position: absolute;
+        width: 100%;
+        left: 0;
+        opacity: 0;
+        animation: rotateWord 12s linear infinite;
+        animation-delay: calc(var(--i) * 3s);
+      }
+
+      @keyframes rotateWord {
+        0%,
+        25% {
+          opacity: 0;
+          transform: translateY(50px) rotateX(-90deg);
+        }
+        8%,
+        17% {
+          opacity: 1;
+          transform: translateY(0) rotateX(0deg);
+        }
+        25%,
+        100% {
+          opacity: 0;
+          transform: translateY(-50px) rotateX(90deg);
+        }
+      }
+
+      /* 비디오 섹션 */
+      .video-section {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .video-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .video-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .video-text {
+        font-size: clamp(4rem, 15vw, 12rem);
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.2em;
+        text-align: center;
+        mix-blend-mode: overlay;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      /* 연락처 섹션 */
+      .contact-section {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .contact-content {
+        text-align: center;
+        z-index: 10;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.1em;
+        margin-bottom: 2rem;
+        position: relative;
+        display: inline-block;
+      }
+
+      .contact-title::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        -webkit-text-stroke: 2px #fff;
+        animation: outline 4s ease-in-out infinite;
+      }
+
+      @keyframes outline {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(5px, -5px);
+        }
+      }
+
+      /* 반응형 */
+      @media (max-width: 768px) {
+        .hero-title h1 {
+          font-size: 15vw;
+        }
+
+        .nav-menu {
+          display: none;
+        }
+
+        .scrolling-text {
+          font-size: 20vw;
+        }
+
+        .grid-text h3 {
+          font-size: 2rem;
+        }
+
+        .rotating-text {
+          font-size: 3rem;
+        }
+      }
+
+      /* 스무스 스크롤 */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* 선택 효과 */
+      ::selection {
+        background: #fff;
+        color: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 로딩 화면 -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- 글자 비 효과 -->
+    <div class="letter-rain" id="letterRain"></div>
+
+    <!-- 네비게이션 -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">TYPECRAFT</div>
+        <ul class="nav-menu">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero" id="home">
+      <div class="distorted-text">CREATIVE</div>
+      <div class="hero-title">
+        <h1 id="heroText"></h1>
+        <p class="subtitle">Where Typography Meets Art</p>
+      </div>
+    </section>
+
+    <!-- 텍스트 갤러리 -->
+    <section class="text-gallery">
+      <div class="scrolling-text scroll-left">
+        DESIGN • TYPOGRAPHY • CREATIVE • INNOVATION • DESIGN • TYPOGRAPHY •
+        CREATIVE • INNOVATION •
+      </div>
+      <div class="scrolling-text scroll-right">
+        EXPERIMENTAL • MODERN • BOLD • UNIQUE • EXPERIMENTAL • MODERN • BOLD •
+        UNIQUE •
+      </div>
+      <div class="scrolling-text scroll-left">
+        ARTISTIC • VISUAL • DYNAMIC • POWERFUL • ARTISTIC • VISUAL • DYNAMIC •
+        POWERFUL •
+      </div>
+    </section>
+
+    <!-- 이미지 그리드 -->
+    <section class="image-grid" id="gallery">
+      <!-- 이미지들이 JavaScript로 생성됩니다 -->
+    </section>
+
+    <!-- 타이포그래피 애니메이션 -->
+    <section class="typo-section" id="about">
+      <div class="rotating-text">
+        <span style="--i: 0">We Create</span>
+        <span style="--i: 1">We Design</span>
+        <span style="--i: 2">We Inspire</span>
+        <span style="--i: 3">We Innovate</span>
+      </div>
+    </section>
+
+    <!-- 비디오 섹션 -->
+    <section class="video-section">
+      <div class="video-container">
+        <video autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+      <div class="video-overlay">
+        <h2 class="video-text">MOTION</h2>
+      </div>
+    </section>
+
+    <!-- 연락처 섹션 -->
+    <section class="contact-section" id="contact">
+      <div class="contact-content">
+        <h2 class="contact-title" data-text="LET'S TALK">LET'S TALK</h2>
+        <p style="font-size: 1.5rem; font-weight: 200; letter-spacing: 0.1em">
+          hello@typecraft.studio
+        </p>
+      </div>
+    </section>
+
+    <script>
+      // 이미지 데이터
+      const images = [
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "ABSTRACT",
+          subtitle: "Digital Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "MINIMAL",
+          subtitle: "Clean Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "BOLD",
+          subtitle: "Typography",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "CREATIVE",
+          subtitle: "Exploration",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "DYNAMIC",
+          subtitle: "Motion",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "FLUID",
+          subtitle: "Organic",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "GEOMETRIC",
+          subtitle: "Structure",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "VIBRANT",
+          subtitle: "Color",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "ETHEREAL",
+          subtitle: "Dreams",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "SURREAL",
+          subtitle: "Fantasy",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+          title: "COSMIC",
+          subtitle: "Universe",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+          title: "MYSTIC",
+          subtitle: "Unknown",
+        },
+      ];
+
+      // 로더 숨기기
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+          initHeroAnimation();
+          createLetterRain();
+        }, 1500);
+      });
+
+      // 히어로 텍스트 애니메이션
+      function initHeroAnimation() {
+        const heroText = document.getElementById("heroText");
+        const text = "TYPECRAFT";
+        let html = "";
+
+        for (let i = 0; i < text.length; i++) {
+          html += `<span style="--i: ${i}">${text[i]}</span>`;
+        }
+
+        heroText.innerHTML = html;
+      }
+
+      // 글자 비 효과
+      function createLetterRain() {
+        const letterRain = document.getElementById("letterRain");
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+
+        setInterval(() => {
+          const letter = document.createElement("div");
+          letter.className = "falling-letter";
+          letter.textContent =
+            letters[Math.floor(Math.random() * letters.length)];
+          letter.style.left = Math.random() * 100 + "%";
+          letter.style.animationDuration = Math.random() * 3 + 2 + "s";
+          letter.style.fontSize = Math.random() * 2 + 1 + "rem";
+
+          letterRain.appendChild(letter);
+
+          setTimeout(() => {
+            letter.remove();
+          }, 5000);
+        }, 100);
+      }
+
+      // 이미지 그리드 생성
+      function createImageGrid() {
+        const grid = document.getElementById("gallery");
+
+        images.forEach((image, index) => {
+          const item = document.createElement("div");
+          item.className = "grid-item";
+          item.innerHTML = `
+                    <img src="${image.src}" alt="${image.title}">
+                    <div class="grid-overlay">
+                        <div class="grid-text">
+                            <h3>${image.title}</h3>
+                            <p>${image.subtitle}</p>
+                        </div>
+                    </div>
+                `;
+
+          grid.appendChild(item);
+        });
+      }
+
+      // 스크롤 효과
+      let lastScrollY = 0;
+
+      window.addEventListener("scroll", () => {
+        const scrollY = window.scrollY;
+        const delta = scrollY - lastScrollY;
+
+        // 패럴랙스 효과
+        document.querySelectorAll(".scrolling-text").forEach((text, index) => {
+          const speed = index % 2 === 0 ? 0.5 : -0.5;
+          text.style.transform = `translateX(${delta * speed}px)`;
+        });
+
+        lastScrollY = scrollY;
+      });
+
+      // 초기화
+      createImageGrid();
+
+      // 마우스 이동 효과
+      document.addEventListener("mousemove", (e) => {
+        const x = e.clientX / window.innerWidth - 0.5;
+        const y = e.clientY / window.innerHeight - 0.5;
+
+        document.querySelector(".distorted-text").style.transform =
+          `translate(-50%, -50%) translate(${x * 20}px, ${y * 20}px)`;
+      });
+    </script>
+  </body>
+</html>

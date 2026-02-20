@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spiral Gallery - Infinite Art Journey</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;400;600&family=Crimson+Text:ital,wght@0,400;1,400&family=Space+Grotesk:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-bg: #0f0f0f;
+        --accent: #ff6b6b;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --ease: cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--primary-bg);
+        color: var(--text-primary);
+        overflow: hidden;
+        position: relative;
+        height: 100vh;
+      }
+
+      /* Floating Navigation Orbs */
+      .nav-orbs {
+        position: fixed;
+        top: 50%;
+        right: 40px;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .orb {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.4s var(--ease);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        letter-spacing: 1px;
+        overflow: hidden;
+      }
+
+      .orb::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        border-radius: 50%;
+      }
+
+      .orb:hover {
+        transform: scale(1.2);
+        border-color: var(--accent);
+      }
+
+      .orb:hover::before {
+        opacity: 0.3;
+      }
+
+      .orb.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        transform: scale(1.3);
+      }
+
+      /* Central Spiral Container */
+      .spiral-container {
+        position: absolute;
+        width: 200vw;
+        height: 200vh;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(0deg);
+        transition: transform 1.5s var(--ease);
+      }
+
+      /* Gallery Cards - Increased Size */
+      .gallery-card {
+        position: absolute;
+        width: 450px;
+        height: 600px;
+        background: #1a1a1a;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.8s var(--ease);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      .gallery-card.large {
+        width: 550px;
+        height: 700px;
+      }
+
+      .gallery-card.xlarge {
+        width: 650px;
+        height: 800px;
+      }
+
+      .gallery-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 107, 107, 0.1),
+          transparent
+        );
+        transform: rotate(45deg);
+        transition: all 0.6s ease;
+        opacity: 0;
+        z-index: 1;
+      }
+
+      .gallery-card:hover::before {
+        opacity: 1;
+        animation: shimmer 1.5s ease-in-out;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+        100% {
+          transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+      }
+
+      /* Active state - centered and straight */
+      .gallery-card.active {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 1001;
+        box-shadow: 0 50px 100px rgba(255, 107, 107, 0.4);
+        width: 600px;
+        height: 800px;
+      }
+
+      .gallery-card.large.active {
+        width: 700px;
+        height: 900px;
+      }
+
+      .gallery-card.xlarge.active {
+        width: 800px;
+        height: 1000px;
+      }
+
+      /* Overlay background when card is active */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.6s ease;
+        z-index: 999;
+      }
+
+      .overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .card-media {
+        width: 100%;
+        height: 75%;
+        object-fit: cover;
+        filter: grayscale(80%) brightness(0.8);
+        transition: all 0.6s var(--ease);
+        position: relative;
+        z-index: 1;
+      }
+
+      .gallery-card:hover .card-media {
+        filter: grayscale(40%) brightness(0.9);
+        transform: scale(1.05);
+      }
+
+      /* IMPORTANT: Active card media is bright and colorful - ENHANCED */
+      /* 클릭/활성 상태 - 매우 밝게 */
+      .gallery-card.active .card-media {
+        filter: brightness(1.3) contrast(1.1) saturate(1.2) !important;
+        transform: scale(1.05) !important;
+      }
+
+      /* Additional brightness boost for active state */
+      .gallery-card.active::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 75%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0.05) 50%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .card-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+        transform: translateY(60%);
+        transition: transform 0.6s var(--ease);
+        z-index: 3;
+      }
+
+      .gallery-card:hover .card-content,
+      .gallery-card.active .card-content {
+        transform: translateY(0);
+      }
+
+      /* Active card content styling */
+      .gallery-card.active .card-content {
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+      }
+
+      .card-number {
+        font-family: "Oswald", sans-serif;
+        font-size: 56px;
+        font-weight: 600;
+        color: var(--accent);
+        opacity: 0.8;
+        line-height: 1;
+      }
+
+      .gallery-card.active .card-number {
+        opacity: 1;
+        color: #ff8888;
+      }
+
+      .card-title {
+        font-family: "Crimson Text", serif;
+        font-size: 28px;
+        margin: 10px 0 5px;
+        font-style: italic;
+      }
+
+      .gallery-card.active .card-title {
+        font-size: 32px;
+        color: #ffffff;
+      }
+
+      .card-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .gallery-card.active .card-subtitle {
+        color: #bbbbbb;
+        font-size: 16px;
+      }
+
+      /* Close button for active card */
+      .close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 10;
+      }
+
+      .gallery-card.active .close-btn {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .close-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .close-btn::before,
+      .close-btn::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 2px;
+        background: white;
+      }
+
+      .close-btn::before {
+        transform: rotate(45deg);
+      }
+
+      .close-btn::after {
+        transform: rotate(-45deg);
+      }
+
+      /* Text Panels */
+      .text-panel {
+        position: absolute;
+        width: 400px;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        transition: all 0.6s var(--ease);
+      }
+
+      .text-panel:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 107, 107, 0.3);
+        transform: scale(1.05);
+      }
+
+      .quote-text {
+        font-family: "Crimson Text", serif;
+        font-size: 32px;
+        line-height: 1.4;
+        font-style: italic;
+        margin-bottom: 20px;
+      }
+
+      .quote-author {
+        font-family: "Oswald", sans-serif;
+        font-size: 16px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 200;
+      }
+
+      /* Center Logo */
+      .center-logo {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .logo-text {
+        font-family: "Oswald", sans-serif;
+        font-size: 140px;
+        font-weight: 600;
+        letter-spacing: -5px;
+        opacity: 0.05;
+        text-align: center;
+        line-height: 0.8;
+      }
+
+      .logo-subtext {
+        font-size: 18px;
+        letter-spacing: 12px;
+        text-align: center;
+        margin-top: 10px;
+        opacity: 0.3;
+      }
+
+      /* Info Overlay */
+      .info-overlay {
+        position: fixed;
+        top: 40px;
+        left: 40px;
+        z-index: 1000;
+      }
+
+      .current-section {
+        font-family: "Oswald", sans-serif;
+        font-size: 14px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+      }
+
+      .section-title {
+        font-family: "Crimson Text", serif;
+        font-size: 56px;
+        font-style: italic;
+        line-height: 1;
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: var(--primary-bg);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.8s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-circle {
+        width: 100px;
+        height: 100px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 30px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Particle Background */
+      .particles {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: float 20s linear infinite;
+      }
+
+      @keyframes float {
+        from {
+          transform: translateY(100vh) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        to {
+          transform: translateY(-100vh) translateX(100px);
+          opacity: 0;
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .nav-orbs {
+          right: 20px;
+          gap: 10px;
+        }
+
+        .orb {
+          width: 40px;
+          height: 40px;
+          font-size: 8px;
+        }
+
+        .gallery-card {
+          width: 300px;
+          height: 400px;
+        }
+
+        .gallery-card.large {
+          width: 350px;
+          height: 450px;
+        }
+
+        .gallery-card.xlarge {
+          width: 400px;
+          height: 500px;
+        }
+
+        .gallery-card.active {
+          width: 90vw;
+          height: 70vh;
+        }
+
+        .text-panel {
+          width: 300px;
+          padding: 30px;
+        }
+
+        .quote-text {
+          font-size: 24px;
+        }
+
+        .logo-text {
+          font-size: 100px;
+        }
+
+        .section-title {
+          font-size: 42px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-circle"></div>
+        <p
+          style="
+            font-family: &quot;Oswald&quot;, sans-serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+          "
+        >
+          Initializing Gallery
+        </p>
+      </div>
+    </div>
+
+    <!-- Overlay for active cards -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Particle Background -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Navigation Orbs -->
+    <nav class="nav-orbs">
+      <div class="orb active" data-section="0">01</div>
+      <div class="orb" data-section="1">02</div>
+      <div class="orb" data-section="2">03</div>
+      <div class="orb" data-section="3">04</div>
+      <div class="orb" data-section="4">05</div>
+      <div class="orb" data-section="5">06</div>
+      <div class="orb" data-section="6">07</div>
+      <div class="orb" data-section="7">08</div>
+      <div class="orb" data-section="8">09</div>
+      <div class="orb" data-section="9">10</div>
+    </nav>
+
+    <!-- Info Overlay -->
+    <div class="info-overlay">
+      <div class="current-section" id="currentSection">Section 01</div>
+      <h1 class="section-title" id="sectionTitle">Discovery</h1>
+    </div>
+
+    <!-- Center Logo -->
+    <div class="center-logo">
+      <div class="logo-text">SPIRAL</div>
+      <div class="logo-subtext">GALLERY</div>
+    </div>
+
+    <!-- Spiral Container -->
+    <div class="spiral-container" id="spiralContainer">
+      <!-- Section 1: Discovery -->
+      <div
+        class="gallery-card xlarge"
+        style="top: 35%; left: 40%; transform: rotate(-15deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">01</div>
+          <h3 class="card-title">Ethereal Dimensions</h3>
+          <p class="card-subtitle">Digital Exploration</p>
+        </div>
+      </div>
+
+      <div class="text-panel" style="top: 25%; left: 55%">
+        <div class="quote-text">
+          "Art is the lie that enables us to realize the truth."
+        </div>
+        <div class="quote-author">Pablo Picasso</div>
+      </div>
+
+      <div
+        class="gallery-card large"
+        style="top: 50%; left: 35%; transform: rotate(10deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">02</div>
+          <h3 class="card-title">Motion Poetry</h3>
+          <p class="card-subtitle">Video Art</p>
+        </div>
+      </div>
+
+      <!-- Section 2: Immersion -->
+      <div
+        class="gallery-card xlarge"
+        style="top: 20%; left: 65%; transform: rotate(25deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">03</div>
+          <h3 class="card-title">Natural Flow</h3>
+          <p class="card-subtitle">Environmental Art</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card"
+        style="top: 55%; left: 60%; transform: rotate(-20deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">04</div>
+          <h3 class="card-title">Urban Symphony</h3>
+          <p class="card-subtitle">Photography</p>
+        </div>
+      </div>
+
+      <!-- Section 3: Reflection -->
+      <div class="text-panel" style="top: 65%; left: 45%">
+        <div class="quote-text">"Every artist was first an amateur."</div>
+        <div class="quote-author">Ralph Waldo Emerson</div>
+      </div>
+
+      <div
+        class="gallery-card large"
+        style="top: 30%; left: 75%; transform: rotate(-30deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">05</div>
+          <h3 class="card-title">Color Theory</h3>
+          <p class="card-subtitle">Abstract Expression</p>
+        </div>
+      </div>
+
+      <!-- Section 4: Transformation -->
+      <div
+        class="gallery-card large"
+        style="top: 70%; left: 50%; transform: rotate(15deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">06</div>
+          <h3 class="card-title">Minimal Essence</h3>
+          <p class="card-subtitle">Contemporary Minimalism</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card xlarge"
+        style="top: 40%; left: 25%; transform: rotate(-25deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">07</div>
+          <h3 class="card-title">Dream Sequences</h3>
+          <p class="card-subtitle">Animation</p>
+        </div>
+      </div>
+
+      <!-- Section 5: Transcendence -->
+      <div class="text-panel" style="top: 15%; left: 45%">
+        <div class="quote-text">"Creativity takes courage."</div>
+        <div class="quote-author">Henri Matisse</div>
+      </div>
+
+      <div
+        class="gallery-card"
+        style="top: 60%; left: 70%; transform: rotate(20deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">08</div>
+          <h3 class="card-title">New Perspectives</h3>
+          <p class="card-subtitle">Emerging Artists</p>
+        </div>
+      </div>
+
+      <!-- Section 6: Evolution -->
+      <div
+        class="gallery-card xlarge"
+        style="top: 25%; left: 30%; transform: rotate(-35deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">09</div>
+          <h3 class="card-title">Fluid Dynamics</h3>
+          <p class="card-subtitle">Experimental Media</p>
+        </div>
+      </div>
+
+      <div class="text-panel" style="top: 75%; left: 35%">
+        <div class="quote-text">
+          "Art washes away from the soul the dust of everyday life."
+        </div>
+        <div class="quote-author">Pablo Picasso</div>
+      </div>
+
+      <!-- Section 7: Synthesis -->
+      <div
+        class="gallery-card large"
+        style="top: 45%; left: 55%; transform: rotate(40deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">10</div>
+          <h3 class="card-title">Final Vision</h3>
+          <p class="card-subtitle">Masterworks</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card xlarge"
+        style="top: 35%; left: 70%; transform: rotate(-18deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">11</div>
+          <h3 class="card-title">Evolution of Form</h3>
+          <p class="card-subtitle">Progressive Art</p>
+        </div>
+      </div>
+
+      <!-- Section 8: Metamorphosis -->
+      <div
+        class="gallery-card"
+        style="top: 55%; left: 40%; transform: rotate(22deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">12</div>
+          <h3 class="card-title">Kinetic Energy</h3>
+          <p class="card-subtitle">Motion Studies</p>
+        </div>
+      </div>
+
+      <div class="text-panel" style="top: 20%; left: 50%">
+        <div class="quote-text">
+          "The purpose of art is washing the dust of daily life off our souls."
+        </div>
+        <div class="quote-author">Pablo Picasso</div>
+      </div>
+
+      <!-- Section 9: Resonance -->
+      <div
+        class="gallery-card large"
+        style="top: 65%; left: 55%; transform: rotate(-28deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">13</div>
+          <h3 class="card-title">Synthetic Reality</h3>
+          <p class="card-subtitle">Digital Fusion</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card xlarge"
+        style="top: 30%; left: 45%; transform: rotate(35deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">14</div>
+          <h3 class="card-title">Experimental Cinema</h3>
+          <p class="card-subtitle">Avant-garde Film</p>
+        </div>
+      </div>
+
+      <!-- Section 10: Infinity -->
+      <div class="text-panel" style="top: 50%; left: 65%">
+        <div class="quote-text">
+          "Art enables us to find ourselves and lose ourselves at the same
+          time."
+        </div>
+        <div class="quote-author">Thomas Merton</div>
+      </div>
+
+      <div
+        class="gallery-card"
+        style="top: 45%; left: 30%; transform: rotate(-42deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_3.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">15</div>
+          <h3 class="card-title">Metamorphic Forms</h3>
+          <p class="card-subtitle">Transformative Art</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card large"
+        style="top: 25%; left: 60%; transform: rotate(18deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">16</div>
+          <h3 class="card-title">Temporal Shifts</h3>
+          <p class="card-subtitle">Time-based Media</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card xlarge"
+        style="top: 55%; left: 25%; transform: rotate(-24deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">17</div>
+          <h3 class="card-title">Resonant Frequencies</h3>
+          <p class="card-subtitle">Sound & Vision</p>
+        </div>
+      </div>
+
+      <div class="text-panel" style="top: 70%; left: 60%">
+        <div class="quote-text">
+          "Every artist dips his brush in his own soul."
+        </div>
+        <div class="quote-author">Henry Ward Beecher</div>
+      </div>
+
+      <div
+        class="gallery-card large"
+        style="top: 35%; left: 50%; transform: rotate(45deg)"
+      >
+        <div class="close-btn"></div>
+        <video class="card-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="card-content">
+          <div class="card-number">18</div>
+          <h3 class="card-title">Infinite Loop</h3>
+          <p class="card-subtitle">Eternal Art</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card xlarge"
+        style="top: 60%; left: 45%; transform: rotate(-50deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">19</div>
+          <h3 class="card-title">Cosmic Convergence</h3>
+          <p class="card-subtitle">Universal Themes</p>
+        </div>
+      </div>
+
+      <div
+        class="gallery-card"
+        style="top: 40%; left: 65%; transform: rotate(30deg)"
+      >
+        <div class="close-btn"></div>
+        <img
+          class="card-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_3.png"
+          alt="Gallery Image"
+        />
+        <div class="card-content">
+          <div class="card-number">20</div>
+          <h3 class="card-title">Full Circle</h3>
+          <p class="card-subtitle">The Journey Continues</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize particles
+      const particlesContainer = document.getElementById("particles");
+      for (let i = 0; i < 60; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 20 + "s";
+        particle.style.animationDuration = 15 + Math.random() * 10 + "s";
+        particlesContainer.appendChild(particle);
+      }
+
+      // Section data - 10 sections
+      const sections = [
+        { name: "Discovery", rotation: 0 },
+        { name: "Immersion", rotation: -36 },
+        { name: "Reflection", rotation: -72 },
+        { name: "Transformation", rotation: -108 },
+        { name: "Transcendence", rotation: -144 },
+        { name: "Evolution", rotation: -180 },
+        { name: "Synthesis", rotation: -216 },
+        { name: "Metamorphosis", rotation: -252 },
+        { name: "Resonance", rotation: -288 },
+        { name: "Infinity", rotation: -324 },
+      ];
+
+      let currentSection = 0;
+      const spiralContainer = document.getElementById("spiralContainer");
+      const orbs = document.querySelectorAll(".orb");
+      const sectionTitle = document.getElementById("sectionTitle");
+      const currentSectionText = document.getElementById("currentSection");
+      const overlay = document.getElementById("overlay");
+
+      // Navigation function
+      function navigateToSection(index) {
+        currentSection = index;
+
+        // Update spiral rotation
+        spiralContainer.style.transform = `translate(-50%, -50%) rotate(${sections[index].rotation}deg)`;
+
+        // Update orbs
+        orbs.forEach((orb, i) => {
+          orb.classList.toggle("active", i === index);
+        });
+
+        // Update info
+        sectionTitle.textContent = sections[index].name;
+        currentSectionText.textContent = `Section ${String(index + 1).padStart(2, "0")}`;
+      }
+
+      // Orb click handlers
+      orbs.forEach((orb, index) => {
+        orb.addEventListener("click", () => navigateToSection(index));
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+          navigateToSection((currentSection + 1) % sections.length);
+        } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          navigateToSection(
+            (currentSection - 1 + sections.length) % sections.length,
+          );
+        }
+      });
+
+      // Mouse wheel navigation
+      let isScrolling = false;
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          if (!isScrolling) {
+            isScrolling = true;
+
+            if (e.deltaY > 0) {
+              navigateToSection((currentSection + 1) % sections.length);
+            } else {
+              navigateToSection(
+                (currentSection - 1 + sections.length) % sections.length,
+              );
+            }
+
+            setTimeout(() => {
+              isScrolling = false;
+            }, 1500);
+          }
+        },
+        { passive: true },
+      );
+
+      // Gallery card interactions - Updated for center positioning
+      const galleryCards = document.querySelectorAll(".gallery-card");
+      let activeCard = null;
+
+      galleryCards.forEach((card) => {
+        // Store original position and transform
+        const originalStyle = {
+          top: card.style.top,
+          left: card.style.left,
+          transform: card.style.transform,
+          position: card.style.position || "absolute",
+        };
+
+        card.addEventListener("click", function (e) {
+          // Don't activate if clicking close button
+          if (e.target.classList.contains("close-btn")) {
+            return;
+          }
+
+          if (this.classList.contains("active")) {
+            // Deactivate
+            deactivateCard(this, originalStyle);
+          } else {
+            // Deactivate any active card first
+            if (activeCard) {
+              const prevOriginalStyle = activeCard.originalStyle;
+              deactivateCard(activeCard, prevOriginalStyle);
+            }
+
+            // Activate this card
+            this.originalStyle = originalStyle;
+            this.classList.add("active");
+            overlay.classList.add("active");
+            activeCard = this;
+
+            // Disable scrolling
+            document.body.style.overflow = "hidden";
+          }
+        });
+
+        // Close button handler
+        const closeBtn = card.querySelector(".close-btn");
+        closeBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          deactivateCard(card, originalStyle);
+        });
+      });
+
+      function deactivateCard(card, originalStyle) {
+        card.classList.remove("active");
+        overlay.classList.remove("active");
+
+        // Restore original position
+        card.style.position = originalStyle.position;
+        card.style.top = originalStyle.top;
+        card.style.left = originalStyle.left;
+        card.style.transform = originalStyle.transform;
+
+        activeCard = null;
+        document.body.style.overflow = "";
+      }
+
+      // Click overlay to close
+      overlay.addEventListener("click", () => {
+        if (activeCard) {
+          deactivateCard(activeCard, activeCard.originalStyle);
+        }
+      });
+
+      // ESC key to close
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && activeCard) {
+          deactivateCard(activeCard, activeCard.originalStyle);
+        }
+      });
+
+      // Touch support
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndY < touchStartY - 50) {
+          navigateToSection((currentSection + 1) % sections.length);
+        }
+        if (touchEndY > touchStartY + 50) {
+          navigateToSection(
+            (currentSection - 1 + sections.length) % sections.length,
+          );
+        }
+      }
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Parallax effect on mouse move
+      document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+
+        document.querySelectorAll(".text-panel").forEach((panel, index) => {
+          const speed = 0.5 + index * 0.1;
+          panel.style.transform = `translateX(${x * speed}px) translateY(${y * speed}px)`;
+        });
+      });
+    </script>
+  </body>
+</html>

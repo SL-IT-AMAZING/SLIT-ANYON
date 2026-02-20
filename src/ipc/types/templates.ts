@@ -8,6 +8,9 @@ import { createClient, defineContract } from "../contracts/core";
 // Import the shared Template type
 // Note: The actual Template type is defined in shared/templates.ts
 // We create a compatible Zod schema here
+export const TemplateTypeSchema = z.enum(["html", "nextjs"]);
+export type TemplateType = z.infer<typeof TemplateTypeSchema>;
+
 export const TemplateSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -15,6 +18,7 @@ export const TemplateSchema = z.object({
   category: z.string(),
   imageUrl: z.string(),
   path: z.string(),
+  type: TemplateTypeSchema.optional(),
   techStack: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
@@ -62,6 +66,22 @@ export const GetAppThemeParamsSchema = z.object({
 });
 
 export type GetAppThemeParams = z.infer<typeof GetAppThemeParamsSchema>;
+
+export const GetTemplateContentParamsSchema = z.object({
+  templatePath: z.string(),
+});
+
+export type GetTemplateContentParams = z.infer<
+  typeof GetTemplateContentParamsSchema
+>;
+
+export const GetTemplateContentResultSchema = z.object({
+  html: z.string(),
+});
+
+export type GetTemplateContentResult = z.infer<
+  typeof GetTemplateContentResultSchema
+>;
 
 // =============================================================================
 // Custom Theme Schemas
@@ -200,6 +220,12 @@ export const templateContracts = {
     channel: "get-templates",
     input: z.void(),
     output: TemplateRegistrySchema,
+  }),
+
+  getTemplateContent: defineContract({
+    channel: "get-template-content",
+    input: GetTemplateContentParamsSchema,
+    output: GetTemplateContentResultSchema,
   }),
 
   getThemes: defineContract({

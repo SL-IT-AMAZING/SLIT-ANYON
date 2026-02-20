@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RETRO STUDIO - Typography & Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&family=Space+Mono:wght@400;700&display=swap");
+
+      :root {
+        --color-primary: #ff6b6b;
+        --color-secondary: #4ecdc4;
+        --color-accent: #ffe66d;
+      }
+
+      /* Custom Tailwind Config */
+      .text-primary {
+        color: var(--color-primary);
+      }
+      .text-secondary {
+        color: var(--color-secondary);
+      }
+      .text-accent {
+        color: var(--color-accent);
+      }
+      .bg-primary {
+        background-color: var(--color-primary);
+      }
+      .bg-secondary {
+        background-color: var(--color-secondary);
+      }
+      .bg-accent {
+        background-color: var(--color-accent);
+      }
+      .border-primary {
+        border-color: var(--color-primary);
+      }
+      .border-secondary {
+        border-color: var(--color-secondary);
+      }
+      .border-accent {
+        border-color: var(--color-accent);
+      }
+
+      /* Typography Animations */
+      @keyframes glitch {
+        0% {
+          text-shadow:
+            2px 2px var(--color-primary),
+            -2px -2px var(--color-secondary);
+        }
+        25% {
+          text-shadow:
+            -2px 2px var(--color-secondary),
+            2px -2px var(--color-accent);
+        }
+        50% {
+          text-shadow:
+            2px -2px var(--color-accent),
+            -2px 2px var(--color-primary);
+        }
+        75% {
+          text-shadow:
+            -2px -2px var(--color-primary),
+            2px 2px var(--color-secondary);
+        }
+        100% {
+          text-shadow:
+            2px 2px var(--color-primary),
+            -2px -2px var(--color-secondary);
+        }
+      }
+
+      @keyframes typewriter {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes wave {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      @keyframes rotate3d {
+        0% {
+          transform: rotateY(0deg);
+        }
+        100% {
+          transform: rotateY(360deg);
+        }
+      }
+
+      @keyframes neon {
+        0%,
+        100% {
+          text-shadow:
+            0 0 10px var(--color-primary),
+            0 0 20px var(--color-primary),
+            0 0 30px var(--color-primary);
+        }
+        50% {
+          text-shadow:
+            0 0 20px var(--color-secondary),
+            0 0 30px var(--color-secondary),
+            0 0 40px var(--color-secondary);
+        }
+      }
+
+      /* Typography Classes */
+      .font-bebas {
+        font-family: "Bebas Neue", cursive;
+      }
+      .font-oswald {
+        font-family: "Oswald", sans-serif;
+      }
+      .font-mono {
+        font-family: "Space Mono", monospace;
+      }
+
+      .glitch-text {
+        animation: glitch 0.5s infinite;
+        font-weight: bold;
+      }
+
+      .typewriter {
+        overflow: hidden;
+        white-space: nowrap;
+        animation:
+          typewriter 3s steps(40) 1s 1 normal both,
+          blink 900ms steps(40) infinite;
+        border-right: 3px solid var(--color-accent);
+      }
+
+      .wave-text span {
+        display: inline-block;
+        animation: wave 2s ease-in-out infinite;
+        animation-delay: calc(0.1s * var(--i));
+      }
+
+      .rotate-3d {
+        animation: rotate3d 4s linear infinite;
+        transform-style: preserve-3d;
+      }
+
+      .neon-text {
+        animation: neon 2s ease-in-out infinite;
+      }
+
+      /* Retro Grid Background */
+      .retro-grid {
+        background-image:
+          linear-gradient(rgba(78, 205, 196, 0.3) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(78, 205, 196, 0.3) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: grid-move 10s linear infinite;
+      }
+
+      @keyframes grid-move {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 50px 50px;
+        }
+      }
+
+      /* Smooth Scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Hide scrollbar but keep functionality */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #000;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--color-primary);
+        border-radius: 5px;
+      }
+
+      /* Image Container */
+      .image-fit {
+        object-fit: contain;
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* Retro Button */
+      .retro-button {
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.3s;
+      }
+
+      .retro-button::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        transform: translateZ(-10px) translateY(5px) translateX(5px);
+        transition: transform 0.3s;
+      }
+
+      .retro-button:hover {
+        transform: translateZ(5px);
+      }
+
+      .retro-button:hover::before {
+        transform: translateZ(-5px) translateY(3px) translateX(3px);
+      }
+
+      /* Zigzag Border */
+      .zigzag {
+        position: relative;
+      }
+
+      .zigzag::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background:
+          linear-gradient(
+              135deg,
+              var(--color-primary) 25%,
+              transparent 25%
+            ) -5px
+            0,
+          linear-gradient(
+              225deg,
+              var(--color-primary) 25%,
+              transparent 25%
+            ) -5px
+            0,
+          linear-gradient(315deg, var(--color-primary) 25%, transparent 25%),
+          linear-gradient(45deg, var(--color-primary) 25%, transparent 25%);
+        background-size: 10px 10px;
+      }
+
+      /* Floating Animation */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      .floating {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      /* Retro TV Effect */
+      .tv-effect {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tv-effect::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* ASCII Art Animation */
+      .ascii-art {
+        font-family: "Space Mono", monospace;
+        line-height: 1;
+        white-space: pre;
+      }
+
+      /* Perspective Text */
+      .perspective-text {
+        transform: perspective(500px) rotateX(25deg);
+      }
+
+      /* Blob Shape */
+      .blob {
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation: blob-morph 8s ease-in-out infinite;
+      }
+
+      @keyframes blob-morph {
+        0%,
+        100% {
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        }
+        50% {
+          border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+        }
+      }
+
+      /* Menu Styles */
+      .menu-item {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .menu-item::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: -100%;
+        width: 100%;
+        height: 3px;
+        background: var(--color-accent);
+        transition: left 0.3s;
+      }
+
+      .menu-item:hover::after {
+        left: 0;
+      }
+
+      /* Sticker Effect */
+      .sticker {
+        position: relative;
+        transform: rotate(-5deg);
+        transition: transform 0.3s;
+      }
+
+      .sticker:hover {
+        transform: rotate(5deg) scale(1.1);
+      }
+
+      /* Marquee Text */
+      @keyframes marquee {
+        0% {
+          transform: translateX(100%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+
+      .marquee {
+        animation: marquee 20s linear infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white overflow-x-hidden">
+    <!-- Fixed Navigation -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 bg-black border-b-4 border-accent"
+    >
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex justify-between items-center">
+          <div class="font-bebas text-4xl text-primary glitch-text">
+            RETRO STUDIO
+          </div>
+          <div class="hidden md:flex space-x-8">
+            <a
+              href="#home"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >HOME</a
+            >
+            <a
+              href="#about"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >ABOUT</a
+            >
+            <a
+              href="#work"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >WORK</a
+            >
+            <a
+              href="#gallery"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >GALLERY</a
+            >
+            <a
+              href="#team"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >TEAM</a
+            >
+            <a
+              href="#process"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >PROCESS</a
+            >
+            <a
+              href="#contact"
+              class="menu-item font-mono text-accent hover:text-primary transition-colors"
+              >CONTACT</a
+            >
+          </div>
+          <button id="mobileMenu" class="md:hidden text-accent">
+            <svg
+              class="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenuPanel" class="fixed inset-0 bg-black z-40 hidden">
+      <div class="flex flex-col items-center justify-center h-full space-y-8">
+        <a
+          href="#home"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >HOME</a
+        >
+        <a
+          href="#about"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >ABOUT</a
+        >
+        <a
+          href="#work"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >WORK</a
+        >
+        <a
+          href="#gallery"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >GALLERY</a
+        >
+        <a
+          href="#team"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >TEAM</a
+        >
+        <a
+          href="#process"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >PROCESS</a
+        >
+        <a
+          href="#contact"
+          class="font-bebas text-4xl text-accent hover:text-primary"
+          >CONTACT</a
+        >
+      </div>
+    </div>
+
+    <!-- Section 1: Home -->
+    <section
+      id="home"
+      class="min-h-screen flex items-center justify-center retro-grid relative pt-20"
+    >
+      <div class="container mx-auto px-6 text-center z-10">
+        <h1 class="font-bebas text-8xl md:text-9xl text-primary mb-4 rotate-3d">
+          RETRO IS THE
+        </h1>
+        <h2
+          class="font-oswald text-6xl md:text-7xl text-secondary neon-text mb-8"
+        >
+          NEW FUTURE
+        </h2>
+        <div class="font-mono text-xl text-accent typewriter mx-auto max-w-2xl">
+          Welcome to the intersection of nostalgia and innovation_
+        </div>
+        <div class="mt-12 space-y-4">
+          <div class="wave-text font-bebas text-4xl text-accent">
+            <span style="--i: 1">D</span>
+            <span style="--i: 2">E</span>
+            <span style="--i: 3">S</span>
+            <span style="--i: 4">I</span>
+            <span style="--i: 5">G</span>
+            <span style="--i: 6">N</span>
+            <span class="mx-2"></span>
+            <span style="--i: 7">•</span>
+            <span class="mx-2"></span>
+            <span style="--i: 8">C</span>
+            <span style="--i: 9">O</span>
+            <span style="--i: 10">D</span>
+            <span style="--i: 11">E</span>
+            <span class="mx-2"></span>
+            <span style="--i: 12">•</span>
+            <span class="mx-2"></span>
+            <span style="--i: 13">C</span>
+            <span style="--i: 14">R</span>
+            <span style="--i: 15">E</span>
+            <span style="--i: 16">A</span>
+            <span style="--i: 17">T</span>
+            <span style="--i: 18">E</span>
+          </div>
+        </div>
+        <div class="mt-16 floating">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+            alt="Hero Image"
+            class="mx-auto rounded-lg shadow-2xl image-fit max-h-96 tv-effect"
+          />
+        </div>
+      </div>
+      <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2">
+        <div class="font-mono text-accent animate-bounce">↓ SCROLL ↓</div>
+      </div>
+    </section>
+
+    <!-- Section 2: About -->
+    <section
+      id="about"
+      class="min-h-screen flex items-center justify-center bg-primary relative py-20"
+    >
+      <div class="container mx-auto px-6">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <h2 class="font-bebas text-6xl md:text-7xl text-black zigzag">
+              WHO WE ARE
+            </h2>
+            <div class="font-mono text-black space-y-4">
+              <p class="text-lg">
+                We're a collective of digital artists, designers, and developers
+                who believe in the power of nostalgia.
+              </p>
+              <p class="text-lg">
+                Our mission? To bring back the bold, the brave, and the
+                beautifully bizarre aesthetics of the past into modern digital
+                experiences.
+              </p>
+              <div class="ascii-art text-sm">
+                _____ _______ _ _ _____ _____ ____ / ____|__ __| | | | __ \_ _/
+                __ \ | (___ | | | | | | | | || || | | | \___ \ | | | | | | | |
+                || || | | | ____) | | | | |__| | |__| || || |__| | |_____/ |_|
+                \____/|_____/_____\____/
+              </div>
+            </div>
+            <button
+              class="retro-button bg-accent text-black font-bebas text-2xl px-8 py-4 relative"
+            >
+              LEARN MORE
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              alt="About 1"
+              class="rounded-lg image-fit sticker"
+            />
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+              alt="About 2"
+              class="rounded-lg image-fit sticker"
+              style="margin-top: 2rem"
+            />
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              alt="About 3"
+              class="rounded-lg image-fit sticker"
+              style="margin-top: -2rem"
+            />
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="About 4"
+              class="rounded-lg image-fit sticker"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="absolute top-0 left-0 w-full overflow-hidden">
+        <div class="marquee font-bebas text-8xl text-black opacity-10">
+          RETRO • VINTAGE • CLASSIC • TIMELESS • RETRO • VINTAGE • CLASSIC •
+          TIMELESS •
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Work -->
+    <section id="work" class="min-h-screen bg-secondary py-20">
+      <div class="container mx-auto px-6">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-black text-center mb-16 perspective-text"
+        >
+          OUR WORK
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div
+            class="bg-black p-8 rounded-lg transform hover:scale-105 transition-transform"
+          >
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Work 1"
+              class="w-full h-64 object-contain rounded mb-4"
+            />
+            <h3 class="font-oswald text-2xl text-accent mb-2">NEON DREAMS</h3>
+            <p class="font-mono text-primary text-sm">
+              A cyberpunk-inspired web experience that merges 80s aesthetics
+              with modern functionality.
+            </p>
+          </div>
+          <div
+            class="bg-black p-8 rounded-lg transform hover:scale-105 transition-transform"
+          >
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="Work 2"
+              class="w-full h-64 object-contain rounded mb-4"
+            />
+            <h3 class="font-oswald text-2xl text-accent mb-2">PIXEL PERFECT</h3>
+            <p class="font-mono text-primary text-sm">
+              Retro gaming meets contemporary design in this interactive
+              portfolio piece.
+            </p>
+          </div>
+          <div
+            class="bg-black p-8 rounded-lg transform hover:scale-105 transition-transform"
+          >
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+              alt="Work 3"
+              class="w-full h-64 object-contain rounded mb-4"
+            />
+            <h3 class="font-oswald text-2xl text-accent mb-2">
+              SYNTHWAVE SHOP
+            </h3>
+            <p class="font-mono text-primary text-sm">
+              E-commerce platform with a nostalgic twist and modern UX
+              principles.
+            </p>
+          </div>
+        </div>
+        <div class="mt-16 text-center">
+          <div class="inline-block">
+            <div class="font-bebas text-5xl text-black glitch-text">
+              VIEW ALL PROJECTS →
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Gallery -->
+    <section id="gallery" class="min-h-screen bg-accent py-20">
+      <div class="container mx-auto px-6">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-black text-center mb-16"
+        >
+          VISUAL FEAST
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Gallery 1"
+            class="w-full h-64 object-contain rounded-lg blob"
+          />
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+            alt="Gallery 2"
+            class="w-full h-64 object-contain rounded-lg"
+          />
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+            alt="Gallery 3"
+            class="w-full h-64 object-contain rounded-lg"
+          />
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+            alt="Gallery 4"
+            class="w-full h-64 object-contain rounded-lg blob"
+          />
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+            alt="Gallery 5"
+            class="w-full h-64 object-contain rounded-lg"
+          />
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+            alt="Gallery 6"
+            class="w-full h-64 object-contain rounded-lg blob"
+          />
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+            alt="Gallery 7"
+            class="w-full h-64 object-contain rounded-lg"
+          />
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+            alt="Gallery 8"
+            class="w-full h-64 object-contain rounded-lg"
+          />
+        </div>
+        <div class="mt-16 text-center">
+          <div class="font-mono text-black text-2xl">
+            <span class="inline-block rotate-3d">★</span>
+            <span class="mx-4">CURATED WITH LOVE</span>
+            <span class="inline-block rotate-3d">★</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Team -->
+    <section id="team" class="min-h-screen bg-black py-20 retro-grid">
+      <div class="container mx-auto px-6">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-primary text-center mb-16 neon-text"
+        >
+          THE CREW
+        </h2>
+        <div class="grid md:grid-cols-4 gap-8">
+          <div class="text-center group">
+            <div class="relative overflow-hidden rounded-lg mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                alt="Team 1"
+                class="w-full h-64 object-contain tv-effect group-hover:scale-110 transition-transform"
+              />
+              <div
+                class="absolute inset-0 bg-primary opacity-0 group-hover:opacity-20 transition-opacity"
+              ></div>
+            </div>
+            <h3 class="font-oswald text-2xl text-accent">ALEX RETRO</h3>
+            <p class="font-mono text-secondary">Creative Director</p>
+          </div>
+          <div class="text-center group">
+            <div class="relative overflow-hidden rounded-lg mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+                alt="Team 2"
+                class="w-full h-64 object-contain tv-effect group-hover:scale-110 transition-transform"
+              />
+              <div
+                class="absolute inset-0 bg-secondary opacity-0 group-hover:opacity-20 transition-opacity"
+              ></div>
+            </div>
+            <h3 class="font-oswald text-2xl text-accent">PIXEL JANE</h3>
+            <p class="font-mono text-primary">Lead Designer</p>
+          </div>
+          <div class="text-center group">
+            <div class="relative overflow-hidden rounded-lg mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+                alt="Team 3"
+                class="w-full h-64 object-contain tv-effect group-hover:scale-110 transition-transform"
+              />
+              <div
+                class="absolute inset-0 bg-accent opacity-0 group-hover:opacity-20 transition-opacity"
+              ></div>
+            </div>
+            <h3 class="font-oswald text-2xl text-accent">NEON MIKE</h3>
+            <p class="font-mono text-secondary">Tech Lead</p>
+          </div>
+          <div class="text-center group">
+            <div class="relative overflow-hidden rounded-lg mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png"
+                alt="Team 4"
+                class="w-full h-64 object-contain tv-effect group-hover:scale-110 transition-transform"
+              />
+              <div
+                class="absolute inset-0 bg-primary opacity-0 group-hover:opacity-20 transition-opacity"
+              ></div>
+            </div>
+            <h3 class="font-oswald text-2xl text-accent">SYNTH SARA</h3>
+            <p class="font-mono text-primary">Motion Designer</p>
+          </div>
+        </div>
+        <div class="mt-16 text-center">
+          <div class="font-bebas text-4xl text-secondary wave-text">
+            <span style="--i: 1">T</span>
+            <span style="--i: 2">O</span>
+            <span style="--i: 3">G</span>
+            <span style="--i: 4">E</span>
+            <span style="--i: 5">T</span>
+            <span style="--i: 6">H</span>
+            <span style="--i: 7">E</span>
+            <span style="--i: 8">R</span>
+            <span class="mx-2"></span>
+            <span style="--i: 9">W</span>
+            <span style="--i: 10">E</span>
+            <span class="mx-2"></span>
+            <span style="--i: 11">C</span>
+            <span style="--i: 12">R</span>
+            <span style="--i: 13">E</span>
+            <span style="--i: 14">A</span>
+            <span style="--i: 15">T</span>
+            <span style="--i: 16">E</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Process -->
+    <section id="process" class="min-h-screen bg-primary py-20">
+      <div class="container mx-auto px-6">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-black text-center mb-16 zigzag"
+        >
+          HOW WE WORK
+        </h2>
+        <div class="max-w-4xl mx-auto space-y-12">
+          <div class="flex items-center space-x-8">
+            <div class="font-bebas text-8xl text-accent">01</div>
+            <div class="flex-1">
+              <h3 class="font-oswald text-3xl text-black mb-2">IDEATE</h3>
+              <p class="font-mono text-black">
+                We brainstorm wild ideas and filter them through our retro lens.
+              </p>
+            </div>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+              alt="Process 1"
+              class="w-32 h-32 object-contain rounded-lg"
+            />
+          </div>
+          <div class="flex items-center space-x-8">
+            <div class="font-bebas text-8xl text-secondary">02</div>
+            <div class="flex-1">
+              <h3 class="font-oswald text-3xl text-black mb-2">DESIGN</h3>
+              <p class="font-mono text-black">
+                Pixels are pushed, colors are clashed, and magic happens.
+              </p>
+            </div>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+              alt="Process 2"
+              class="w-32 h-32 object-contain rounded-lg"
+            />
+          </div>
+          <div class="flex items-center space-x-8">
+            <div class="font-bebas text-8xl text-accent">03</div>
+            <div class="flex-1">
+              <h3 class="font-oswald text-3xl text-black mb-2">DEVELOP</h3>
+              <p class="font-mono text-black">
+                Code is crafted with the precision of a vintage watchmaker.
+              </p>
+            </div>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+              alt="Process 3"
+              class="w-32 h-32 object-contain rounded-lg"
+            />
+          </div>
+          <div class="flex items-center space-x-8">
+            <div class="font-bebas text-8xl text-secondary">04</div>
+            <div class="flex-1">
+              <h3 class="font-oswald text-3xl text-black mb-2">LAUNCH</h3>
+              <p class="font-mono text-black">
+                Your project goes live with a bang and a synth chord.
+              </p>
+            </div>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png"
+              alt="Process 4"
+              class="w-32 h-32 object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Contact -->
+    <section
+      id="contact"
+      class="min-h-screen bg-secondary py-20 relative overflow-hidden"
+    >
+      <div class="container mx-auto px-6 relative z-10">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-black text-center mb-16 glitch-text"
+        >
+          GET IN TOUCH
+        </h2>
+        <div class="max-w-2xl mx-auto">
+          <form class="space-y-6">
+            <div>
+              <label class="font-mono text-black text-sm">NAME:</label>
+              <input
+                type="text"
+                class="w-full bg-black text-accent font-mono p-4 rounded-lg border-4 border-black focus:border-primary outline-none"
+              />
+            </div>
+            <div>
+              <label class="font-mono text-black text-sm">EMAIL:</label>
+              <input
+                type="email"
+                class="w-full bg-black text-accent font-mono p-4 rounded-lg border-4 border-black focus:border-primary outline-none"
+              />
+            </div>
+            <div>
+              <label class="font-mono text-black text-sm">MESSAGE:</label>
+              <textarea
+                rows="5"
+                class="w-full bg-black text-accent font-mono p-4 rounded-lg border-4 border-black focus:border-primary outline-none"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="retro-button bg-primary text-black font-bebas text-3xl px-12 py-6 w-full"
+            >
+              SEND MESSAGE
+            </button>
+          </form>
+          <div class="mt-12 text-center">
+            <div class="font-mono text-black space-y-2">
+              <p>EMAIL: hello@retrostudio.com</p>
+              <p>PHONE: +1 (555) 123-4567</p>
+              <p>LOCATION: CYBERSPACE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full">
+        <div
+          class="font-bebas text-9xl text-black opacity-10 whitespace-nowrap marquee"
+        >
+          LET'S CREATE SOMETHING AMAZING TOGETHER • LET'S CREATE SOMETHING
+          AMAZING TOGETHER •
+        </div>
+      </div>
+    </section>
+
+    <!-- Bonus Section: Video Showcase -->
+    <section class="min-h-screen bg-black py-20 retro-grid">
+      <div class="container mx-auto px-6">
+        <h2
+          class="font-bebas text-7xl md:text-8xl text-accent text-center mb-16 neon-text"
+        >
+          MOTION REEL
+        </h2>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="relative overflow-hidden rounded-lg">
+            <video autoplay muted loop class="w-full h-64 object-cover">
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent"
+            >
+              <h3 class="font-oswald text-xl text-accent">NEON NIGHTS</h3>
+            </div>
+          </div>
+          <div class="relative overflow-hidden rounded-lg">
+            <video autoplay muted loop class="w-full h-64 object-cover">
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent"
+            >
+              <h3 class="font-oswald text-xl text-primary">CYBER DREAMS</h3>
+            </div>
+          </div>
+          <div class="relative overflow-hidden rounded-lg">
+            <video autoplay muted loop class="w-full h-64 object-cover">
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent"
+            >
+              <h3 class="font-oswald text-xl text-secondary">RETRO WAVE</h3>
+            </div>
+          </div>
+          <div class="relative overflow-hidden rounded-lg">
+            <video autoplay muted loop class="w-full h-64 object-cover">
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent"
+            >
+              <h3 class="font-oswald text-xl text-accent">FUTURE PAST</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t-4 border-accent py-12">
+      <div class="container mx-auto px-6 text-center">
+        <div class="font-bebas text-4xl text-primary mb-4 glitch-text">
+          RETRO STUDIO
+        </div>
+        <div class="font-mono text-secondary mb-8">
+          © 2025 ALL RIGHTS RESERVED IN THE METAVERSE
+        </div>
+        <div class="flex justify-center space-x-8">
+          <span class="font-mono text-accent hover:text-primary cursor-pointer"
+            >TWITTER</span
+          >
+          <span class="font-mono text-accent hover:text-primary cursor-pointer"
+            >INSTAGRAM</span
+          >
+          <span class="font-mono text-accent hover:text-primary cursor-pointer"
+            >BEHANCE</span
+          >
+          <span class="font-mono text-accent hover:text-primary cursor-pointer"
+            >GITHUB</span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Mobile Menu Toggle
+      const mobileMenu = document.getElementById("mobileMenu");
+      const mobileMenuPanel = document.getElementById("mobileMenuPanel");
+
+      mobileMenu.addEventListener("click", () => {
+        mobileMenuPanel.classList.toggle("hidden");
+      });
+
+      // Close mobile menu when clicking links
+      document.querySelectorAll("#mobileMenuPanel a").forEach((link) => {
+        link.addEventListener("click", () => {
+          mobileMenuPanel.classList.add("hidden");
+        });
+      });
+
+      // Smooth scroll behavior for all navigation links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Add parallax effect to floating elements
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelectorAll(".floating");
+
+        parallax.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          element.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+      });
+
+      // Add typing effect to elements with typewriter class
+      const typewriters = document.querySelectorAll(".typewriter");
+      typewriters.forEach((typewriter) => {
+        const text = typewriter.textContent;
+        typewriter.textContent = "";
+        let i = 0;
+
+        const type = () => {
+          if (i < text.length) {
+            typewriter.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, 100);
+          }
+        };
+
+        // Start typing when element is in view
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              type();
+              observer.unobserve(entry.target);
+            }
+          });
+        });
+
+        observer.observe(typewriter);
+      });
+
+      // Form submission
+      document.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert(
+          "Message sent to the retro-verse! We'll get back to you faster than a DeLorean at 88mph! 🚗💨",
+        );
+      });
+    </script>
+  </body>
+</html>

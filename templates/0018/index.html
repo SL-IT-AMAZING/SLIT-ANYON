@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Immersive Portfolio - Spatial Experience</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+        cursor: none;
+      }
+
+      /* 로딩 화면 */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-weight: 100;
+        letter-spacing: 0.5rem;
+        overflow: hidden;
+      }
+
+      .loader-text span {
+        display: inline-block;
+        transform: translateY(100%);
+        animation: revealText 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes revealText {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .progress-bar {
+        width: 200px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 30px auto;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        width: 0%;
+        height: 100%;
+        background: #fff;
+        transition: width 0.3s;
+      }
+
+      /* 마우스 트레일 효과 */
+      .mouse-trail {
+        position: fixed;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9998;
+        mix-blend-mode: screen;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .trail-1 {
+        background: radial-gradient(
+          circle,
+          rgba(255, 0, 100, 0.8) 0%,
+          transparent 70%
+        );
+      }
+
+      .trail-2 {
+        background: radial-gradient(
+          circle,
+          rgba(0, 255, 200, 0.8) 0%,
+          transparent 70%
+        );
+      }
+
+      .trail-3 {
+        background: radial-gradient(
+          circle,
+          rgba(100, 0, 255, 0.8) 0%,
+          transparent 70%
+        );
+      }
+
+      /* 커스텀 커서 */
+      .cursor-ring {
+        position: fixed;
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.15s ease-out;
+      }
+
+      .cursor-dot {
+        position: fixed;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+      }
+
+      .cursor-ring.expand {
+        width: 80px;
+        height: 80px;
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* 메인 컨테이너 */
+      .main-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* 3D 공간 네비게이션 */
+      .spatial-nav {
+        position: fixed;
+        top: 50%;
+        right: 50px;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .nav-node {
+        width: 12px;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        margin: 20px 0;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .nav-node::before {
+        content: attr(data-section);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+      }
+
+      .nav-node:hover::before,
+      .nav-node.active::before {
+        opacity: 1;
+      }
+
+      .nav-node.active {
+        background: #fff;
+        transform: scale(1.5);
+      }
+
+      .nav-node:hover {
+        transform: scale(1.3);
+      }
+
+      /* 플로팅 메뉴 */
+      .floating-menu {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        z-index: 1000;
+      }
+
+      .menu-trigger {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .menu-trigger:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+      }
+
+      .menu-icon {
+        width: 20px;
+        height: 14px;
+        position: relative;
+      }
+
+      .menu-icon span {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: #fff;
+        transition: all 0.3s;
+      }
+
+      .menu-icon span:nth-child(1) {
+        top: 0;
+      }
+      .menu-icon span:nth-child(2) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .menu-icon span:nth-child(3) {
+        bottom: 0;
+      }
+
+      .menu-trigger.active .menu-icon span:nth-child(1) {
+        transform: rotate(45deg) translateY(6px);
+      }
+
+      .menu-trigger.active .menu-icon span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-trigger.active .menu-icon span:nth-child(3) {
+        transform: rotate(-45deg) translateY(-6px);
+      }
+
+      .menu-items {
+        position: absolute;
+        top: 80px;
+        left: 0;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+      }
+
+      .menu-items.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-item {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 30px;
+        margin: 10px 0;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+        transform: translateX(-20px);
+        opacity: 0;
+      }
+
+      .menu-items.active .menu-item {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .menu-items.active .menu-item:nth-child(1) {
+        transition-delay: 0.1s;
+      }
+      .menu-items.active .menu-item:nth-child(2) {
+        transition-delay: 0.2s;
+      }
+
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(10px);
+      }
+
+      /* 섹션 스타일 */
+      .section {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .section.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* 홈 섹션 - 인터랙티브 갤러리 그리드 */
+      .home-section {
+        background: radial-gradient(
+          ellipse at center,
+          rgba(20, 20, 40, 0.8) 0%,
+          #000 100%
+        );
+      }
+
+      .gallery-grid {
+        position: relative;
+        width: 90vw;
+        height: 90vh;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 20px;
+        perspective: 1500px;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0;
+        transform: translateZ(-100px) rotateY(45deg);
+      }
+
+      .gallery-item.loaded {
+        opacity: 1;
+        transform: translateZ(0) rotateY(0);
+      }
+
+      .gallery-item:hover {
+        transform: translateZ(50px) scale(1.05);
+        z-index: 10;
+      }
+
+      .gallery-item img,
+      .gallery-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s;
+      }
+
+      .gallery-item:hover img,
+      .gallery-item:hover video {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 0, 100, 0.3) 0%,
+          rgba(0, 100, 255, 0.3) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-align: center;
+        transform: translateY(20px);
+        transition: transform 0.3s;
+      }
+
+      .gallery-item:hover .gallery-title {
+        transform: translateY(0);
+      }
+
+      /* 비디오 아이콘 */
+      .video-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+
+      .video-icon::before {
+        content: "▶";
+        color: #fff;
+        font-size: 16px;
+      }
+
+      /* About 섹션 */
+      .about-section {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .about-content {
+        max-width: 1000px;
+        text-align: center;
+        z-index: 2;
+        position: relative;
+      }
+
+      .about-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 100;
+        letter-spacing: -0.02em;
+        margin-bottom: 2rem;
+        position: relative;
+      }
+
+      .about-title span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 0.8s forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      .about-description {
+        font-size: 1.5rem;
+        line-height: 1.8;
+        opacity: 0.8;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .about-bg-text {
+        position: absolute;
+        font-size: 20vw;
+        font-weight: 900;
+        opacity: 0.02;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      /* 스킬 오브 */
+      .skill-orbs {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .skill-orb {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        animation: float 6s infinite ease-in-out;
+      }
+
+      .skill-orb:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+      .skill-orb:nth-child(2) {
+        top: 30%;
+        right: 15%;
+        animation-delay: 1s;
+      }
+      .skill-orb:nth-child(3) {
+        bottom: 30%;
+        left: 20%;
+        animation-delay: 2s;
+      }
+      .skill-orb:nth-child(4) {
+        bottom: 20%;
+        right: 10%;
+        animation-delay: 3s;
+      }
+      .skill-orb:nth-child(5) {
+        top: 50%;
+        left: 50%;
+        animation-delay: 4s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        33% {
+          transform: translateY(-20px) rotate(120deg);
+        }
+        66% {
+          transform: translateY(20px) rotate(240deg);
+        }
+      }
+
+      .skill-orb:hover {
+        transform: scale(1.2);
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.3) 0%,
+          transparent 70%
+        );
+      }
+
+      /* 배경 애니메이션 */
+      .bg-animation {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.3;
+        animation: morphing 20s infinite;
+      }
+
+      .bg-shape:nth-child(1) {
+        width: 600px;
+        height: 600px;
+        background: linear-gradient(45deg, #ff006e, #8338ec);
+        top: -300px;
+        left: -300px;
+        animation-delay: 0s;
+      }
+
+      .bg-shape:nth-child(2) {
+        width: 500px;
+        height: 500px;
+        background: linear-gradient(45deg, #3a86ff, #06ffa5);
+        bottom: -250px;
+        right: -250px;
+        animation-delay: 5s;
+      }
+
+      .bg-shape:nth-child(3) {
+        width: 400px;
+        height: 400px;
+        background: linear-gradient(45deg, #ffbe0b, #fb5607);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-delay: 10s;
+      }
+
+      @keyframes morphing {
+        0%,
+        100% {
+          border-radius: 50%;
+          transform: rotate(0deg) scale(1);
+        }
+        25% {
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+          transform: rotate(90deg) scale(1.1);
+        }
+        50% {
+          border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+          transform: rotate(180deg) scale(0.9);
+        }
+        75% {
+          border-radius: 30% 70% 70% 30% / 70% 30% 30% 70%;
+          transform: rotate(270deg) scale(1.05);
+        }
+      }
+
+      /* 프로젝트 모달 */
+      .project-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+        z-index: 2000;
+      }
+
+      .project-modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        width: 90%;
+        max-width: 1200px;
+        height: 80vh;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 40px;
+        position: relative;
+        transform: scale(0.8);
+        transition: transform 0.5s;
+        overflow: hidden;
+      }
+
+      .project-modal.active .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(90deg);
+      }
+
+      .modal-close::before,
+      .modal-close::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 2px;
+        background: #fff;
+      }
+
+      .modal-close::before {
+        transform: rotate(45deg);
+      }
+      .modal-close::after {
+        transform: rotate(-45deg);
+      }
+
+      /* 반응형 */
+      @media (max-width: 768px) {
+        .gallery-grid {
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(5, 1fr);
+          gap: 10px;
+        }
+
+        .spatial-nav {
+          right: 20px;
+        }
+
+        .about-title {
+          font-size: 2.5rem;
+        }
+
+        .floating-menu {
+          top: 20px;
+          left: 20px;
+        }
+
+        .menu-trigger {
+          width: 50px;
+          height: 50px;
+        }
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 로딩 화면 -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">
+          <span style="--i: 0">S</span>
+          <span style="--i: 1">T</span>
+          <span style="--i: 2">U</span>
+          <span style="--i: 3">D</span>
+          <span style="--i: 4">I</span>
+          <span style="--i: 5">O</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 커스텀 커서 -->
+    <div class="cursor-ring"></div>
+    <div class="cursor-dot"></div>
+
+    <!-- 마우스 트레일 -->
+    <div class="mouse-trail trail-1"></div>
+    <div class="mouse-trail trail-2"></div>
+    <div class="mouse-trail trail-3"></div>
+
+    <!-- 플로팅 메뉴 -->
+    <div class="floating-menu">
+      <div class="menu-trigger" id="menuTrigger">
+        <div class="menu-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <div class="menu-items" id="menuItems">
+        <div class="menu-item" data-section="0">Gallery</div>
+        <div class="menu-item" data-section="1">About</div>
+      </div>
+    </div>
+
+    <!-- 3D 공간 네비게이션 -->
+    <div class="spatial-nav">
+      <div class="nav-node active" data-section="Gallery" data-index="0"></div>
+      <div class="nav-node" data-section="About" data-index="1"></div>
+    </div>
+
+    <!-- 메인 컨테이너 -->
+    <div class="main-container">
+      <!-- Home Section - Gallery Grid -->
+      <section class="section home-section active" data-section="0">
+        <div class="gallery-grid" id="galleryGrid">
+          <!-- 갤러리 아이템들이 동적으로 생성됩니다 -->
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section about-section" data-section="1">
+        <div class="bg-animation">
+          <div class="bg-shape"></div>
+          <div class="bg-shape"></div>
+          <div class="bg-shape"></div>
+        </div>
+        <div class="skill-orbs">
+          <div class="skill-orb">Creative</div>
+          <div class="skill-orb">Innovation</div>
+          <div class="skill-orb">Design</div>
+          <div class="skill-orb">Technology</div>
+          <div class="skill-orb">Experience</div>
+        </div>
+        <div class="about-content">
+          <h1 class="about-title">
+            <span style="--i: 0">W</span>
+            <span style="--i: 1">e</span>
+            <span style="--i: 2"> </span>
+            <span style="--i: 3">C</span>
+            <span style="--i: 4">r</span>
+            <span style="--i: 5">e</span>
+            <span style="--i: 6">a</span>
+            <span style="--i: 7">t</span>
+            <span style="--i: 8">e</span>
+            <span style="--i: 9"> </span>
+            <span style="--i: 10">E</span>
+            <span style="--i: 11">x</span>
+            <span style="--i: 12">p</span>
+            <span style="--i: 13">e</span>
+            <span style="--i: 14">r</span>
+            <span style="--i: 15">i</span>
+            <span style="--i: 16">e</span>
+            <span style="--i: 17">n</span>
+            <span style="--i: 18">c</span>
+            <span style="--i: 19">e</span>
+            <span style="--i: 20">s</span>
+          </h1>
+          <p class="about-description">
+            We are a creative studio specializing in immersive digital
+            experiences. Our passion lies in pushing the boundaries of web
+            design and creating memorable interactions that captivate and
+            inspire.
+          </p>
+        </div>
+        <div class="about-bg-text">STUDIO</div>
+      </section>
+    </div>
+
+    <!-- 프로젝트 모달 -->
+    <div class="project-modal" id="projectModal">
+      <div class="modal-content">
+        <div class="modal-close" id="modalClose"></div>
+        <div id="modalBody">
+          <!-- 모달 내용이 동적으로 추가됩니다 -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 모든 이미지와 비디오 데이터
+      const allMedia = [
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png",
+      ];
+
+      const videos = [
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4",
+      ];
+
+      // 프로젝트 타이틀 생성
+      const projectTitles = [
+        "Digital Dreams",
+        "Future Vision",
+        "Creative Flow",
+        "Innovation Lab",
+        "Design System",
+        "Motion Magic",
+        "Tech Forward",
+        "User First",
+        "Brand Evolution",
+        "Digital Art",
+        "Web 3.0",
+        "Minimal Beauty",
+        "Bold Moves",
+        "Color Theory",
+        "Space Design",
+      ];
+
+      // 전역 변수
+      let currentSection = 0;
+      let isTransitioning = false;
+      let mouseX = 0;
+      let mouseY = 0;
+      let usedMedia = [];
+
+      // 중복되지 않은 미디어 선택 함수
+      function getUniqueMedia() {
+        // 모든 미디어를 사용했으면 리셋
+        if (usedMedia.length >= allMedia.length + videos.length) {
+          usedMedia = [];
+        }
+
+        let media;
+        let attempts = 0;
+
+        do {
+          const useVideo = Math.random() < 0.2 && videos.length > 0; // 20% 확률로 비디오
+
+          if (useVideo) {
+            const randomVideo =
+              videos[Math.floor(Math.random() * videos.length)];
+            media = { type: "video", src: randomVideo };
+          } else {
+            const randomImage =
+              allMedia[Math.floor(Math.random() * allMedia.length)];
+            media = { type: "image", src: randomImage };
+          }
+
+          attempts++;
+          // 무한 루프 방지
+          if (attempts > 100) break;
+        } while (usedMedia.includes(media.src));
+
+        usedMedia.push(media.src);
+        return media;
+      }
+
+      // 로딩 애니메이션
+      function initLoader() {
+        let progress = 0;
+        const progressFill = document.getElementById("progressFill");
+        const loader = document.getElementById("loader");
+
+        const interval = setInterval(() => {
+          progress += Math.random() * 15;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            setTimeout(() => {
+              loader.classList.add("hidden");
+              initializeApp();
+            }, 500);
+          }
+          progressFill.style.width = progress + "%";
+        }, 100);
+      }
+
+      // 커스텀 커서
+      function initCursor() {
+        const cursorRing = document.querySelector(".cursor-ring");
+        const cursorDot = document.querySelector(".cursor-dot");
+        const trails = document.querySelectorAll(".mouse-trail");
+
+        let trailIndex = 0;
+        let lastTime = 0;
+
+        document.addEventListener("mousemove", (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+
+          // 커서 위치 업데이트
+          cursorRing.style.left = mouseX - 20 + "px";
+          cursorRing.style.top = mouseY - 20 + "px";
+          cursorDot.style.left = mouseX + "px";
+          cursorDot.style.top = mouseY + "px";
+
+          // 마우스 트레일 효과
+          const currentTime = Date.now();
+          if (currentTime - lastTime > 50) {
+            const trail = trails[trailIndex];
+            trail.style.left = mouseX - 15 + "px";
+            trail.style.top = mouseY - 15 + "px";
+            trail.style.opacity = "1";
+
+            setTimeout(() => {
+              trail.style.opacity = "0";
+            }, 500);
+
+            trailIndex = (trailIndex + 1) % trails.length;
+            lastTime = currentTime;
+          }
+        });
+
+        // 호버 효과
+        const interactiveElements = document.querySelectorAll(
+          "a, button, .menu-trigger, .nav-node, .gallery-item, .skill-orb, .menu-item",
+        );
+        interactiveElements.forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursorRing.classList.add("expand"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursorRing.classList.remove("expand"),
+          );
+        });
+      }
+
+      // 갤러리 그리드 생성
+      function createGalleryGrid() {
+        const galleryGrid = document.getElementById("galleryGrid");
+        usedMedia = []; // 갤러리 시작 시 리셋
+
+        // 15개의 갤러리 아이템 생성
+        for (let i = 0; i < 15; i++) {
+          const media = getUniqueMedia();
+          const title = projectTitles[i] || `Project ${i + 1}`;
+
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+
+          if (media.type === "video") {
+            item.innerHTML = `
+                        <div class="video-icon"></div>
+                        <video src="${media.src}" autoplay muted loop></video>
+                        <div class="gallery-overlay">
+                            <h3 class="gallery-title">${title}</h3>
+                        </div>
+                    `;
+          } else {
+            item.innerHTML = `
+                        <img src="${media.src}" alt="${title}">
+                        <div class="gallery-overlay">
+                            <h3 class="gallery-title">${title}</h3>
+                        </div>
+                    `;
+          }
+
+          // 스태거 애니메이션
+          setTimeout(() => {
+            item.classList.add("loaded");
+          }, i * 50);
+
+          // 클릭 이벤트
+          item.addEventListener("click", () => {
+            openProjectModal({
+              src: media.src,
+              title: title,
+              type: media.type,
+            });
+          });
+
+          galleryGrid.appendChild(item);
+        }
+
+        // 패럴랙스 효과
+        document.addEventListener("mousemove", (e) => {
+          const items = document.querySelectorAll(".gallery-item");
+          items.forEach((item, index) => {
+            const speed = 0.5 + (index % 3) * 0.2;
+            const x = ((window.innerWidth / 2 - e.clientX) * speed) / 100;
+            const y = ((window.innerHeight / 2 - e.clientY) * speed) / 100;
+            item.style.transform = `translateZ(0) rotateY(${x}deg) rotateX(${-y}deg)`;
+          });
+        });
+      }
+
+      // 섹션 전환
+      function switchSection(index) {
+        if (isTransitioning || index === currentSection) return;
+        isTransitioning = true;
+
+        const sections = document.querySelectorAll(".section");
+        const navNodes = document.querySelectorAll(".nav-node");
+
+        // 현재 섹션 숨기기
+        sections[currentSection].classList.remove("active");
+        navNodes[currentSection].classList.remove("active");
+
+        // 새 섹션 표시
+        setTimeout(() => {
+          sections[index].classList.add("active");
+          navNodes[index].classList.add("active");
+          currentSection = index;
+          isTransitioning = false;
+        }, 500);
+      }
+
+      // 메뉴 기능
+      function initMenu() {
+        const menuTrigger = document.getElementById("menuTrigger");
+        const menuItems = document.getElementById("menuItems");
+
+        menuTrigger.addEventListener("click", () => {
+          menuTrigger.classList.toggle("active");
+          menuItems.classList.toggle("active");
+        });
+
+        // 메뉴 아이템 클릭
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          item.addEventListener("click", () => {
+            const sectionIndex = parseInt(item.dataset.section);
+            switchSection(sectionIndex);
+            menuTrigger.classList.remove("active");
+            menuItems.classList.remove("active");
+          });
+        });
+      }
+
+      // 네비게이션 노드
+      function initNavigation() {
+        document.querySelectorAll(".nav-node").forEach((node) => {
+          node.addEventListener("click", () => {
+            const index = parseInt(node.dataset.index);
+            switchSection(index);
+          });
+        });
+
+        // 휠 네비게이션
+        let wheelTimeout;
+        document.addEventListener("wheel", (e) => {
+          if (isTransitioning) return;
+
+          clearTimeout(wheelTimeout);
+          wheelTimeout = setTimeout(() => {
+            if (e.deltaY > 0 && currentSection < 1) {
+              switchSection(currentSection + 1);
+            } else if (e.deltaY < 0 && currentSection > 0) {
+              switchSection(currentSection - 1);
+            }
+          }, 50);
+        });
+
+        // 키보드 네비게이션
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown" && currentSection < 1) {
+            switchSection(currentSection + 1);
+          } else if (e.key === "ArrowUp" && currentSection > 0) {
+            switchSection(currentSection - 1);
+          }
+        });
+      }
+
+      // 프로젝트 모달
+      function openProjectModal(project) {
+        const modal = document.getElementById("projectModal");
+        const modalBody = document.getElementById("modalBody");
+
+        if (project.type === "video") {
+          modalBody.innerHTML = `
+                    <div style="display: flex; gap: 40px; height: 100%;">
+                        <div style="flex: 1;">
+                            <video src="${project.src}" autoplay muted loop controls style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"></video>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <h2 style="font-size: 3rem; margin-bottom: 20px;">${project.title}</h2>
+                            <p style="font-size: 1.2rem; line-height: 1.8; opacity: 0.8;">
+                                ${project.description || "This project represents our commitment to pushing creative boundaries and delivering exceptional digital experiences."}
+                            </p>
+                            <div style="margin-top: 40px;">
+                                <button class="submit-btn" style="background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%); border: 1px solid rgba(255, 255, 255, 0.3); padding: 15px 30px; border-radius: 50px; color: #fff; cursor: pointer;">View Live Project</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        } else {
+          modalBody.innerHTML = `
+                    <div style="display: flex; gap: 40px; height: 100%;">
+                        <div style="flex: 1;">
+                            <img src="${project.src}" alt="${project.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <h2 style="font-size: 3rem; margin-bottom: 20px;">${project.title}</h2>
+                            <p style="font-size: 1.2rem; line-height: 1.8; opacity: 0.8;">
+                                ${project.description || "This project represents our commitment to pushing creative boundaries and delivering exceptional digital experiences."}
+                            </p>
+                            <div style="margin-top: 40px;">
+                                <button class="submit-btn" style="background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%); border: 1px solid rgba(255, 255, 255, 0.3); padding: 15px 30px; border-radius: 50px; color: #fff; cursor: pointer;">View Live Project</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        }
+
+        modal.classList.add("active");
+      }
+
+      // 모달 닫기
+      document.getElementById("modalClose").addEventListener("click", () => {
+        document.getElementById("projectModal").classList.remove("active");
+      });
+
+      // 앱 초기화
+      function initializeApp() {
+        initCursor();
+        createGalleryGrid();
+        initMenu();
+        initNavigation();
+      }
+
+      // 시작
+      window.addEventListener("load", initLoader);
+    </script>
+  </body>
+</html>

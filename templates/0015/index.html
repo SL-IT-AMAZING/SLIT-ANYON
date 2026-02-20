@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Card Stack Gallery</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Montserrat:wght@100;300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #1a1a1a;
+        --accent: #ff6b6b;
+        --text-primary: #ffffff;
+        --text-secondary: #999999;
+        --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        overflow: hidden;
+        height: 100vh;
+        perspective: 2000px;
+      }
+
+      /* Animated Background */
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background:
+          radial-gradient(
+            circle at 20% 50%,
+            rgba(255, 107, 107, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 50%,
+            rgba(107, 107, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(107, 255, 107, 0.05) 0%,
+            transparent 50%
+          );
+        animation: bgPulse 20s ease-in-out infinite;
+        z-index: -1;
+      }
+
+      @keyframes bgPulse {
+        0%,
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
+        50% {
+          transform: scale(1.1) rotate(5deg);
+        }
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 32px;
+        letter-spacing: 3px;
+        background: linear-gradient(45deg, #ff6b6b, #6b6bff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: logoGlow 3s ease-in-out infinite;
+      }
+
+      @keyframes logoGlow {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.2);
+        }
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .nav-menu a:hover {
+        color: var(--text-primary);
+      }
+
+      .nav-menu a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--accent);
+        transition: width 0.3s ease;
+      }
+
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* Main Container */
+      .main-container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-style: preserve-3d;
+      }
+
+      /* Card Stack */
+      .card-stack {
+        position: relative;
+        width: 400px;
+        height: 600px;
+        transform-style: preserve-3d;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .card {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--bg-secondary);
+        box-shadow: var(--card-shadow);
+        transform-origin: center bottom;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        transform-style: preserve-3d;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 50%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .card:hover::before {
+        opacity: 1;
+      }
+
+      .card-media {
+        width: 100%;
+        height: 70%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .card:hover .card-media {
+        transform: scale(1.05);
+      }
+
+      .card-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(
+          to top,
+          rgba(10, 10, 10, 0.95),
+          transparent
+        );
+        transform: translateZ(20px);
+      }
+
+      .card-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 48px;
+        color: var(--accent);
+        opacity: 0.8;
+        margin-bottom: 10px;
+      }
+
+      .card-title {
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1.2;
+      }
+
+      .card-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 300;
+        letter-spacing: 1px;
+      }
+
+      /* Text Cards */
+      .text-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 107, 107, 0.1),
+          rgba(107, 107, 255, 0.1)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .text-card .quote {
+        font-family: "Playfair Display", serif;
+        font-size: 32px;
+        font-style: italic;
+        text-align: center;
+        line-height: 1.4;
+      }
+
+      .text-card .author {
+        font-size: 14px;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: 20px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Side Navigation */
+      .side-nav {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 20px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-dot:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.2);
+      }
+
+      .nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.3);
+      }
+
+      .nav-dot::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: var(--text-secondary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      /* Progress Indicator */
+      .progress-bar {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        width: 20%;
+        transition: width 0.6s ease;
+      }
+
+      /* Info Panel */
+      .info-panel {
+        position: fixed;
+        left: 40px;
+        bottom: 40px;
+        max-width: 300px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.4s ease;
+      }
+
+      .info-panel.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .info-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 18px;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        color: var(--accent);
+      }
+
+      .info-text {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 48px;
+        letter-spacing: 4px;
+        background: linear-gradient(45deg, #ff6b6b, #6b6bff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .loader-bar {
+        width: 200px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 20px auto;
+        overflow: hidden;
+      }
+
+      .loader-progress {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #6b6bff);
+        animation: loading 2s ease-in-out infinite;
+      }
+
+      @keyframes loading {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(200%);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .card-stack {
+          width: 300px;
+          height: 450px;
+        }
+
+        .side-nav {
+          right: 20px;
+        }
+
+        .info-panel {
+          left: 20px;
+          bottom: 20px;
+        }
+
+        .header {
+          padding: 15px 20px;
+        }
+
+        .logo {
+          font-size: 24px;
+        }
+
+        .nav-menu {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">LOADING</div>
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">3D GALLERY</div>
+        <ul class="nav-menu">
+          <li><a onclick="navigateToSection(0)">Featured</a></li>
+          <li><a onclick="navigateToSection(1)">Collections</a></li>
+          <li><a onclick="navigateToSection(2)">Artists</a></li>
+          <li><a onclick="navigateToSection(3)">Exhibitions</a></li>
+          <li><a onclick="navigateToSection(4)">Archive</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <div class="card-stack" id="cardStack">
+        <!-- Cards will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <!-- Side Navigation -->
+    <div class="side-nav">
+      <div
+        class="nav-dot active"
+        data-title="Featured"
+        onclick="navigateToSection(0)"
+      ></div>
+      <div
+        class="nav-dot"
+        data-title="Collections"
+        onclick="navigateToSection(1)"
+      ></div>
+      <div
+        class="nav-dot"
+        data-title="Artists"
+        onclick="navigateToSection(2)"
+      ></div>
+      <div
+        class="nav-dot"
+        data-title="Exhibitions"
+        onclick="navigateToSection(3)"
+      ></div>
+      <div
+        class="nav-dot"
+        data-title="Archive"
+        onclick="navigateToSection(4)"
+      ></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="infoPanel">
+      <div class="info-title">NAVIGATION</div>
+      <div class="info-text">
+        Use scroll or arrow keys to navigate through the gallery. Click on cards
+        to explore.
+      </div>
+    </div>
+
+    <script>
+      // Gallery Data
+      const galleryData = [
+        // Featured Section
+        [
+          {
+            type: "image",
+            number: "01",
+            title: "Ethereal Landscapes",
+            subtitle: "Digital Art Collection",
+            media:
+              "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png",
+          },
+          {
+            type: "text",
+            quote: "Art is not what you see, but what you make others see.",
+            author: "Edgar Degas",
+          },
+          {
+            type: "video",
+            number: "02",
+            title: "Motion Studies",
+            subtitle: "Video Installation",
+            media:
+              "https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4",
+          },
+          {
+            type: "image",
+            number: "03",
+            title: "Urban Fragments",
+            subtitle: "Photography Series",
+            media:
+              "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png",
+          },
+          {
+            type: "video",
+            number: "04",
+            title: "Nature in Motion",
+            subtitle: "Video Art",
+            media:
+              "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+          },
+        ],
+        // Collections Section
+        [
+          {
+            type: "image",
+            number: "05",
+            title: "Abstract Reality",
+            subtitle: "Mixed Media",
+            media:
+              "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png",
+          },
+          {
+            type: "video",
+            number: "06",
+            title: "Animated Dreams",
+            subtitle: "Animation Art",
+            media:
+              "https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4",
+          },
+          {
+            type: "text",
+            quote:
+              "Every artist dips his brush in his own soul, and paints his own nature into his pictures.",
+            author: "Henry Ward Beecher",
+          },
+          {
+            type: "image",
+            number: "07",
+            title: "Geometric Visions",
+            subtitle: "Digital Sculpture",
+            media:
+              "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png",
+          },
+          {
+            type: "video",
+            number: "08",
+            title: "Fluid Dynamics",
+            subtitle: "Video Sculpture",
+            media:
+              "https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4",
+          },
+        ],
+        // Artists Section
+        [
+          {
+            type: "image",
+            number: "09",
+            title: "Artist Portfolio",
+            subtitle: "Contemporary Works",
+            media:
+              "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png",
+          },
+          {
+            type: "video",
+            number: "10",
+            title: "Video Artist",
+            subtitle: "Moving Images",
+            media:
+              "https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4",
+          },
+          {
+            type: "text",
+            quote:
+              "The purpose of art is washing the dust of daily life off our souls.",
+            author: "Pablo Picasso",
+          },
+          {
+            type: "image",
+            number: "11",
+            title: "Emerging Talent",
+            subtitle: "New Voices",
+            media:
+              "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png",
+          },
+          {
+            type: "video",
+            number: "12",
+            title: "Experimental Film",
+            subtitle: "Avant-garde Cinema",
+            media:
+              "https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4",
+          },
+        ],
+        // Exhibitions Section
+        [
+          {
+            type: "image",
+            number: "13",
+            title: "Current Show",
+            subtitle: "Main Gallery",
+            media:
+              "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png",
+          },
+          {
+            type: "video",
+            number: "14",
+            title: "Video Exhibition",
+            subtitle: "Screening Room",
+            media:
+              "https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4",
+          },
+          {
+            type: "text",
+            quote:
+              "Art enables us to find ourselves and lose ourselves at the same time.",
+            author: "Thomas Merton",
+          },
+          {
+            type: "image",
+            number: "15",
+            title: "Group Show",
+            subtitle: "Collective Vision",
+            media:
+              "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_3.png",
+          },
+          {
+            type: "image",
+            number: "16",
+            title: "Solo Exhibition",
+            subtitle: "Featured Artist",
+            media:
+              "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png",
+          },
+        ],
+        // Archive Section
+        [
+          {
+            type: "image",
+            number: "17",
+            title: "Past Exhibition",
+            subtitle: "2023 Collection",
+            media:
+              "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png",
+          },
+          {
+            type: "video",
+            number: "18",
+            title: "Archive Footage",
+            subtitle: "Historical Documentation",
+            media:
+              "https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4",
+          },
+          {
+            type: "text",
+            quote:
+              "The artist is nothing without the gift, but the gift is nothing without work.",
+            author: "Émile Zola",
+          },
+          {
+            type: "image",
+            number: "19",
+            title: "Classic Works",
+            subtitle: "Permanent Collection",
+            media:
+              "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png",
+          },
+          {
+            type: "image",
+            number: "20",
+            title: "Archive Material",
+            subtitle: "Research Collection",
+            media:
+              "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_3.png",
+          },
+        ],
+      ];
+
+      let currentSection = 0;
+      let currentCard = 0;
+      let isAnimating = false;
+
+      // Create card HTML
+      function createCard(data, index) {
+        if (data.type === "text") {
+          return `
+                    <div class="card text-card" data-index="${index}">
+                        <div class="quote">"${data.quote}"</div>
+                        <div class="author">— ${data.author}</div>
+                    </div>
+                `;
+        } else {
+          const mediaElement =
+            data.type === "video"
+              ? `<video class="card-media" autoplay muted loop playsinline>
+                         <source src="${data.media}" type="video/mp4">
+                       </video>`
+              : `<img class="card-media" src="${data.media}" alt="${data.title}">`;
+
+          return `
+                    <div class="card" data-index="${index}">
+                        ${mediaElement}
+                        <div class="card-content">
+                            <div class="card-number">${data.number}</div>
+                            <h3 class="card-title">${data.title}</h3>
+                            <p class="card-subtitle">${data.subtitle}</p>
+                        </div>
+                    </div>
+                `;
+        }
+      }
+
+      // Load section
+      function loadSection(sectionIndex) {
+        const cardStack = document.getElementById("cardStack");
+        cardStack.innerHTML = "";
+
+        const sectionData = galleryData[sectionIndex];
+        sectionData.forEach((data, index) => {
+          cardStack.innerHTML += createCard(data, index);
+        });
+
+        updateCardPositions();
+        updateProgress();
+        updateNavDots();
+      }
+
+      // Update card positions
+      function updateCardPositions() {
+        const cards = document.querySelectorAll(".card");
+        const totalCards = cards.length;
+
+        cards.forEach((card, index) => {
+          const offset = index - currentCard;
+          const absOffset = Math.abs(offset);
+          const sign = offset < 0 ? -1 : 1;
+
+          // Calculate rotation and position
+          const rotateY = offset * 15;
+          const translateZ = -absOffset * 100;
+          const translateX = offset * 50;
+          const scale = 1 - absOffset * 0.1;
+          const opacity = 1 - absOffset * 0.3;
+
+          card.style.transform = `
+                    translateX(${translateX}px) 
+                    translateZ(${translateZ}px) 
+                    rotateY(${rotateY}deg) 
+                    scale(${scale})
+                `;
+          card.style.opacity = Math.max(0, opacity);
+          card.style.zIndex = totalCards - absOffset;
+
+          // Add hover effect
+          card.addEventListener("mouseenter", function () {
+            if (index === currentCard) {
+              this.style.transform += " translateZ(50px) rotateX(-5deg)";
+            }
+          });
+
+          card.addEventListener("mouseleave", function () {
+            updateCardPositions();
+          });
+        });
+      }
+
+      // Navigation
+      function navigateCards(direction) {
+        if (isAnimating) return;
+
+        const cards = document.querySelectorAll(".card");
+        const maxCard = cards.length - 1;
+
+        if (direction === "next" && currentCard < maxCard) {
+          currentCard++;
+          isAnimating = true;
+          updateCardPositions();
+          setTimeout(() => (isAnimating = false), 600);
+        } else if (direction === "prev" && currentCard > 0) {
+          currentCard--;
+          isAnimating = true;
+          updateCardPositions();
+          setTimeout(() => (isAnimating = false), 600);
+        } else if (
+          direction === "next" &&
+          currentCard === maxCard &&
+          currentSection < galleryData.length - 1
+        ) {
+          navigateToSection(currentSection + 1);
+        } else if (
+          direction === "prev" &&
+          currentCard === 0 &&
+          currentSection > 0
+        ) {
+          navigateToSection(currentSection - 1);
+        }
+
+        updateProgress();
+      }
+
+      function navigateToSection(sectionIndex) {
+        if (sectionIndex >= 0 && sectionIndex < galleryData.length) {
+          currentSection = sectionIndex;
+          currentCard = 0;
+          loadSection(sectionIndex);
+
+          // Show info panel briefly
+          const infoPanel = document.getElementById("infoPanel");
+          infoPanel.classList.add("active");
+          setTimeout(() => {
+            infoPanel.classList.remove("active");
+          }, 3000);
+        }
+      }
+
+      // Update progress bar
+      function updateProgress() {
+        const totalSections = galleryData.length;
+        const cardsInSection = galleryData[currentSection].length;
+        const sectionProgress = (currentCard + 1) / cardsInSection;
+        const totalProgress =
+          (currentSection + sectionProgress) / totalSections;
+
+        document.getElementById("progressFill").style.width =
+          `${totalProgress * 100}%`;
+      }
+
+      // Update navigation dots
+      function updateNavDots() {
+        const dots = document.querySelectorAll(".nav-dot");
+        dots.forEach((dot, index) => {
+          dot.classList.toggle("active", index === currentSection);
+        });
+      }
+
+      // Event Listeners
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          if (e.deltaY > 0) {
+            navigateCards("next");
+          } else {
+            navigateCards("prev");
+          }
+        },
+        { passive: false },
+      );
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          navigateCards("next");
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          navigateCards("prev");
+        }
+      });
+
+      // Touch support
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndY < touchStartY - 50) {
+          navigateCards("next");
+        }
+        if (touchEndY > touchStartY + 50) {
+          navigateCards("prev");
+        }
+      }
+
+      // Initialize
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+          loadSection(0);
+
+          // Show info panel initially
+          setTimeout(() => {
+            document.getElementById("infoPanel").classList.add("active");
+            setTimeout(() => {
+              document.getElementById("infoPanel").classList.remove("active");
+            }, 5000);
+          }, 1000);
+        }, 2000);
+      });
+
+      // 3D mouse tracking effect
+      document.addEventListener("mousemove", (e) => {
+        const cardStack = document.getElementById("cardStack");
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * -20;
+
+        cardStack.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
+      });
+    </script>
+  </body>
+</html>

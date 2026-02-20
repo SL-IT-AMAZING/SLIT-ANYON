@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typographic Dimensions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;700&family=Bebas+Neue&family=Crimson+Text:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #0a0a0a;
+        --accent-color: #ff6b6b;
+        --text-light: #f8f9fa;
+        --golden-ratio: 1.618;
+        --phi: 1.618033988749895;
+      }
+
+      body {
+        background: var(--primary-color);
+        color: var(--text-light);
+        font-family: "Space Grotesk", sans-serif;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--text-light);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.1s ease;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        z-index: 9998;
+      }
+
+      /* Navigation System */
+      .nav-system {
+        position: fixed;
+        top: 50%;
+        right: 30px;
+        transform: translateY(-50%);
+        z-index: 1000;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        margin: 20px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-dot.active {
+        background: var(--accent-color);
+        transform: scale(1.5);
+      }
+
+      .nav-dot::before {
+        content: attr(data-section);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 1s ease;
+      }
+
+      .section.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Hero Section with Mathematical Typography */
+      .hero {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 15vw, 12rem);
+        font-weight: 700;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        line-height: 0.9;
+        z-index: 10;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        animation: floatText 6s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes floatText {
+        0%,
+        100% {
+          transform: translateY(0) rotateZ(0deg);
+        }
+        33% {
+          transform: translateY(-20px) rotateZ(-2deg);
+        }
+        66% {
+          transform: translateY(10px) rotateZ(2deg);
+        }
+      }
+
+      /* Mathematical Pattern Background */
+      .math-pattern {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .fibonacci-spiral {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0.1;
+      }
+
+      .spiral-segment {
+        position: absolute;
+        border: 2px solid var(--text-light);
+        border-radius: 50%;
+        animation: spiralRotate 20s linear infinite;
+      }
+
+      @keyframes spiralRotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Typography Showcase */
+      .typography-showcase {
+        padding: 100px 50px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 50px;
+        margin-top: 50px;
+      }
+
+      .type-card {
+        position: relative;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+
+      .type-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--accent-color);
+      }
+
+      .type-card h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 3rem;
+        margin-bottom: 20px;
+        background: linear-gradient(
+          45deg,
+          var(--text-light),
+          var(--accent-color)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .type-animation {
+        font-family: "Crimson Text", serif;
+        font-size: 1.2rem;
+        line-height: 1.8;
+        position: relative;
+      }
+
+      /* Kinetic Typography */
+      .kinetic-section {
+        position: relative;
+        padding: 100px 50px;
+        overflow: hidden;
+      }
+
+      .kinetic-text {
+        font-size: clamp(2rem, 8vw, 6rem);
+        font-weight: 700;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+      }
+
+      .word {
+        display: inline-block;
+        margin: 0 0.5em;
+        position: relative;
+      }
+
+      .word:hover .letter {
+        animation: letterDance 0.6s ease-in-out;
+        animation-delay: calc(var(--letter-index) * 0.05s);
+      }
+
+      .letter {
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      @keyframes letterDance {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        25% {
+          transform: translateY(-20px) scale(1.2) rotate(-5deg);
+        }
+        75% {
+          transform: translateY(10px) scale(0.9) rotate(5deg);
+        }
+      }
+
+      /* Gallery with Golden Ratio Layout */
+      .gallery-section {
+        padding: 100px 50px;
+        position: relative;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+        aspect-ratio: var(--phi);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .gallery-item:nth-child(3n) {
+        grid-column: span 2;
+      }
+
+      .gallery-item:nth-child(5n) {
+        grid-row: span 2;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 20px;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      /* Interactive Typography Lab */
+      .lab-section {
+        padding: 100px 50px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .lab-canvas {
+        width: 100%;
+        max-width: 800px;
+        height: 400px;
+        position: relative;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        margin: 50px 0;
+        overflow: hidden;
+      }
+
+      .floating-letter {
+        position: absolute;
+        font-size: 3rem;
+        font-weight: 700;
+        opacity: 0.8;
+        animation: floatAround 20s infinite;
+        animation-delay: calc(var(--delay) * 1s);
+      }
+
+      @keyframes floatAround {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+          transform: translate(100px, -50px) rotate(90deg);
+        }
+        50% {
+          transform: translate(-50px, 100px) rotate(180deg);
+        }
+        75% {
+          transform: translate(50px, 50px) rotate(270deg);
+        }
+        100% {
+          transform: translate(0, 0) rotate(360deg);
+        }
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 20px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .control-btn {
+        padding: 15px 30px;
+        background: transparent;
+        border: 2px solid var(--text-light);
+        color: var(--text-light);
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .control-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--accent-color);
+        transition: left 0.3s ease;
+        z-index: -1;
+      }
+
+      .control-btn:hover::before {
+        left: 0;
+      }
+
+      .control-btn:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+      }
+
+      /* Video Background Section */
+      .video-section {
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .video-bg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        opacity: 0.3;
+      }
+
+      .video-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        padding: 50px;
+      }
+
+      .glitch-text {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 700;
+        position: relative;
+        animation: glitch 2s infinite;
+      }
+
+      .glitch-text::before,
+      .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch-text::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--accent-color);
+        z-index: -1;
+      }
+
+      .glitch-text::after {
+        animation: glitch-2 0.5s infinite;
+        color: #00ffff;
+        z-index: -2;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        50% {
+          text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+        }
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(-2px, 2px);
+        }
+        80% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(2px, -2px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(2px, -2px);
+        }
+        40% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(-2px, 2px);
+        }
+        60% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, 2px);
+        }
+        80% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-2px, -2px);
+        }
+      }
+
+      /* Particle System */
+      .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--text-light);
+        border-radius: 50%;
+        opacity: 0.5;
+        animation: particleFloat 20s infinite linear;
+      }
+
+      @keyframes particleFloat {
+        from {
+          transform: translateY(100vh) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.5;
+        }
+        90% {
+          opacity: 0.5;
+        }
+        to {
+          transform: translateY(-100vh) translateX(100px);
+          opacity: 0;
+        }
+      }
+
+      /* Text Morphing Section */
+      .morph-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .morph-container {
+        text-align: center;
+      }
+
+      .morph-text {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+      }
+
+      .morph-text svg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .morph-text svg text {
+        fill: none;
+        stroke: var(--text-light);
+        stroke-width: 2;
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: strokeDraw 3s ease-in-out forwards;
+      }
+
+      @keyframes strokeDraw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* 3D Typography */
+      .three-d-section {
+        perspective: 1000px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .three-d-text {
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 700;
+        transform-style: preserve-3d;
+        animation: rotate3D 10s infinite linear;
+      }
+
+      @keyframes rotate3D {
+        from {
+          transform: rotateY(0deg) rotateX(0deg);
+        }
+        to {
+          transform: rotateY(360deg) rotateX(360deg);
+        }
+      }
+
+      .three-d-text span {
+        display: inline-block;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: translateZ(50px);
+        text-shadow:
+          0 0 10px rgba(255, 107, 107, 0.5),
+          0 0 20px rgba(255, 107, 107, 0.3),
+          0 0 30px rgba(255, 107, 107, 0.2);
+      }
+
+      /* Footer */
+      .footer {
+        padding: 100px 50px 50px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .footer-text {
+        font-size: clamp(2rem, 6vw, 4rem);
+        font-weight: 700;
+        margin-bottom: 50px;
+        opacity: 0.8;
+      }
+
+      .social-links {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      .social-link {
+        width: 50px;
+        height: 50px;
+        border: 2px solid var(--text-light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--text-light);
+        transition: all 0.3s ease;
+      }
+
+      .social-link:hover {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        transform: translateY(-5px);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-weight: 700;
+        position: relative;
+      }
+
+      .loader-text span {
+        display: inline-block;
+        animation: loaderBounce 1s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes loaderBounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-30px);
+        }
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .nav-system {
+          right: 15px;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 12vw, 6rem);
+        }
+
+        .type-grid {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+
+        .gallery-item:nth-child(3n),
+        .gallery-item:nth-child(5n) {
+          grid-column: span 1;
+          grid-row: span 1;
+        }
+
+        .controls {
+          flex-direction: column;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .control-btn {
+          width: 100%;
+        }
+
+        .kinetic-text {
+          font-size: clamp(1.5rem, 6vw, 3rem);
+        }
+
+        .glitch-text {
+          font-size: clamp(2rem, 8vw, 4rem);
+        }
+
+        .three-d-text {
+          font-size: clamp(2.5rem, 10vw, 5rem);
+        }
+
+        .morph-text {
+          font-size: clamp(2rem, 8vw, 4rem);
+        }
+
+        .lab-canvas {
+          height: 300px;
+        }
+
+        .floating-letter {
+          font-size: 2rem;
+        }
+
+        .footer-text {
+          font-size: clamp(1.5rem, 5vw, 3rem);
+        }
+
+        .social-links {
+          gap: 20px;
+        }
+
+        .social-link {
+          width: 40px;
+          height: 40px;
+        }
+
+        .loader-text {
+          font-size: 2.5rem;
+        }
+
+        .section {
+          padding: 50px 20px;
+        }
+
+        .typography-showcase,
+        .kinetic-section,
+        .gallery-section,
+        .lab-section,
+        .footer {
+          padding: 50px 20px;
+        }
+
+        .video-content {
+          padding: 30px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: clamp(2.5rem, 10vw, 4rem);
+        }
+
+        .type-card {
+          padding: 25px;
+        }
+
+        .type-card h3 {
+          font-size: 2rem;
+        }
+
+        .nav-dot::before {
+          display: none;
+        }
+      }
+
+      /* Print Styles */
+      @media print {
+        body {
+          background: white;
+          color: black;
+        }
+
+        .nav-system,
+        .cursor,
+        .cursor-follower,
+        .particles,
+        .loader,
+        .video-bg,
+        .control-btn {
+          display: none;
+        }
+
+        .section {
+          page-break-after: always;
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* High Contrast Mode */
+      @media (prefers-contrast: high) {
+        :root {
+          --primary-color: #000000;
+          --accent-color: #ff0000;
+          --text-light: #ffffff;
+        }
+
+        .type-card,
+        .gallery-item,
+        .control-btn {
+          border-width: 3px;
+        }
+      }
+
+      /* Dark Mode Preference */
+      @media (prefers-color-scheme: light) {
+        :root {
+          --primary-color: #f8f9fa;
+          --accent-color: #d63031;
+          --text-light: #2d3436;
+        }
+
+        .cursor {
+          border-color: var(--text-light);
+          mix-blend-mode: multiply;
+        }
+
+        .particles .particle {
+          background: var(--text-light);
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader">
+      <div class="loader-text">
+        <span style="--i: 0">L</span>
+        <span style="--i: 1">O</span>
+        <span style="--i: 2">A</span>
+        <span style="--i: 3">D</span>
+        <span style="--i: 4">I</span>
+        <span style="--i: 5">N</span>
+        <span style="--i: 6">G</span>
+      </div>
+    </div>
+
+    <!-- Navigation System -->
+    <nav class="nav-system">
+      <div class="nav-dot active" data-section="Hero"></div>
+      <div class="nav-dot" data-section="Typography"></div>
+      <div class="nav-dot" data-section="Kinetic"></div>
+      <div class="nav-dot" data-section="Gallery"></div>
+      <div class="nav-dot" data-section="Lab"></div>
+      <div class="nav-dot" data-section="Video"></div>
+      <div class="nav-dot" data-section="Morph"></div>
+      <div class="nav-dot" data-section="3D"></div>
+    </nav>
+
+    <!-- Particle System -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Hero Section -->
+    <section class="section hero active" data-section="0">
+      <div class="math-pattern">
+        <div class="fibonacci-spiral">
+          <div
+            class="spiral-segment"
+            style="width: 13px; height: 13px; top: 50%; left: 50%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 21px; height: 21px; top: 48%; left: 48%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 34px; height: 34px; top: 46%; left: 46%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 55px; height: 55px; top: 44%; left: 44%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 89px; height: 89px; top: 42%; left: 42%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 144px; height: 144px; top: 40%; left: 40%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 233px; height: 233px; top: 38%; left: 38%"
+          ></div>
+          <div
+            class="spiral-segment"
+            style="width: 377px; height: 377px; top: 36%; left: 36%"
+          ></div>
+        </div>
+      </div>
+      <h1 class="hero-title">
+        <span style="--i: 0">T</span><span style="--i: 1">Y</span
+        ><span style="--i: 2">P</span><span style="--i: 3">O</span><br />
+        <span style="--i: 4">G</span><span style="--i: 5">R</span
+        ><span style="--i: 6">A</span><span style="--i: 7">P</span
+        ><span style="--i: 8">H</span><span style="--i: 9">Y</span>
+      </h1>
+    </section>
+
+    <!-- Typography Showcase -->
+    <section class="section typography-showcase" data-section="1">
+      <div class="container">
+        <h2 style="font-size: 3rem; text-align: center; margin-bottom: 50px">
+          The Art of Letters
+        </h2>
+        <div class="type-grid">
+          <div class="type-card">
+            <h3>GEOMETRIC</h3>
+            <div class="type-animation">
+              Typography is the craft of endowing human language with a durable
+              visual form, and thus with an independent existence.
+            </div>
+          </div>
+          <div class="type-card">
+            <h3>ORGANIC</h3>
+            <div class="type-animation">
+              Letters have a life and dignity of their own. They dance in their
+              silent way on the stage of the page.
+            </div>
+          </div>
+          <div class="type-card">
+            <h3>DYNAMIC</h3>
+            <div class="type-animation">
+              The beauty of type lies in its utility; the beauty of utility lies
+              in its simplicity and complexity dancing together.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Kinetic Typography -->
+    <section class="section kinetic-section" data-section="2">
+      <div class="kinetic-text">
+        <span class="word">
+          <span class="letter" style="--letter-index: 0">E</span
+          ><span class="letter" style="--letter-index: 1">X</span
+          ><span class="letter" style="--letter-index: 2">P</span
+          ><span class="letter" style="--letter-index: 3">L</span
+          ><span class="letter" style="--letter-index: 4">O</span
+          ><span class="letter" style="--letter-index: 5">R</span
+          ><span class="letter" style="--letter-index: 6">E</span>
+        </span>
+        <span class="word">
+          <span class="letter" style="--letter-index: 0">T</span
+          ><span class="letter" style="--letter-index: 1">H</span
+          ><span class="letter" style="--letter-index: 2">E</span>
+        </span>
+        <span class="word">
+          <span class="letter" style="--letter-index: 0">R</span
+          ><span class="letter" style="--letter-index: 1">H</span
+          ><span class="letter" style="--letter-index: 2">Y</span
+          ><span class="letter" style="--letter-index: 3">T</span
+          ><span class="letter" style="--letter-index: 4">H</span
+          ><span class="letter" style="--letter-index: 5">M</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="section gallery-section" data-section="3">
+      <h2 style="font-size: 3rem; text-align: center; margin-bottom: 50px">
+        Visual Symphony
+      </h2>
+      <div class="gallery-grid" id="gallery"></div>
+    </section>
+
+    <!-- Interactive Lab -->
+    <section class="section lab-section" data-section="4">
+      <h2 style="font-size: 3rem; margin-bottom: 30px">
+        Typography Laboratory
+      </h2>
+      <div class="lab-canvas" id="labCanvas"></div>
+      <div class="controls">
+        <button class="control-btn" onclick="generateLetters()">
+          GENERATE
+        </button>
+        <button class="control-btn" onclick="clearCanvas()">CLEAR</button>
+        <button class="control-btn" onclick="animateLetters()">ANIMATE</button>
+      </div>
+    </section>
+
+    <!-- Video Section -->
+    <section class="section video-section" data-section="5">
+      <video class="video-bg" id="videoBg" autoplay muted loop></video>
+      <div class="video-content">
+        <h2 class="glitch-text" data-text="DIGITAL DREAMS">DIGITAL DREAMS</h2>
+      </div>
+    </section>
+
+    <!-- Text Morphing Section -->
+    <section class="section morph-section" data-section="6">
+      <div class="morph-container">
+        <div class="morph-text">
+          <svg viewBox="0 0 800 200">
+            <text
+              x="50%"
+              y="50%"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              TRANSFORM
+            </text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3D Typography -->
+    <section class="section three-d-section" data-section="7">
+      <h2 class="three-d-text">
+        <span>D</span><span>E</span><span>P</span><span>T</span><span>H</span>
+      </h2>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-text">CREATE • INSPIRE • EVOLVE</div>
+      <div class="social-links">
+        <a href="#" class="social-link">X</a>
+        <a href="#" class="social-link">IN</a>
+        <a href="#" class="social-link">BE</a>
+      </div>
+    </footer>
+
+    <script>
+      // Image URLs array
+      const imageUrls = [
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+      ];
+
+      const videoUrls = [
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+        "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4",
+      ];
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 10 + "px";
+          cursorFollower.style.top = e.clientY - 10 + "px";
+        }, 100);
+      });
+
+      // Hide loader after page load
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Particle System
+      function createParticles() {
+        const particlesContainer = document.getElementById("particles");
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.animationDelay = Math.random() * 20 + "s";
+          particle.style.animationDuration = 15 + Math.random() * 10 + "s";
+          particlesContainer.appendChild(particle);
+        }
+      }
+
+      createParticles();
+
+      // Gallery Population
+      function populateGallery() {
+        const gallery = document.getElementById("gallery");
+        const shuffledImages = [...imageUrls].sort(() => Math.random() - 0.5);
+
+        shuffledImages.slice(0, 8).forEach((url, index) => {
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+          item.innerHTML = `
+                    <img src="${url}" alt="Gallery Image ${index + 1}">
+                    <div class="gallery-overlay">
+                        <p>Artwork ${index + 1}</p>
+                    </div>
+                `;
+          gallery.appendChild(item);
+        });
+      }
+
+      populateGallery();
+
+      // Video Background
+      function setRandomVideo() {
+        const videoBg = document.getElementById("videoBg");
+        const randomVideo =
+          videoUrls[Math.floor(Math.random() * videoUrls.length)];
+        videoBg.src = randomVideo;
+      }
+
+      setRandomVideo();
+
+      // Typography Lab Functions
+      const labCanvas = document.getElementById("labCanvas");
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const fonts = [
+        "Playfair Display",
+        "Space Grotesk",
+        "Bebas Neue",
+        "Crimson Text",
+      ];
+
+      function generateLetters() {
+        clearCanvas();
+        for (let i = 0; i < 15; i++) {
+          const letter = document.createElement("div");
+          letter.className = "floating-letter";
+          letter.textContent =
+            letters[Math.floor(Math.random() * letters.length)];
+          letter.style.left = Math.random() * 80 + 10 + "%";
+          letter.style.top = Math.random() * 80 + 10 + "%";
+          letter.style.color = `hsl(${Math.random() * 360}, 70%, 70%)`;
+          letter.style.fontFamily =
+            fonts[Math.floor(Math.random() * fonts.length)];
+          letter.style.setProperty("--delay", Math.random() * 5);
+          labCanvas.appendChild(letter);
+        }
+      }
+
+      function clearCanvas() {
+        labCanvas.innerHTML = "";
+      }
+
+      function animateLetters() {
+        const floatingLetters = labCanvas.querySelectorAll(".floating-letter");
+        floatingLetters.forEach((letter) => {
+          letter.style.animation = "none";
+          setTimeout(() => {
+            letter.style.animation = "";
+          }, 10);
+        });
+      }
+
+      // Smooth Scrolling and Section Navigation
+      const sections = document.querySelectorAll(".section");
+      const navDots = document.querySelectorAll(".nav-dot");
+      let currentSection = 0;
+      let isScrolling = false;
+
+      function updateActiveSection(index) {
+        sections.forEach((section, i) => {
+          section.classList.toggle("active", i === index);
+        });
+        navDots.forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+        currentSection = index;
+      }
+
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          updateActiveSection(index);
+          sections[index].scrollIntoView({ behavior: "smooth" });
+        });
+      });
+
+      // Intersection Observer for section transitions
+      const observerOptions = {
+        threshold: 0.5,
+      };
+
+      const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.dataset.section);
+            updateActiveSection(index);
+          }
+        });
+      }, observerOptions);
+
+      sections.forEach((section) => {
+        sectionObserver.observe(section);
+      });
+
+      // Mouse wheel navigation
+      let scrollTimeout;
+      window.addEventListener("wheel", (e) => {
+        if (isScrolling) return;
+
+        clearTimeout(scrollTimeout);
+        isScrolling = true;
+
+        if (e.deltaY > 0 && currentSection < sections.length - 1) {
+          updateActiveSection(currentSection + 1);
+          sections[currentSection].scrollIntoView({ behavior: "smooth" });
+        } else if (e.deltaY < 0 && currentSection > 0) {
+          updateActiveSection(currentSection - 1);
+          sections[currentSection].scrollIntoView({ behavior: "smooth" });
+        }
+
+        scrollTimeout = setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      });
+
+      // Touch support for mobile
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (
+          touchEndY < touchStartY - 50 &&
+          currentSection < sections.length - 1
+        ) {
+          updateActiveSection(currentSection + 1);
+          sections[currentSection].scrollIntoView({ behavior: "smooth" });
+        }
+        if (touchEndY > touchStartY + 50 && currentSection > 0) {
+          updateActiveSection(currentSection - 1);
+          sections[currentSection].scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      // Dynamic text effects
+      document.querySelectorAll(".word").forEach((word) => {
+        word.addEventListener("mouseenter", () => {
+          const letters = word.querySelectorAll(".letter");
+          letters.forEach((letter, index) => {
+            letter.style.animationDelay = `${index * 0.05}s`;
+          });
+        });
+      });
+
+      // Initialize
+      generateLetters();
+    </script>
+  </body>
+</html>

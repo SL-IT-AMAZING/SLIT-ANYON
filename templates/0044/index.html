@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARTSPACE - Experimental Gallery</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #fff;
+        --bg-color: #000;
+        --accent-color: #ff0066;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-color);
+        color: var(--primary-color);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* 커스텀 커서 - 액체 효과 */
+      .cursor-blob {
+        width: 200px;
+        height: 200px;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(40px);
+        opacity: 0.5;
+        mix-blend-mode: screen;
+        transition: transform 0.2s ease-out;
+      }
+
+      .cursor-blob-inner {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle,
+          var(--accent-color) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      .cursor-point {
+        width: 10px;
+        height: 10px;
+        background: var(--primary-color);
+        position: fixed;
+        pointer-events: none;
+        z-index: 10000;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s ease-out;
+      }
+
+      /* 플로팅 네비게이션 */
+      .floating-nav {
+        position: fixed;
+        top: 50%;
+        right: 30px;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      .nav-dot.active {
+        background: var(--primary-color);
+        transform: scale(1.5);
+      }
+
+      /* 헤더 - 미니멀 */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        padding: 30px 50px;
+        mix-blend-mode: difference;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 5px;
+        cursor: pointer;
+      }
+
+      .menu-trigger {
+        width: 30px;
+        height: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: pointer;
+      }
+
+      .menu-line {
+        width: 100%;
+        height: 1px;
+        background: var(--primary-color);
+        transition: all 0.3s;
+      }
+
+      /* 풀스크린 메뉴 */
+      .fullscreen-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(20px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+        z-index: 998;
+      }
+
+      .fullscreen-menu.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-content {
+        text-align: center;
+      }
+
+      .menu-item {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 100;
+        margin: 20px 0;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.5s;
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+      }
+
+      .fullscreen-menu.active .menu-item {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: calc(var(--index) * 0.1s);
+      }
+
+      .menu-item::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--accent-color);
+        transition: width 0.3s;
+      }
+
+      .menu-item:hover::after {
+        width: 100%;
+      }
+
+      /* 섹션 1: 히어로 - 분할 스크린 */
+      .hero-section {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .split-container {
+        display: flex;
+        height: 100%;
+      }
+
+      .split-panel {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .split-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 1;
+        transition: opacity 0.5s;
+      }
+
+      .split-panel:hover::before {
+        opacity: 0;
+      }
+
+      .split-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scale(1.1);
+        transition: transform 0.8s;
+      }
+
+      .split-panel:hover .split-image {
+        transform: scale(1);
+      }
+
+      .split-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        text-align: center;
+        width: 80%;
+      }
+
+      .split-title {
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 100;
+        letter-spacing: 5px;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s forwards;
+        animation-delay: 0.5s;
+      }
+
+      .split-subtitle {
+        font-size: 14px;
+        letter-spacing: 3px;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 1s forwards;
+        animation-delay: 0.7s;
+      }
+
+      /* 섹션 2: 무한 스크롤 갤러리 */
+      .infinite-gallery {
+        padding: 150px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gallery-track {
+        display: flex;
+        animation: scroll-horizontal 30s linear infinite;
+      }
+
+      .gallery-track:hover {
+        animation-play-state: paused;
+      }
+
+      @keyframes scroll-horizontal {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      .gallery-item {
+        flex: 0 0 400px;
+        height: 500px;
+        margin: 0 20px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.9) 0%,
+          transparent 100%
+        );
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      /* 섹션 3: 그리드 모자이크 */
+      .mosaic-section {
+        padding: 100px 50px;
+        position: relative;
+      }
+
+      .mosaic-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .mosaic-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #111;
+      }
+
+      .mosaic-item:nth-child(3n + 1) {
+        grid-row: span 2;
+      }
+
+      .mosaic-item:nth-child(4n + 2) {
+        grid-column: span 2;
+      }
+
+      .mosaic-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+        opacity: 0.8;
+      }
+
+      .mosaic-item:hover .mosaic-media {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+
+      /* 섹션 4: 비디오 쇼케이스 */
+      .video-showcase {
+        height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .video-container {
+        position: relative;
+        width: 80%;
+        max-width: 1200px;
+        aspect-ratio: 16/9;
+      }
+
+      .showcase-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 20px;
+        opacity: 0;
+        transition: opacity 1s;
+      }
+
+      .showcase-video.active {
+        opacity: 1;
+      }
+
+      .video-controls {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 10;
+      }
+
+      .video-dot {
+        width: 60px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .video-dot::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: var(--primary-color);
+        transition: width 5s linear;
+      }
+
+      .video-dot.active::after {
+        width: 100%;
+      }
+
+      /* 섹션 5: 텍스트 아트 */
+      .text-art-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 100px 50px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .text-art-container {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+      }
+
+      .art-text {
+        font-size: clamp(4rem, 15vw, 12rem);
+        font-weight: 900;
+        letter-spacing: -5px;
+        line-height: 0.9;
+        background: linear-gradient(45deg, #ff0066, #00ff88, #0066ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient-shift 5s ease infinite;
+        margin-bottom: 30px;
+      }
+
+      @keyframes gradient-shift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .art-description {
+        font-size: 18px;
+        opacity: 0.7;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+      }
+
+      /* 플로팅 이미지 배경 */
+      .floating-images {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .float-image {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 20px;
+        overflow: hidden;
+        opacity: 0.1;
+        animation: float-around 20s infinite;
+        animation-delay: calc(var(--index) * 2s);
+      }
+
+      @keyframes float-around {
+        0% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        25% {
+          transform: translate(100px, -100px) rotate(90deg) scale(1.2);
+        }
+        50% {
+          transform: translate(-100px, 100px) rotate(180deg) scale(0.8);
+        }
+        75% {
+          transform: translate(50px, 50px) rotate(270deg) scale(1.1);
+        }
+        100% {
+          transform: translate(0, 0) rotate(360deg) scale(1);
+        }
+      }
+
+      .float-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Contact 섹션 */
+      .contact-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 100px 50px;
+        background: radial-gradient(
+          circle at center,
+          rgba(255, 0, 102, 0.1) 0%,
+          transparent 70%
+        );
+      }
+
+      .contact-container {
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 100;
+        margin-bottom: 50px;
+        letter-spacing: -2px;
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        margin-top: 80px;
+      }
+
+      .contact-item {
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .contact-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-10px);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .contact-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+      }
+
+      /* Footer */
+      footer {
+        padding: 50px;
+        text-align: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        gap: 30px;
+      }
+
+      .social-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 14px;
+        transition: opacity 0.3s;
+      }
+
+      .social-link:hover {
+        opacity: 0.6;
+      }
+
+      /* 애니메이션 */
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 로딩 화면 */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--bg-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-size: 24px;
+        letter-spacing: 10px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      /* 반응형 */
+      @media (max-width: 768px) {
+        .floating-nav {
+          right: 15px;
+        }
+
+        header {
+          padding: 20px 30px;
+        }
+
+        .split-container {
+          flex-direction: column;
+        }
+
+        .gallery-item {
+          flex: 0 0 300px;
+          height: 400px;
+        }
+
+        .mosaic-grid {
+          grid-template-columns: 1fr;
+          padding: 50px 20px;
+        }
+
+        .mosaic-item:nth-child(3n + 1),
+        .mosaic-item:nth-child(4n + 2) {
+          grid-row: auto;
+          grid-column: auto;
+        }
+
+        .video-container {
+          width: 90%;
+        }
+
+        .art-text {
+          font-size: clamp(3rem, 12vw, 8rem);
+        }
+
+        .footer-content {
+          flex-direction: column;
+          gap: 30px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .menu-item {
+          font-size: 2.5rem;
+        }
+
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 로딩 화면 -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- 커스텀 커서 -->
+    <div class="cursor-blob">
+      <div class="cursor-blob-inner"></div>
+    </div>
+    <div class="cursor-point"></div>
+
+    <!-- 플로팅 네비게이션 -->
+    <nav class="floating-nav">
+      <div class="nav-dot" data-title="Home" data-section="hero"></div>
+      <div class="nav-dot" data-title="Gallery" data-section="gallery"></div>
+      <div class="nav-dot" data-title="Works" data-section="mosaic"></div>
+      <div class="nav-dot" data-title="Motion" data-section="video"></div>
+      <div class="nav-dot" data-title="About" data-section="text-art"></div>
+      <div class="nav-dot" data-title="Contact" data-section="contact"></div>
+    </nav>
+
+    <!-- 헤더 -->
+    <header>
+      <div class="header-content">
+        <div class="logo">ARTSPACE</div>
+        <div class="menu-trigger" id="menuTrigger">
+          <span class="menu-line"></span>
+          <span class="menu-line"></span>
+          <span class="menu-line"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 풀스크린 메뉴 -->
+    <div class="fullscreen-menu" id="fullscreenMenu">
+      <div class="menu-content">
+        <div class="menu-item" style="--index: 0">HOME</div>
+        <div class="menu-item" style="--index: 1">GALLERY</div>
+        <div class="menu-item" style="--index: 2">WORKS</div>
+        <div class="menu-item" style="--index: 3">ABOUT</div>
+        <div class="menu-item" style="--index: 4">CONTACT</div>
+      </div>
+    </div>
+
+    <!-- 섹션 1: 히어로 -->
+    <section class="hero-section" id="hero">
+      <div class="split-container">
+        <div class="split-panel">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+            alt="Art"
+            class="split-image"
+          />
+          <div class="split-content">
+            <h1 class="split-title">CREATIVE</h1>
+            <p class="split-subtitle">PUSHING BOUNDARIES</p>
+          </div>
+        </div>
+        <div class="split-panel">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+            alt="Vision"
+            class="split-image"
+          />
+          <div class="split-content">
+            <h1 class="split-title">VISION</h1>
+            <p class="split-subtitle">BEYOND IMAGINATION</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 2: 무한 스크롤 갤러리 -->
+    <section class="infinite-gallery" id="gallery">
+      <div class="gallery-track" id="galleryTrack">
+        <!-- 갤러리 아이템들이 동적으로 생성됩니다 -->
+      </div>
+    </section>
+
+    <!-- 섹션 3: 그리드 모자이크 -->
+    <section class="mosaic-section" id="mosaic">
+      <div class="mosaic-grid" id="mosaicGrid">
+        <!-- 모자이크 아이템들이 동적으로 생성됩니다 -->
+      </div>
+    </section>
+
+    <!-- 섹션 4: 비디오 쇼케이스 -->
+    <section class="video-showcase" id="video">
+      <div class="video-container">
+        <video class="showcase-video active" autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <video class="showcase-video" muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <video class="showcase-video" muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <video class="showcase-video" muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="video-controls">
+          <div class="video-dot active" data-video="0"></div>
+          <div class="video-dot" data-video="1"></div>
+          <div class="video-dot" data-video="2"></div>
+          <div class="video-dot" data-video="3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 5: 텍스트 아트 -->
+    <section class="text-art-section" id="text-art">
+      <div class="floating-images" id="floatingImages">
+        <!-- 플로팅 이미지들이 동적으로 생성됩니다 -->
+      </div>
+      <div class="text-art-container">
+        <h2 class="art-text">BEYOND<br />REALITY</h2>
+        <p class="art-description">
+          We are a collective of digital artists and creative technologists
+          pushing the boundaries of what's possible in the digital realm. Our
+          work explores the intersection of art, technology, and human
+          experience.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact 섹션 -->
+    <section class="contact-section" id="contact">
+      <div class="contact-container">
+        <h2 class="contact-title">Let's Create</h2>
+        <p class="art-description">
+          Ready to bring your vision to life? We're here to transform your ideas
+          into extraordinary digital experiences.
+        </p>
+        <div class="contact-grid">
+          <div class="contact-item">
+            <div class="contact-icon">📧</div>
+            <h3>Email</h3>
+            <p>hello@artspace.com</p>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📱</div>
+            <h3>Phone</h3>
+            <p>+1 234 567 890</p>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <h3>Location</h3>
+            <p>Seoul, South Korea</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="copyright">© 2025 ARTSPACE. All rights reserved.</div>
+        <div class="social-links">
+          <a href="#" class="social-link">Instagram</a>
+          <a href="#" class="social-link">Behance</a>
+          <a href="#" class="social-link">Dribbble</a>
+          <a href="#" class="social-link">Twitter</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // 이미지 데이터
+      const imageUrls = [
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png",
+      ];
+
+      // 커스텀 커서
+      const cursorBlob = document.querySelector(".cursor-blob");
+      const cursorPoint = document.querySelector(".cursor-point");
+
+      document.addEventListener("mousemove", (e) => {
+        const x = e.clientX;
+        const y = e.clientY;
+
+        cursorBlob.style.left = x - 100 + "px";
+        cursorBlob.style.top = y - 100 + "px";
+
+        cursorPoint.style.left = x + "px";
+        cursorPoint.style.top = y + "px";
+      });
+
+      // 커서 호버 효과
+      const interactiveElements = document.querySelectorAll(
+        "a, button, .nav-dot, .menu-trigger, .menu-item, .split-panel, .gallery-item, .mosaic-item, .video-dot, .contact-item",
+      );
+
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          cursorBlob.style.transform = "scale(1.5)";
+          cursorPoint.style.transform = "translate(-50%, -50%) scale(2)";
+        });
+
+        el.addEventListener("mouseleave", () => {
+          cursorBlob.style.transform = "scale(1)";
+          cursorPoint.style.transform = "translate(-50%, -50%) scale(1)";
+        });
+      });
+
+      // 로더
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // 메뉴 토글
+      const menuTrigger = document.getElementById("menuTrigger");
+      const fullscreenMenu = document.getElementById("fullscreenMenu");
+      let menuOpen = false;
+
+      menuTrigger.addEventListener("click", () => {
+        menuOpen = !menuOpen;
+        if (menuOpen) {
+          fullscreenMenu.classList.add("active");
+          menuTrigger.classList.add("active");
+        } else {
+          fullscreenMenu.classList.remove("active");
+          menuTrigger.classList.remove("active");
+        }
+      });
+
+      // 메뉴 아이템 클릭
+      document.querySelectorAll(".menu-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          fullscreenMenu.classList.remove("active");
+          menuTrigger.classList.remove("active");
+          menuOpen = false;
+        });
+      });
+
+      // 무한 스크롤 갤러리 생성
+      function createInfiniteGallery() {
+        const galleryTrack = document.getElementById("galleryTrack");
+
+        // 이미지를 두 번 반복하여 무한 스크롤 효과
+        for (let i = 0; i < 2; i++) {
+          imageUrls.slice(0, 12).forEach((url, index) => {
+            const item = document.createElement("div");
+            item.className = "gallery-item";
+            item.innerHTML = `
+                        <img src="${url}" alt="Gallery ${index + 1}">
+                        <div class="gallery-overlay">
+                            <h3>Project ${index + 1}</h3>
+                            <p>Digital Art Collection</p>
+                        </div>
+                    `;
+            galleryTrack.appendChild(item);
+          });
+        }
+      }
+
+      // 모자이크 그리드 생성
+      function createMosaicGrid() {
+        const mosaicGrid = document.getElementById("mosaicGrid");
+
+        imageUrls.slice(12, 24).forEach((url, index) => {
+          const item = document.createElement("div");
+          item.className = "mosaic-item";
+          item.innerHTML = `<img src="${url}" alt="Mosaic ${index + 1}" class="mosaic-media">`;
+          mosaicGrid.appendChild(item);
+        });
+      }
+
+      // 플로팅 이미지 생성
+      function createFloatingImages() {
+        const floatingImages = document.getElementById("floatingImages");
+
+        for (let i = 0; i < 6; i++) {
+          const floatImage = document.createElement("div");
+          floatImage.className = "float-image";
+          floatImage.style.setProperty("--index", i);
+          floatImage.style.left = Math.random() * 80 + "%";
+          floatImage.style.top = Math.random() * 80 + "%";
+          floatImage.innerHTML = `<img src="${imageUrls[i + 24]}" alt="Float ${i + 1}">`;
+          floatingImages.appendChild(floatImage);
+        }
+      }
+
+      // 비디오 쇼케이스 컨트롤
+      const videos = document.querySelectorAll(".showcase-video");
+      const videoDots = document.querySelectorAll(".video-dot");
+      let currentVideo = 0;
+      let videoInterval;
+
+      function switchVideo(index) {
+        videos.forEach((v) => v.classList.remove("active"));
+        videoDots.forEach((d) => d.classList.remove("active"));
+
+        videos[index].classList.add("active");
+        videoDots[index].classList.add("active");
+        videos[index].play();
+
+        currentVideo = index;
+      }
+
+      function autoSwitchVideo() {
+        const nextIndex = (currentVideo + 1) % videos.length;
+        switchVideo(nextIndex);
+      }
+
+      videoDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          clearInterval(videoInterval);
+          switchVideo(index);
+          videoInterval = setInterval(autoSwitchVideo, 5000);
+        });
+      });
+
+      // 자동 비디오 전환
+      videoInterval = setInterval(autoSwitchVideo, 5000);
+
+      // 스크롤 기반 네비게이션 활성화
+      const sections = document.querySelectorAll("section[id]");
+      const navDots = document.querySelectorAll(".nav-dot");
+
+      function updateActiveNav() {
+        const scrollY = window.scrollY;
+
+        sections.forEach((section, index) => {
+          const sectionTop = section.offsetTop - 200;
+          const sectionBottom = sectionTop + section.offsetHeight;
+
+          if (scrollY >= sectionTop && scrollY < sectionBottom) {
+            navDots.forEach((dot) => dot.classList.remove("active"));
+            if (navDots[index]) {
+              navDots[index].classList.add("active");
+            }
+          }
+        });
+      }
+
+      window.addEventListener("scroll", updateActiveNav);
+
+      // 네비게이션 도트 클릭
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          const targetSection = sections[index];
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      // 초기화
+      document.addEventListener("DOMContentLoaded", () => {
+        createInfiniteGallery();
+        createMosaicGrid();
+        createFloatingImages();
+        updateActiveNav();
+      });
+
+      // 스크롤 애니메이션
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      // 애니메이션 요소 관찰
+      const animateElements = document.querySelectorAll(
+        ".mosaic-item, .contact-item",
+      );
+      animateElements.forEach((el) => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(50px)";
+        el.style.transition = "all 0.8s ease";
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

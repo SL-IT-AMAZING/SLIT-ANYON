@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HYPER STUDIO - Digital Artistry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;700&display=swap");
+
+      :root {
+        --color-primary: #ff006e;
+        --color-secondary: #8338ec;
+        --color-accent: #ffbe0b;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        overflow: hidden;
+        cursor: none;
+        background: #000;
+      }
+
+      /* Custom Cursor */
+      .cursor-main {
+        width: 20px;
+        height: 20px;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transition: transform 0.2s ease;
+      }
+
+      .cursor-main::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: var(--color-accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .cursor-trail {
+        width: 40px;
+        height: 40px;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        border: 2px solid var(--color-primary);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        transform: translate(-50%, -50%);
+      }
+
+      /* Page Container */
+      .page-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .page {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .page.active {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+
+      .page.prev {
+        transform: translateX(-100%) scale(0.8);
+        opacity: 0;
+      }
+
+      .page.next {
+        transform: translateX(100%) scale(0.8);
+        opacity: 0;
+      }
+
+      /* Navigation */
+      .nav-dots {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot.active {
+        background: var(--color-accent);
+        transform: scale(1.5);
+      }
+
+      .nav-dot::after {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+      }
+
+      .nav-dot:hover::after {
+        opacity: 1;
+      }
+
+      /* Typography */
+      .mega-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(8rem, 20vw, 18rem);
+        line-height: 0.8;
+        letter-spacing: -0.05em;
+        position: relative;
+      }
+
+      .glitch-text {
+        position: relative;
+        color: var(--color-primary);
+      }
+
+      .glitch-text::before,
+      .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch-text::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--color-secondary);
+        z-index: -1;
+      }
+
+      .glitch-text::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--color-accent);
+        z-index: -2;
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 30% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(10% 0 60% 0);
+          transform: translate(-2px, 0);
+        }
+        80% {
+          clip-path: inset(80% 0 5% 0);
+          transform: translate(2px, 2px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(60% 0 10% 0);
+          transform: translate(2px, -2px);
+        }
+        40% {
+          clip-path: inset(20% 0 50% 0);
+          transform: translate(-2px, 2px);
+        }
+        60% {
+          clip-path: inset(30% 0 40% 0);
+          transform: translate(2px, 0);
+        }
+        80% {
+          clip-path: inset(5% 0 80% 0);
+          transform: translate(-2px, -2px);
+        }
+      }
+
+      /* Mathematical Patterns */
+      .math-bg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        opacity: 0.1;
+      }
+
+      .fibonacci-spiral {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .golden-rect {
+        position: absolute;
+        border: 1px solid var(--color-accent);
+        animation: golden-grow 10s infinite alternate;
+      }
+
+      @keyframes golden-grow {
+        0% {
+          width: 10px;
+          height: 6.18px;
+        }
+        100% {
+          width: 610px;
+          height: 377.58px;
+        }
+      }
+
+      /* Floating Elements */
+      .float-element {
+        position: absolute;
+        animation: float-random 20s infinite;
+      }
+
+      @keyframes float-random {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+          transform: translate(100px, -50px) rotate(90deg);
+        }
+        50% {
+          transform: translate(-50px, 100px) rotate(180deg);
+        }
+        75% {
+          transform: translate(-100px, -100px) rotate(270deg);
+        }
+      }
+
+      /* Image Grid Effects */
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .image-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        aspect-ratio: 1;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .image-card:hover {
+        transform: scale(1.05) rotate(2deg);
+        box-shadow: 0 20px 40px rgba(255, 0, 110, 0.3);
+      }
+
+      .image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .image-card:hover img {
+        transform: scale(1.1);
+      }
+
+      /* Morphing Shapes */
+      .morph-shape {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(
+          45deg,
+          var(--color-primary),
+          var(--color-secondary)
+        );
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation: morph 8s ease-in-out infinite;
+        opacity: 0.1;
+      }
+
+      @keyframes morph {
+        0%,
+        100% {
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        }
+        25% {
+          border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%;
+        }
+        50% {
+          border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%;
+        }
+        75% {
+          border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%;
+        }
+      }
+
+      /* Text Animations */
+      .word-reveal {
+        overflow: hidden;
+      }
+
+      .word-reveal span {
+        display: inline-block;
+        transform: translateY(100%);
+        animation: reveal-up 0.8s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      @keyframes reveal-up {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .mega-title {
+          font-size: clamp(4rem, 15vw, 8rem);
+        }
+
+        .nav-dots {
+          right: 20px;
+        }
+
+        .image-grid {
+          grid-template-columns: 1fr;
+          padding: 1rem;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-family: "Bebas Neue", cursive;
+        color: var(--color-accent);
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(0.95);
+        }
+      }
+
+      /* Menu */
+      .menu-toggle {
+        position: fixed;
+        top: 40px;
+        left: 40px;
+        z-index: 1000;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .menu-line {
+        width: 100%;
+        height: 3px;
+        background: var(--color-accent);
+        transition: all 0.3s;
+      }
+
+      .menu-toggle.active .menu-line:nth-child(1) {
+        transform: rotate(45deg) translate(8px, 8px);
+      }
+
+      .menu-toggle.active .menu-line:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-toggle.active .menu-line:nth-child(3) {
+        transform: rotate(-45deg) translate(8px, -8px);
+      }
+
+      .menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s;
+      }
+
+      .menu-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .menu-items {
+        text-align: center;
+      }
+
+      .menu-item {
+        font-size: 3rem;
+        font-family: "Bebas Neue", cursive;
+        color: white;
+        margin: 20px 0;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        display: inline-block;
+      }
+
+      .menu-item:hover {
+        color: var(--color-accent);
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white">
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-main"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Menu Toggle -->
+    <div class="menu-toggle" id="menuToggle">
+      <div class="menu-line"></div>
+      <div class="menu-line"></div>
+      <div class="menu-line"></div>
+    </div>
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay">
+      <div class="menu-items">
+        <div class="menu-item" data-page="0">HOME</div>
+        <div class="menu-item" data-page="1">MANIFESTO</div>
+        <div class="menu-item" data-page="2">WORKS</div>
+        <div class="menu-item" data-page="3">PROCESS</div>
+        <div class="menu-item" data-page="4">TEAM</div>
+        <div class="menu-item" data-page="5">LAB</div>
+        <div class="menu-item" data-page="6">CONTACT</div>
+      </div>
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="nav-dots">
+      <div class="nav-dot active" data-page="0" data-title="HOME"></div>
+      <div class="nav-dot" data-page="1" data-title="MANIFESTO"></div>
+      <div class="nav-dot" data-page="2" data-title="WORKS"></div>
+      <div class="nav-dot" data-page="3" data-title="PROCESS"></div>
+      <div class="nav-dot" data-page="4" data-title="TEAM"></div>
+      <div class="nav-dot" data-page="5" data-title="LAB"></div>
+      <div class="nav-dot" data-page="6" data-title="CONTACT"></div>
+    </div>
+
+    <!-- Page Container -->
+    <div class="page-container">
+      <!-- Page 1: Home -->
+      <section class="page active" data-page="0">
+        <div class="math-bg">
+          <div class="fibonacci-spiral">
+            <div class="golden-rect"></div>
+          </div>
+        </div>
+        <div class="morph-shape" style="top: 10%; left: 10%"></div>
+        <div
+          class="morph-shape"
+          style="bottom: 10%; right: 10%; animation-delay: 4s"
+        ></div>
+
+        <div class="text-center relative z-10">
+          <h1 class="mega-title glitch-text" data-text="HYPER">HYPER</h1>
+          <h1
+            class="mega-title glitch-text"
+            data-text="STUDIO"
+            style="color: var(--color-secondary)"
+          >
+            STUDIO
+          </h1>
+          <p class="text-2xl mt-8 word-reveal">
+            <span style="--index: 0">WHERE</span>
+            <span style="--index: 1">MATH</span>
+            <span style="--index: 2">MEETS</span>
+            <span style="--index: 3">MAGIC</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- Page 2: Manifesto -->
+      <section class="page next" data-page="1">
+        <div class="max-w-6xl mx-auto px-8">
+          <h2
+            class="mega-title mb-12"
+            style="
+              font-size: clamp(4rem, 10vw, 8rem);
+              color: var(--color-secondary);
+            "
+          >
+            WE CREATE<br />DIGITAL<br />EXPERIENCES
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div
+              class="p-6 border-2 border-pink-500 rounded-2xl hover:bg-pink-500 hover:bg-opacity-10 transition-all"
+            >
+              <h3
+                class="text-3xl font-bold mb-4"
+                style="color: var(--color-accent)"
+              >
+                01
+              </h3>
+              <h4 class="text-2xl mb-2">INNOVATE</h4>
+              <p class="opacity-80">
+                Pushing boundaries with mathematical precision and creative
+                chaos.
+              </p>
+            </div>
+            <div
+              class="p-6 border-2 border-purple-500 rounded-2xl hover:bg-purple-500 hover:bg-opacity-10 transition-all"
+            >
+              <h3
+                class="text-3xl font-bold mb-4"
+                style="color: var(--color-accent)"
+              >
+                02
+              </h3>
+              <h4 class="text-2xl mb-2">ITERATE</h4>
+              <p class="opacity-80">
+                Refining through fibonacci sequences of improvement.
+              </p>
+            </div>
+            <div
+              class="p-6 border-2 border-yellow-500 rounded-2xl hover:bg-yellow-500 hover:bg-opacity-10 transition-all"
+            >
+              <h3
+                class="text-3xl font-bold mb-4"
+                style="color: var(--color-accent)"
+              >
+                03
+              </h3>
+              <h4 class="text-2xl mb-2">INTEGRATE</h4>
+              <p class="opacity-80">
+                Harmonizing technology and artistry in golden ratios.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 3: Works -->
+      <section class="page next" data-page="2">
+        <div class="w-full h-full overflow-y-auto">
+          <h2
+            class="mega-title text-center py-12"
+            style="
+              font-size: clamp(3rem, 8vw, 6rem);
+              color: var(--color-primary);
+            "
+          >
+            SELECTED WORKS
+          </h2>
+          <div class="image-grid pb-20">
+            <div class="image-card float-element">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+                alt="Project 1"
+              />
+            </div>
+            <div class="image-card float-element" style="animation-delay: 0.5s">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+                alt="Project 2"
+              />
+            </div>
+            <div class="image-card float-element" style="animation-delay: 1s">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+                alt="Project 3"
+              />
+            </div>
+            <div class="image-card float-element" style="animation-delay: 1.5s">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+                alt="Project 4"
+              />
+            </div>
+            <div class="image-card float-element" style="animation-delay: 2s">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                alt="Project 5"
+              />
+            </div>
+            <div class="image-card float-element" style="animation-delay: 2.5s">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+                alt="Project 6"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 4: Process -->
+      <section class="page next" data-page="3">
+        <div class="max-w-6xl mx-auto px-8 text-center">
+          <h2
+            class="mega-title mb-16"
+            style="
+              font-size: clamp(3rem, 8vw, 6rem);
+              color: var(--color-accent);
+            "
+          >
+            OUR PROCESS
+          </h2>
+          <div class="relative">
+            <svg class="absolute inset-0 w-full h-full" style="z-index: -1">
+              <path
+                d="M 100 200 Q 300 100 500 200 T 900 200"
+                stroke="var(--color-primary)"
+                stroke-width="2"
+                fill="none"
+                opacity="0.3"
+              />
+            </svg>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div class="transform hover:scale-110 transition-all">
+                <div
+                  class="text-6xl font-bold mb-4"
+                  style="color: var(--color-primary)"
+                >
+                  ∞
+                </div>
+                <h3 class="text-xl font-bold">DISCOVER</h3>
+                <p class="text-sm opacity-70 mt-2">Infinite possibilities</p>
+              </div>
+              <div class="transform hover:scale-110 transition-all">
+                <div
+                  class="text-6xl font-bold mb-4"
+                  style="color: var(--color-secondary)"
+                >
+                  φ
+                </div>
+                <h3 class="text-xl font-bold">DESIGN</h3>
+                <p class="text-sm opacity-70 mt-2">Golden ratio perfection</p>
+              </div>
+              <div class="transform hover:scale-110 transition-all">
+                <div
+                  class="text-6xl font-bold mb-4"
+                  style="color: var(--color-accent)"
+                >
+                  π
+                </div>
+                <h3 class="text-xl font-bold">DEVELOP</h3>
+                <p class="text-sm opacity-70 mt-2">Calculated precision</p>
+              </div>
+              <div class="transform hover:scale-110 transition-all">
+                <div
+                  class="text-6xl font-bold mb-4"
+                  style="color: var(--color-primary)"
+                >
+                  Σ
+                </div>
+                <h3 class="text-xl font-bold">DELIVER</h3>
+                <p class="text-sm opacity-70 mt-2">Sum of all parts</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 5: Team -->
+      <section class="page next" data-page="4">
+        <div class="max-w-6xl mx-auto px-8">
+          <h2
+            class="mega-title mb-16"
+            style="
+              font-size: clamp(3rem, 8vw, 6rem);
+              color: var(--color-secondary);
+            "
+          >
+            THE MINDS
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center group">
+              <div
+                class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-transparent group-hover:border-pink-500 transition-all"
+              >
+                <img
+                  src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                  alt="Team 1"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <h3 class="text-xl font-bold">ALEX</h3>
+              <p class="text-sm opacity-70">Creative Alchemist</p>
+            </div>
+            <div class="text-center group">
+              <div
+                class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-transparent group-hover:border-purple-500 transition-all"
+              >
+                <img
+                  src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+                  alt="Team 2"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <h3 class="text-xl font-bold">MAYA</h3>
+              <p class="text-sm opacity-70">Code Philosopher</p>
+            </div>
+            <div class="text-center group">
+              <div
+                class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-transparent group-hover:border-yellow-500 transition-all"
+              >
+                <img
+                  src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png"
+                  alt="Team 3"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <h3 class="text-xl font-bold">KAI</h3>
+              <p class="text-sm opacity-70">Digital Architect</p>
+            </div>
+            <div class="text-center group">
+              <div
+                class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-transparent group-hover:border-pink-500 transition-all"
+              >
+                <img
+                  src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png"
+                  alt="Team 4"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <h3 class="text-xl font-bold">ZOE</h3>
+              <p class="text-sm opacity-70">Pixel Shaman</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 6: Lab -->
+      <section class="page next" data-page="5">
+        <div class="max-w-6xl mx-auto px-8 text-center">
+          <h2
+            class="mega-title mb-16"
+            style="
+              font-size: clamp(3rem, 8vw, 6rem);
+              color: var(--color-primary);
+            "
+          >
+            EXPERIMENT LAB
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div
+              class="bg-gradient-to-br from-pink-500 to-purple-500 p-8 rounded-3xl transform hover:rotate-3 transition-all"
+            >
+              <h3 class="text-3xl font-bold mb-4">NEURAL NETWORKS</h3>
+              <p class="text-lg opacity-90">
+                AI-powered generative design systems creating impossible
+                geometries.
+              </p>
+              <div class="mt-6 text-6xl">🧠</div>
+            </div>
+            <div
+              class="bg-gradient-to-br from-purple-500 to-yellow-500 p-8 rounded-3xl transform hover:rotate-3 transition-all"
+            >
+              <h3 class="text-3xl font-bold mb-4">QUANTUM EFFECTS</h3>
+              <p class="text-lg opacity-90">
+                Superposition states in UI elements for multidimensional
+                experiences.
+              </p>
+              <div class="mt-6 text-6xl">⚛️</div>
+            </div>
+            <div
+              class="bg-gradient-to-br from-yellow-500 to-pink-500 p-8 rounded-3xl transform hover:rotate-3 transition-all"
+            >
+              <h3 class="text-3xl font-bold mb-4">FRACTAL SYSTEMS</h3>
+              <p class="text-lg opacity-90">
+                Self-similar patterns creating infinite zoom interfaces.
+              </p>
+              <div class="mt-6 text-6xl">🌀</div>
+            </div>
+            <div
+              class="bg-gradient-to-br from-pink-500 to-purple-500 p-8 rounded-3xl transform hover:rotate-3 transition-all"
+            >
+              <h3 class="text-3xl font-bold mb-4">4D PROJECTIONS</h3>
+              <p class="text-lg opacity-90">
+                Hypercube navigation through tesseract-inspired layouts.
+              </p>
+              <div class="mt-6 text-6xl">🔮</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 7: Contact -->
+      <section class="page next" data-page="6">
+        <div class="max-w-4xl mx-auto px-8 text-center">
+          <h2
+            class="mega-title mb-16"
+            style="
+              font-size: clamp(3rem, 8vw, 6rem);
+              color: var(--color-accent);
+            "
+          >
+            LET'S TALK
+          </h2>
+          <div class="space-y-8">
+            <div>
+              <h3 class="text-3xl font-bold mb-4">hello@hyperstudio.xyz</h3>
+              <p class="text-xl opacity-80">
+                Drop us a line about your wildest ideas
+              </p>
+            </div>
+            <div class="flex justify-center gap-8 text-2xl">
+              <a href="#" class="hover:text-pink-500 transition-colors"
+                >TWITTER</a
+              >
+              <a href="#" class="hover:text-purple-500 transition-colors"
+                >INSTAGRAM</a
+              >
+              <a href="#" class="hover:text-yellow-500 transition-colors"
+                >BEHANCE</a
+              >
+            </div>
+            <div class="mt-16">
+              <button
+                class="px-12 py-6 text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 rounded-full hover:scale-110 transition-transform"
+              >
+                START PROJECT
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Variables
+      let currentPage = 0;
+      const totalPages = 7;
+      const pages = document.querySelectorAll(".page");
+      const navDots = document.querySelectorAll(".nav-dot");
+      const cursorMain = document.querySelector(".cursor-main");
+      const cursorTrail = document.querySelector(".cursor-trail");
+      const menuToggle = document.getElementById("menuToggle");
+      const menuOverlay = document.getElementById("menuOverlay");
+      const menuItems = document.querySelectorAll(".menu-item");
+      const loader = document.getElementById("loader");
+
+      // Custom Cursor
+      document.addEventListener("mousemove", (e) => {
+        cursorMain.style.left = e.clientX + "px";
+        cursorMain.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorTrail.style.left = e.clientX + "px";
+          cursorTrail.style.top = e.clientY + "px";
+        }, 100);
+      });
+
+      // Page Navigation
+      function goToPage(pageIndex) {
+        if (pageIndex < 0 || pageIndex >= totalPages) return;
+
+        pages.forEach((page, index) => {
+          page.classList.remove("active", "prev", "next");
+
+          if (index === pageIndex) {
+            page.classList.add("active");
+          } else if (index < pageIndex) {
+            page.classList.add("prev");
+          } else {
+            page.classList.add("next");
+          }
+        });
+
+        navDots.forEach((dot, index) => {
+          dot.classList.toggle("active", index === pageIndex);
+        });
+
+        currentPage = pageIndex;
+      }
+
+      // Navigation Dots Click
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => goToPage(index));
+      });
+
+      // Keyboard Navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") {
+          goToPage(currentPage + 1);
+        } else if (e.key === "ArrowLeft") {
+          goToPage(currentPage - 1);
+        } else if (e.key === "ArrowUp") {
+          goToPage(currentPage - 1);
+        } else if (e.key === "ArrowDown") {
+          goToPage(currentPage + 1);
+        }
+      });
+
+      // Mouse Wheel Navigation
+      let isScrolling = false;
+      document.addEventListener("wheel", (e) => {
+        if (isScrolling) return;
+
+        isScrolling = true;
+
+        if (e.deltaY > 0) {
+          goToPage(currentPage + 1);
+        } else {
+          goToPage(currentPage - 1);
+        }
+
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      });
+
+      // Touch Navigation
+      let touchStartY = 0;
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            goToPage(currentPage + 1);
+          } else {
+            goToPage(currentPage - 1);
+          }
+        }
+      });
+
+      // Menu Toggle
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("active");
+        menuOverlay.classList.toggle("active");
+      });
+
+      menuItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const pageIndex = parseInt(item.dataset.page);
+          goToPage(pageIndex);
+          menuToggle.classList.remove("active");
+          menuOverlay.classList.remove("active");
+        });
+      });
+
+      // Mathematical Background Effects
+      function createMathematicalPatterns() {
+        // Fibonacci sequence animation
+        const fibonacciNumbers = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144];
+
+        // Create floating fibonacci numbers
+        fibonacciNumbers.forEach((num, index) => {
+          const element = document.createElement("div");
+          element.textContent = num;
+          element.style.position = "absolute";
+          element.style.fontSize = `${20 + index * 2}px`;
+          element.style.opacity = "0.1";
+          element.style.color = "var(--color-accent)";
+          element.style.left = `${Math.random() * 100}%`;
+          element.style.top = `${Math.random() * 100}%`;
+          element.style.animation = `float-random ${10 + index * 2}s infinite`;
+          document.querySelector(".math-bg").appendChild(element);
+        });
+      }
+
+      // Initialize
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          loader.style.opacity = "0";
+          setTimeout(() => {
+            loader.style.display = "none";
+          }, 500);
+        }, 2000);
+
+        createMathematicalPatterns();
+      });
+
+      // Hover Effects
+      document
+        .querySelectorAll("a, button, .nav-dot, .image-card, .menu-item")
+        .forEach((el) => {
+          el.addEventListener("mouseenter", () => {
+            cursorMain.style.transform = "scale(2)";
+            cursorTrail.style.transform = "translate(-50%, -50%) scale(1.5)";
+          });
+
+          el.addEventListener("mouseleave", () => {
+            cursorMain.style.transform = "scale(1)";
+            cursorTrail.style.transform = "translate(-50%, -50%) scale(1)";
+          });
+        });
+
+      // Glitch Effect on Hover
+      document.querySelectorAll(".glitch-text").forEach((text) => {
+        text.addEventListener("mouseenter", () => {
+          text.style.animation = "glitch-1 0.3s infinite";
+        });
+
+        text.addEventListener("mouseleave", () => {
+          text.style.animation = "none";
+        });
+      });
+
+      // Dynamic Color Shifts
+      let hue = 0;
+      setInterval(() => {
+        hue = (hue + 1) % 360;
+        document.querySelectorAll(".morph-shape").forEach((shape) => {
+          shape.style.filter = `hue-rotate(${hue}deg)`;
+        });
+      }, 50);
+    </script>
+  </body>
+</html>

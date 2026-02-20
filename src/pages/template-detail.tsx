@@ -3,10 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { useTemplates } from "@/hooks/useTemplates";
+import { ipc } from "@/ipc/types";
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  RotateCw,
+} from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface TemplateDetailPageProps {
@@ -21,8 +29,30 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   const { templates } = useTemplates();
   const { updateSettings } = useSettings();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewScale, setPreviewScale] = useState(0.5);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   const template = templates?.find((t) => t.id === templateId);
+
+  useEffect(() => {
+    if (!template) return;
+    ipc.template
+      .getTemplateContent({ templatePath: template.path })
+      .then((result) => setPreviewHtml(result.html))
+      .catch(() => setPreviewHtml(""));
+  }, [template]);
+
+  useEffect(() => {
+    const container = previewContainerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) setPreviewScale(width / 1280);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   if (!template) {
     return (
@@ -30,9 +60,9 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
         <div className="max-w-5xl mx-auto pb-12">
           <Button
             onClick={() => router.history.back()}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
+            className="flex items-center gap-2 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("templateDetail.backToMarketplace", { ns: "app" })}
@@ -53,115 +83,142 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   return (
     <div className="min-h-screen px-8 py-4">
       <div className="max-w-5xl mx-auto pb-12">
-        <Button
-          onClick={() => router.history.back()}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t("templateDetail.backToMarketplace", { ns: "app" })}
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            onClick={() => router.history.back()}
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("templateDetail.backToMarketplace", { ns: "app" })}
+          </Button>
+          <Button onClick={handleChoose}>
+            {t("templateDetail.chooseTemplate", { ns: "app" })}
+          </Button>
+        </div>
 
-        {/* Hero Section */}
-        <div className="flex flex-col lg:flex-row gap-8 mb-8">
-          {/* Left: Main Image */}
-          <div className="lg:w-1/2">
-            <img
-              src={template.imageUrl}
-              alt={template.title}
-              className="w-full rounded-xl shadow-sm object-cover"
-            />
+        <div className="mb-6">
+          {template.category && (
+            <Badge variant="outline" className="text-xs capitalize mb-1">
+              {template.category}
+            </Badge>
+          )}
+          <h1 className="text-3xl font-bold text-foreground">
+            {template.title}
+          </h1>
+        </div>
+
+        <div className="rounded-xl border border-border overflow-hidden mb-10">
+          <div className="flex items-center h-10 px-3 bg-muted/50 border-b border-border gap-2">
+            <div className="flex items-center gap-0.5 text-muted-foreground/50">
+              <ChevronLeft className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
+            </div>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-xs text-muted-foreground bg-background px-4 py-1 rounded-md border border-border max-w-xs truncate">
+                /
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground/50">
+              <ExternalLink className="h-3.5 w-3.5" />
+              <RotateCw className="h-3.5 w-3.5" />
+            </div>
           </div>
 
-          {/* Right: Info */}
-          <div className="lg:w-1/2">
-            {template.category && (
-              <Badge variant="outline" className="text-xs capitalize">
-                {template.category}
-              </Badge>
+          <div
+            ref={previewContainerRef}
+            className="relative overflow-hidden bg-white"
+            style={{ aspectRatio: "16 / 9" }}
+          >
+            {previewHtml && previewHtml.length > 0 ? (
+              <iframe
+                srcDoc={previewHtml}
+                title={template.title}
+                sandbox="allow-scripts"
+                className="absolute top-0 left-0 border-none"
+                style={{
+                  width: "1280px",
+                  height: `${3000 / previewScale}px`,
+                  zoom: previewScale,
+                }}
+              />
+            ) : previewHtml === null ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                Preview unavailable
+              </div>
             )}
-            <h1 className="text-3xl font-bold text-foreground mt-2">
-              {template.title}
-            </h1>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col gap-3 mt-6">
-              <Button className="w-full text-lg py-6" onClick={handleChoose}>
-                {t("templateDetail.chooseTemplate", { ns: "app" })}
-              </Button>
-            </div>
           </div>
         </div>
 
-        {/* About Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-3">
-            {t("templateDetail.about", { ns: "app" })}
-          </h2>
-          <p className="text-muted-foreground leading-relaxed">
-            {template.longDescription || template.description}
-          </p>
-        </section>
-
-        {/* Features Section */}
-        {template.features && template.features.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-3">
-              {t("templateDetail.features", { ns: "app" })}
+        <div className="flex flex-col lg:flex-row gap-10 border-t border-border pt-8">
+          <div className="lg:w-3/5">
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t("templateDetail.about", { ns: "app" })}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {template.features.map((feature) => (
-                <div key={feature} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span className="text-sm text-foreground">{feature}</span>
+            <p className="text-muted-foreground leading-relaxed">
+              {template.longDescription || template.description}
+            </p>
+
+            {template.features && template.features.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-base font-semibold text-foreground mb-2">
+                  {t("templateDetail.features", { ns: "app" })}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {template.features.map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span className="text-sm text-foreground">{feature}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </div>
+            )}
+          </div>
 
-        {/* Tech Stack Section */}
-        {template.techStack && template.techStack.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-3">
-              {t("templateDetail.techStack", { ns: "app" })}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {template.techStack.map((tech) => (
-                <span
-                  key={tech}
-                  className="text-sm px-3 py-1 rounded-full bg-muted text-muted-foreground"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+          <div className="lg:w-2/5">
+            {template.tags && template.tags.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  {t("templateDetail.tags", { ns: "app" })}
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {template.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-sm px-3 py-1 rounded-full border border-border text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Screenshots Gallery */}
-        {template.screenshots && template.screenshots.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-3">
-              {t("templateDetail.screenshots", { ns: "app" })}
-            </h2>
-            <div className="flex overflow-x-auto gap-4 pb-4 snap-x">
-              {template.screenshots.map((src, index) => (
-                <img
-                  key={index}
-                  src={src}
-                  alt={t("templateDetail.screenshotAlt", {
-                    ns: "app",
-                    title: template.title,
-                    index: index + 1,
-                  })}
-                  className="h-64 rounded-lg shadow-sm snap-start flex-shrink-0"
-                />
-              ))}
-            </div>
-          </section>
-        )}
+            {template.techStack && template.techStack.length > 0 && (
+              <div className="mb-6 pt-6 border-t border-border">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  {t("templateDetail.techStack", { ns: "app" })}
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {template.techStack.map((tech) => (
+                    <span
+                      key={tech}
+                      className="text-sm px-3 py-1 rounded-full border border-border text-muted-foreground"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <CreateAppDialog

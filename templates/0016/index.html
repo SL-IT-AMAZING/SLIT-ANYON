@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gallery Parallax Experience</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Montserrat:wght@100;300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-color: #0a0a0a;
+        --accent: #ff6b6b;
+        --text-light: #999;
+        --transition: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background-color: var(--bg-color);
+        color: #fff;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Smooth Scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Custom Cursor with Trail */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.1s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-trail {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        transition: transform 0.3s ease;
+      }
+
+      .cursor.hover {
+        transform: scale(2);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Floating Navigation */
+      .floating-nav {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-dot.active {
+        background: #fff;
+        transform: scale(1.5);
+      }
+
+      .nav-dot:hover {
+        background: #fff;
+      }
+
+      .nav-tooltip {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .nav-dot:hover .nav-tooltip {
+        opacity: 1;
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: linear-gradient(
+          to bottom,
+          rgba(10, 10, 10, 0.9),
+          transparent
+        );
+        backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+      }
+
+      .header.scrolled {
+        padding: 15px 40px;
+        background: rgba(10, 10, 10, 0.95);
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 28px;
+        letter-spacing: 2px;
+        background: linear-gradient(45deg, #fff, var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 40px;
+      }
+
+      /* Hero Section */
+      .hero {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+      }
+
+      .hero-bg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        filter: contrast(1.2);
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 1;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(60px, 10vw, 120px);
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 3px;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease 0.3s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Bento Grid Layout */
+      .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: 250px;
+        gap: 20px;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .bento-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.5s var(--transition);
+        transform-style: preserve-3d;
+      }
+
+      .bento-item:hover {
+        transform: translateZ(20px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Different grid spans */
+      .bento-item.large {
+        grid-column: span 3;
+        grid-row: span 2;
+      }
+
+      .bento-item.wide {
+        grid-column: span 2;
+      }
+
+      .bento-item.tall {
+        grid-row: span 2;
+      }
+
+      .bento-item.featured {
+        grid-column: span 4;
+        grid-row: span 2;
+      }
+
+      .bento-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s var(--transition);
+      }
+
+      .bento-item:hover .bento-media {
+        transform: scale(1.1);
+      }
+
+      /* Floating Content Overlay */
+      .bento-content {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 107, 107, 0.9),
+          rgba(255, 107, 107, 0) 70%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 30px;
+      }
+
+      .bento-item:hover .bento-content {
+        opacity: 1;
+      }
+
+      .bento-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 60px;
+        opacity: 0.3;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        transition: all 0.4s ease;
+      }
+
+      .bento-item:hover .bento-number {
+        opacity: 0.6;
+        transform: translate(-10px, -10px);
+      }
+
+      .bento-title {
+        font-family: "Playfair Display", serif;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.4s ease 0.1s;
+      }
+
+      .bento-item:hover .bento-title {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .bento-subtitle {
+        font-size: 14px;
+        font-weight: 300;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.4s ease 0.2s;
+      }
+
+      .bento-item:hover .bento-subtitle {
+        transform: translateY(0);
+        opacity: 0.8;
+      }
+
+      /* Text Cards */
+      .text-card {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.05),
+          rgba(255, 255, 255, 0.02)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .text-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(255, 107, 107, 0.1),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .text-card:hover::before {
+        opacity: 1;
+      }
+
+      .quote-text {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 32px;
+        font-style: italic;
+        line-height: 1.4;
+        margin-bottom: 20px;
+      }
+
+      .quote-author {
+        font-size: 14px;
+        letter-spacing: 2px;
+        opacity: 0.6;
+        text-transform: uppercase;
+      }
+
+      /* Parallax Scroll Effects */
+      .parallax-wrapper {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .parallax-element {
+        will-change: transform;
+        transition: transform 0.1s linear;
+      }
+
+      /* Magnetic Buttons */
+      .magnetic-btn {
+        display: inline-block;
+        padding: 15px 40px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .magnetic-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--accent);
+        transform: translateY(100%);
+        transition: transform 0.3s var(--transition);
+      }
+
+      .magnetic-btn:hover::before {
+        transform: translateY(0);
+      }
+
+      .magnetic-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Reveal Animations */
+      .reveal {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 1s var(--transition);
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-bar {
+        width: 200px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 20px auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: var(--accent);
+        animation: loading 2s ease-in-out infinite;
+      }
+
+      @keyframes loading {
+        0% {
+          width: 0;
+          left: 0;
+        }
+        50% {
+          width: 100%;
+          left: 0;
+        }
+        100% {
+          width: 0;
+          left: 100%;
+        }
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        body {
+          cursor: auto;
+        }
+
+        .cursor,
+        .cursor-trail {
+          display: none;
+        }
+
+        .floating-nav {
+          right: 20px;
+        }
+
+        .bento-grid {
+          grid-template-columns: repeat(2, 1fr);
+          grid-auto-rows: 200px;
+          gap: 15px;
+        }
+
+        .bento-item.large,
+        .bento-item.wide,
+        .bento-item.featured {
+          grid-column: span 2;
+        }
+
+        .hero-title {
+          font-size: 60px;
+        }
+
+        .quote-text {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">LOADING GALLERY</div>
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+      <div class="nav-dot active" data-section="0">
+        <span class="nav-tooltip">Home</span>
+      </div>
+      <div class="nav-dot" data-section="1">
+        <span class="nav-tooltip">Featured</span>
+      </div>
+      <div class="nav-dot" data-section="2">
+        <span class="nav-tooltip">Collections</span>
+      </div>
+      <div class="nav-dot" data-section="3">
+        <span class="nav-tooltip">Artists</span>
+      </div>
+      <div class="nav-dot" data-section="4">
+        <span class="nav-tooltip">Archive</span>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="header" id="header">
+      <div class="logo">GALLERY PARALLAX</div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="section hero" data-section="0">
+      <div class="hero-bg">
+        <img
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+          alt="Hero Background"
+        />
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title">Immersive Art<br />Experience</h1>
+        <p class="hero-subtitle">Where Digital Meets Reality</p>
+      </div>
+    </section>
+
+    <!-- Featured Section -->
+    <section class="section" data-section="1">
+      <div class="bento-grid">
+        <div class="bento-item featured parallax-element" data-speed="0.5">
+          <span class="bento-number">01</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Ethereal Landscapes</h3>
+            <p class="bento-subtitle">Digital Art Collection</p>
+          </div>
+        </div>
+
+        <div class="bento-item tall text-card">
+          <div class="text-content">
+            <h3 class="quote-text">
+              "Art is not what you see, but what you make others see."
+            </h3>
+            <p class="quote-author">— Edgar Degas</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.3">
+          <span class="bento-number">02</span>
+          <video class="bento-media" autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="bento-content">
+            <h3 class="bento-title">Motion Studies</h3>
+            <p class="bento-subtitle">Video Installation</p>
+          </div>
+        </div>
+
+        <div class="bento-item wide parallax-element" data-speed="0.7">
+          <span class="bento-number">03</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Urban Fragments</h3>
+            <p class="bento-subtitle">Photography Series</p>
+          </div>
+        </div>
+
+        <div class="bento-item text-card">
+          <div class="text-content">
+            <h3>Contemporary Vision</h3>
+            <p>Exploring the boundaries between digital and physical realms.</p>
+          </div>
+        </div>
+
+        <div class="bento-item large parallax-element" data-speed="0.4">
+          <span class="bento-number">04</span>
+          <video class="bento-media" autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="bento-content">
+            <h3 class="bento-title">Nature in Motion</h3>
+            <p class="bento-subtitle">Video Art</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Collections Section -->
+    <section class="section" data-section="2">
+      <div class="bento-grid">
+        <div class="bento-item text-card wide">
+          <div class="text-content">
+            <div style="font-family: &quot;Bebas Neue&quot;; font-size: 72px">
+              2024
+            </div>
+            <p>COLLECTION</p>
+          </div>
+        </div>
+
+        <div class="bento-item tall parallax-element" data-speed="0.6">
+          <span class="bento-number">05</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Chromatic Dreams</h3>
+            <p class="bento-subtitle">Contemporary Art</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.3">
+          <span class="bento-number">06</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Minimal Forms</h3>
+            <p class="bento-subtitle">Sculptural Photography</p>
+          </div>
+        </div>
+
+        <div class="bento-item wide parallax-element" data-speed="0.5">
+          <span class="bento-number">07</span>
+          <video class="bento-media" autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="bento-content">
+            <h3 class="bento-title">Animated Dreams</h3>
+            <p class="bento-subtitle">Animation Art</p>
+          </div>
+        </div>
+
+        <div class="bento-item large text-card">
+          <div class="text-content">
+            <h3 class="quote-text">
+              "Every artist dips his brush in his own soul, and paints his own
+              nature into his pictures."
+            </h3>
+            <p class="quote-author">— Henry Ward Beecher</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.4">
+          <span class="bento-number">08</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Geometric Visions</h3>
+            <p class="bento-subtitle">Digital Sculpture</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Artists Section -->
+    <section class="section" data-section="3">
+      <div class="bento-grid">
+        <div class="bento-item featured parallax-element" data-speed="0.5">
+          <span class="bento-number">09</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Artist Portfolio</h3>
+            <p class="bento-subtitle">Contemporary Works</p>
+          </div>
+        </div>
+
+        <div class="bento-item text-card tall">
+          <div class="text-content">
+            <h3>Featured Artists</h3>
+            <p>
+              Discover the visionaries shaping tomorrow's artistic landscape.
+            </p>
+            <br />
+            <a href="#" class="magnetic-btn">
+              <span>View All Artists</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="bento-item wide parallax-element" data-speed="0.3">
+          <span class="bento-number">10</span>
+          <video class="bento-media" autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="bento-content">
+            <h3 class="bento-title">Video Artist</h3>
+            <p class="bento-subtitle">Moving Images</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.6">
+          <span class="bento-number">11</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Emerging Talent</h3>
+            <p class="bento-subtitle">New Voices</p>
+          </div>
+        </div>
+
+        <div class="bento-item large text-card">
+          <div class="text-content">
+            <h3 class="quote-text">
+              "The purpose of art is washing the dust of daily life off our
+              souls."
+            </h3>
+            <p class="quote-author">— Pablo Picasso</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.4">
+          <span class="bento-number">12</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Master Works</h3>
+            <p class="bento-subtitle">Established Artist</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Archive Section -->
+    <section class="section" data-section="4">
+      <div class="bento-grid">
+        <div class="bento-item wide parallax-element" data-speed="0.5">
+          <span class="bento-number">13</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Past Exhibition</h3>
+            <p class="bento-subtitle">2023 Collection</p>
+          </div>
+        </div>
+
+        <div class="bento-item text-card tall">
+          <div class="text-content">
+            <div style="font-family: &quot;Bebas Neue&quot;; font-size: 48px">
+              EST.
+            </div>
+            <div style="font-family: &quot;Bebas Neue&quot;; font-size: 72px">
+              2020
+            </div>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.3">
+          <span class="bento-number">14</span>
+          <video class="bento-media" autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="bento-content">
+            <h3 class="bento-title">Archive Footage</h3>
+            <p class="bento-subtitle">Historical Documentation</p>
+          </div>
+        </div>
+
+        <div class="bento-item large text-card">
+          <div class="text-content">
+            <h3 class="quote-text">
+              "The artist is nothing without the gift, but the gift is nothing
+              without work."
+            </h3>
+            <p class="quote-author">— Émile Zola</p>
+          </div>
+        </div>
+
+        <div class="bento-item parallax-element" data-speed="0.6">
+          <span class="bento-number">15</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Classic Works</h3>
+            <p class="bento-subtitle">Permanent Collection</p>
+          </div>
+        </div>
+
+        <div class="bento-item wide parallax-element" data-speed="0.4">
+          <span class="bento-number">16</span>
+          <img
+            class="bento-media"
+            src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png"
+            alt="Gallery Image"
+          />
+          <div class="bento-content">
+            <h3 class="bento-title">Archive Material</h3>
+            <p class="bento-subtitle">Research Collection</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // Custom Cursor with Trail
+      const cursor = document.querySelector(".cursor");
+      const cursorTrail = document.querySelector(".cursor-trail");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+      let trailX = 0,
+        trailY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        // Main cursor
+        cursorX += (mouseX - cursorX) * 0.2;
+        cursorY += (mouseY - cursorY) * 0.2;
+        cursor.style.left = cursorX + "px";
+        cursor.style.top = cursorY + "px";
+
+        // Trail cursor
+        trailX += (mouseX - trailX) * 0.1;
+        trailY += (mouseY - trailY) * 0.1;
+        cursorTrail.style.left = trailX + "px";
+        cursorTrail.style.top = trailY + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Cursor hover effects
+      const hoverElements = document.querySelectorAll(
+        "a, button, .bento-item, .nav-dot",
+      );
+      hoverElements.forEach((element) => {
+        element.addEventListener("mouseenter", () =>
+          cursor.classList.add("hover"),
+        );
+        element.addEventListener("mouseleave", () =>
+          cursor.classList.remove("hover"),
+        );
+      });
+
+      // Parallax scrolling
+      const parallaxElements = document.querySelectorAll(".parallax-element");
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+
+        parallaxElements.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+
+      // Header scroll effect
+      const header = document.getElementById("header");
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 100) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+      });
+
+      // Floating navigation
+      const navDots = document.querySelectorAll(".nav-dot");
+      const sections = document.querySelectorAll(".section");
+
+      // Update active dot on scroll
+      window.addEventListener("scroll", () => {
+        let current = "";
+        sections.forEach((section) => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.clientHeight;
+          if (pageYOffset >= sectionTop - 200) {
+            current = section.getAttribute("data-section");
+          }
+        });
+
+        navDots.forEach((dot) => {
+          dot.classList.remove("active");
+          if (dot.getAttribute("data-section") === current) {
+            dot.classList.add("active");
+          }
+        });
+      });
+
+      // Click navigation
+      navDots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const targetSection = dot.getAttribute("data-section");
+          const targetElement = document.querySelector(
+            `[data-section="${targetSection}"]`,
+          );
+          targetElement.scrollIntoView({ behavior: "smooth" });
+        });
+      });
+
+      // Magnetic button effect
+      const magneticBtns = document.querySelectorAll(".magnetic-btn");
+
+      magneticBtns.forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "translate(0, 0)";
+        });
+      });
+
+      // Interactive text cards - follow mouse
+      const textCards = document.querySelectorAll(".text-card");
+
+      textCards.forEach((card) => {
+        card.addEventListener("mousemove", (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+          card.style.setProperty("--mouse-x", `${x}%`);
+          card.style.setProperty("--mouse-y", `${y}%`);
+        });
+      });
+
+      // Reveal animations on scroll
+      const revealElements = document.querySelectorAll(".reveal");
+
+      const revealOnScroll = () => {
+        revealElements.forEach((element) => {
+          const elementTop = element.getBoundingClientRect().top;
+          const elementVisible = 150;
+
+          if (elementTop < window.innerHeight - elementVisible) {
+            element.classList.add("active");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", revealOnScroll);
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Smooth scroll for touch devices
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartY = e.changedTouches[0].screenY;
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        "touchend",
+        (e) => {
+          touchEndY = e.changedTouches[0].screenY;
+          handleSwipe();
+        },
+        { passive: true },
+      );
+
+      function handleSwipe() {
+        const swipeDistance = touchStartY - touchEndY;
+        if (Math.abs(swipeDistance) > 50) {
+          // Natural scrolling is already enabled
+        }
+      }
+
+      // Performance optimization - throttle scroll events
+      let ticking = false;
+      function updateOnScroll() {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            // Update parallax and other scroll-based animations
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }
+      window.addEventListener("scroll", updateOnScroll);
+    </script>
+  </body>
+</html>

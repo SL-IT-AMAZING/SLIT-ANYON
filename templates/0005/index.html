@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Portfolio - Modern Experience</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* 커스텀 커서 */
+      .cursor {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.1s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-dot {
+        width: 4px;
+        height: 4px;
+        background: #fff;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+      }
+
+      .cursor.hover {
+        transform: scale(1.5);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* 네비게이션 */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 50px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+      }
+
+      nav.scrolled {
+        padding: 15px 50px;
+        background: rgba(0, 0, 0, 0.8);
+      }
+
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        cursor: pointer;
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 16px;
+        position: relative;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .nav-menu a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #fff;
+        transition: width 0.3s;
+      }
+
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* 햄버거 메뉴 */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+      }
+
+      .menu-toggle span {
+        width: 25px;
+        height: 2px;
+        background: #fff;
+        transition: all 0.3s;
+      }
+
+      /* 첫 번째 섹션 - 향상된 이미지 갤러리 */
+      .gallery-section {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
+      }
+
+      .image-stack {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 2000px;
+      }
+
+      .image-container {
+        position: absolute;
+        width: 80%;
+        max-width: 1200px;
+        height: 80%;
+        transform-style: preserve-3d;
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .image-slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        border-radius: 20px;
+        box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+        backface-visibility: hidden;
+        opacity: 0;
+        transform: translateZ(-500px) rotateY(90deg) scale(0.5);
+        transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+
+      .image-slide::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.1) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+
+      .image-slide:hover::before {
+        opacity: 1;
+      }
+
+      .image-slide.active {
+        opacity: 1;
+        transform: translateZ(0) rotateY(0) scale(1);
+        z-index: 10;
+      }
+
+      .image-slide.prev {
+        opacity: 0.7;
+        transform: translateZ(-200px) translateX(-50%) rotateY(25deg) scale(0.9);
+        z-index: 5;
+      }
+
+      .image-slide.next {
+        opacity: 0.7;
+        transform: translateZ(-200px) translateX(50%) rotateY(-25deg) scale(0.9);
+        z-index: 5;
+      }
+
+      .image-slide.far-prev {
+        opacity: 0.3;
+        transform: translateZ(-400px) translateX(-100%) rotateY(45deg)
+          scale(0.8);
+        z-index: 1;
+      }
+
+      .image-slide.far-next {
+        opacity: 0.3;
+        transform: translateZ(-400px) translateX(100%) rotateY(-45deg)
+          scale(0.8);
+        z-index: 1;
+      }
+
+      /* 이미지 정보 오버레이 */
+      .image-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.9) 0%,
+          transparent 100%
+        );
+        transform: translateY(100%);
+        transition: transform 0.5s;
+      }
+
+      .image-slide.active .image-info {
+        transform: translateY(0);
+      }
+
+      .image-title {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .image-description {
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+
+      /* 파티클 배경 */
+      .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        animation: float 20s infinite linear;
+      }
+
+      @keyframes float {
+        from {
+          transform: translateY(100vh) translateX(0);
+        }
+        to {
+          transform: translateY(-100px) translateX(100px);
+        }
+      }
+
+      /* 페이지 인디케이터 개선 */
+      .page-indicator {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 15px 30px;
+        border-radius: 50px;
+        backdrop-filter: blur(10px);
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .dot::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        opacity: 0;
+        transition: all 0.3s;
+      }
+
+      .dot.active {
+        background: #fff;
+        transform: scale(1.2);
+      }
+
+      .dot.active::after {
+        opacity: 1;
+        animation: pulse-ring 1.5s infinite;
+      }
+
+      @keyframes pulse-ring {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      /* 네비게이션 화살표 */
+      .nav-arrows {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 50px;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      .arrow {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        pointer-events: all;
+        backdrop-filter: blur(10px);
+      }
+
+      .arrow:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+        border-color: #fff;
+      }
+
+      .arrow::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        border-top: 3px solid #fff;
+        border-right: 3px solid #fff;
+      }
+
+      .arrow.prev::before {
+        transform: rotate(-135deg) translateX(2px);
+      }
+
+      .arrow.next::before {
+        transform: rotate(45deg) translateX(-2px);
+      }
+
+      /* 스크롤 인디케이터 */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 50;
+      }
+
+      .scroll-text {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.6;
+        margin-bottom: 10px;
+      }
+
+      .scroll-line {
+        width: 1px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .scroll-line::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background: #fff;
+        animation: scroll-down 2s infinite;
+      }
+
+      @keyframes scroll-down {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(50px);
+        }
+      }
+
+      /* 섹션 스타일 개선 */
+      .section {
+        width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 100px 20px;
+        overflow: hidden;
+      }
+
+      .section-content {
+        max-width: 1200px;
+        width: 100%;
+        text-align: center;
+        z-index: 2;
+        position: relative;
+      }
+
+      /* 배경 애니메이션 */
+      .section::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.02) 1px,
+          transparent 1px
+        );
+        background-size: 50px 50px;
+        animation: grid-move 20s linear infinite;
+        z-index: 1;
+      }
+
+      @keyframes grid-move {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(50px, 50px);
+        }
+      }
+
+      /* 반응형 */
+      @media (max-width: 768px) {
+        .nav-menu {
+          display: none;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        nav {
+          padding: 15px 20px;
+        }
+
+        .nav-arrows {
+          padding: 0 20px;
+        }
+
+        .arrow {
+          width: 50px;
+          height: 50px;
+        }
+
+        .image-container {
+          width: 90%;
+          height: 60%;
+        }
+
+        h1 {
+          font-size: 2.5rem;
+        }
+
+        h2 {
+          font-size: 1.8rem;
+        }
+      }
+
+      /* 기존 섹션 스타일 유지 */
+      .about-section {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      }
+
+      .about-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .about-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 40px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 0.8s forwards;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+      }
+
+      .about-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .portfolio-section {
+        background: #0a0a0a;
+      }
+
+      .portfolio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
+      }
+
+      .portfolio-item {
+        position: relative;
+        height: 400px;
+        background: #1a1a1a;
+        border-radius: 15px;
+        overflow: hidden;
+        transform: scale(0.9);
+        opacity: 0;
+        animation: scaleIn 0.6s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      .portfolio-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .portfolio-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .portfolio-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .portfolio-item:hover .portfolio-overlay {
+        opacity: 1;
+      }
+
+      .portfolio-info {
+        text-align: center;
+        transform: translateY(20px);
+        transition: transform 0.3s;
+      }
+
+      .portfolio-item:hover .portfolio-info {
+        transform: translateY(0);
+      }
+
+      .services-section {
+        background: linear-gradient(180deg, #0f0f0f 0%, #1f1f1f 100%);
+      }
+
+      .services-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .service-box {
+        flex: 0 1 300px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 50px 30px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .service-box::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .service-box:hover::before {
+        opacity: 1;
+      }
+
+      .service-box:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .contact-section {
+        background: #000;
+        background-image:
+          radial-gradient(
+            circle at 20% 50%,
+            rgba(120, 120, 120, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 50%,
+            rgba(120, 120, 120, 0.1) 0%,
+            transparent 50%
+          );
+      }
+
+      .contact-form {
+        max-width: 600px;
+        margin: 60px auto 0;
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+        text-align: left;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      h1 {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 700;
+        margin-bottom: 20px;
+        letter-spacing: -2px;
+      }
+
+      h2 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 600;
+        margin-bottom: 30px;
+      }
+
+      h3 {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+      }
+
+      p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.8;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 15px 40px;
+        background: #fff;
+        color: #000;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-top: 30px;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: none;
+        font-size: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes scaleIn {
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 커스텀 커서 -->
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+
+    <!-- 네비게이션 -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <div class="logo">STUDIO</div>
+        <ul class="nav-menu">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#portfolio">Portfolio</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 섹션 1: 이미지 갤러리 -->
+    <section class="gallery-section" id="home">
+      <div class="particles" id="particles"></div>
+      <div class="image-stack">
+        <div class="image-container" id="imageContainer">
+          <!-- 이미지들이 동적으로 생성됩니다 -->
+        </div>
+      </div>
+      <div class="nav-arrows">
+        <div class="arrow prev" onclick="prevSlide()"></div>
+        <div class="arrow next" onclick="nextSlide()"></div>
+      </div>
+      <div class="scroll-indicator">
+        <div class="scroll-text">Scroll to explore</div>
+        <div class="scroll-line"></div>
+      </div>
+      <div class="page-indicator" id="pageIndicator"></div>
+    </section>
+
+    <!-- 섹션 2: About -->
+    <section class="section about-section" id="about">
+      <div class="section-content">
+        <h2>About Our Studio</h2>
+        <p>
+          We create immersive digital experiences that push the boundaries of
+          web design and development.
+        </p>
+        <div class="about-grid">
+          <div class="about-card">
+            <h3>Creative Vision</h3>
+            <p>
+              Transforming ideas into stunning visual narratives that captivate
+              and inspire audiences worldwide.
+            </p>
+          </div>
+          <div class="about-card">
+            <h3>Technical Excellence</h3>
+            <p>
+              Leveraging cutting-edge technologies to build seamless, performant
+              digital solutions.
+            </p>
+          </div>
+          <div class="about-card">
+            <h3>User-Centric Design</h3>
+            <p>
+              Creating intuitive interfaces that prioritize user experience and
+              engagement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 3: Portfolio -->
+    <section class="section portfolio-section" id="portfolio">
+      <div class="section-content">
+        <h2>Selected Works</h2>
+        <p>A curated collection of our most impactful projects</p>
+        <div class="portfolio-grid" id="portfolioGrid">
+          <!-- 포트폴리오 아이템들이 동적으로 생성됩니다 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 4: Services -->
+    <section class="section services-section" id="services">
+      <div class="section-content">
+        <h2>What We Do</h2>
+        <p>Comprehensive digital solutions tailored to your needs</p>
+        <div class="services-container">
+          <div class="service-box">
+            <h3>Web Design</h3>
+            <p>
+              Beautiful, responsive designs that work seamlessly across all
+              devices and platforms.
+            </p>
+          </div>
+          <div class="service-box">
+            <h3>Development</h3>
+            <p>
+              Custom web applications built with modern frameworks and best
+              practices.
+            </p>
+          </div>
+          <div class="service-box">
+            <h3>Branding</h3>
+            <p>
+              Complete brand identity solutions that tell your unique story.
+            </p>
+          </div>
+          <div class="service-box">
+            <h3>Motion Design</h3>
+            <p>
+              Engaging animations and interactions that bring your content to
+              life.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 5: Contact -->
+    <section class="section contact-section" id="contact">
+      <div class="section-content">
+        <h2>Let's Create Together</h2>
+        <p>Ready to start your next project? We'd love to hear from you.</p>
+        <form class="contact-form">
+          <div class="form-group">
+            <input type="text" placeholder="Your Name" required />
+          </div>
+          <div class="form-group">
+            <input type="email" placeholder="Your Email" required />
+          </div>
+          <div class="form-group">
+            <textarea
+              rows="5"
+              placeholder="Tell us about your project"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn">Send Message</button>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      // 이미지 갤러리 데이터
+      const imageData = [
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Project Alpha",
+          description: "Revolutionary design concept",
+        },
+        {
+          src: "https://cdn.midjourney.com/ad9c548a-5a75-4743-8684-8cf99f7a5c93/0_1.png",
+          title: "Digital Dreams",
+          description: "Where imagination meets reality",
+        },
+        {
+          src: "https://cdn.midjourney.com/ad9c548a-5a75-4743-8684-8cf99f7a5c93/0_3.png",
+          title: "Future Vision",
+          description: "Next generation interfaces",
+        },
+        {
+          src: "https://cdn.midjourney.com/ad9c548a-5a75-4743-8684-8cf99f7a5c93/0_0.png",
+          title: "Creative Flow",
+          description: "Seamless user experiences",
+        },
+        {
+          src: "https://cdn.midjourney.com/abc5e43f-d21c-41d0-b959-03f92393789d/0_3.png",
+          title: "Innovation Lab",
+          description: "Pushing boundaries daily",
+        },
+        {
+          src: "https://cdn.midjourney.com/abc5e43f-d21c-41d0-b959-03f92393789d/0_2.png",
+          title: "Design System",
+          description: "Cohesive brand identity",
+        },
+        {
+          src: "https://cdn.midjourney.com/abc5e43f-d21c-41d0-b959-03f92393789d/0_1.png",
+          title: "Motion Magic",
+          description: "Bringing ideas to life",
+        },
+        {
+          src: "https://cdn.midjourney.com/abc5e43f-d21c-41d0-b959-03f92393789d/0_0.png",
+          title: "Tech Forward",
+          description: "Modern solutions for modern problems",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+          title: "User First",
+          description: "Design that speaks to people",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+          title: "Brand Evolution",
+          description: "Growing with purpose",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+          title: "Digital Art",
+          description: "Where code meets creativity",
+        },
+        {
+          src: "https://cdn.midjourney.com/daf02e50-ae22-4e0e-87ab-e22a1a04e638/0_2.png",
+          title: "Web 3.0",
+          description: "The future is now",
+        },
+        {
+          src: "https://cdn.midjourney.com/daf02e50-ae22-4e0e-87ab-e22a1a04e638/0_1.png",
+          title: "Minimal Beauty",
+          description: "Less is more",
+        },
+        {
+          src: "https://cdn.midjourney.com/daf02e50-ae22-4e0e-87ab-e22a1a04e638/0_3.png",
+          title: "Bold Moves",
+          description: "Taking risks, making impact",
+        },
+        {
+          src: "https://cdn.midjourney.com/daf02e50-ae22-4e0e-87ab-e22a1a04e638/0_0.png",
+          title: "Color Theory",
+          description: "Psychology in design",
+        },
+      ];
+
+      let currentIndex = 0;
+      const imageContainer = document.getElementById("imageContainer");
+      const pageIndicator = document.getElementById("pageIndicator");
+
+      // 커스텀 커서
+      const cursor = document.querySelector(".cursor");
+      const cursorDot = document.querySelector(".cursor-dot");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 20 + "px";
+        cursor.style.top = e.clientY - 20 + "px";
+        cursorDot.style.left = e.clientX + "px";
+        cursorDot.style.top = e.clientY + "px";
+      });
+
+      document.addEventListener("mousedown", () =>
+        cursor.classList.add("hover"),
+      );
+      document.addEventListener("mouseup", () =>
+        cursor.classList.remove("hover"),
+      );
+
+      // 호버 효과
+      const hoverElements = document.querySelectorAll(
+        "a, button, .arrow, .dot, .portfolio-item, .service-box, .about-card",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => cursor.classList.add("hover"));
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("hover"),
+        );
+      });
+
+      // 파티클 생성
+      function createParticles() {
+        const particlesContainer = document.getElementById("particles");
+        for (let i = 0; i < 50; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.animationDelay = Math.random() * 20 + "s";
+          particle.style.animationDuration = Math.random() * 20 + 20 + "s";
+          particlesContainer.appendChild(particle);
+        }
+      }
+
+      // 이미지 슬라이드 생성
+      function createImageSlides() {
+        imageData.forEach((data, index) => {
+          const slide = document.createElement("div");
+          slide.className = "image-slide";
+          slide.style.backgroundImage = `url(${data.src})`;
+
+          const info = document.createElement("div");
+          info.className = "image-info";
+          info.innerHTML = `
+                    <h3 class="image-title">${data.title}</h3>
+                    <p class="image-description">${data.description}</p>
+                `;
+          slide.appendChild(info);
+
+          imageContainer.appendChild(slide);
+
+          // 페이지 인디케이터 생성
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.addEventListener("click", (e) => {
+            e.stopPropagation();
+            goToSlide(index);
+          });
+          pageIndicator.appendChild(dot);
+        });
+
+        updateSlides();
+      }
+
+      // 슬라이드 업데이트
+      function updateSlides() {
+        const slides = document.querySelectorAll(".image-slide");
+        const dots = document.querySelectorAll(".dot");
+
+        slides.forEach((slide, index) => {
+          slide.classList.remove(
+            "active",
+            "prev",
+            "next",
+            "far-prev",
+            "far-next",
+          );
+          dots[index].classList.remove("active");
+        });
+
+        slides[currentIndex].classList.add("active");
+        dots[currentIndex].classList.add("active");
+
+        const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+        const nextIndex = (currentIndex + 1) % slides.length;
+        const farPrevIndex = (currentIndex - 2 + slides.length) % slides.length;
+        const farNextIndex = (currentIndex + 2) % slides.length;
+
+        slides[prevIndex].classList.add("prev");
+        slides[nextIndex].classList.add("next");
+        slides[farPrevIndex].classList.add("far-prev");
+        slides[farNextIndex].classList.add("far-next");
+      }
+
+      // 슬라이드 전환
+      function goToSlide(index) {
+        currentIndex = index;
+        updateSlides();
+      }
+
+      function nextSlide() {
+        currentIndex = (currentIndex + 1) % imageData.length;
+        updateSlides();
+      }
+
+      function prevSlide() {
+        currentIndex = (currentIndex - 1 + imageData.length) % imageData.length;
+        updateSlides();
+      }
+
+      // 키보드 네비게이션
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+      });
+
+      // 갤러리 섹션 클릭 이벤트
+      document
+        .querySelector(".gallery-section")
+        .addEventListener("click", (e) => {
+          if (
+            !e.target.closest(".arrow") &&
+            !e.target.classList.contains("dot")
+          ) {
+            nextSlide();
+          }
+        });
+
+      // 포트폴리오 아이템 생성
+      function createPortfolioItems() {
+        const portfolioGrid = document.getElementById("portfolioGrid");
+        const portfolioProjects = [
+          { title: "E-Commerce Platform", category: "Web Development" },
+          { title: "Brand Identity", category: "Branding" },
+          { title: "Mobile App UI", category: "UI/UX Design" },
+          { title: "Marketing Campaign", category: "Digital Marketing" },
+          { title: "Corporate Website", category: "Web Design" },
+          { title: "3D Animation", category: "Motion Design" },
+        ];
+
+        portfolioProjects.forEach((project, i) => {
+          const item = document.createElement("div");
+          item.className = "portfolio-item";
+          item.style.setProperty("--index", i);
+          item.innerHTML = `
+                    <img src="https://picsum.photos/400/400?random=${i + 20}" alt="${project.title}">
+                    <div class="portfolio-overlay">
+                        <div class="portfolio-info">
+                            <h3>${project.title}</h3>
+                            <p>${project.category}</p>
+                        </div>
+                    </div>
+                `;
+          portfolioGrid.appendChild(item);
+        });
+      }
+
+      // 스크롤 애니메이션
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = "running";
+          }
+        });
+      }, observerOptions);
+
+      // 네비게이션 스크롤 효과
+      window.addEventListener("scroll", () => {
+        const navbar = document.getElementById("navbar");
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      // 부드러운 스크롤
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // 초기화
+      document.addEventListener("DOMContentLoaded", () => {
+        createParticles();
+        createImageSlides();
+        createPortfolioItems();
+
+        // 애니메이션 요소 관찰
+        document
+          .querySelectorAll(".about-card, .portfolio-item")
+          .forEach((el) => {
+            el.style.animationPlayState = "paused";
+            observer.observe(el);
+          });
+      });
+
+      // 폼 제출 방지
+      document
+        .querySelector(".contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Thank you for your message! We will get back to you soon.");
+        });
+
+      // 모바일 메뉴 토글
+      const menuToggle = document.querySelector(".menu-toggle");
+      const navMenu = document.querySelector(".nav-menu");
+
+      menuToggle.addEventListener("click", () => {
+        navMenu.classList.toggle("active");
+        menuToggle.classList.toggle("active");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RETRO STUDIO - Typography & Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap");
+
+      :root {
+        --color-primary: #ff6b35; /* Vibrant Orange */
+        --color-secondary: #f7931e; /* Golden Yellow */
+        --color-dark: #1e1e1e; /* Almost Black */
+      }
+
+      * {
+        cursor: none;
+      }
+
+      body {
+        font-family: "Oswald", sans-serif;
+        overflow: hidden;
+        background: var(--color-dark);
+      }
+
+      /* Custom Cursor */
+      .cursor-outer {
+        width: 40px;
+        height: 40px;
+        border: 2px solid var(--color-primary);
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.15s ease-out;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-inner {
+        width: 8px;
+        height: 8px;
+        background: var(--color-secondary);
+        position: fixed;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+      }
+
+      /* Typography Animations */
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            2px 2px 0 var(--color-primary),
+            -2px -2px 0 var(--color-secondary);
+        }
+        25% {
+          text-shadow:
+            -2px 2px 0 var(--color-primary),
+            2px -2px 0 var(--color-secondary);
+        }
+        50% {
+          text-shadow:
+            2px -2px 0 var(--color-primary),
+            -2px 2px 0 var(--color-secondary);
+        }
+        75% {
+          text-shadow:
+            -2px -2px 0 var(--color-primary),
+            2px 2px 0 var(--color-secondary);
+        }
+      }
+
+      @keyframes typewriter {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      @keyframes rotate3d {
+        0% {
+          transform: rotateY(0deg);
+        }
+        100% {
+          transform: rotateY(360deg);
+        }
+      }
+
+      .glitch-text {
+        animation: glitch 2s infinite;
+      }
+
+      .typewriter {
+        overflow: hidden;
+        white-space: nowrap;
+        animation: typewriter 3s steps(40) 1s 1 normal both;
+      }
+
+      .typewriter::after {
+        content: "|";
+        animation: blink 1s infinite;
+      }
+
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .rotate-3d {
+        animation: rotate3d 10s linear infinite;
+        transform-style: preserve-3d;
+      }
+
+      /* Page Transitions */
+      .page {
+        position: absolute;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .page.active {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      /* Transition Effects */
+      .transition-slide {
+        transform: translateX(-100%);
+      }
+      .transition-fade {
+        opacity: 0;
+      }
+      .transition-zoom {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      .transition-rotate {
+        transform: rotateY(90deg);
+        opacity: 0;
+      }
+      .transition-flip {
+        transform: rotateX(90deg);
+        opacity: 0;
+      }
+
+      /* Navigation */
+      .nav-fixed {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: rgba(30, 30, 30, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid var(--color-primary);
+      }
+
+      /* Retro Button */
+      .retro-btn {
+        background: var(--color-primary);
+        color: var(--color-dark);
+        padding: 12px 30px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+        border: 3px solid var(--color-dark);
+        box-shadow: 5px 5px 0 var(--color-dark);
+      }
+
+      .retro-btn:hover {
+        transform: translate(-5px, -5px);
+        box-shadow: 10px 10px 0 var(--color-dark);
+      }
+
+      .retro-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--color-secondary);
+        transition: left 0.3s;
+      }
+
+      .retro-btn:hover::before {
+        left: 0;
+      }
+
+      .retro-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Image Containers */
+      .image-frame {
+        border: 8px solid var(--color-primary);
+        box-shadow:
+          10px 10px 0 var(--color-secondary),
+          20px 20px 0 var(--color-dark);
+        transition: all 0.3s;
+        overflow: hidden;
+      }
+
+      .image-frame:hover {
+        transform: translate(-5px, -5px);
+        box-shadow:
+          15px 15px 0 var(--color-secondary),
+          30px 30px 0 var(--color-dark);
+      }
+
+      /* Scanlines Effect */
+      .scanlines::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255, 255, 255, 0.03) 2px,
+          rgba(255, 255, 255, 0.03) 4px
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Noise Effect */
+      .noise::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgbnVtT2N0YXZlcz0iMTAiLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDEgMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iLjA1Ii8+PC9zdmc+");
+        opacity: 0.05;
+        pointer-events: none;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Custom Cursor -->
+    <div class="cursor-outer rounded-full"></div>
+    <div class="cursor-inner rounded-full"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-fixed px-8 py-4">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div
+          class="text-3xl font-bold"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-primary);
+          "
+        >
+          RETRO.STUDIO
+        </div>
+        <div class="flex gap-6">
+          <button
+            onclick="goToPage(0)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Home
+          </button>
+          <button
+            onclick="goToPage(1)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            About
+          </button>
+          <button
+            onclick="goToPage(2)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Works
+          </button>
+          <button
+            onclick="goToPage(3)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Process
+          </button>
+          <button
+            onclick="goToPage(4)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Team
+          </button>
+          <button
+            onclick="goToPage(5)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Services
+          </button>
+          <button
+            onclick="goToPage(6)"
+            class="nav-link text-white hover:text-orange-500 transition-colors font-bold uppercase tracking-wider"
+          >
+            Contact
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page 1: Home -->
+    <section class="page active scanlines noise" id="page-0">
+      <div class="container mx-auto px-8 text-center relative z-10">
+        <h1
+          class="text-8xl md:text-9xl font-bold mb-8 glitch-text"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-primary);
+          "
+        >
+          RETRO VIBES
+        </h1>
+        <p
+          class="text-4xl md:text-5xl mb-8 typewriter"
+          style="
+            font-family: &quot;Space Mono&quot;;
+            color: var(--color-secondary);
+          "
+        >
+          Where Past Meets Future
+        </p>
+        <div
+          class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 max-w-6xl mx-auto"
+        >
+          <div class="image-frame">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              alt="Retro Design"
+              class="w-full h-48 object-cover"
+            />
+          </div>
+          <div class="image-frame">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+              alt="Retro Design"
+              class="w-full h-48 object-cover"
+            />
+          </div>
+          <div class="image-frame">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              alt="Retro Design"
+              class="w-full h-48 object-cover"
+            />
+          </div>
+          <div class="image-frame">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+              alt="Retro Design"
+              class="w-full h-48 object-cover"
+            />
+          </div>
+        </div>
+        <button class="retro-btn mt-12">
+          <span>EXPLORE MORE</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Page 2: About -->
+    <section
+      class="page scanlines"
+      id="page-1"
+      style="background: var(--color-dark)"
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2
+              class="text-6xl md:text-7xl font-bold mb-8 float-animation"
+              style="
+                font-family: &quot;Bebas Neue&quot;;
+                color: var(--color-secondary);
+              "
+            >
+              WE ARE<br />
+              <span style="color: var(--color-primary)">DIGITAL REBELS</span>
+            </h2>
+            <p class="text-xl mb-6" style="font-family: &quot;Space Mono&quot;">
+              Breaking conventions since 1985. We blend retro aesthetics with
+              cutting-edge technology to create experiences that transcend time.
+            </p>
+            <div class="flex gap-4">
+              <div class="bg-orange-500 text-black px-6 py-3 font-bold">
+                INNOVATIVE
+              </div>
+              <div class="bg-yellow-500 text-black px-6 py-3 font-bold">
+                CREATIVE
+              </div>
+              <div class="bg-gray-200 text-black px-6 py-3 font-bold">BOLD</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="About"
+              class="image-frame w-full h-64 object-cover"
+            />
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="About"
+              class="image-frame w-full h-64 object-cover"
+            />
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="About"
+              class="image-frame w-full h-64 object-cover"
+            />
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+              alt="About"
+              class="image-frame w-full h-64 object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 3: Works -->
+    <section
+      class="page noise"
+      id="page-2"
+      style="
+        background: linear-gradient(135deg, var(--color-dark) 0%, #2a2a2a 100%);
+      "
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <h2
+          class="text-7xl md:text-8xl font-bold mb-12 text-center rotate-3d"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-primary);
+          "
+        >
+          SELECTED WORKS
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div class="group relative overflow-hidden">
+            <div class="image-frame">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+                alt="Work 1"
+                class="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-80 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform"
+            >
+              <h3
+                class="text-2xl font-bold"
+                style="color: var(--color-secondary)"
+              >
+                NEON DREAMS
+              </h3>
+              <p>Digital Art Installation</p>
+            </div>
+          </div>
+          <div class="group relative overflow-hidden">
+            <div class="image-frame">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+                alt="Work 2"
+                class="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-80 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform"
+            >
+              <h3
+                class="text-2xl font-bold"
+                style="color: var(--color-secondary)"
+              >
+                CYBER PUNK
+              </h3>
+              <p>Brand Identity</p>
+            </div>
+          </div>
+          <div class="group relative overflow-hidden">
+            <div class="image-frame">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+                alt="Work 3"
+                class="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            </div>
+            <div
+              class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-80 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform"
+            >
+              <h3
+                class="text-2xl font-bold"
+                style="color: var(--color-secondary)"
+              >
+                RETRO WAVE
+              </h3>
+              <p>Motion Graphics</p>
+            </div>
+          </div>
+        </div>
+        <div class="text-center mt-12">
+          <button class="retro-btn">
+            <span>VIEW ALL PROJECTS</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 4: Process -->
+    <section
+      class="page scanlines"
+      id="page-3"
+      style="background: var(--color-dark)"
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <h2
+          class="text-6xl md:text-7xl font-bold mb-12 text-center glitch-text"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-secondary);
+          "
+        >
+          OUR PROCESS
+        </h2>
+        <div class="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div class="text-center">
+            <div
+              class="text-8xl font-bold mb-4"
+              style="
+                font-family: &quot;Bebas Neue&quot;;
+                color: var(--color-primary);
+              "
+            >
+              01
+            </div>
+            <h3 class="text-2xl font-bold mb-2">DISCOVER</h3>
+            <p style="font-family: &quot;Space Mono&quot;">
+              Understanding your vision
+            </p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Process 1"
+              class="mt-4 w-full h-48 object-cover image-frame"
+            />
+          </div>
+          <div class="text-center">
+            <div
+              class="text-8xl font-bold mb-4"
+              style="
+                font-family: &quot;Bebas Neue&quot;;
+                color: var(--color-primary);
+              "
+            >
+              02
+            </div>
+            <h3 class="text-2xl font-bold mb-2">DESIGN</h3>
+            <p style="font-family: &quot;Space Mono&quot;">
+              Crafting unique concepts
+            </p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+              alt="Process 2"
+              class="mt-4 w-full h-48 object-cover image-frame"
+            />
+          </div>
+          <div class="text-center">
+            <div
+              class="text-8xl font-bold mb-4"
+              style="
+                font-family: &quot;Bebas Neue&quot;;
+                color: var(--color-primary);
+              "
+            >
+              03
+            </div>
+            <h3 class="text-2xl font-bold mb-2">DEVELOP</h3>
+            <p style="font-family: &quot;Space Mono&quot;">
+              Building with precision
+            </p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+              alt="Process 3"
+              class="mt-4 w-full h-48 object-cover image-frame"
+            />
+          </div>
+          <div class="text-center">
+            <div
+              class="text-8xl font-bold mb-4"
+              style="
+                font-family: &quot;Bebas Neue&quot;;
+                color: var(--color-primary);
+              "
+            >
+              04
+            </div>
+            <h3 class="text-2xl font-bold mb-2">DELIVER</h3>
+            <p style="font-family: &quot;Space Mono&quot;">
+              Exceeding expectations
+            </p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+              alt="Process 4"
+              class="mt-4 w-full h-48 object-cover image-frame"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 5: Team -->
+    <section
+      class="page noise"
+      id="page-4"
+      style="
+        background: linear-gradient(45deg, var(--color-dark) 0%, #1a1a1a 100%);
+      "
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <h2
+          class="text-7xl md:text-8xl font-bold mb-12 text-center float-animation"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-primary);
+          "
+        >
+          MEET THE CREW
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div class="text-center group">
+            <div class="relative overflow-hidden mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                alt="Team 1"
+                class="w-full h-80 object-cover image-frame transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-70 transition-opacity"
+              ></div>
+            </div>
+            <h3
+              class="text-3xl font-bold"
+              style="color: var(--color-secondary)"
+            >
+              ALEX NOVA
+            </h3>
+            <p class="text-xl" style="font-family: &quot;Space Mono&quot;">
+              Creative Director
+            </p>
+          </div>
+          <div class="text-center group">
+            <div class="relative overflow-hidden mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+                alt="Team 2"
+                class="w-full h-80 object-cover image-frame transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-70 transition-opacity"
+              ></div>
+            </div>
+            <h3
+              class="text-3xl font-bold"
+              style="color: var(--color-secondary)"
+            >
+              MAYA SYNTH
+            </h3>
+            <p class="text-xl" style="font-family: &quot;Space Mono&quot;">
+              Lead Developer
+            </p>
+          </div>
+          <div class="text-center group">
+            <div class="relative overflow-hidden mb-4">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+                alt="Team 3"
+                class="w-full h-80 object-cover image-frame transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-70 transition-opacity"
+              ></div>
+            </div>
+            <h3
+              class="text-3xl font-bold"
+              style="color: var(--color-secondary)"
+            >
+              REX PIXEL
+            </h3>
+            <p class="text-xl" style="font-family: &quot;Space Mono&quot;">
+              Design Lead
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 6: Services -->
+    <section
+      class="page scanlines"
+      id="page-5"
+      style="background: var(--color-dark)"
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <h2
+          class="text-6xl md:text-7xl font-bold mb-12 text-center glitch-text"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-secondary);
+          "
+        >
+          WHAT WE DO
+        </h2>
+        <div class="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div
+            class="bg-gray-900 p-8 border-4"
+            style="border-color: var(--color-primary)"
+          >
+            <h3
+              class="text-4xl font-bold mb-4"
+              style="color: var(--color-primary)"
+            >
+              DESIGN
+            </h3>
+            <ul class="space-y-3" style="font-family: &quot;Space Mono&quot;">
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-secondary)"
+                  >▸</span
+                >
+                Brand Identity
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-secondary)"
+                  >▸</span
+                >
+                UI/UX Design
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-secondary)"
+                  >▸</span
+                >
+                Motion Graphics
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-secondary)"
+                  >▸</span
+                >
+                Print Design
+              </li>
+            </ul>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+              alt="Design Service"
+              class="mt-6 w-full h-48 object-cover image-frame"
+            />
+          </div>
+          <div
+            class="bg-gray-900 p-8 border-4"
+            style="border-color: var(--color-secondary)"
+          >
+            <h3
+              class="text-4xl font-bold mb-4"
+              style="color: var(--color-secondary)"
+            >
+              DEVELOPMENT
+            </h3>
+            <ul class="space-y-3" style="font-family: &quot;Space Mono&quot;">
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-primary)">▸</span>
+                Web Applications
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-primary)">▸</span>
+                E-commerce
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-primary)">▸</span>
+                Mobile Apps
+              </li>
+              <li class="flex items-center">
+                <span class="mr-3" style="color: var(--color-primary)">▸</span>
+                API Integration
+              </li>
+            </ul>
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+              alt="Dev Service"
+              class="mt-6 w-full h-48 object-cover image-frame"
+            />
+          </div>
+        </div>
+        <div class="text-center mt-12">
+          <button class="retro-btn">
+            <span>GET STARTED</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 7: Contact -->
+    <section
+      class="page noise"
+      id="page-6"
+      style="
+        background: linear-gradient(135deg, #1a1a1a 0%, var(--color-dark) 100%);
+      "
+    >
+      <div class="container mx-auto px-8 relative z-10">
+        <h2
+          class="text-7xl md:text-8xl font-bold mb-12 text-center rotate-3d"
+          style="
+            font-family: &quot;Bebas Neue&quot;;
+            color: var(--color-primary);
+          "
+        >
+          LET'S CONNECT
+        </h2>
+        <div class="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
+          <div>
+            <form class="space-y-6">
+              <div>
+                <input
+                  type="text"
+                  placeholder="YOUR NAME"
+                  class="w-full p-4 bg-transparent border-2 text-white placeholder-gray-400"
+                  style="
+                    border-color: var(--color-secondary);
+                    font-family: &quot;Space Mono&quot;;
+                  "
+                />
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="YOUR EMAIL"
+                  class="w-full p-4 bg-transparent border-2 text-white placeholder-gray-400"
+                  style="
+                    border-color: var(--color-secondary);
+                    font-family: &quot;Space Mono&quot;;
+                  "
+                />
+              </div>
+              <div>
+                <textarea
+                  placeholder="YOUR MESSAGE"
+                  rows="4"
+                  class="w-full p-4 bg-transparent border-2 text-white placeholder-gray-400"
+                  style="
+                    border-color: var(--color-secondary);
+                    font-family: &quot;Space Mono&quot;;
+                  "
+                ></textarea>
+              </div>
+              <button type="submit" class="retro-btn w-full">
+                <span>SEND MESSAGE</span>
+              </button>
+            </form>
+          </div>
+          <div class="text-center">
+            <div class="mb-8">
+              <h3
+                class="text-4xl font-bold mb-4"
+                style="color: var(--color-secondary)"
+              >
+                FIND US
+              </h3>
+              <p class="text-xl" style="font-family: &quot;Space Mono&quot;">
+                123 Retro Street<br />
+                Neon City, NC 80808<br />
+                hello@retro.studio
+              </p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                alt="Contact"
+                class="w-full h-32 object-cover image-frame"
+              />
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png"
+                alt="Contact"
+                class="w-full h-32 object-cover image-frame"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page Indicator -->
+    <div
+      class="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-50"
+    >
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-primary)"
+        onclick="goToPage(0)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(1)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(2)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(3)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(4)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(5)"
+      ></div>
+      <div
+        class="page-dot w-3 h-3 rounded-full cursor-pointer transition-all duration-300"
+        style="background: var(--color-secondary); opacity: 0.3"
+        onclick="goToPage(6)"
+      ></div>
+    </div>
+
+    <script>
+      // Custom cursor
+      const cursorOuter = document.querySelector(".cursor-outer");
+      const cursorInner = document.querySelector(".cursor-inner");
+
+      document.addEventListener("mousemove", (e) => {
+        cursorOuter.style.left = e.clientX - 20 + "px";
+        cursorOuter.style.top = e.clientY - 20 + "px";
+        cursorInner.style.left = e.clientX + "px";
+        cursorInner.style.top = e.clientY + "px";
+      });
+
+      // Hover effects
+      const hoverElements = document.querySelectorAll(
+        "button, a, .image-frame, input, textarea",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          cursorOuter.style.transform = "scale(1.5)";
+          cursorOuter.style.borderColor = "var(--color-secondary)";
+        });
+        el.addEventListener("mouseleave", () => {
+          cursorOuter.style.transform = "scale(1)";
+          cursorOuter.style.borderColor = "var(--color-primary)";
+        });
+      });
+
+      // Page navigation
+      let currentPage = 0;
+      const pages = document.querySelectorAll(".page");
+      const pageDots = document.querySelectorAll(".page-dot");
+      const transitions = [
+        "transition-slide",
+        "transition-fade",
+        "transition-zoom",
+        "transition-rotate",
+        "transition-flip",
+      ];
+
+      function goToPage(index) {
+        if (index === currentPage) return;
+
+        // Random transition effect
+        const randomTransition =
+          transitions[Math.floor(Math.random() * transitions.length)];
+
+        // Hide current page
+        pages[currentPage].classList.remove("active");
+        pages[currentPage].classList.add(randomTransition);
+
+        // Update dots
+        pageDots[currentPage].style.background = "var(--color-secondary)";
+        pageDots[currentPage].style.opacity = "0.3";
+
+        // Show new page
+        setTimeout(() => {
+          pages[currentPage].classList.remove(...transitions);
+          currentPage = index;
+          pages[currentPage].classList.add("active");
+
+          pageDots[currentPage].style.background = "var(--color-primary)";
+          pageDots[currentPage].style.opacity = "1";
+        }, 300);
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" && currentPage < pages.length - 1) {
+          goToPage(currentPage + 1);
+        } else if (e.key === "ArrowLeft" && currentPage > 0) {
+          goToPage(currentPage - 1);
+        }
+      });
+
+      // Mouse wheel navigation
+      let isScrolling = false;
+      document.addEventListener("wheel", (e) => {
+        if (isScrolling) return;
+
+        isScrolling = true;
+        if (e.deltaY > 0 && currentPage < pages.length - 1) {
+          goToPage(currentPage + 1);
+        } else if (e.deltaY < 0 && currentPage > 0) {
+          goToPage(currentPage - 1);
+        }
+
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      });
+
+      // Touch navigation
+      let touchStartY = 0;
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+
+        if (Math.abs(diff) > 50) {
+          if (diff > 0 && currentPage < pages.length - 1) {
+            goToPage(currentPage + 1);
+          } else if (diff < 0 && currentPage > 0) {
+            goToPage(currentPage - 1);
+          }
+        }
+      });
+
+      // Form submission
+      document.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Message sent! We'll get back to you soon.");
+        e.target.reset();
+      });
+    </script>
+  </body>
+</html>

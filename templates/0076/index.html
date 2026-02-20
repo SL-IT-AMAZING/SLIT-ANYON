@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TYPOSPACE - Creative Studio</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+
+    <style>
+      :root {
+        /* Cozy color palette */
+        --primary: #e8b4b8; /* Dusty Rose */
+        --secondary: #a8dadc; /* Soft Teal */
+        --accent: #f1faee; /* Cream */
+        --text-primary: #2d3436;
+        --text-secondary: #636e72;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--accent);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* Custom Cursor */
+      .cursor-follow {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.15s ease;
+        mix-blend-mode: difference;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: var(--accent);
+        transition: all 0.3s ease;
+        border-bottom: 1px solid transparent;
+      }
+
+      nav.scrolled {
+        background: rgba(241, 250, 238, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--primary);
+        padding: 15px 40px;
+      }
+
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--primary);
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .logo:hover {
+        transform: scale(1.05) rotate(-2deg);
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+        align-items: center;
+      }
+
+      .nav-menu a {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        text-decoration: none;
+        position: relative;
+        transition: color 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .nav-menu a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--secondary);
+        transition: width 0.3s;
+      }
+
+      .nav-menu a:hover {
+        color: var(--secondary);
+      }
+
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* Mobile Menu */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-toggle span {
+        width: 25px;
+        height: 2px;
+        background: var(--text-primary);
+        transition: all 0.3s;
+      }
+
+      .menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+
+      .menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 80px 20px;
+        overflow: hidden;
+      }
+
+      .section-content {
+        max-width: 1200px;
+        width: 100%;
+        z-index: 2;
+        position: relative;
+      }
+
+      /* Page 1 - Hero with p5.js */
+      #hero {
+        background: var(--accent);
+        position: relative;
+      }
+
+      #p5-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+        position: relative;
+      }
+
+      .hero-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 15vw, 12rem);
+        line-height: 0.9;
+        color: var(--primary);
+        margin-bottom: 20px;
+        letter-spacing: -2px;
+        transition: transform 0.3s;
+      }
+
+      .hero-subtitle {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(1.5rem, 4vw, 3rem);
+        color: var(--secondary);
+        font-style: italic;
+        opacity: 0;
+        animation: fadeInUp 1s 0.5s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Page 2 - About with Scrolling Typography */
+      #about {
+        background: var(--primary);
+        color: var(--accent);
+      }
+
+      .scroll-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 10vw, 8rem);
+        line-height: 1.2;
+        text-align: center;
+        transition: all 0.3s;
+        transform-origin: center;
+      }
+
+      .about-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .about-card {
+        background: rgba(241, 250, 238, 0.1);
+        padding: 30px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        border: 2px solid var(--accent);
+        transition: all 0.3s;
+      }
+
+      .about-card:hover {
+        transform: translateY(-10px) rotate(2deg);
+        background: rgba(241, 250, 238, 0.2);
+      }
+
+      /* Page 3 - Works Gallery */
+      #works {
+        background: var(--secondary);
+        color: var(--text-primary);
+      }
+
+      .works-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 6rem);
+        text-align: center;
+        margin-bottom: 60px;
+        color: var(--accent);
+      }
+
+      .works-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        padding: 0 20px;
+      }
+
+      .work-item {
+        position: relative;
+        height: 400px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .work-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .work-item:hover {
+        transform: scale(0.98);
+      }
+
+      .work-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .work-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 100%
+        );
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .work-item:hover .work-overlay {
+        transform: translateY(0);
+      }
+
+      .work-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--accent);
+        margin-bottom: 10px;
+      }
+
+      /* Page 4 - Services with Animated Typography */
+      #services {
+        background: var(--accent);
+      }
+
+      .services-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .services-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 6rem);
+        color: var(--primary);
+        position: relative;
+        display: inline-block;
+      }
+
+      .service-list {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .service-item {
+        padding: 40px;
+        background: var(--primary);
+        color: var(--accent);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .service-item:nth-child(even) {
+        background: var(--secondary);
+        color: var(--text-primary);
+      }
+
+      .service-item:hover {
+        transform: translateX(20px);
+      }
+
+      .service-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 6rem;
+        position: absolute;
+        top: -20px;
+        right: 20px;
+        opacity: 0.2;
+      }
+
+      /* Page 5 - Process */
+      #process {
+        background: var(--primary);
+        color: var(--accent);
+      }
+
+      .process-timeline {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 0;
+      }
+
+      .timeline-item {
+        position: relative;
+        padding: 40px;
+        margin-bottom: 40px;
+        background: rgba(241, 250, 238, 0.1);
+        border-radius: 20px;
+        border: 2px solid var(--accent);
+        transition: all 0.3s;
+      }
+
+      .timeline-item:hover {
+        transform: translateX(20px);
+        background: rgba(241, 250, 238, 0.2);
+      }
+
+      .timeline-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--secondary);
+        margin-bottom: 10px;
+      }
+
+      /* Page 6 - Team */
+      #team {
+        background: var(--secondary);
+        color: var(--text-primary);
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .team-member {
+        text-align: center;
+        transition: all 0.3s;
+      }
+
+      .member-image {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 0 auto 20px;
+        border: 4px solid var(--accent);
+        transition: all 0.3s;
+      }
+
+      .member-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+      }
+
+      .team-member:hover .member-image {
+        transform: rotate(5deg) scale(1.05);
+      }
+
+      .team-member:hover .member-image img {
+        transform: scale(1.1);
+      }
+
+      /* Page 7 - Contact */
+      #contact {
+        background: var(--accent);
+      }
+
+      .contact-container {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .contact-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 6rem);
+        color: var(--primary);
+        margin-bottom: 40px;
+      }
+
+      .contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-group {
+        position: relative;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 20px;
+        background: transparent;
+        border: 2px solid var(--primary);
+        border-radius: 10px;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+        color: var(--text-primary);
+        transition: all 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--secondary);
+        transform: translateY(-2px);
+      }
+
+      .form-group label {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      .form-group input:focus + label,
+      .form-group input:not(:placeholder-shown) + label,
+      .form-group textarea:focus + label,
+      .form-group textarea:not(:placeholder-shown) + label {
+        top: -10px;
+        left: 15px;
+        font-size: 0.8rem;
+        background: var(--accent);
+        padding: 0 5px;
+        color: var(--secondary);
+      }
+
+      .submit-btn {
+        padding: 20px 60px;
+        background: var(--primary);
+        color: var(--accent);
+        border: none;
+        border-radius: 50px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(232, 180, 184, 0.3);
+      }
+
+      /* Page Transitions */
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background: var(--primary);
+        z-index: 9998;
+        transition: left 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      .page-transition.exit {
+        left: 100%;
+      }
+
+      /* Floating Elements */
+      .float-element {
+        position: absolute;
+        font-family: "Bebas Neue", cursive;
+        font-size: 8rem;
+        opacity: 0.05;
+        pointer-events: none;
+        animation: float 20s infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        33% {
+          transform: translateY(-30px) rotate(5deg);
+        }
+        66% {
+          transform: translateY(30px) rotate(-5deg);
+        }
+      }
+
+      /* Video Background */
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        z-index: 0;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        nav {
+          padding: 15px 20px;
+        }
+
+        .nav-menu {
+          position: fixed;
+          top: 0;
+          right: -100%;
+          width: 100%;
+          height: 100vh;
+          background: var(--accent);
+          flex-direction: column;
+          justify-content: center;
+          gap: 40px;
+          transition: right 0.3s;
+        }
+
+        .nav-menu.active {
+          right: 0;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 12vw, 6rem);
+        }
+
+        .works-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .team-grid {
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .service-item:hover {
+          transform: translateX(0) translateY(-5px);
+        }
+
+        .timeline-item:hover {
+          transform: translateX(0) translateY(-5px);
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--primary);
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* Smooth Reveal */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s;
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Page Transition -->
+    <div class="page-transition"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-follow"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <div class="logo">TYPOSPACE</div>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#works">Works</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#process">Process</a></li>
+          <li><a href="#team">Team</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="menu-toggle" id="menuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page 1: Hero -->
+    <section class="section" id="hero">
+      <div id="p5-canvas"></div>
+      <div class="section-content hero-content">
+        <h1 class="hero-title reveal">CREATIVE</h1>
+        <h1 class="hero-title reveal" style="animation-delay: 0.2s">
+          TYPOGRAPHY
+        </h1>
+        <h1 class="hero-title reveal" style="animation-delay: 0.4s">STUDIO</h1>
+        <p class="hero-subtitle">Where words become art</p>
+      </div>
+      <div class="float-element" style="top: 10%; left: 10%">A</div>
+      <div class="float-element" style="top: 70%; right: 15%">Z</div>
+    </section>
+
+    <!-- Page 2: About -->
+    <section class="section" id="about">
+      <div class="section-content">
+        <h2 class="scroll-text reveal">WE CREATE</h2>
+        <h2 class="scroll-text reveal" style="animation-delay: 0.2s">
+          MEANINGFUL
+        </h2>
+        <h2 class="scroll-text reveal" style="animation-delay: 0.4s">
+          EXPERIENCES
+        </h2>
+        <div class="about-grid">
+          <div class="about-card reveal">
+            <h3>DESIGN</h3>
+            <p>
+              Crafting visual stories through innovative typography and bold
+              aesthetics
+            </p>
+          </div>
+          <div class="about-card reveal" style="animation-delay: 0.2s">
+            <h3>DEVELOP</h3>
+            <p>
+              Building interactive experiences with cutting-edge web
+              technologies
+            </p>
+          </div>
+          <div class="about-card reveal" style="animation-delay: 0.4s">
+            <h3>DELIVER</h3>
+            <p>Bringing ideas to life with precision and creative excellence</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 3: Works -->
+    <section class="section" id="works">
+      <video class="video-bg" autoplay muted loop>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div class="section-content">
+        <h2 class="works-title reveal">SELECTED WORKS</h2>
+        <div class="works-grid">
+          <div class="work-item reveal">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              alt="Project 1"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">BRAND IDENTITY</h3>
+              <p>Visual system design</p>
+            </div>
+          </div>
+          <div class="work-item reveal" style="animation-delay: 0.1s">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Project 2"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">WEB EXPERIENCE</h3>
+              <p>Interactive design</p>
+            </div>
+          </div>
+          <div class="work-item reveal" style="animation-delay: 0.2s">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Project 3"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">MOTION DESIGN</h3>
+              <p>Dynamic storytelling</p>
+            </div>
+          </div>
+          <div class="work-item reveal" style="animation-delay: 0.3s">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Project 4"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">TYPOGRAPHY</h3>
+              <p>Experimental type</p>
+            </div>
+          </div>
+          <div class="work-item reveal" style="animation-delay: 0.4s">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+              alt="Project 5"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">DIGITAL ART</h3>
+              <p>Creative exploration</p>
+            </div>
+          </div>
+          <div class="work-item reveal" style="animation-delay: 0.5s">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+              alt="Project 6"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">UI/UX DESIGN</h3>
+              <p>User-centric approach</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 4: Services -->
+    <section class="section" id="services">
+      <div class="section-content">
+        <div class="services-header">
+          <h2 class="services-title reveal">WHAT WE DO</h2>
+        </div>
+        <div class="service-list">
+          <div class="service-item reveal">
+            <span class="service-number">01</span>
+            <h3>BRAND STRATEGY</h3>
+            <p>
+              Creating powerful brand narratives that resonate with your
+              audience and stand the test of time
+            </p>
+          </div>
+          <div class="service-item reveal" style="animation-delay: 0.2s">
+            <span class="service-number">02</span>
+            <h3>VISUAL DESIGN</h3>
+            <p>
+              Crafting stunning visual experiences that capture attention and
+              communicate your message effectively
+            </p>
+          </div>
+          <div class="service-item reveal" style="animation-delay: 0.4s">
+            <span class="service-number">03</span>
+            <h3>WEB DEVELOPMENT</h3>
+            <p>
+              Building responsive, performant websites with cutting-edge
+              technologies and seamless interactions
+            </p>
+          </div>
+          <div class="service-item reveal" style="animation-delay: 0.6s">
+            <span class="service-number">04</span>
+            <h3>MOTION GRAPHICS</h3>
+            <p>
+              Bringing stories to life through dynamic animations and engaging
+              visual effects
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 5: Process -->
+    <section class="section" id="process">
+      <div class="section-content">
+        <h2 class="works-title reveal" style="color: var(--accent)">
+          OUR PROCESS
+        </h2>
+        <div class="process-timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-number">01</div>
+            <h3>DISCOVER</h3>
+            <p>
+              Understanding your vision, goals, and target audience through
+              in-depth research and analysis
+            </p>
+          </div>
+          <div class="timeline-item reveal" style="animation-delay: 0.2s">
+            <div class="timeline-number">02</div>
+            <h3>IDEATE</h3>
+            <p>
+              Brainstorming creative concepts and exploring innovative solutions
+              to bring your vision to life
+            </p>
+          </div>
+          <div class="timeline-item reveal" style="animation-delay: 0.4s">
+            <div class="timeline-number">03</div>
+            <h3>CREATE</h3>
+            <p>
+              Transforming ideas into tangible designs with meticulous attention
+              to detail and craftsmanship
+            </p>
+          </div>
+          <div class="timeline-item reveal" style="animation-delay: 0.6s">
+            <div class="timeline-number">04</div>
+            <h3>REFINE</h3>
+            <p>
+              Iterating and perfecting every element until we achieve excellence
+              in execution
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 6: Team -->
+    <section class="section" id="team">
+      <div class="section-content">
+        <h2 class="works-title reveal" style="color: var(--accent)">
+          MEET THE TEAM
+        </h2>
+        <div class="team-grid">
+          <div class="team-member reveal">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                alt="Team Member 1"
+              />
+            </div>
+            <h3>ALEX CHEN</h3>
+            <p>Creative Director</p>
+          </div>
+          <div class="team-member reveal" style="animation-delay: 0.2s">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png"
+                alt="Team Member 2"
+              />
+            </div>
+            <h3>SARAH JONES</h3>
+            <p>Lead Designer</p>
+          </div>
+          <div class="team-member reveal" style="animation-delay: 0.4s">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+                alt="Team Member 3"
+              />
+            </div>
+            <h3>MIKE WILSON</h3>
+            <p>Developer</p>
+          </div>
+          <div class="team-member reveal" style="animation-delay: 0.6s">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+                alt="Team Member 4"
+              />
+            </div>
+            <h3>EMMA DAVIS</h3>
+            <p>Motion Designer</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 7: Contact -->
+    <section class="section" id="contact">
+      <div class="section-content contact-container">
+        <h2 class="contact-title reveal">LET'S TALK</h2>
+        <p
+          class="reveal"
+          style="animation-delay: 0.2s; font-size: 1.2rem; margin-bottom: 40px"
+        >
+          Ready to start your next creative journey?
+        </p>
+        <form class="contact-form">
+          <div class="form-group reveal" style="animation-delay: 0.3s">
+            <input type="text" placeholder=" " required />
+            <label>Your Name</label>
+          </div>
+          <div class="form-group reveal" style="animation-delay: 0.4s">
+            <input type="email" placeholder=" " required />
+            <label>Your Email</label>
+          </div>
+          <div class="form-group reveal" style="animation-delay: 0.5s">
+            <textarea rows="5" placeholder=" " required></textarea>
+            <label>Your Message</label>
+          </div>
+          <button
+            type="submit"
+            class="submit-btn reveal"
+            style="animation-delay: 0.6s"
+          >
+            SEND MESSAGE
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      // p5.js Typography Animation
+      let p5Canvas;
+      let letters = [];
+      let font;
+
+      function setup() {
+        p5Canvas = createCanvas(windowWidth, windowHeight);
+        p5Canvas.parent("p5-canvas");
+        textAlign(CENTER, CENTER);
+
+        // Create floating letters
+        for (let i = 0; i < 20; i++) {
+          letters.push({
+            char: String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+            x: random(width),
+            y: random(height),
+            size: random(20, 80),
+            speed: random(0.5, 2),
+            rotation: random(TWO_PI),
+          });
+        }
+      }
+
+      function draw() {
+        clear();
+
+        letters.forEach((letter) => {
+          push();
+          translate(letter.x, letter.y);
+          rotate(letter.rotation);
+
+          // Use CSS colors
+          fill(232, 180, 184, 50); // Primary color with transparency
+          noStroke();
+          textSize(letter.size);
+          textFont("Bebas Neue");
+          text(letter.char, 0, 0);
+
+          pop();
+
+          // Update position
+          letter.y -= letter.speed;
+          letter.rotation += 0.01;
+
+          // Reset position when off screen
+          if (letter.y < -100) {
+            letter.y = height + 100;
+            letter.x = random(width);
+          }
+        });
+      }
+
+      function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+      }
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor-follow");
+      let mouseX = 0;
+      let mouseY = 0;
+      let cursorX = 0;
+      let cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+
+        cursor.style.left = cursorX - 10 + "px";
+        cursor.style.top = cursorY - 10 + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Navigation
+      const navbar = document.getElementById("navbar");
+      const menuToggle = document.getElementById("menuToggle");
+      const navMenu = document.getElementById("navMenu");
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("active");
+        navMenu.classList.toggle("active");
+      });
+
+      // Close mobile menu on link click
+      document.querySelectorAll(".nav-menu a").forEach((link) => {
+        link.addEventListener("click", () => {
+          menuToggle.classList.remove("active");
+          navMenu.classList.remove("active");
+        });
+      });
+
+      // Scroll-based typography scaling
+      const scrollText = document.querySelectorAll(".scroll-text");
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const aboutSection = document.getElementById("about");
+        const aboutTop = aboutSection.offsetTop;
+        const aboutHeight = aboutSection.offsetHeight;
+
+        if (
+          scrolled > aboutTop - window.innerHeight &&
+          scrolled < aboutTop + aboutHeight
+        ) {
+          const progress =
+            (scrolled - (aboutTop - window.innerHeight)) / window.innerHeight;
+          const scale = 1 - progress * 0.5;
+
+          scrollText.forEach((text, index) => {
+            text.style.transform = `scale(${Math.max(scale, 0.5)})`;
+            text.style.opacity = Math.max(1 - progress * 0.5, 0.5);
+          });
+        }
+      });
+
+      // Reveal animations
+      const reveals = document.querySelectorAll(".reveal");
+
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("active");
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -100px 0px",
+        },
+      );
+
+      reveals.forEach((reveal) => {
+        revealObserver.observe(reveal);
+      });
+
+      // Page transitions
+      const pageTransition = document.querySelector(".page-transition");
+      const navLinks = document.querySelectorAll(".nav-menu a");
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(link.getAttribute("href"));
+
+          // Random transition effect
+          const effects = ["slide", "fade", "scale"];
+          const randomEffect =
+            effects[Math.floor(Math.random() * effects.length)];
+
+          pageTransition.classList.add("active");
+
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: "smooth" });
+            pageTransition.classList.remove("active");
+            pageTransition.classList.add("exit");
+
+            setTimeout(() => {
+              pageTransition.classList.remove("exit");
+            }, 600);
+          }, 300);
+        });
+      });
+
+      // Form submission
+      document
+        .querySelector(".contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Thanks for reaching out! We'll get back to you soon.");
+          e.target.reset();
+        });
+
+      // Hero title animation on load
+      window.addEventListener("load", () => {
+        const heroTitles = document.querySelectorAll(".hero-title");
+        heroTitles.forEach((title, index) => {
+          setTimeout(() => {
+            title.style.transform = "translateY(0)";
+            title.style.opacity = "1";
+          }, index * 200);
+        });
+      });
+
+      // Parallax effect for floating elements
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const floatElements = document.querySelectorAll(".float-element");
+
+        floatElements.forEach((element, index) => {
+          const speed = 0.5 + index * 0.1;
+          element.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+      });
+    </script>
+  </body>
+</html>

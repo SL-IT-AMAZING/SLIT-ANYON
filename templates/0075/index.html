@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RETRO STUDIO - Typography & Design</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Oswald:wght@300;400;700&display=swap");
+
+      :root {
+        /* High contrast color palette */
+        --primary: #ff6b6b; /* Coral Red */
+        --secondary: #4ecdc4; /* Turquoise */
+        --background: #1a1a2e; /* Deep Navy */
+        --text: #ffffff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Space Mono", monospace;
+        background: var(--background);
+        color: var(--text);
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* Fixed Navigation */
+      .fixed-nav {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        mix-blend-mode: difference;
+      }
+
+      .nav-item {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        padding: 10px 5px;
+        background: var(--primary);
+        color: var(--background);
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 2px;
+        transition: all 0.3s;
+        font-size: 14px;
+      }
+
+      .nav-item:hover {
+        background: var(--secondary);
+        transform: translateX(-10px);
+        letter-spacing: 4px;
+      }
+
+      .nav-item.active {
+        background: var(--text);
+      }
+
+      /* Mobile Navigation */
+      .mobile-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--background);
+        border-top: 2px solid var(--primary);
+        padding: 10px;
+        z-index: 1000;
+      }
+
+      .mobile-nav-items {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .mobile-nav-item {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 12px;
+        padding: 5px;
+        transition: all 0.3s;
+      }
+
+      .mobile-nav-item:hover,
+      .mobile-nav-item.active {
+        color: var(--primary);
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .section.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Typography Animations */
+      .glitch-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 12vw, 10rem);
+        position: relative;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        animation: glitch 2s infinite;
+      }
+
+      .glitch-text::before,
+      .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch-text::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--primary);
+        z-index: -1;
+      }
+
+      .glitch-text::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--secondary);
+        z-index: -2;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+        }
+        50% {
+          text-shadow: 0 0 20px rgba(78, 205, 196, 0.8);
+        }
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(80% 0 0 0);
+          transform: translate(1px, 1px);
+        }
+        80% {
+          clip-path: inset(0 0 70% 0);
+          transform: translate(-1px, -1px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(60% 0 20% 0);
+          transform: translate(2px, -1px);
+        }
+        40% {
+          clip-path: inset(0 0 80% 0);
+          transform: translate(-2px, 1px);
+        }
+        60% {
+          clip-path: inset(40% 0 40% 0);
+          transform: translate(1px, -2px);
+        }
+        80% {
+          clip-path: inset(80% 0 0 0);
+          transform: translate(-1px, 2px);
+        }
+      }
+
+      /* Hero Section */
+      #hero {
+        position: relative;
+        overflow: hidden;
+      }
+
+      #p5-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-family: "Oswald", sans-serif;
+        font-size: clamp(1rem, 3vw, 1.5rem);
+        color: var(--secondary);
+        margin-top: 20px;
+        letter-spacing: 0.5em;
+        animation: slide-in 1s ease-out;
+      }
+
+      @keyframes slide-in {
+        from {
+          transform: translateX(-100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* About Section */
+      #about {
+        background:
+          linear-gradient(45deg, var(--background) 25%, transparent 25%),
+          linear-gradient(-45deg, var(--background) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, var(--background) 75%),
+          linear-gradient(-45deg, transparent 75%, var(--background) 75%);
+        background-size: 50px 50px;
+        background-position:
+          0 0,
+          0 25px,
+          25px -25px,
+          -25px 0px;
+        animation: bg-shift 10s linear infinite;
+      }
+
+      @keyframes bg-shift {
+        0% {
+          background-position:
+            0 0,
+            0 25px,
+            25px -25px,
+            -25px 0px;
+        }
+        100% {
+          background-position:
+            50px 50px,
+            50px 75px,
+            75px 25px,
+            25px 50px;
+        }
+      }
+
+      .about-content {
+        max-width: 800px;
+        text-align: center;
+        background: var(--background);
+        padding: 60px;
+        border: 3px solid var(--primary);
+        position: relative;
+      }
+
+      .about-content::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: -10px;
+        bottom: -10px;
+        border: 3px solid var(--secondary);
+        z-index: -1;
+      }
+
+      .rotating-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(2rem, 5vw, 3rem);
+        margin: 20px 0;
+        color: var(--primary);
+        animation: rotate-colors 3s infinite;
+      }
+
+      @keyframes rotate-colors {
+        0%,
+        100% {
+          color: var(--primary);
+        }
+        50% {
+          color: var(--secondary);
+        }
+      }
+
+      /* Work Section */
+      #work {
+        padding: 80px 20px;
+      }
+
+      .work-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .work-item {
+        position: relative;
+        height: 400px;
+        overflow: hidden;
+        border: 2px solid var(--primary);
+        transition: all 0.3s;
+      }
+
+      .work-item:hover {
+        transform: scale(1.05) rotate(-2deg);
+        border-color: var(--secondary);
+      }
+
+      .work-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.2);
+        transition: all 0.5s;
+      }
+
+      .work-item:hover img {
+        filter: grayscale(0%) contrast(1);
+      }
+
+      .work-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--background);
+        padding: 20px;
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .work-item:hover .work-overlay {
+        transform: translateY(0);
+      }
+
+      .work-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 5px;
+      }
+
+      /* Services Section */
+      #services {
+        background: repeating-linear-gradient(
+          0deg,
+          var(--background),
+          var(--background) 20px,
+          rgba(255, 107, 107, 0.1) 20px,
+          rgba(255, 107, 107, 0.1) 40px
+        );
+      }
+
+      .services-container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .service-card {
+        background: var(--background);
+        border: 3px solid var(--secondary);
+        padding: 40px;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .service-card:nth-child(even) {
+        border-color: var(--primary);
+      }
+
+      .service-card:hover {
+        transform: translateX(20px);
+      }
+
+      .service-number {
+        position: absolute;
+        top: -20px;
+        right: 20px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 8rem;
+        color: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+      }
+
+      .service-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .service-title {
+        font-family: "Oswald", sans-serif;
+        font-size: 2rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      /* Process Section */
+      #process {
+        background: var(--background);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .process-timeline {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .process-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--primary);
+        transform: translateX(-50%);
+      }
+
+      .process-step {
+        position: relative;
+        padding: 40px;
+        margin: 40px 0;
+        background: var(--background);
+        border: 2px solid var(--secondary);
+      }
+
+      .process-step:nth-child(even) {
+        margin-left: auto;
+        margin-right: 0;
+        width: 45%;
+      }
+
+      .process-step:nth-child(odd) {
+        margin-left: 0;
+        margin-right: auto;
+        width: 45%;
+      }
+
+      .process-number {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: "Bebas Neue", cursive;
+        font-size: 3rem;
+        color: var(--primary);
+      }
+
+      .process-step:nth-child(even) .process-number {
+        left: -60px;
+      }
+
+      .process-step:nth-child(odd) .process-number {
+        right: -60px;
+      }
+
+      /* Team Section */
+      #team {
+        padding: 80px 20px;
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .team-member {
+        text-align: center;
+        position: relative;
+      }
+
+      .member-image {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 20px;
+        position: relative;
+        overflow: hidden;
+        border: 4px solid var(--primary);
+        transform: rotate(45deg);
+      }
+
+      .member-image img {
+        width: 140%;
+        height: 140%;
+        object-fit: cover;
+        transform: rotate(-45deg) translate(-20%, -20%);
+        filter: contrast(1.2);
+        transition: all 0.5s;
+      }
+
+      .team-member:hover .member-image img {
+        transform: rotate(-45deg) translate(-20%, -20%) scale(1.1);
+      }
+
+      .member-name {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--secondary);
+        margin-bottom: 5px;
+      }
+
+      .member-role {
+        font-family: "Space Mono", monospace;
+        font-size: 0.9rem;
+        color: var(--text);
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+      }
+
+      /* Contact Section */
+      #contact {
+        background: var(--background);
+        position: relative;
+      }
+
+      .contact-container {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .contact-form {
+        margin-top: 40px;
+      }
+
+      .form-group {
+        position: relative;
+        margin: 30px 0;
+        text-align: left;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 15px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid var(--primary);
+        color: var(--text);
+        font-family: "Space Mono", monospace;
+        font-size: 16px;
+        transition: all 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--secondary);
+      }
+
+      .form-label {
+        position: absolute;
+        top: 15px;
+        left: 0;
+        color: var(--text);
+        opacity: 0.6;
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      .form-input:focus + .form-label,
+      .form-input:not(:placeholder-shown) + .form-label {
+        top: -20px;
+        font-size: 12px;
+        color: var(--secondary);
+        opacity: 1;
+      }
+
+      .submit-btn {
+        background: var(--primary);
+        color: var(--background);
+        border: none;
+        padding: 20px 60px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+        margin-top: 40px;
+      }
+
+      .submit-btn:hover {
+        transform: scale(1.05);
+        background: var(--secondary);
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .submit-btn:active::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      /* Page Transition Effects */
+      .transition-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary);
+        transform: translateY(-100%);
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 9999;
+        pointer-events: none;
+      }
+
+      .transition-overlay.active {
+        transform: translateY(0);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .fixed-nav {
+          display: none;
+        }
+
+        .mobile-nav {
+          display: block;
+        }
+
+        .glitch-text {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .about-content {
+          padding: 30px;
+        }
+
+        .work-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .process-step {
+          width: 100% !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+        }
+
+        .process-line {
+          display: none;
+        }
+
+        .process-number {
+          position: static !important;
+          margin-bottom: 20px;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .service-card:hover {
+          transform: translateX(0);
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--primary);
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Page Transition Overlay -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
+
+    <!-- Fixed Navigation -->
+    <nav class="fixed-nav">
+      <a href="#hero" class="nav-item active">HOME</a>
+      <a href="#about" class="nav-item">ABOUT</a>
+      <a href="#work" class="nav-item">WORK</a>
+      <a href="#services" class="nav-item">SERVICES</a>
+      <a href="#process" class="nav-item">PROCESS</a>
+      <a href="#team" class="nav-item">TEAM</a>
+      <a href="#contact" class="nav-item">CONTACT</a>
+    </nav>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+      <div class="mobile-nav-items">
+        <a href="#hero" class="mobile-nav-item active">HOME</a>
+        <a href="#about" class="mobile-nav-item">ABOUT</a>
+        <a href="#work" class="mobile-nav-item">WORK</a>
+        <a href="#services" class="mobile-nav-item">SERVICES</a>
+        <a href="#process" class="mobile-nav-item">PROCESS</a>
+        <a href="#team" class="mobile-nav-item">TEAM</a>
+        <a href="#contact" class="mobile-nav-item">CONTACT</a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="section visible">
+      <div id="p5-canvas"></div>
+      <div class="hero-content">
+        <h1 class="glitch-text" data-text="RETRO STUDIO">RETRO STUDIO</h1>
+        <p class="subtitle">TYPOGRAPHY × DESIGN × INNOVATION</p>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+      <div class="about-content">
+        <h2 class="glitch-text" data-text="WHO WE ARE">WHO WE ARE</h2>
+        <p class="rotating-text">CREATIVE REBELS</p>
+        <p style="margin-top: 30px; line-height: 1.8; font-size: 1.1rem">
+          We are a collective of designers, developers, and dreamers who believe
+          in the power of bold typography and fearless design. Our mission is to
+          create digital experiences that challenge conventions and inspire
+          change.
+        </p>
+      </div>
+    </section>
+
+    <!-- Work Section -->
+    <section id="work" class="section">
+      <div class="section-content">
+        <h2 class="glitch-text" data-text="OUR WORK">OUR WORK</h2>
+        <div class="work-grid">
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              alt="Project 1"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">NEON DREAMS</h3>
+              <p>Digital Art Installation</p>
+            </div>
+          </div>
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Project 2"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">CYBER PUNK</h3>
+              <p>Brand Identity</p>
+            </div>
+          </div>
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Project 3"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">RETRO WAVE</h3>
+              <p>Web Experience</p>
+            </div>
+          </div>
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+              alt="Project 4"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">GLITCH ART</h3>
+              <p>Interactive Design</p>
+            </div>
+          </div>
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+              alt="Project 5"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">FUTURE NOIR</h3>
+              <p>Motion Graphics</p>
+            </div>
+          </div>
+          <div class="work-item">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png"
+              alt="Project 6"
+            />
+            <div class="work-overlay">
+              <h3 class="work-title">ELECTRIC DREAMS</h3>
+              <p>UI/UX Design</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section">
+      <div class="services-container">
+        <h2 class="glitch-text" data-text="SERVICES">SERVICES</h2>
+        <div class="service-card">
+          <div class="service-number">01</div>
+          <div class="service-content">
+            <h3 class="service-title">Typography Design</h3>
+            <p>
+              Custom typefaces and lettering that make your brand unforgettable.
+            </p>
+          </div>
+        </div>
+        <div class="service-card">
+          <div class="service-number">02</div>
+          <div class="service-content">
+            <h3 class="service-title">Web Development</h3>
+            <p>
+              Cutting-edge websites with immersive interactions and animations.
+            </p>
+          </div>
+        </div>
+        <div class="service-card">
+          <div class="service-number">03</div>
+          <div class="service-content">
+            <h3 class="service-title">Brand Identity</h3>
+            <p>Complete visual systems that capture your essence and vision.</p>
+          </div>
+        </div>
+        <div class="service-card">
+          <div class="service-number">04</div>
+          <div class="service-content">
+            <h3 class="service-title">Motion Design</h3>
+            <p>Dynamic animations that bring your content to life.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="process" class="section">
+      <div class="section-content">
+        <h2 class="glitch-text" data-text="OUR PROCESS">OUR PROCESS</h2>
+        <div class="process-timeline">
+          <div class="process-line"></div>
+          <div class="process-step">
+            <div class="process-number">01</div>
+            <h3>DISCOVER</h3>
+            <p>
+              We dive deep into your vision, goals, and audience to understand
+              what makes you unique.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="process-number">02</div>
+            <h3>DESIGN</h3>
+            <p>
+              Our creative team crafts bold concepts that push boundaries and
+              challenge expectations.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="process-number">03</div>
+            <h3>DEVELOP</h3>
+            <p>
+              We bring designs to life with clean code and cutting-edge
+              technology.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="process-number">04</div>
+            <h3>DELIVER</h3>
+            <p>
+              Launch your project with confidence and ongoing support for
+              continued success.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="section">
+      <div class="section-content">
+        <h2 class="glitch-text" data-text="THE CREW">THE CREW</h2>
+        <div class="team-grid">
+          <div class="team-member">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                alt="Team Member 1"
+              />
+            </div>
+            <h3 class="member-name">ALEX NOVA</h3>
+            <p class="member-role">Creative Director</p>
+          </div>
+          <div class="team-member">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+                alt="Team Member 2"
+              />
+            </div>
+            <h3 class="member-name">MAYA SYNC</h3>
+            <p class="member-role">Lead Developer</p>
+          </div>
+          <div class="team-member">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png"
+                alt="Team Member 3"
+              />
+            </div>
+            <h3 class="member-name">REX PIXEL</h3>
+            <p class="member-role">Motion Designer</p>
+          </div>
+          <div class="team-member">
+            <div class="member-image">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png"
+                alt="Team Member 4"
+              />
+            </div>
+            <h3 class="member-name">LUNA WAVE</h3>
+            <p class="member-role">UI/UX Designer</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+      <div class="contact-container">
+        <h2 class="glitch-text" data-text="GET IN TOUCH">GET IN TOUCH</h2>
+        <p style="margin: 30px 0; font-size: 1.2rem; color: var(--secondary)">
+          Ready to create something extraordinary?
+        </p>
+        <form class="contact-form" id="contactForm">
+          <div class="form-group">
+            <input type="text" class="form-input" placeholder=" " required />
+            <label class="form-label">YOUR NAME</label>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-input" placeholder=" " required />
+            <label class="form-label">YOUR EMAIL</label>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-input" placeholder=" " required />
+            <label class="form-label">PROJECT TYPE</label>
+          </div>
+          <div class="form-group">
+            <textarea
+              class="form-input"
+              rows="4"
+              placeholder=" "
+              required
+            ></textarea>
+            <label class="form-label">YOUR MESSAGE</label>
+          </div>
+          <button type="submit" class="submit-btn">SEND MESSAGE</button>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      // p5.js Typography Animation
+      let p5Canvas;
+      let letters = [];
+      let font;
+
+      const sketch = (p) => {
+        p.setup = () => {
+          const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+          canvas.parent("p5-canvas");
+          p.textAlign(p.CENTER, p.CENTER);
+
+          // Create floating letters
+          const chars = "RETROSTUDIODESIGNTYPOGRAPHY".split("");
+          for (let i = 0; i < 30; i++) {
+            letters.push({
+              char: chars[Math.floor(Math.random() * chars.length)],
+              x: p.random(p.width),
+              y: p.random(p.height),
+              size: p.random(20, 80),
+              speed: p.random(0.5, 2),
+              rotation: p.random(p.TWO_PI),
+              rotSpeed: p.random(-0.02, 0.02),
+            });
+          }
+        };
+
+        p.draw = () => {
+          p.clear();
+
+          letters.forEach((letter) => {
+            p.push();
+            p.translate(letter.x, letter.y);
+            p.rotate(letter.rotation);
+            p.textSize(letter.size);
+            p.fill(255, 255, 255, 30);
+            p.text(letter.char, 0, 0);
+            p.pop();
+
+            // Update position
+            letter.y -= letter.speed;
+            letter.rotation += letter.rotSpeed;
+
+            // Reset when off screen
+            if (letter.y < -50) {
+              letter.y = p.height + 50;
+              letter.x = p.random(p.width);
+            }
+          });
+        };
+
+        p.windowResized = () => {
+          p.resizeCanvas(p.windowWidth, p.windowHeight);
+        };
+      };
+
+      // Initialize p5.js
+      p5Canvas = new p5(sketch);
+
+      // Page Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Smooth Scrolling with Page Transitions
+      const transitionOverlay = document.getElementById("transitionOverlay");
+      const sections = document.querySelectorAll(".section");
+      const navItems = document.querySelectorAll(".nav-item, .mobile-nav-item");
+
+      // Random transition effects
+      const transitions = [
+        { transform: "translateY(-100%)", duration: "0.6s" },
+        { transform: "translateX(-100%)", duration: "0.5s" },
+        { transform: "scale(0)", duration: "0.4s" },
+        { transform: "rotate(180deg) scale(0)", duration: "0.7s" },
+      ];
+
+      function smoothScroll(target) {
+        const randomTransition =
+          transitions[Math.floor(Math.random() * transitions.length)];
+
+        transitionOverlay.style.transition = `transform ${randomTransition.duration} cubic-bezier(0.4, 0, 0.2, 1)`;
+        transitionOverlay.classList.add("active");
+
+        setTimeout(
+          () => {
+            document
+              .querySelector(target)
+              .scrollIntoView({ behavior: "smooth" });
+            transitionOverlay.classList.remove("active");
+          },
+          parseFloat(randomTransition.duration) * 500,
+        );
+      }
+
+      // Navigation click handlers
+      navItems.forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = item.getAttribute("href");
+          smoothScroll(target);
+
+          // Update active state
+          navItems.forEach((nav) => nav.classList.remove("active"));
+          document
+            .querySelectorAll(`a[href="${target}"]`)
+            .forEach((nav) => nav.classList.add("active"));
+        });
+      });
+
+      // Intersection Observer for sections
+      const observerOptions = {
+        threshold: 0.3,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+
+            // Update active navigation
+            const id = entry.target.getAttribute("id");
+            navItems.forEach((nav) => nav.classList.remove("active"));
+            document
+              .querySelectorAll(`a[href="#${id}"]`)
+              .forEach((nav) => nav.classList.add("active"));
+          }
+        });
+      }, observerOptions);
+
+      sections.forEach((section) => {
+        observer.observe(section);
+      });
+
+      // Form submission
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Message sent! We'll get back to you soon.");
+        e.target.reset();
+      });
+
+      // Add some interactive effects
+      document.addEventListener("mousemove", (e) => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+
+        document.querySelectorAll(".glitch-text").forEach((text) => {
+          text.style.textShadow = `
+                    ${x * 5}px ${y * 5}px 10px rgba(255, 107, 107, 0.3),
+                    ${-x * 5}px ${-y * 5}px 10px rgba(78, 205, 196, 0.3)
+                `;
+        });
+      });
+
+      // Mobile menu height adjustment
+      function adjustMobileNav() {
+        if (window.innerWidth <= 768) {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty("--vh", `${vh}px`);
+        }
+      }
+
+      window.addEventListener("resize", adjustMobileNav);
+      adjustMobileNav();
+    </script>
+  </body>
+</html>

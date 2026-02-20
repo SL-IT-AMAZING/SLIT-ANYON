@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbital Studio - Beyond Boundaries</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0a0a0a;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Liquid Cursor */
+      .cursor {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.8) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        mix-blend-mode: screen;
+        transition:
+          transform 0.2s,
+          width 0.2s,
+          height 0.2s;
+      }
+
+      .cursor.expand {
+        width: 60px;
+        height: 60px;
+      }
+
+      .cursor-trail {
+        position: fixed;
+        width: 40px;
+        height: 40px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 50%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      /* Orbital Navigation System */
+      .orbital-nav {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px;
+        height: 500px;
+        z-index: 1000;
+        transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .orbital-nav.active {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      .orbital-nav.hidden {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .nav-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.5s;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      .nav-center::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(
+          from 0deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        animation: rotate 10s linear infinite;
+      }
+
+      @keyframes rotate {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .nav-center:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .menu-icon {
+        position: relative;
+        width: 40px;
+        height: 30px;
+        z-index: 1;
+      }
+
+      .menu-icon span {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #fff;
+        transition: all 0.3s;
+      }
+
+      .menu-icon span:nth-child(1) {
+        top: 0;
+      }
+      .menu-icon span:nth-child(2) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .menu-icon span:nth-child(3) {
+        bottom: 0;
+      }
+
+      .nav-center.active .menu-icon span:nth-child(1) {
+        transform: rotate(45deg) translate(10px, 10px);
+      }
+
+      .nav-center.active .menu-icon span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .nav-center.active .menu-icon span:nth-child(3) {
+        transform: rotate(-45deg) translate(10px, -10px);
+      }
+
+      /* Orbital Menu Items */
+      .orbital-item {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.5s;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      .orbital-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          rgba(255, 255, 255, 0.2) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .orbital-item:hover::before {
+        opacity: 1;
+      }
+
+      .orbital-item:hover {
+        transform: scale(1.2);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .orbital-item span {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      /* Floating Menu Button */
+      .floating-menu {
+        position: fixed;
+        top: 40px;
+        right: 40px;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1001;
+        transition: all 0.3s;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .floating-menu:hover {
+        transform: scale(1.1) rotate(90deg);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Main Content Container */
+      .content-wrapper {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      /* Hero Section with Liquid Gallery */
+      .hero-section {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .liquid-gallery {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 2px;
+      }
+
+      .gallery-cell {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .gallery-cell::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.8s;
+      }
+
+      .gallery-cell:hover::before {
+        width: 200%;
+        height: 200%;
+      }
+
+      .gallery-cell:hover {
+        z-index: 10;
+        transform: scale(1.1);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      }
+
+      .cell-content {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cell-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.8s;
+      }
+
+      .gallery-cell:hover .cell-image {
+        transform: scale(1.2);
+      }
+
+      .cell-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Morphing Title */
+      .morphing-title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        text-align: center;
+        pointer-events: none;
+        mix-blend-mode: difference;
+      }
+
+      .morphing-title h1 {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        line-height: 0.9;
+        filter: blur(0px);
+        transition: all 0.5s;
+      }
+
+      .morphing-title.blur h1 {
+        filter: blur(10px);
+        opacity: 0.3;
+      }
+
+      /* Sections with Liquid Transitions */
+      .section {
+        position: relative;
+        min-height: 100vh;
+        padding: 100px 20px;
+        overflow: hidden;
+      }
+
+      .section::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle at 30% 50%,
+          rgba(255, 255, 255, 0.03) 0%,
+          transparent 50%
+        );
+        animation: liquid-move 20s ease-in-out infinite;
+      }
+
+      @keyframes liquid-move {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(10%, -10%) scale(1.1);
+        }
+        66% {
+          transform: translate(-10%, 10%) scale(0.9);
+        }
+      }
+
+      /* Floating Elements */
+      .floating-element {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.05) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(40px);
+        animation: float-around 30s infinite;
+      }
+
+      @keyframes float-around {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+          transform: translate(100px, -100px) rotate(90deg);
+        }
+        50% {
+          transform: translate(-100px, -200px) rotate(180deg);
+        }
+        75% {
+          transform: translate(-200px, 100px) rotate(270deg);
+        }
+      }
+
+      /* Content Cards with Liquid Borders */
+      .liquid-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 30px;
+        padding: 60px;
+        margin: 40px auto;
+        max-width: 1000px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s;
+      }
+
+      .liquid-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        border-radius: 30px;
+        opacity: 0;
+        transition: opacity 0.5s;
+        animation: border-flow 3s linear infinite;
+      }
+
+      @keyframes border-flow {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .liquid-card:hover::before {
+        opacity: 1;
+      }
+
+      .liquid-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Typography */
+      h1,
+      h2,
+      h3 {
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+
+      h2 {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        margin-bottom: 30px;
+      }
+
+      h3 {
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        margin-bottom: 20px;
+      }
+
+      p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.8;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .orbital-nav {
+          width: 350px;
+          height: 350px;
+        }
+
+        .nav-center {
+          width: 80px;
+          height: 80px;
+        }
+
+        .orbital-item {
+          width: 60px;
+          height: 60px;
+        }
+
+        .orbital-item span {
+          font-size: 10px;
+        }
+
+        .liquid-gallery {
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+        }
+
+        .floating-menu {
+          top: 20px;
+          right: 20px;
+          width: 50px;
+          height: 50px;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0a0a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-circle {
+        width: 100px;
+        height: 100px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-circle"></div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-trail" id="cursorTrail"></div>
+
+    <!-- Floating Menu Button -->
+    <div class="floating-menu" id="floatingMenu">
+      <div class="menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- Orbital Navigation -->
+    <div class="orbital-nav hidden" id="orbitalNav">
+      <div class="nav-center" id="navCenter">
+        <div class="menu-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <!-- Menu items will be dynamically positioned -->
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Hero Section -->
+      <section class="hero-section" id="home">
+        <div class="liquid-gallery" id="liquidGallery">
+          <!-- Gallery cells will be dynamically created -->
+        </div>
+        <div class="morphing-title" id="morphingTitle">
+          <h1>ORBITAL<br />STUDIO</h1>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section" id="about">
+        <div class="floating-element" style="top: 10%; left: 10%"></div>
+        <div class="floating-element" style="bottom: 20%; right: 15%"></div>
+
+        <div class="liquid-card">
+          <h2>Beyond Traditional Design</h2>
+          <p>
+            We create digital experiences that transcend conventional
+            boundaries, merging art, technology, and human emotion into seamless
+            interactive journeys.
+          </p>
+
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+              gap: 30px;
+              margin-top: 50px;
+            "
+          >
+            <div>
+              <h3>Liquid Motion</h3>
+              <p>
+                Fluid animations that respond to user interaction, creating
+                organic digital environments.
+              </p>
+            </div>
+            <div>
+              <h3>Spatial Design</h3>
+              <p>
+                Three-dimensional thinking applied to two-dimensional screens,
+                breaking the flatness barrier.
+              </p>
+            </div>
+            <div>
+              <h3>Emotional Tech</h3>
+              <p>
+                Technology that feels human, interfaces that understand and
+                adapt to user emotions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vision Section -->
+      <section class="section" id="vision">
+        <div class="liquid-card">
+          <h2>Our Vision</h2>
+          <p>
+            To redefine digital interaction by creating experiences that feel
+            alive, responsive, and deeply personal. We believe the future of web
+            design lies not in static layouts, but in living, breathing digital
+            organisms.
+          </p>
+        </div>
+      </section>
+
+      <!-- Process Section -->
+      <section class="section" id="process">
+        <div class="liquid-card">
+          <h2>The Orbital Process</h2>
+          <div style="display: grid; gap: 40px; margin-top: 50px">
+            <div>
+              <h3>01. Exploration</h3>
+              <p>
+                We orbit around your ideas, exploring every angle and
+                possibility before choosing our trajectory.
+              </p>
+            </div>
+            <div>
+              <h3>02. Fusion</h3>
+              <p>
+                Merging creativity with technology, we create unique solutions
+                that defy categorization.
+              </p>
+            </div>
+            <div>
+              <h3>03. Evolution</h3>
+              <p>
+                Our designs evolve and adapt, growing stronger through iteration
+                and user feedback.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lab Section -->
+      <section class="section" id="lab">
+        <div class="liquid-card">
+          <h2>Digital Laboratory</h2>
+          <p>
+            Where we experiment with the impossible, pushing pixels beyond their
+            limits and creating new forms of digital expression.
+          </p>
+        </div>
+      </section>
+
+      <!-- Philosophy Section -->
+      <section class="section" id="philosophy">
+        <div class="liquid-card">
+          <h2>Design Philosophy</h2>
+          <p>
+            We believe in design that moves, breathes, and evolves. Static is
+            dead. The future is fluid, responsive, and alive with possibility.
+          </p>
+        </div>
+      </section>
+
+      <!-- Connect Section -->
+      <section class="section" id="connect">
+        <div class="liquid-card">
+          <h2>Enter Our Orbit</h2>
+          <p>
+            Ready to break free from conventional design? Let's create something
+            extraordinary together.
+          </p>
+
+          <div style="margin-top: 50px; text-align: center">
+            <p style="font-size: 1.5rem; margin-bottom: 20px">
+              hello@orbitalstudio.space
+            </p>
+            <p>We respond to all transmissions within 24 Earth hours.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Image and video data
+      const mediaData = [
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        },
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+        },
+      ];
+
+      // Menu items
+      const menuItems = [
+        { name: "Home", href: "#home" },
+        { name: "About", href: "#about" },
+        { name: "Vision", href: "#vision" },
+        { name: "Process", href: "#process" },
+        { name: "Lab", href: "#lab" },
+        { name: "Philosophy", href: "#philosophy" },
+        { name: "Connect", href: "#connect" },
+      ];
+
+      // Custom cursor
+      const cursor = document.getElementById("cursor");
+      const cursorTrail = document.getElementById("cursorTrail");
+      let mouseX = 0,
+        mouseY = 0;
+      let trailX = 0,
+        trailY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        cursor.style.left = mouseX - 10 + "px";
+        cursor.style.top = mouseY - 10 + "px";
+      });
+
+      // Smooth cursor trail
+      function animateCursorTrail() {
+        trailX += (mouseX - trailX) * 0.1;
+        trailY += (mouseY - trailY) * 0.1;
+
+        cursorTrail.style.left = trailX - 20 + "px";
+        cursorTrail.style.top = trailY - 20 + "px";
+
+        requestAnimationFrame(animateCursorTrail);
+      }
+      animateCursorTrail();
+
+      // Cursor hover effects
+      const hoverElements = document.querySelectorAll(
+        "a, button, .orbital-item, .nav-center, .floating-menu, .gallery-cell, .liquid-card",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => cursor.classList.add("expand"));
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("expand"),
+        );
+      });
+
+      // Create liquid gallery
+      function createLiquidGallery() {
+        const gallery = document.getElementById("liquidGallery");
+
+        mediaData.forEach((media, index) => {
+          const cell = document.createElement("div");
+          cell.className = "gallery-cell";
+
+          const content = document.createElement("div");
+          content.className = "cell-content";
+
+          if (media.type === "image") {
+            const img = document.createElement("img");
+            img.className = "cell-image";
+            img.src = media.src;
+            img.alt = `Gallery image ${index + 1}`;
+            content.appendChild(img);
+          } else if (media.type === "video") {
+            const video = document.createElement("video");
+            video.className = "cell-video";
+            video.src = media.src;
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            content.appendChild(video);
+          }
+
+          cell.appendChild(content);
+          gallery.appendChild(cell);
+        });
+      }
+
+      // Create orbital navigation
+      function createOrbitalNav() {
+        const orbitalNav = document.getElementById("orbitalNav");
+        const angleStep = (2 * Math.PI) / menuItems.length;
+        const radius = 180;
+
+        menuItems.forEach((item, index) => {
+          const angle = angleStep * index - Math.PI / 2;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+
+          const orbitalItem = document.createElement("div");
+          orbitalItem.className = "orbital-item";
+          orbitalItem.style.left = `calc(50% + ${x}px - 40px)`;
+          orbitalItem.style.top = `calc(50% + ${y}px - 40px)`;
+          orbitalItem.innerHTML = `<span>${item.name}</span>`;
+
+          orbitalItem.addEventListener("click", () => {
+            const target = document.querySelector(item.href);
+            if (target) {
+              target.scrollIntoView({ behavior: "smooth" });
+              toggleMenu();
+            }
+          });
+
+          orbitalNav.appendChild(orbitalItem);
+        });
+      }
+
+      // Toggle menu
+      const floatingMenu = document.getElementById("floatingMenu");
+      const orbitalNav = document.getElementById("orbitalNav");
+      const navCenter = document.getElementById("navCenter");
+      const morphingTitle = document.getElementById("morphingTitle");
+      let menuOpen = false;
+
+      function toggleMenu() {
+        menuOpen = !menuOpen;
+
+        if (menuOpen) {
+          orbitalNav.classList.remove("hidden");
+          orbitalNav.classList.add("active");
+          navCenter.classList.add("active");
+          morphingTitle.classList.add("blur");
+          floatingMenu.style.transform = "scale(1.1) rotate(180deg)";
+        } else {
+          orbitalNav.classList.remove("active");
+          orbitalNav.classList.add("hidden");
+          navCenter.classList.remove("active");
+          morphingTitle.classList.remove("blur");
+          floatingMenu.style.transform = "scale(1) rotate(0deg)";
+        }
+      }
+
+      floatingMenu.addEventListener("click", toggleMenu);
+      navCenter.addEventListener("click", toggleMenu);
+
+      // Gallery cell interactions
+      document.addEventListener("DOMContentLoaded", () => {
+        createLiquidGallery();
+        createOrbitalNav();
+
+        // Hide loader
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+
+        // Add hover effects to gallery cells
+        const cells = document.querySelectorAll(".gallery-cell");
+        cells.forEach((cell) => {
+          cell.addEventListener("mouseenter", () => {
+            cursor.classList.add("expand");
+          });
+          cell.addEventListener("mouseleave", () => {
+            cursor.classList.remove("expand");
+          });
+        });
+      });
+
+      // Smooth scroll for sections
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      // Observe all sections
+      document.querySelectorAll(".section").forEach((section) => {
+        section.style.opacity = "0";
+        section.style.transform = "translateY(50px)";
+        section.style.transition = "all 1s cubic-bezier(0.4, 0, 0.2, 1)";
+        observer.observe(section);
+      });
+
+      // Parallax effect on scroll
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".floating-element");
+
+        parallaxElements.forEach((el, index) => {
+          const speed = 0.5 + index * 0.1;
+          el.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+
+        ticking = false;
+      }
+
+      document.addEventListener("scroll", () => {
+        if (!ticking) {
+          requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      });
+
+      // ESC key to close menu
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && menuOpen) {
+          toggleMenu();
+        }
+      });
+    </script>
+  </body>
+</html>

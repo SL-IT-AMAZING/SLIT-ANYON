@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Gallery - Multidimensional Experience</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: default;
+      }
+
+      /* Loading Screen */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 1s ease-out;
+      }
+
+      .loading-text {
+        font-size: 14px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        opacity: 0.7;
+      }
+
+      /* Header */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px 40px;
+        z-index: 1000;
+        mix-blend-mode: difference;
+        transition: all 0.3s ease;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 2px;
+        cursor: pointer;
+      }
+
+      nav {
+        position: absolute;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 30px;
+      }
+
+      nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        letter-spacing: 1px;
+        transition: opacity 0.3s;
+        cursor: pointer;
+      }
+
+      nav a:hover {
+        opacity: 0.6;
+      }
+
+      /* Main Gallery Section */
+      .main-gallery {
+        position: relative;
+        height: 300vh;
+        overflow: hidden;
+      }
+
+      /* Main Hero Image */
+      .hero-image {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .hero-image img {
+        width: 80%;
+        max-width: 1200px;
+        height: 80vh;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
+        transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .hero-image.shrink img {
+        width: 200px;
+        height: 280px;
+        opacity: 0;
+        transform: scale(0.3);
+      }
+
+      /* Gallery Container */
+      .gallery-fixed-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 1000px;
+      }
+
+      /* Background rotating gallery */
+      .gallery-background {
+        position: absolute;
+        width: 120%;
+        height: 120%;
+        transform-style: preserve-3d;
+        animation: continuousRotate 90s linear infinite;
+        opacity: 0;
+        transition: opacity 2s ease;
+        filter: blur(3px);
+        transform: scale(1.2);
+      }
+
+      .gallery-background.visible {
+        opacity: 0.3;
+      }
+
+      /* Main gallery wrapper */
+      .gallery-wrapper {
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        animation: continuousRotate 60s linear infinite;
+        cursor: grab;
+        position: relative;
+        z-index: 20;
+      }
+
+      .gallery-wrapper.dragging {
+        animation-play-state: paused;
+        cursor: grabbing;
+      }
+
+      @keyframes continuousRotate {
+        from {
+          transform: rotateY(0deg);
+        }
+        to {
+          transform: rotateY(360deg);
+        }
+      }
+
+      .gallery-item {
+        position: absolute;
+        width: clamp(200px, 25vw, 300px);
+        height: clamp(280px, 35vw, 400px);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        transform-style: preserve-3d;
+        user-select: none;
+      }
+
+      .gallery-item.visible {
+        opacity: 1;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+      }
+
+      .gallery-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        border-radius: 10px;
+      }
+
+      .gallery-item:hover::before {
+        opacity: 1;
+      }
+
+      .gallery-item:hover {
+        z-index: 100;
+        transform: translate(-50%, -50%) scale(1.1) translateZ(50px) !important;
+      }
+
+      /* Video Items */
+      .video-item {
+        position: absolute;
+        width: clamp(280px, 35vw, 400px);
+        height: clamp(200px, 25vw, 300px);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        user-select: none;
+      }
+
+      .video-item.visible {
+        opacity: 1;
+      }
+
+      .video-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+
+      /* Hero Content Overlay */
+      .hero-content {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 100;
+        pointer-events: none;
+        transition: opacity 1s ease;
+      }
+
+      .hero-content.hidden {
+        opacity: 0;
+      }
+
+      .hero-title {
+        font-size: clamp(40px, 8vw, 80px);
+        font-weight: 300;
+        line-height: 1.1;
+        margin-bottom: 20px;
+        letter-spacing: -2px;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease-out 0.5s forwards;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+        opacity: 0;
+        letter-spacing: 1px;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease-out 0.7s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Scroll Indicator */
+      .scroll-indicator {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        opacity: 0;
+        animation: fadeIn 1s ease-out 1s forwards;
+        transition: opacity 0.5s ease;
+      }
+
+      .scroll-indicator.hidden {
+        opacity: 0;
+      }
+
+      .scroll-indicator::after {
+        content: "";
+        display: block;
+        width: 1px;
+        height: 40px;
+        background: #fff;
+        margin: 10px auto;
+        animation: scrollLine 2s ease-in-out infinite;
+      }
+
+      @keyframes scrollLine {
+        0%,
+        100% {
+          transform: scaleY(0.5);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Rotation Controls */
+      .rotation-controls {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        display: flex;
+        gap: 15px;
+        z-index: 200;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .rotation-controls.visible {
+        opacity: 1;
+      }
+
+      .control-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 18px;
+      }
+
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: scale(1.1);
+      }
+
+      .control-btn.active {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #fff;
+      }
+
+      /* Modal */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        position: relative;
+        width: 90%;
+        max-width: 1200px;
+        height: 90vh;
+        display: flex;
+        gap: 40px;
+        align-items: center;
+        opacity: 0;
+        transform: scale(0.9);
+        transition: all 0.3s ease 0.1s;
+      }
+
+      .modal.active .modal-content {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .modal-image {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-image img,
+      .modal-image video {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 10px;
+      }
+
+      .modal-info {
+        flex: 0 0 350px;
+        padding: 40px;
+        overflow-y: auto;
+        max-height: 100%;
+      }
+
+      .modal-title {
+        font-size: 36px;
+        font-weight: 300;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
+      }
+
+      .modal-description {
+        font-size: 16px;
+        line-height: 1.8;
+        opacity: 0.8;
+        margin-bottom: 30px;
+      }
+
+      .modal-details {
+        font-size: 14px;
+        opacity: 0.6;
+        line-height: 2;
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 40px;
+        right: 40px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        z-index: 10;
+      }
+
+      .modal-close::before,
+      .modal-close::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 24px;
+        height: 1px;
+        background: #fff;
+        transform: translate(-50%, -50%) rotate(45deg);
+        transition: all 0.3s ease;
+      }
+
+      .modal-close::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      .modal-close:hover::before,
+      .modal-close:hover::after {
+        width: 30px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        header {
+          padding: 20px;
+        }
+
+        nav {
+          display: none;
+        }
+
+        .hero-image img {
+          width: 90%;
+          height: 60vh;
+        }
+
+        .gallery-item {
+          width: 150px;
+          height: 200px;
+        }
+
+        .video-item {
+          width: 200px;
+          height: 150px;
+        }
+
+        .modal-content {
+          flex-direction: column;
+          gap: 20px;
+          padding: 20px;
+        }
+
+        .modal-info {
+          flex: 1;
+          padding: 20px;
+          width: 100%;
+        }
+
+        .modal-title {
+          font-size: 24px;
+        }
+
+        .modal-close {
+          top: 20px;
+          right: 20px;
+        }
+
+        .rotation-controls {
+          bottom: 20px;
+          right: 20px;
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .gallery-item {
+          width: 120px;
+          height: 160px;
+        }
+
+        .video-item {
+          width: 160px;
+          height: 120px;
+        }
+
+        .hero-title {
+          font-size: 32px;
+        }
+
+        .hero-subtitle {
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loading-text">LOADING</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <div class="logo">VISUAL GALLERY</div>
+      <nav>
+        <ul>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Main Gallery Section -->
+    <section class="main-gallery">
+      <!-- Hero Image -->
+      <div class="hero-image" id="heroImage">
+        <img
+          src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+          alt="Main Visual"
+        />
+      </div>
+
+      <div class="gallery-fixed-container">
+        <!-- Background rotating gallery -->
+        <div class="gallery-background" id="galleryBackground">
+          <div class="gallery-wrapper" id="backgroundWrapper">
+            <!-- Background items will be cloned here -->
+          </div>
+        </div>
+
+        <!-- Main gallery -->
+        <div class="gallery-wrapper" id="galleryWrapper">
+          <!-- Gallery items will be dynamically positioned -->
+        </div>
+      </div>
+
+      <!-- Hero Content Overlay -->
+      <div class="hero-content" id="heroContent">
+        <h1 class="hero-title">Visual Dimensions</h1>
+        <p class="hero-subtitle">
+          Scroll to explore the multidimensional gallery
+        </p>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="scroll-indicator" id="scrollIndicator"></div>
+
+      <!-- Rotation Controls -->
+      <div class="rotation-controls" id="rotationControls">
+        <div class="control-btn" id="pauseBtn" onclick="toggleRotation()">
+          ⏸
+        </div>
+        <div class="control-btn" onclick="changeSpeed()">⚡</div>
+        <div class="control-btn" onclick="resetView()">⊙</div>
+      </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+      <div class="modal-close" onclick="closeModal()"></div>
+      <div class="modal-content">
+        <div class="modal-image" id="modalImage"></div>
+        <div class="modal-info">
+          <h2 class="modal-title" id="modalTitle">Visual Experience</h2>
+          <p class="modal-description" id="modalDescription">
+            This piece represents a journey through abstract dimensions, where
+            color and form merge to create a unique visual narrative.
+          </p>
+          <div class="modal-details" id="modalDetails">
+            <p>Type: Digital Art</p>
+            <p>Created: 2025</p>
+            <p>Dimensions: Variable</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Image URLs and metadata
+      const mediaItems = [
+        {
+          url: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          type: "image",
+          title: "Ethereal Dimensions",
+          description:
+            "A surreal exploration of light and shadow, where reality bends to imagination.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          type: "image",
+          title: "Cosmic Harmony",
+          description:
+            "The intersection of cosmic forces visualized through abstract forms.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          type: "image",
+          title: "Neural Pathways",
+          description:
+            "An artistic interpretation of consciousness and neural connections.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          type: "image",
+          title: "Quantum Dreams",
+          description: "Where quantum mechanics meets artistic expression.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          type: "image",
+          title: "Temporal Shift",
+          description: "Time visualized as a fluid, ever-changing medium.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          type: "image",
+          title: "Digital Flora",
+          description:
+            "Nature reimagined through the lens of digital evolution.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          type: "image",
+          title: "Synthetic Reality",
+          description: "The boundary between synthetic and organic dissolves.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          type: "image",
+          title: "Metamorphosis",
+          description: "Constant transformation captured in a single moment.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          type: "image",
+          title: "Luminous Echoes",
+          description: "Light patterns that echo through dimensional space.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          type: "image",
+          title: "Fractal Dreams",
+          description:
+            "Infinite patterns within patterns, endlessly repeating.",
+          details: [
+            "Type: Digital Art",
+            "Created: 2025",
+            "Medium: AI Generated",
+          ],
+        },
+        {
+          url: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+          type: "video",
+          title: "Motion in Time",
+          description: "Dynamic visual poetry captured in motion.",
+          details: ["Type: Video Art", "Created: 2025", "Duration: Variable"],
+        },
+        {
+          url: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+          type: "video",
+          title: "Fluid Dynamics",
+          description: "The beauty of fluid motion in abstract form.",
+          details: ["Type: Video Art", "Created: 2025", "Duration: Variable"],
+        },
+        {
+          url: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+          type: "video",
+          title: "Kinetic Energy",
+          description: "Energy visualized through movement and color.",
+          details: ["Type: Video Art", "Created: 2025", "Duration: Variable"],
+        },
+      ];
+
+      // Global variables
+      let isExpanded = false;
+      let isPaused = false;
+      let rotationSpeed = 60;
+      let isDragging = false;
+      let startX = 0;
+      let currentRotation = 0;
+
+      // Initialize gallery
+      function initGallery() {
+        const wrapper = document.getElementById("galleryWrapper");
+        const backgroundWrapper = document.getElementById("backgroundWrapper");
+
+        mediaItems.forEach((item, index) => {
+          // Main gallery item
+          const element = document.createElement("div");
+          element.className =
+            item.type === "video" ? "video-item" : "gallery-item";
+          element.dataset.index = index;
+
+          if (item.type === "video") {
+            element.innerHTML = `<video src="${item.url}" muted loop></video>`;
+          } else {
+            element.innerHTML = `<img src="${item.url}" alt="${item.title}">`;
+          }
+
+          element.addEventListener("click", (e) => {
+            if (!isDragging) {
+              openModal(index);
+            }
+          });
+
+          wrapper.appendChild(element);
+
+          // Background gallery item (clone)
+          const bgElement = element.cloneNode(true);
+          bgElement.style.opacity = "0.5";
+          backgroundWrapper.appendChild(bgElement);
+        });
+
+        // Initialize drag rotation
+        initDragRotation();
+      }
+
+      // Initialize drag rotation
+      function initDragRotation() {
+        const wrapper = document.getElementById("galleryWrapper");
+
+        wrapper.addEventListener("mousedown", startDrag);
+        document.addEventListener("mousemove", drag);
+        document.addEventListener("mouseup", endDrag);
+
+        wrapper.addEventListener("touchstart", (e) => startDrag(e.touches[0]));
+        document.addEventListener("touchmove", (e) => drag(e.touches[0]));
+        document.addEventListener("touchend", endDrag);
+
+        function startDrag(e) {
+          isDragging = true;
+          startX = e.clientX;
+          wrapper.classList.add("dragging");
+        }
+
+        function drag(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+          const deltaX = e.clientX - startX;
+          currentRotation += deltaX * 0.5;
+          wrapper.style.transform = `rotateY(${currentRotation}deg)`;
+          startX = e.clientX;
+        }
+
+        function endDrag() {
+          if (isDragging) {
+            isDragging = false;
+            wrapper.classList.remove("dragging");
+            setTimeout(() => {
+              isDragging = false;
+            }, 100);
+          }
+        }
+      }
+
+      // Handle scroll
+      function handleScroll() {
+        const scrollY = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const scrollProgress = Math.min(scrollY / (windowHeight * 2), 1);
+
+        // Hide/show elements
+        const heroContent = document.getElementById("heroContent");
+        const scrollIndicator = document.getElementById("scrollIndicator");
+        const rotationControls = document.getElementById("rotationControls");
+        const heroImage = document.getElementById("heroImage");
+        const galleryBackground = document.getElementById("galleryBackground");
+
+        if (scrollProgress > 0.1) {
+          heroContent.classList.add("hidden");
+          scrollIndicator.classList.add("hidden");
+        } else {
+          heroContent.classList.remove("hidden");
+          scrollIndicator.classList.remove("hidden");
+        }
+
+        // Hero image shrink effect
+        if (scrollProgress > 0.2 && scrollProgress < 0.5) {
+          heroImage.classList.add("shrink");
+        } else if (scrollProgress <= 0.2) {
+          heroImage.classList.remove("shrink");
+        }
+
+        // Show gallery after hero shrinks
+        if (scrollProgress > 0.4) {
+          rotationControls.classList.add("visible");
+          galleryBackground.classList.add("visible");
+          if (!isExpanded) {
+            expandGallery();
+          }
+        } else {
+          rotationControls.classList.remove("visible");
+          galleryBackground.classList.remove("visible");
+          if (isExpanded) {
+            collapseGallery();
+          }
+        }
+      }
+
+      // Expand gallery
+      function expandGallery() {
+        isExpanded = true;
+        const items = document.querySelectorAll(
+          ".gallery-wrapper .gallery-item, .gallery-wrapper .video-item",
+        );
+        const bgItems = document.querySelectorAll(
+          ".gallery-background .gallery-item, .gallery-background .video-item",
+        );
+        const itemCount = items.length;
+        const radius = Math.min(window.innerWidth * 0.35, 400);
+
+        // Position main gallery items
+        items.forEach((item, index) => {
+          const angle = (index / itemCount) * Math.PI * 2;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius * 0.5;
+          const z = Math.sin(angle * 2) * 200;
+
+          item.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) scale(1)`;
+          item.classList.add("visible");
+
+          // Auto-play videos
+          if (item.classList.contains("video-item")) {
+            const video = item.querySelector("video");
+            if (video) video.play();
+          }
+        });
+
+        // Position background items with larger radius
+        bgItems.forEach((item, index) => {
+          const angle = (index / itemCount) * Math.PI * 2 + Math.PI / itemCount;
+          const x = Math.cos(angle) * radius * 1.5;
+          const y = Math.sin(angle) * radius * 0.7;
+          const z = Math.sin(angle * 2) * 300;
+
+          item.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) scale(0.8)`;
+          item.classList.add("visible");
+        });
+      }
+
+      // Collapse gallery
+      function collapseGallery() {
+        isExpanded = false;
+        const items = document.querySelectorAll(".gallery-item, .video-item");
+
+        items.forEach((item) => {
+          item.style.transform = "translate(-50%, -50%) scale(0)";
+          item.classList.remove("visible");
+
+          // Pause videos
+          if (item.classList.contains("video-item")) {
+            const video = item.querySelector("video");
+            if (video) video.pause();
+          }
+        });
+      }
+
+      // Toggle rotation
+      function toggleRotation() {
+        const wrapper = document.getElementById("galleryWrapper");
+        const bgWrapper = document.getElementById("backgroundWrapper");
+        const pauseBtn = document.getElementById("pauseBtn");
+        isPaused = !isPaused;
+
+        if (isPaused) {
+          wrapper.style.animationPlayState = "paused";
+          bgWrapper.style.animationPlayState = "paused";
+          pauseBtn.innerHTML = "▶";
+          pauseBtn.classList.add("active");
+        } else {
+          wrapper.style.animationPlayState = "running";
+          bgWrapper.style.animationPlayState = "running";
+          pauseBtn.innerHTML = "⏸";
+          pauseBtn.classList.remove("active");
+        }
+      }
+
+      // Change rotation speed
+      function changeSpeed() {
+        const wrapper = document.getElementById("galleryWrapper");
+        const bgWrapper = document.getElementById("backgroundWrapper");
+        const speeds = [60, 30, 15];
+        const currentIndex = speeds.indexOf(rotationSpeed);
+        rotationSpeed = speeds[(currentIndex + 1) % speeds.length];
+        wrapper.style.animationDuration = `${rotationSpeed}s`;
+        bgWrapper.style.animationDuration = `${rotationSpeed * 1.5}s`;
+      }
+
+      // Reset view
+      function resetView() {
+        const wrapper = document.getElementById("galleryWrapper");
+        currentRotation = 0;
+        wrapper.style.transform = "rotateY(0deg)";
+        if (isPaused) toggleRotation();
+      }
+
+      // Modal functions
+      function openModal(index) {
+        const modal = document.getElementById("modal");
+        const modalImage = document.getElementById("modalImage");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalDescription = document.getElementById("modalDescription");
+        const modalDetails = document.getElementById("modalDetails");
+        const item = mediaItems[index];
+
+        modalTitle.textContent = item.title;
+        modalDescription.textContent = item.description;
+        modalDetails.innerHTML = item.details
+          .map((detail) => `<p>${detail}</p>`)
+          .join("");
+
+        if (item.type === "video") {
+          modalImage.innerHTML = `<video src="${item.url}" controls autoplay loop></video>`;
+        } else {
+          modalImage.innerHTML = `<img src="${item.url}" alt="${item.title}">`;
+        }
+
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("modal");
+        modal.classList.remove("active");
+        document.body.style.overflow = "";
+
+        const video = modal.querySelector("video");
+        if (video) video.pause();
+      }
+
+      // Event listeners
+      document.getElementById("modal").addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // Initialize
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loadingScreen").style.opacity = "0";
+          setTimeout(() => {
+            document.getElementById("loadingScreen").style.display = "none";
+          }, 1000);
+        }, 1000);
+
+        initGallery();
+      });
+
+      window.addEventListener("scroll", handleScroll);
+
+      // Smooth scroll for navigation
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      // Handle window resize
+      window.addEventListener("resize", () => {
+        if (isExpanded) expandGallery();
+      });
+    </script>
+  </body>
+</html>

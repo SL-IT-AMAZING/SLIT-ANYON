@@ -1,0 +1,1477 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spiral Gallery Experience - Enhanced</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;400;600&family=Crimson+Text:ital,wght@0,400;1,400&family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-bg: #0f0f0f;
+        --accent-color: #ff3366;
+        --text-muted: #666;
+        --text-light: #e0e0e0;
+        --transition: cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      body {
+        font-family: "Space Mono", monospace;
+        background: var(--primary-bg);
+        color: var(--text-light);
+        overflow: hidden;
+        position: relative;
+        height: 100vh;
+      }
+
+      /* Magnetic Cursor */
+      .magnetic-cursor {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        mix-blend-mode: difference;
+        transition: transform 0.15s var(--transition);
+      }
+
+      .magnetic-cursor.expanded {
+        transform: scale(3);
+      }
+
+      /* Floating Navigation */
+      .floating-nav {
+        position: fixed;
+        top: 50%;
+        right: 40px;
+        transform: translateY(-50%);
+        z-index: 1000;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 10px 0;
+      }
+
+      .floating-nav::-webkit-scrollbar {
+        width: 2px;
+      }
+
+      .floating-nav::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .floating-nav::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+        border-radius: 1px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border: 1px solid var(--text-muted);
+        border-radius: 50%;
+        margin: 15px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-dot.active {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        transform: scale(1.5);
+      }
+
+      .nav-dot:hover {
+        border-color: var(--text-light);
+      }
+
+      .nav-label {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+        color: var(--text-muted);
+      }
+
+      .nav-dot:hover .nav-label {
+        opacity: 1;
+      }
+
+      /* Spiral Container */
+      .spiral-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        perspective: 1000px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .spiral-track {
+        position: relative;
+        width: 80vw;
+        height: 80vh;
+        transform-style: preserve-3d;
+        transition: transform 1s var(--transition);
+      }
+
+      /* Gallery Cards - Increased Size */
+      .gallery-card {
+        position: absolute;
+        width: 500px;
+        height: 350px;
+        left: 50%;
+        top: 50%;
+        transform-origin: center;
+        transition: all 0.6s var(--transition);
+        cursor: pointer;
+      }
+
+      .gallery-card.focused {
+        z-index: 100;
+      }
+
+      .card-inner {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.6s ease;
+      }
+
+      .gallery-card:hover .card-inner {
+        transform: rotateY(5deg) rotateX(-3deg);
+      }
+
+      .gallery-card.focused .card-inner {
+        transform: none !important;
+      }
+
+      .card-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 15px;
+        filter: brightness(0.7) contrast(1.1);
+        transition: all 0.5s ease;
+      }
+
+      .gallery-card.active .card-media {
+        filter: brightness(1) contrast(1);
+        box-shadow: 0 20px 60px rgba(255, 51, 102, 0.3);
+      }
+
+      .gallery-card.focused .card-media {
+        filter: brightness(1) contrast(1);
+        box-shadow: 0 40px 100px rgba(255, 51, 102, 0.5);
+      }
+
+      /* Card Info - Integrated Design */
+      .card-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        border-radius: 0 0 15px 15px;
+        opacity: 0;
+        transition: all 0.5s ease;
+      }
+
+      .gallery-card.active .card-info,
+      .gallery-card.focused .card-info {
+        opacity: 1;
+      }
+
+      .card-number {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 96px;
+        color: var(--accent-color);
+        position: absolute;
+        top: -40px;
+        right: -30px;
+        opacity: 0.1;
+        transition: all 0.5s ease;
+      }
+
+      .gallery-card.active .card-number {
+        opacity: 0.3;
+        transform: translate(10px, -10px);
+      }
+
+      .gallery-card.focused .card-number {
+        opacity: 0.5;
+        font-size: 120px;
+      }
+
+      .card-title {
+        font-family: "Oswald", sans-serif;
+        font-size: 24px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        color: #fff;
+      }
+
+      .card-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.5px;
+        margin-bottom: 15px;
+      }
+
+      .card-description {
+        font-size: 13px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.6);
+        max-width: 400px;
+      }
+
+      /* Text Panels - Matched Style */
+      .text-panel {
+        position: absolute;
+        width: 500px;
+        height: 350px;
+        padding: 50px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        transition: all 0.6s var(--transition);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .text-panel:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 51, 102, 0.3);
+        transform: translateY(-5px);
+      }
+
+      .quote-text {
+        font-family: "Crimson Text", serif;
+        font-size: 32px;
+        font-style: italic;
+        line-height: 1.4;
+        margin-bottom: 20px;
+        color: var(--text-light);
+      }
+
+      .quote-author {
+        font-family: "Space Mono", monospace;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+      }
+
+      .statement-title {
+        font-family: "Oswald", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--accent-color);
+      }
+
+      .statement-text {
+        font-size: 16px;
+        line-height: 1.8;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      /* Focus Overlay */
+      .focus-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+        z-index: 50;
+      }
+
+      .focus-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* Close Button */
+      .close-focus {
+        position: fixed;
+        top: 40px;
+        right: 40px;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 101;
+      }
+
+      .close-focus.visible {
+        opacity: 1;
+      }
+
+      .close-focus:hover {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        transform: rotate(90deg);
+      }
+
+      .close-focus::before,
+      .close-focus::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 2px;
+        background: #fff;
+      }
+
+      .close-focus::before {
+        transform: rotate(45deg);
+      }
+
+      .close-focus::after {
+        transform: rotate(-45deg);
+      }
+
+      /* Section Indicator */
+      .section-indicator {
+        position: fixed;
+        top: 40px;
+        left: 40px;
+        z-index: 1000;
+      }
+
+      .section-name {
+        font-family: "Archivo Black", sans-serif;
+        font-size: 48px;
+        letter-spacing: -2px;
+        color: var(--text-light);
+        opacity: 0.1;
+        transition: all 0.5s ease;
+      }
+
+      .section-name.active {
+        opacity: 1;
+        color: var(--accent-color);
+      }
+
+      .section-number {
+        font-family: "Oswald", sans-serif;
+        font-size: 120px;
+        font-weight: 200;
+        position: absolute;
+        top: -20px;
+        left: -10px;
+        opacity: 0.05;
+        z-index: -1;
+      }
+
+      /* Progress Indicator */
+      .progress-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 1000;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--accent-color);
+        width: 10%;
+        transition: width 0.5s ease;
+      }
+
+      /* Loading Animation */
+      .loader-container {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20000;
+        transition: opacity 0.8s ease;
+      }
+
+      .loader-container.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-spiral {
+        width: 100px;
+        height: 100px;
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Control Hints */
+      .control-hints {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 30px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        z-index: 40;
+      }
+
+      .hint {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .hint-icon {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--text-muted);
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .magnetic-cursor {
+          display: none;
+        }
+
+        .floating-nav {
+          right: 20px;
+        }
+
+        .gallery-card,
+        .text-panel {
+          width: 350px;
+          height: 250px;
+        }
+
+        .text-panel {
+          padding: 30px;
+        }
+
+        .section-name {
+          font-size: 32px;
+        }
+
+        .control-hints {
+          flex-direction: column;
+          gap: 10px;
+          bottom: 20px;
+        }
+
+        .quote-text {
+          font-size: 24px;
+        }
+
+        .statement-title {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Magnetic Cursor -->
+    <div class="magnetic-cursor"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader-container" id="loader">
+      <div class="loader-spiral"></div>
+    </div>
+
+    <!-- Focus Overlay -->
+    <div class="focus-overlay" id="focusOverlay"></div>
+
+    <!-- Close Button -->
+    <div class="close-focus" id="closeButton"></div>
+
+    <!-- Section Indicator -->
+    <div class="section-indicator">
+      <div class="section-number" id="sectionNumber">01</div>
+      <h1 class="section-name" id="sectionName">FEATURED</h1>
+    </div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+      <div class="nav-dot active" onclick="navigateToSection(0)">
+        <span class="nav-label">Featured</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(1)">
+        <span class="nav-label">Collections</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(2)">
+        <span class="nav-label">Artists</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(3)">
+        <span class="nav-label">Exhibitions</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(4)">
+        <span class="nav-label">Archive</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(5)">
+        <span class="nav-label">Digital Art</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(6)">
+        <span class="nav-label">Photography</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(7)">
+        <span class="nav-label">Video Art</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(8)">
+        <span class="nav-label">Installations</span>
+      </div>
+      <div class="nav-dot" onclick="navigateToSection(9)">
+        <span class="nav-label">About</span>
+      </div>
+    </nav>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Spiral Container -->
+    <div class="spiral-container">
+      <div class="spiral-track" id="spiralTrack">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Control Hints -->
+    <div class="control-hints">
+      <div class="hint">
+        <div class="hint-icon">↕</div>
+        <span>Scroll to Navigate</span>
+      </div>
+      <div class="hint">
+        <div class="hint-icon">⎵</div>
+        <span>Click to Focus</span>
+      </div>
+    </div>
+
+    <script>
+      // Extended Gallery Data Structure with Descriptions
+      const sections = [
+        {
+          name: "FEATURED",
+          items: [
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png",
+              title: "Digital Horizons",
+              subtitle: "Contemporary Vision",
+              description:
+                "An exploration of digital landscapes that blur the boundaries between reality and imagination, created using advanced AI algorithms and human creativity.",
+            },
+            {
+              type: "quote",
+              text: "Art is the lie that enables us to realize the truth.",
+              author: "Pablo Picasso",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4",
+              title: "Fluid Motion",
+              subtitle: "Video Installation",
+              description:
+                "A mesmerizing study of movement and form, capturing the ephemeral nature of liquid dynamics in high-definition slow motion.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png",
+              title: "Abstract Reality",
+              subtitle: "Mixed Media",
+              description:
+                "Combining traditional painting techniques with digital manipulation to create a unique visual language that speaks to our contemporary experience.",
+            },
+            {
+              type: "statement",
+              title: "New Perspectives",
+              text: "Exploring the intersection of technology and human expression through innovative artistic mediums.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png",
+              title: "Featured Work",
+              subtitle: "Editor's Choice",
+              description:
+                "Selected for its innovative approach to color theory and composition, this piece represents the cutting edge of digital art practice.",
+            },
+          ],
+        },
+        {
+          name: "COLLECTIONS",
+          items: [
+            {
+              type: "statement",
+              title: "2024 Collection",
+              text: "A curated selection of works that define contemporary digital artistry.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png",
+              title: "Chromatic Dreams",
+              subtitle: "Digital Art",
+              description:
+                "Vibrant explorations of color psychology and emotional resonance through algorithmic color generation.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+              title: "Nature Reimagined",
+              subtitle: "Environmental Art",
+              description:
+                "A powerful commentary on climate change, reimagining natural forms through a digital lens.",
+            },
+            {
+              type: "quote",
+              text: "Every artist was first an amateur.",
+              author: "Ralph Waldo Emerson",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png",
+              title: "Minimal Forms",
+              subtitle: "Sculptural Series",
+              description:
+                "Inspired by brutalist architecture and minimalist philosophy, these works explore the beauty of simple geometric forms.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4",
+              title: "Animated Dreams",
+              subtitle: "Motion Graphics",
+              description:
+                "Surreal animations that bring subconscious imagery to life through fluid transformations.",
+            },
+            {
+              type: "statement",
+              title: "Curated Excellence",
+              text: "Each piece selected for its unique contribution to the contemporary art dialogue.",
+            },
+          ],
+        },
+        {
+          name: "ARTISTS",
+          items: [
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png",
+              title: "Emerging Voices",
+              subtitle: "New Generation",
+              description:
+                "Featuring breakthrough artists who are redefining the boundaries of digital expression.",
+            },
+            {
+              type: "statement",
+              title: "Featured Artists",
+              text: "Showcasing visionaries who challenge conventions and redefine artistic boundaries.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4",
+              title: "Artist Profile",
+              subtitle: "Documentary",
+              description:
+                "An intimate look into the creative process of our featured artist, exploring their journey and inspiration.",
+            },
+            {
+              type: "quote",
+              text: "The artist is a receptacle for emotions that come from all over the place.",
+              author: "Pablo Picasso",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png",
+              title: "Master Works",
+              subtitle: "Established Artist",
+              description:
+                "A retrospective collection from an artist who has shaped the digital art movement over two decades.",
+            },
+            {
+              type: "statement",
+              title: "Artist Residency",
+              text: "Supporting creative development through our international residency program.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4",
+              title: "Studio Visit",
+              subtitle: "Behind the Scenes",
+              description:
+                "Exclusive access to the artist's creative space and working methods.",
+            },
+          ],
+        },
+        {
+          name: "EXHIBITIONS",
+          items: [
+            {
+              type: "statement",
+              title: "Current Exhibition",
+              text: "Immersive installations that transform space and challenge perception.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png",
+              title: "Main Gallery",
+              subtitle: "Now Showing",
+              description:
+                "Our flagship exhibition space featuring rotating installations from international artists.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4",
+              title: "Video Exhibition",
+              subtitle: "Screening Room",
+              description:
+                "Continuous screening of experimental video works in our dedicated cinema space.",
+            },
+            {
+              type: "quote",
+              text: "Art washes away from the soul the dust of everyday life.",
+              author: "Pablo Picasso",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_3.png",
+              title: "Group Show",
+              subtitle: "Collective Vision",
+              description:
+                "A collaborative exhibition bringing together diverse perspectives on contemporary themes.",
+            },
+            {
+              type: "statement",
+              title: "Upcoming Shows",
+              text: "Preview our exciting lineup of exhibitions for the coming season.",
+            },
+          ],
+        },
+        {
+          name: "ARCHIVE",
+          items: [
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png",
+              title: "Historical Works",
+              subtitle: "2020-2023",
+              description:
+                "Documenting the evolution of our gallery and the artists we've showcased over the years.",
+            },
+            {
+              type: "statement",
+              title: "Preserving Legacy",
+              text: "Four years of groundbreaking exhibitions archived for future generations.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4",
+              title: "Archive Footage",
+              subtitle: "Documentation",
+              description:
+                "Rare footage from past exhibitions and artist talks, preserving important moments in art history.",
+            },
+            {
+              type: "quote",
+              text: "The purpose of art is washing the dust of daily life off our souls.",
+              author: "Pablo Picasso",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png",
+              title: "Classic Collection",
+              subtitle: "Permanent Archive",
+              description:
+                "Seminal works that have defined our gallery's vision and mission.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png",
+              title: "Research Materials",
+              subtitle: "Academic Resource",
+              description:
+                "Comprehensive documentation available for researchers and art historians.",
+            },
+            {
+              type: "statement",
+              title: "Digital Preservation",
+              text: "Ensuring art history remains accessible through advanced archival technologies.",
+            },
+          ],
+        },
+        {
+          name: "DIGITAL ART",
+          items: [
+            {
+              type: "statement",
+              title: "Digital Revolution",
+              text: "Exploring the frontiers of art in the digital age through NFTs, AI, and generative algorithms.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png",
+              title: "Generative Art",
+              subtitle: "Algorithm-based Creation",
+              description:
+                "Complex mathematical algorithms create unique, never-repeating visual patterns.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4",
+              title: "AI Collaboration",
+              subtitle: "Human-Machine Art",
+              description:
+                "Exploring the creative potential of artificial intelligence as a collaborative partner.",
+            },
+            {
+              type: "quote",
+              text: "Technology is the canvas of the 21st century artist.",
+              author: "Digital Art Manifesto",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png",
+              title: "NFT Collection",
+              subtitle: "Blockchain Art",
+              description:
+                "Pioneering works in the NFT space, exploring ownership and authenticity in digital art.",
+            },
+            {
+              type: "statement",
+              title: "Virtual Galleries",
+              text: "Experience art beyond physical boundaries in our metaverse exhibitions.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4",
+              title: "Interactive Media",
+              subtitle: "Responsive Installations",
+              description:
+                "Artworks that respond to viewer presence and interaction in real-time.",
+            },
+          ],
+        },
+        {
+          name: "PHOTOGRAPHY",
+          items: [
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png",
+              title: "Urban Landscapes",
+              subtitle: "City Documentation",
+              description:
+                "Capturing the raw energy and hidden beauty of metropolitan life through a unique lens.",
+            },
+            {
+              type: "statement",
+              title: "Lens & Vision",
+              text: "Contemporary photography that captures the essence of our changing world.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png",
+              title: "Portrait Series",
+              subtitle: "Human Stories",
+              description:
+                "Intimate portraits that reveal the depth and complexity of human emotion.",
+            },
+            {
+              type: "quote",
+              text: "Photography is the story I fail to put into words.",
+              author: "Destin Sparks",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png",
+              title: "Nature Studies",
+              subtitle: "Environmental Focus",
+              description:
+                "Documenting the fragile beauty of our natural world and the impact of climate change.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_3.png",
+              title: "Abstract Photography",
+              subtitle: "Experimental Vision",
+              description:
+                "Pushing the boundaries of photographic technique to create abstract visual poetry.",
+            },
+            {
+              type: "statement",
+              title: "Documentary Projects",
+              text: "Long-term photographic investigations into social and cultural phenomena.",
+            },
+          ],
+        },
+        {
+          name: "VIDEO ART",
+          items: [
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+              title: "Time-Based Media",
+              subtitle: "Experimental Film",
+              description:
+                "Non-linear narratives that challenge conventional storytelling through innovative editing.",
+            },
+            {
+              type: "statement",
+              title: "Moving Images",
+              text: "Video art that challenges traditional narrative structures and visual conventions.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4",
+              title: "Loop Studies",
+              subtitle: "Infinite Cycles",
+              description:
+                "Meditative works exploring repetition, rhythm, and the nature of time.",
+            },
+            {
+              type: "quote",
+              text: "Video art is not about the medium, but about time and perception.",
+              author: "Bill Viola",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4",
+              title: "Performance Film",
+              subtitle: "Body & Movement",
+              description:
+                "Documenting ephemeral performance art through the permanence of video.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4",
+              title: "Digital Narratives",
+              subtitle: "New Storytelling",
+              description:
+                "Innovative approaches to narrative using digital effects and non-traditional structures.",
+            },
+            {
+              type: "statement",
+              title: "Screening Program",
+              text: "Monthly presentations of groundbreaking video art from around the world.",
+            },
+          ],
+        },
+        {
+          name: "INSTALLATIONS",
+          items: [
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png",
+              title: "Spatial Interventions",
+              subtitle: "Site-Specific Art",
+              description:
+                "Large-scale works that transform architectural spaces into immersive experiences.",
+            },
+            {
+              type: "statement",
+              title: "Immersive Spaces",
+              text: "Large-scale installations that transform gallery spaces into experiential environments.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4",
+              title: "Light Installation",
+              subtitle: "Luminous Environment",
+              description:
+                "Dynamic light sculptures that respond to environmental conditions and viewer presence.",
+            },
+            {
+              type: "quote",
+              text: "Installation art is about creating a universe for the viewer to enter.",
+              author: "Ilya Kabakov",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png",
+              title: "Sound Sculpture",
+              subtitle: "Audio-Visual Experience",
+              description:
+                "Multi-sensory installations combining sound, light, and physical form.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png",
+              title: "Interactive Environment",
+              subtitle: "Participatory Art",
+              description:
+                "Installations that require viewer participation to complete the artistic experience.",
+            },
+            {
+              type: "video",
+              src: "https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4",
+              title: "Kinetic Installation",
+              subtitle: "Movement & Space",
+              description:
+                "Mechanical sculptures that explore the poetry of movement and transformation.",
+            },
+          ],
+        },
+        {
+          name: "ABOUT",
+          items: [
+            {
+              type: "statement",
+              title: "Our Mission",
+              text: "To create a platform where art transcends traditional boundaries and connects with audiences globally.",
+            },
+            {
+              type: "image",
+              src: "https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_3.png",
+              title: "Gallery Space",
+              subtitle: "Our Home",
+              description:
+                "A converted industrial space that provides the perfect backdrop for contemporary art.",
+            },
+            {
+              type: "quote",
+              text: "We believe in the transformative power of art to shape culture and consciousness.",
+              author: "Gallery Director",
+            },
+            {
+              type: "statement",
+              title: "Visit Us",
+              text: "Open Tuesday to Sunday, 10:00 AM - 8:00 PM. Free admission on first Sundays.",
+            },
+            {
+              type: "statement",
+              title: "Contact",
+              text: "For inquiries about exhibitions, collections, or collaborations, reach out to our curatorial team.",
+            },
+            {
+              type: "statement",
+              title: "Support",
+              text: "Join our community of art patrons and help us continue our mission of artistic innovation.",
+            },
+          ],
+        },
+      ];
+
+      let currentSection = 0;
+      let itemIndex = 0;
+      let isAnimating = false;
+      let focusedCard = null;
+
+      // Initialize
+      function init() {
+        renderSection(currentSection);
+        setupCursor();
+        setupScrollNavigation();
+        setupCloseButton();
+        updateProgress();
+        hideLoader();
+      }
+
+      // Update Progress Bar
+      function updateProgress() {
+        const progress = ((currentSection + 1) / sections.length) * 100;
+        document.getElementById("progressFill").style.width = `${progress}%`;
+      }
+
+      // Render Section Content
+      function renderSection(sectionIndex) {
+        const track = document.getElementById("spiralTrack");
+        const section = sections[sectionIndex];
+        track.innerHTML = "";
+
+        section.items.forEach((item, index) => {
+          const angle =
+            (((index * 360) / section.items.length) * Math.PI) / 180;
+          const radius = 400;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          const y = (index - section.items.length / 2) * 80;
+
+          let element;
+
+          if (item.type === "image" || item.type === "video") {
+            element = createGalleryCard(item, index);
+          } else {
+            element = createTextPanel(item);
+          }
+
+          element.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateY(${(-angle * 180) / Math.PI}deg)`;
+          element.dataset.originalTransform = element.style.transform;
+          track.appendChild(element);
+        });
+
+        updateSectionInfo(sectionIndex);
+        rotateToItem(0);
+      }
+
+      // Create Gallery Card with Click Handler
+      function createGalleryCard(item, index) {
+        const card = document.createElement("div");
+        card.className = "gallery-card";
+        card.innerHTML = `
+                <div class="card-inner">
+                    <span class="card-number">${String(index + 1).padStart(2, "0")}</span>
+                    ${
+                      item.type === "image"
+                        ? `<img class="card-media" src="${item.src}" alt="${item.title}">`
+                        : `<video class="card-media" autoplay muted loop playsinline>
+                            <source src="${item.src}" type="video/mp4">
+                        </video>`
+                    }
+                    <div class="card-info">
+                        <h3 class="card-title">${item.title}</h3>
+                        <p class="card-subtitle">${item.subtitle}</p>
+                        ${item.description ? `<p class="card-description">${item.description}</p>` : ""}
+                    </div>
+                </div>
+            `;
+
+        // Add click handler for focus view
+        card.addEventListener("click", () => focusCard(card));
+
+        return card;
+      }
+
+      // Create Text Panel
+      function createTextPanel(item) {
+        const panel = document.createElement("div");
+        panel.className = "text-panel gallery-card";
+
+        if (item.type === "quote") {
+          panel.innerHTML = `
+                    <div class="quote-text">"${item.text}"</div>
+                    <div class="quote-author">— ${item.author}</div>
+                `;
+        } else {
+          panel.innerHTML = `
+                    <h3 class="statement-title">${item.title}</h3>
+                    <p class="statement-text">${item.text}</p>
+                `;
+        }
+
+        return panel;
+      }
+
+      // Focus Card Function
+      function focusCard(card) {
+        if (focusedCard || isAnimating) return;
+
+        focusedCard = card;
+        card.classList.add("focused");
+
+        // Store original position
+        const rect = card.getBoundingClientRect();
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        // Calculate translation to center
+        const translateX = centerX - (rect.left + rect.width / 2);
+        const translateY = centerY - (rect.top + rect.height / 2);
+
+        // Apply centering transform
+        card.style.transform = `translate(${translateX}px, ${translateY}px) scale(1.2)`;
+        card.style.zIndex = "100";
+
+        // Show overlay and close button
+        document.getElementById("focusOverlay").classList.add("active");
+        document.getElementById("closeButton").classList.add("visible");
+
+        // Disable scroll
+        document.body.style.overflow = "hidden";
+      }
+
+      // Close Focus View
+      function closeFocus() {
+        if (!focusedCard) return;
+
+        // Restore original transform
+        focusedCard.style.transform = focusedCard.dataset.originalTransform;
+        focusedCard.style.zIndex = "";
+        focusedCard.classList.remove("focused");
+
+        // Hide overlay and close button
+        document.getElementById("focusOverlay").classList.remove("active");
+        document.getElementById("closeButton").classList.remove("visible");
+
+        // Re-enable scroll
+        document.body.style.overflow = "";
+
+        focusedCard = null;
+      }
+
+      // Setup Close Button
+      function setupCloseButton() {
+        const closeButton = document.getElementById("closeButton");
+        const overlay = document.getElementById("focusOverlay");
+
+        closeButton.addEventListener("click", closeFocus);
+        overlay.addEventListener("click", closeFocus);
+
+        // ESC key to close
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && focusedCard) {
+            closeFocus();
+          }
+        });
+      }
+
+      // Rotate to Item
+      function rotateToItem(index) {
+        const track = document.getElementById("spiralTrack");
+        const section = sections[currentSection];
+        const rotation = -index * (360 / section.items.length);
+        track.style.transform = `rotateY(${rotation}deg)`;
+
+        // Update active states
+        const cards = document.querySelectorAll(".gallery-card");
+        cards.forEach((card, i) => {
+          card.classList.toggle("active", i === index);
+        });
+      }
+
+      // Navigate to Section
+      function navigateToSection(index) {
+        if (isAnimating || index === currentSection || focusedCard) return;
+
+        isAnimating = true;
+        currentSection = index;
+        itemIndex = 0;
+
+        // Update navigation dots
+        document.querySelectorAll(".nav-dot").forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+
+        // Update progress
+        updateProgress();
+
+        // Fade transition
+        const track = document.getElementById("spiralTrack");
+        track.style.opacity = "0";
+
+        setTimeout(() => {
+          renderSection(index);
+          track.style.opacity = "1";
+          isAnimating = false;
+        }, 500);
+      }
+
+      // Update Section Info
+      function updateSectionInfo(index) {
+        document.getElementById("sectionNumber").textContent = String(
+          index + 1,
+        ).padStart(2, "0");
+        document.getElementById("sectionName").textContent =
+          sections[index].name;
+
+        // Animate section name
+        const sectionName = document.getElementById("sectionName");
+        sectionName.classList.remove("active");
+        setTimeout(() => sectionName.classList.add("active"), 100);
+      }
+
+      // Setup Cursor
+      function setupCursor() {
+        const cursor = document.querySelector(".magnetic-cursor");
+        let mouseX = 0,
+          mouseY = 0;
+        let cursorX = 0,
+          cursorY = 0;
+
+        document.addEventListener("mousemove", (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+          cursorX += (mouseX - cursorX) * 0.1;
+          cursorY += (mouseY - cursorY) * 0.1;
+
+          cursor.style.left = cursorX + "px";
+          cursor.style.top = cursorY + "px";
+
+          requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Magnetic effect on hover
+        document.addEventListener("mouseover", (e) => {
+          if (
+            e.target.closest(".gallery-card") ||
+            e.target.closest(".nav-dot")
+          ) {
+            cursor.classList.add("expanded");
+          }
+        });
+
+        document.addEventListener("mouseout", (e) => {
+          if (
+            e.target.closest(".gallery-card") ||
+            e.target.closest(".nav-dot")
+          ) {
+            cursor.classList.remove("expanded");
+          }
+        });
+      }
+
+      // Setup Scroll Navigation
+      function setupScrollNavigation() {
+        let scrollTimeout;
+
+        document.addEventListener("wheel", (e) => {
+          if (isAnimating || focusedCard) return;
+
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            const section = sections[currentSection];
+
+            if (e.deltaY > 0) {
+              // Scroll down
+              if (itemIndex < section.items.length - 1) {
+                itemIndex++;
+                rotateToItem(itemIndex);
+              } else if (currentSection < sections.length - 1) {
+                navigateToSection(currentSection + 1);
+              }
+            } else {
+              // Scroll up
+              if (itemIndex > 0) {
+                itemIndex--;
+                rotateToItem(itemIndex);
+              } else if (currentSection > 0) {
+                navigateToSection(currentSection - 1);
+              }
+            }
+          }, 50);
+        });
+
+        // Keyboard navigation
+        document.addEventListener("keydown", (e) => {
+          if (focusedCard) return;
+
+          if (
+            e.key === "ArrowRight" &&
+            itemIndex < sections[currentSection].items.length - 1
+          ) {
+            itemIndex++;
+            rotateToItem(itemIndex);
+          } else if (e.key === "ArrowLeft" && itemIndex > 0) {
+            itemIndex--;
+            rotateToItem(itemIndex);
+          } else if (
+            e.key === "ArrowDown" &&
+            currentSection < sections.length - 1
+          ) {
+            navigateToSection(currentSection + 1);
+          } else if (e.key === "ArrowUp" && currentSection > 0) {
+            navigateToSection(currentSection - 1);
+          }
+        });
+
+        // Touch support
+        let touchStartY = 0;
+        let touchStartX = 0;
+
+        document.addEventListener("touchstart", (e) => {
+          touchStartY = e.touches[0].clientY;
+          touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener("touchend", (e) => {
+          if (focusedCard) return;
+
+          const touchEndY = e.changedTouches[0].clientY;
+          const touchEndX = e.changedTouches[0].clientX;
+          const diffY = touchStartY - touchEndY;
+          const diffX = touchStartX - touchEndX;
+
+          if (Math.abs(diffY) > Math.abs(diffX)) {
+            // Vertical swipe
+            if (Math.abs(diffY) > 50) {
+              if (diffY > 0 && currentSection < sections.length - 1) {
+                navigateToSection(currentSection + 1);
+              } else if (diffY < 0 && currentSection > 0) {
+                navigateToSection(currentSection - 1);
+              }
+            }
+          } else {
+            // Horizontal swipe
+            if (Math.abs(diffX) > 50) {
+              const section = sections[currentSection];
+              if (diffX > 0 && itemIndex < section.items.length - 1) {
+                itemIndex++;
+                rotateToItem(itemIndex);
+              } else if (diffX < 0 && itemIndex > 0) {
+                itemIndex--;
+                rotateToItem(itemIndex);
+              }
+            }
+          }
+        });
+      }
+
+      // Hide Loader
+      function hideLoader() {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      }
+
+      // Initialize on load
+      window.addEventListener("load", init);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1812 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typography & Mathematics - An Artistic Journey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary-color: #0a0a0a;
+        --accent-color: #ff6b6b;
+        --light-accent: #4ecdc4;
+        --text-light: #f7f7f7;
+        --golden-ratio: 1.618;
+        --fibonacci-1: 1;
+        --fibonacci-2: 1;
+        --fibonacci-3: 2;
+        --fibonacci-5: 5;
+        --fibonacci-8: 8;
+        --fibonacci-13: 13;
+        --fibonacci-21: 21;
+        --fibonacci-34: 34;
+        --fibonacci-55: 55;
+        --fibonacci-89: 89;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Crimson Text", serif;
+        background-color: var(--primary-color);
+        color: var(--text-light);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      .custom-cursor {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.1s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-dot {
+        position: fixed;
+        width: 4px;
+        height: 4px;
+        background-color: var(--light-accent);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+      }
+
+      .navigation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: linear-gradient(
+          180deg,
+          rgba(10, 10, 10, 0.9) 0%,
+          transparent 100%
+        );
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-21) * 1px + 1vw);
+        letter-spacing: 3px;
+        color: var(--accent-color);
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        color: var(--light-accent);
+        overflow: hidden;
+        transition: width 0.5s ease;
+      }
+
+      .logo:hover::before {
+        width: 100%;
+      }
+
+      .nav-menu {
+        display: flex;
+        list-style: none;
+        gap: calc(var(--fibonacci-34) * 1px);
+      }
+
+      .nav-item {
+        font-family: "Space Mono", monospace;
+        font-size: 14px;
+        color: var(--text-light);
+        text-decoration: none;
+        position: relative;
+        transition: color 0.3s ease;
+      }
+
+      .nav-item::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--accent-color);
+        transition: width 0.3s ease;
+      }
+
+      .nav-item:hover::after {
+        width: 100%;
+      }
+
+      .hero-section {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+      }
+
+      .hero-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        max-width: 1200px;
+        padding: 0 40px;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: calc(var(--fibonacci-55) * 1px + 3vw);
+        font-weight: 900;
+        line-height: 0.9;
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+        position: relative;
+        display: inline-block;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        animation: titleReveal 1s ease-out forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+        opacity: 0;
+        transform: translateY(50px) rotateX(90deg);
+      }
+
+      @keyframes titleReveal {
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateX(0);
+        }
+      }
+
+      .hero-subtitle {
+        font-family: "Space Mono", monospace;
+        font-size: calc(var(--fibonacci-13) * 1px + 0.5vw);
+        letter-spacing: 5px;
+        opacity: 0.8;
+        margin-bottom: calc(var(--fibonacci-34) * 1px);
+        animation: fadeInUp 1s ease-out 0.8s forwards;
+        opacity: 0;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 0.8;
+          transform: translateY(0);
+        }
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: calc(var(--fibonacci-13) * 1px) calc(var(--fibonacci-34) * 1px);
+        font-family: "Bebas Neue", cursive;
+        font-size: 18px;
+        letter-spacing: 2px;
+        color: var(--primary-color);
+        background-color: var(--accent-color);
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: color 0.3s ease;
+        animation: fadeInUp 1s ease-out 1s forwards;
+        opacity: 0;
+      }
+
+      .cta-button::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background-color: var(--light-accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s ease,
+          height 0.6s ease;
+      }
+
+      .cta-button:hover {
+        color: var(--text-light);
+      }
+
+      .cta-button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .cta-button span {
+        position: relative;
+        z-index: 1;
+      }
+
+      .floating-elements {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+
+      .floating-shape {
+        position: absolute;
+        opacity: 0.1;
+      }
+
+      .shape-1 {
+        width: calc(var(--fibonacci-89) * 1px);
+        height: calc(var(--fibonacci-89) * 1px);
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        top: 10%;
+        left: 5%;
+        animation: float1 20s infinite ease-in-out;
+      }
+
+      .shape-2 {
+        width: calc(var(--fibonacci-55) * 1px);
+        height: calc(var(--fibonacci-55) * 1px);
+        background-color: var(--light-accent);
+        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        top: 70%;
+        right: 10%;
+        animation: float2 15s infinite ease-in-out;
+      }
+
+      .shape-3 {
+        width: calc(var(--fibonacci-144) * 1px);
+        height: calc(var(--fibonacci-34) * 1px);
+        border: 1px solid var(--text-light);
+        transform: rotate(45deg);
+        top: 40%;
+        right: 20%;
+        animation: float3 25s infinite ease-in-out;
+      }
+
+      @keyframes float1 {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        33% {
+          transform: translate(30px, -30px) rotate(120deg);
+        }
+        66% {
+          transform: translate(-20px, 20px) rotate(240deg);
+        }
+      }
+
+      @keyframes float2 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(-40px, -40px) scale(1.2);
+        }
+      }
+
+      @keyframes float3 {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(45deg);
+        }
+        25% {
+          transform: translate(20px, 30px) rotate(90deg);
+        }
+        50% {
+          transform: translate(-30px, 10px) rotate(180deg);
+        }
+        75% {
+          transform: translate(10px, -20px) rotate(270deg);
+        }
+      }
+
+      .gallery-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        position: relative;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: calc(var(--fibonacci-55) * 1px);
+      }
+
+      .section-title {
+        font-family: "Playfair Display", serif;
+        font-size: calc(var(--fibonacci-34) * 1px + 2vw);
+        font-weight: 700;
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+        position: relative;
+        display: inline-block;
+      }
+
+      .section-title::before,
+      .section-title::after {
+        content: "";
+        position: absolute;
+        width: calc(var(--fibonacci-55) * 1px);
+        height: 2px;
+        background-color: var(--accent-color);
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .section-title::before {
+        left: calc(-1 * var(--fibonacci-89) * 1px);
+      }
+
+      .section-title::after {
+        right: calc(-1 * var(--fibonacci-89) * 1px);
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: calc(var(--fibonacci-21) * 1px);
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: var(--golden-ratio);
+        cursor: pointer;
+        transform: scale(1);
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover {
+        transform: scale(1.05);
+        z-index: 10;
+      }
+
+      .gallery-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover .gallery-image {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(10, 10, 10, 0.8) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: calc(var(--fibonacci-21) * 1px);
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-info {
+        transform: translateY(20px);
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover .gallery-info {
+        transform: translateY(0);
+      }
+
+      .gallery-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-21) * 1px);
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+      }
+
+      .gallery-description {
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .typography-showcase {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          #1a1a1a 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+
+      .typography-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: calc(var(--fibonacci-34) * 1px);
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .typography-item {
+        padding: calc(var(--fibonacci-34) * 1px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .typography-item::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--light-accent)
+        );
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+      }
+
+      .typography-item:hover::before {
+        opacity: 1;
+      }
+
+      .typography-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+      }
+
+      .type-display {
+        font-family: "Playfair Display", serif;
+        font-size: calc(var(--fibonacci-55) * 1px);
+        font-weight: 900;
+        line-height: 0.9;
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--light-accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .type-description {
+        font-family: "Crimson Text", serif;
+        font-size: 16px;
+        line-height: 1.6;
+        opacity: 0.8;
+        margin-bottom: calc(var(--fibonacci-13) * 1px);
+      }
+
+      .type-example {
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        padding: calc(var(--fibonacci-13) * 1px);
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+
+      .interactive-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        text-align: center;
+        position: relative;
+      }
+
+      .canvas-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        position: relative;
+        height: 500px;
+        border: 2px solid var(--accent-color);
+        overflow: hidden;
+        cursor: crosshair;
+      }
+
+      #particleCanvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .canvas-info {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Space Mono", monospace;
+        font-size: 14px;
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .quote-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        background-color: #0f0f0f;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .quote-container {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .quote-text {
+        font-family: "Playfair Display", serif;
+        font-size: calc(var(--fibonacci-34) * 1px + 1vw);
+        font-style: italic;
+        line-height: 1.4;
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+        position: relative;
+      }
+
+      .quote-text::before,
+      .quote-text::after {
+        font-size: calc(var(--fibonacci-55) * 1px);
+        color: var(--accent-color);
+        opacity: 0.3;
+        position: absolute;
+      }
+
+      .quote-text::before {
+        content: '"';
+        top: -20px;
+        left: -40px;
+      }
+
+      .quote-text::after {
+        content: '"';
+        bottom: -40px;
+        right: -40px;
+      }
+
+      .quote-author {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-21) * 1px);
+        letter-spacing: 3px;
+        color: var(--light-accent);
+      }
+
+      .contact-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        background: linear-gradient(
+          180deg,
+          var(--primary-color) 0%,
+          #000000 100%
+        );
+      }
+
+      .contact-container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .contact-form {
+        margin-top: calc(var(--fibonacci-34) * 1px);
+      }
+
+      .form-group {
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+        text-align: left;
+      }
+
+      .form-label {
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: calc(var(--fibonacci-8) * 1px);
+        display: block;
+        color: var(--light-accent);
+      }
+
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: calc(var(--fibonacci-13) * 1px);
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        font-family: "Crimson Text", serif;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .form-input:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .form-textarea {
+        min-height: 150px;
+        resize: vertical;
+      }
+
+      .submit-button {
+        display: inline-block;
+        padding: calc(var(--fibonacci-13) * 1px) calc(var(--fibonacci-55) * 1px);
+        font-family: "Bebas Neue", cursive;
+        font-size: 18px;
+        letter-spacing: 3px;
+        color: var(--primary-color);
+        background-color: var(--accent-color);
+        border: none;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-top: calc(var(--fibonacci-21) * 1px);
+      }
+
+      .submit-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+      }
+
+      .footer {
+        padding: calc(var(--fibonacci-34) * 1px) 40px;
+        background-color: #000000;
+        text-align: center;
+      }
+
+      .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: calc(var(--fibonacci-21) * 1px);
+        margin-bottom: calc(var(--fibonacci-21) * 1px);
+      }
+
+      .social-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--accent-color);
+        border-radius: 50%;
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .social-link:hover {
+        background-color: var(--accent-color);
+        color: var(--primary-color);
+        transform: translateY(-3px);
+      }
+
+      .footer-text {
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        opacity: 0.6;
+      }
+
+      .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+
+      .scroll-indicator svg {
+        width: 30px;
+        height: 30px;
+        stroke: var(--accent-color);
+        stroke-width: 2;
+        fill: none;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        40% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+        60% {
+          transform: translateX(-50%) translateY(-5px);
+        }
+      }
+
+      .mathematical-pattern {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.03;
+      }
+
+      .pattern-line {
+        position: absolute;
+        background-color: var(--text-light);
+        transform-origin: center;
+      }
+
+      @media (max-width: 768px) {
+        .nav-menu {
+          display: none;
+        }
+
+        .hero-title {
+          font-size: calc(var(--fibonacci-34) * 1px + 5vw);
+        }
+
+        .hero-subtitle {
+          font-size: calc(var(--fibonacci-8) * 1px + 2vw);
+          letter-spacing: 2px;
+        }
+
+        .gallery-grid {
+          grid-template-columns: 1fr;
+          gap: calc(var(--fibonacci-13) * 1px);
+        }
+
+        .typography-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .section-title::before,
+        .section-title::after {
+          display: none;
+        }
+
+        .quote-text::before,
+        .quote-text::after {
+          font-size: calc(var(--fibonacci-34) * 1px);
+        }
+
+        .canvas-container {
+          height: 300px;
+        }
+
+        body {
+          cursor: default;
+        }
+
+        .custom-cursor,
+        .cursor-dot {
+          display: none;
+        }
+      }
+
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--primary-color);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease;
+      }
+
+      .loading-content {
+        text-align: center;
+      }
+
+      .loading-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-34) * 1px);
+        letter-spacing: 5px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .loading-bar {
+        width: 200px;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.1);
+        margin: 20px auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loading-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background-color: var(--accent-color);
+        animation: loadingAnimation 2s ease-in-out infinite;
+      }
+
+      @keyframes loadingAnimation {
+        0% {
+          width: 0;
+          left: 0;
+        }
+        50% {
+          width: 100%;
+          left: 0;
+        }
+        100% {
+          width: 0;
+          left: 100%;
+        }
+      }
+
+      .parallax-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .reveal-text {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease;
+      }
+
+      .reveal-text.revealed {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .glitch-text {
+        position: relative;
+        display: inline-block;
+      }
+
+      .glitch-text::before,
+      .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch-text::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--accent-color);
+        z-index: -1;
+      }
+
+      .glitch-text::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--light-accent);
+        z-index: -2;
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 30% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(10% 0 60% 0);
+          transform: translate(-2px, 1px);
+        }
+        80% {
+          clip-path: inset(80% 0 5% 0);
+          transform: translate(1px, -1px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(60% 0 10% 0);
+          transform: translate(2px, -1px);
+        }
+        40% {
+          clip-path: inset(20% 0 40% 0);
+          transform: translate(-2px, 2px);
+        }
+        60% {
+          clip-path: inset(30% 0 30% 0);
+          transform: translate(1px, -2px);
+        }
+        80% {
+          clip-path: inset(10% 0 70% 0);
+          transform: translate(-1px, 1px);
+        }
+      }
+
+      .number-counter {
+        font-family: "Space Mono", monospace;
+        font-size: calc(var(--fibonacci-34) * 1px);
+        color: var(--accent-color);
+        font-weight: 700;
+      }
+
+      .stats-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        background-color: #0a0a0a;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: calc(var(--fibonacci-34) * 1px);
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: calc(var(--fibonacci-21) * 1px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 107, 107, 0.1),
+          transparent
+        );
+        transition: left 0.8s ease;
+      }
+
+      .stat-item:hover::before {
+        left: 100%;
+      }
+
+      .stat-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-55) * 1px);
+        color: var(--light-accent);
+        margin-bottom: calc(var(--fibonacci-8) * 1px);
+      }
+
+      .stat-label {
+        font-family: "Space Mono", monospace;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0.7;
+      }
+
+      .timeline-section {
+        padding: calc(var(--fibonacci-89) * 1px) 40px;
+        position: relative;
+      }
+
+      .timeline-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .timeline-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--accent-color);
+        transform: translateX(-50%);
+      }
+
+      .timeline-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: calc(var(--fibonacci-55) * 1px);
+        position: relative;
+      }
+
+      .timeline-item:nth-child(even) {
+        flex-direction: row-reverse;
+      }
+
+      .timeline-content {
+        width: 45%;
+        padding: calc(var(--fibonacci-21) * 1px);
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+      }
+
+      .timeline-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: var(--accent-color);
+        border-radius: 50%;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+      }
+
+      .timeline-date {
+        font-family: "Bebas Neue", cursive;
+        font-size: calc(var(--fibonacci-21) * 1px);
+        color: var(--light-accent);
+        margin-bottom: calc(var(--fibonacci-8) * 1px);
+      }
+
+      .timeline-title {
+        font-family: "Playfair Display", serif;
+        font-size: calc(var(--fibonacci-21) * 1px);
+        margin-bottom: calc(var(--fibonacci-8) * 1px);
+      }
+
+      .timeline-description {
+        font-family: "Crimson Text", serif;
+        font-size: 16px;
+        line-height: 1.6;
+        opacity: 0.8;
+      }
+
+      @media (max-width: 768px) {
+        .timeline-line {
+          left: 20px;
+        }
+
+        .timeline-item,
+        .timeline-item:nth-child(even) {
+          flex-direction: row;
+        }
+
+        .timeline-content {
+          width: calc(100% - 60px);
+          margin-left: 60px;
+        }
+
+        .timeline-dot {
+          left: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loading-content">
+        <div class="loading-text">LOADING</div>
+        <div class="loading-bar">
+          <div class="loading-progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <div class="mathematical-pattern" id="mathPattern"></div>
+
+    <nav class="navigation">
+      <div class="nav-container">
+        <a href="#" class="logo" data-text="TYPOGRAPHICA">TYPOGRAPHICA</a>
+        <ul class="nav-menu">
+          <li><a href="#home" class="nav-item">HOME</a></li>
+          <li><a href="#gallery" class="nav-item">GALLERY</a></li>
+          <li><a href="#typography" class="nav-item">TYPOGRAPHY</a></li>
+          <li><a href="#about" class="nav-item">ABOUT</a></li>
+          <li><a href="#contact" class="nav-item">CONTACT</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <section class="hero-section" id="home">
+      <div class="hero-background">
+        <video class="hero-video" autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+      <div class="floating-elements">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span style="--i: 0">WHERE</span>
+          <span style="--i: 1">MATHEMATICS</span><br />
+          <span style="--i: 2">MEETS</span>
+          <span style="--i: 3" class="glitch-text" data-text="TYPOGRAPHY"
+            >TYPOGRAPHY</span
+          >
+        </h1>
+        <p class="hero-subtitle">EXPLORING THE GOLDEN RATIO IN DESIGN</p>
+        <a href="#gallery" class="cta-button">
+          <span>DISCOVER MORE</span>
+        </a>
+      </div>
+      <div class="scroll-indicator">
+        <svg viewBox="0 0 24 24">
+          <polyline points="7 13 12 18 17 13"></polyline>
+          <polyline points="7 6 12 11 17 6"></polyline>
+        </svg>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="gallery">
+      <div class="section-header">
+        <h2 class="section-title reveal-text">VISUAL SYMPHONY</h2>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+            alt="Gallery Image 1"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">GEOMETRIC DREAMS</h3>
+              <p class="gallery-description">
+                Where shapes dance in perfect harmony
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Gallery Image 2"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">ABSTRACT REALITY</h3>
+              <p class="gallery-description">
+                Blurring lines between art and mathematics
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+            alt="Gallery Image 3"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">DIGITAL RENAISSANCE</h3>
+              <p class="gallery-description">
+                Modern art meets classical proportions
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+            alt="Gallery Image 4"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">CHROMATIC EQUATIONS</h3>
+              <p class="gallery-description">
+                Color theory through mathematical lens
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+            alt="Gallery Image 5"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">FRACTAL UNIVERSE</h3>
+              <p class="gallery-description">
+                Infinite patterns in finite space
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+            alt="Gallery Image 6"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="gallery-title">QUANTUM AESTHETICS</h3>
+              <p class="gallery-description">Beauty at the smallest scale</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <div class="section-header">
+        <h2 class="section-title reveal-text">BY THE NUMBERS</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number number-counter" data-target="1618">0</div>
+          <div class="stat-label">Golden Ratio</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number number-counter" data-target="360">0</div>
+          <div class="stat-label">Degrees of Beauty</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number number-counter" data-target="144">0</div>
+          <div class="stat-label">Fibonacci Sequence</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number number-counter" data-target="∞">0</div>
+          <div class="stat-label">Infinite Possibilities</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="typography-showcase" id="typography">
+      <div class="section-header">
+        <h2 class="section-title reveal-text">TYPOGRAPHIC EXPLORATION</h2>
+      </div>
+      <div class="typography-grid">
+        <div class="typography-item">
+          <h3 class="type-display">Aa</h3>
+          <p class="type-description">
+            Playfair Display brings elegance and sophistication to headlines.
+            Its high contrast and distinctive letterforms create visual
+            hierarchy with mathematical precision.
+          </p>
+          <div class="type-example">
+            font-family: 'Playfair Display', serif;<br />
+            font-weight: 900;<br />
+            letter-spacing: -0.02em;
+          </div>
+        </div>
+        <div class="typography-item">
+          <h3
+            class="type-display"
+            style="font-family: &quot;Space Mono&quot;, monospace"
+          >
+            Aa
+          </h3>
+          <p class="type-description">
+            Space Mono provides technical precision with its monospaced design.
+            Perfect for displaying code, data, and creating rhythmic patterns in
+            text layouts.
+          </p>
+          <div class="type-example">
+            font-family: 'Space Mono', monospace;<br />
+            font-weight: 400;<br />
+            letter-spacing: 0.05em;
+          </div>
+        </div>
+        <div class="typography-item">
+          <h3
+            class="type-display"
+            style="font-family: &quot;Bebas Neue&quot;, cursive"
+          >
+            Aa
+          </h3>
+          <p class="type-description">
+            Bebas Neue commands attention with its condensed form and strong
+            presence. Ideal for impactful statements and bold declarations.
+          </p>
+          <div class="type-example">
+            font-family: 'Bebas Neue', cursive;<br />
+            font-weight: 400;<br />
+            letter-spacing: 0.1em;
+          </div>
+        </div>
+        <div class="typography-item">
+          <h3
+            class="type-display"
+            style="font-family: &quot;Crimson Text&quot;, serif"
+          >
+            Aa
+          </h3>
+          <p class="type-description">
+            Crimson Text offers exceptional readability for body text. Its
+            classical proportions follow time-tested typographic principles.
+          </p>
+          <div class="type-example">
+            font-family: 'Crimson Text', serif;<br />
+            font-weight: 400;<br />
+            line-height: 1.6;
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="timeline-section">
+      <div class="section-header">
+        <h2 class="section-title reveal-text">EVOLUTION OF DESIGN</h2>
+      </div>
+      <div class="timeline-container">
+        <div class="timeline-line"></div>
+        <div class="timeline-item reveal-text">
+          <div class="timeline-content">
+            <div class="timeline-date">1450</div>
+            <h3 class="timeline-title">Gutenberg's Revolution</h3>
+            <p class="timeline-description">
+              The printing press transforms how we share knowledge, establishing
+              the foundation for modern typography.
+            </p>
+          </div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item reveal-text">
+          <div class="timeline-content">
+            <div class="timeline-date">1920s</div>
+            <h3 class="timeline-title">Bauhaus Movement</h3>
+            <p class="timeline-description">
+              Form follows function. The marriage of art, craft, and technology
+              creates timeless design principles.
+            </p>
+          </div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item reveal-text">
+          <div class="timeline-content">
+            <div class="timeline-date">1984</div>
+            <h3 class="timeline-title">Digital Typography</h3>
+            <p class="timeline-description">
+              The Macintosh democratizes design, bringing professional
+              typography to personal computers.
+            </p>
+          </div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item reveal-text">
+          <div class="timeline-content">
+            <div class="timeline-date">Today</div>
+            <h3 class="timeline-title">Algorithmic Design</h3>
+            <p class="timeline-description">
+              AI and mathematics create new possibilities, where code becomes
+              art and algorithms shape aesthetics.
+            </p>
+          </div>
+          <div class="timeline-dot"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="interactive-section">
+      <div class="section-header">
+        <h2 class="section-title reveal-text">INTERACTIVE CANVAS</h2>
+      </div>
+      <div class="canvas-container">
+        <canvas id="particleCanvas"></canvas>
+        <div class="canvas-info">
+          Click and drag to create mathematical patterns
+        </div>
+      </div>
+    </section>
+
+    <section class="quote-section">
+      <div class="quote-container">
+        <blockquote class="quote-text reveal-text">
+          Mathematics is the alphabet with which God has written the universe.
+          In every curve, angle, and proportion, we find the hidden language of
+          beauty.
+        </blockquote>
+        <cite class="quote-author reveal-text">— GALILEO GALILEI</cite>
+      </div>
+    </section>
+
+    <section class="contact-section" id="contact">
+      <div class="contact-container">
+        <div class="section-header">
+          <h2 class="section-title reveal-text">GET IN TOUCH</h2>
+        </div>
+        <form class="contact-form">
+          <div class="form-group">
+            <label class="form-label">Your Name</label>
+            <input type="text" class="form-input" placeholder="John Doe" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="john@example.com"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea
+              class="form-textarea"
+              placeholder="Share your thoughts on typography and mathematics..."
+            ></textarea>
+          </div>
+          <button type="submit" class="submit-button">SEND MESSAGE</button>
+        </form>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="#" class="social-link">f</a>
+          <a href="#" class="social-link">t</a>
+          <a href="#" class="social-link">in</a>
+          <a href="#" class="social-link">@</a>
+        </div>
+        <p class="footer-text">
+          © 2025 TYPOGRAPHICA. WHERE ART MEETS MATHEMATICS.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Custom cursor
+      const cursor = document.getElementById("cursor");
+      const cursorDot = document.getElementById("cursorDot");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 10 + "px";
+        cursor.style.top = e.clientY - 10 + "px";
+        cursorDot.style.left = e.clientX + "px";
+        cursorDot.style.top = e.clientY + "px";
+      });
+
+      document.addEventListener("mousedown", () => {
+        cursor.style.transform = "scale(0.8)";
+      });
+
+      document.addEventListener("mouseup", () => {
+        cursor.style.transform = "scale(1)";
+      });
+
+      // Loading screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          const loadingScreen = document.getElementById("loadingScreen");
+          loadingScreen.style.opacity = "0";
+          setTimeout(() => {
+            loadingScreen.style.display = "none";
+          }, 500);
+        }, 2000);
+      });
+
+      // Mathematical pattern background
+      function createMathPattern() {
+        const pattern = document.getElementById("mathPattern");
+        const fibonacci = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+
+        for (let i = 0; i < 20; i++) {
+          const line = document.createElement("div");
+          line.className = "pattern-line";
+          const angle = (i * 137.5) % 360; // Golden angle
+          const length = fibonacci[i % fibonacci.length] * 10;
+
+          line.style.width = length + "px";
+          line.style.height = "1px";
+          line.style.left = "50%";
+          line.style.top = "50%";
+          line.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+          pattern.appendChild(line);
+        }
+      }
+
+      createMathPattern();
+
+      // Reveal animations on scroll
+      const revealElements = document.querySelectorAll(".reveal-text");
+
+      const revealOnScroll = () => {
+        revealElements.forEach((element) => {
+          const elementTop = element.getBoundingClientRect().top;
+          const elementBottom = element.getBoundingClientRect().bottom;
+
+          if (elementTop < window.innerHeight && elementBottom > 0) {
+            element.classList.add("revealed");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", revealOnScroll);
+      revealOnScroll();
+
+      // Number counter animation
+      const counters = document.querySelectorAll(".number-counter");
+
+      const animateCounter = (counter) => {
+        const target = counter.getAttribute("data-target");
+        const isInfinity = target === "∞";
+        const targetNumber = isInfinity ? 999 : parseInt(target);
+        const duration = 2000;
+        const increment = targetNumber / (duration / 16);
+        let current = 0;
+
+        const updateCounter = () => {
+          current += increment;
+          if (current < targetNumber) {
+            counter.textContent = Math.floor(current);
+            requestAnimationFrame(updateCounter);
+          } else {
+            counter.textContent = isInfinity ? "∞" : targetNumber;
+          }
+        };
+
+        updateCounter();
+      };
+
+      const observerOptions = {
+        threshold: 0.5,
+      };
+
+      const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (
+            entry.isIntersecting &&
+            !entry.target.classList.contains("animated")
+          ) {
+            entry.target.classList.add("animated");
+            animateCounter(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      counters.forEach((counter) => {
+        counterObserver.observe(counter);
+      });
+
+      // Interactive canvas
+      const canvas = document.getElementById("particleCanvas");
+      const ctx = canvas.getContext("2d");
+      let particles = [];
+      let mouse = { x: null, y: null };
+      let isDrawing = false;
+
+      function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+      }
+
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      class Particle {
+        constructor(x, y) {
+          this.x = x;
+          this.y = y;
+          this.size = Math.random() * 3 + 1;
+          this.speedX = Math.random() * 3 - 1.5;
+          this.speedY = Math.random() * 3 - 1.5;
+          this.color = `hsl(${Math.random() * 60 + 180}, 70%, 50%)`;
+          this.life = 100;
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.life -= 1;
+          this.size *= 0.98;
+        }
+
+        draw() {
+          ctx.globalAlpha = this.life / 100;
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      canvas.addEventListener("mousedown", (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (isDrawing) {
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = e.clientX - rect.left;
+          mouse.y = e.clientY - rect.top;
+
+          for (let i = 0; i < 5; i++) {
+            particles.push(new Particle(mouse.x, mouse.y));
+          }
+        }
+      });
+
+      canvas.addEventListener("mouseup", () => {
+        isDrawing = false;
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        isDrawing = false;
+      });
+
+      function animateCanvas() {
+        ctx.fillStyle = "rgba(10, 10, 10, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        particles = particles.filter((particle) => particle.life > 0);
+
+        particles.forEach((particle, index) => {
+          particle.update();
+          particle.draw();
+
+          // Connect nearby particles
+          particles.slice(index + 1).forEach((otherParticle) => {
+            const dx = particle.x - otherParticle.x;
+            const dy = particle.y - otherParticle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 50) {
+              ctx.strokeStyle = particle.color;
+              ctx.globalAlpha = (1 - distance / 50) * (particle.life / 100);
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(particle.x, particle.y);
+              ctx.lineTo(otherParticle.x, otherParticle.y);
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+          });
+        });
+
+        requestAnimationFrame(animateCanvas);
+      }
+
+      animateCanvas();
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Form submission
+      document
+        .querySelector(".contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Thank you for your message! This is a demo form.");
+        });
+
+      // Parallax effect for floating shapes
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const shapes = document.querySelectorAll(".floating-shape");
+
+        shapes.forEach((shape, index) => {
+          const speed = 0.5 + index * 0.2;
+          shape.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+      });
+
+      // Add some interactive hover effects
+      document.querySelectorAll(".gallery-item").forEach((item) => {
+        item.addEventListener("mouseenter", () => {
+          cursor.style.transform = "scale(2)";
+          cursor.style.borderColor = "#4ecdc4";
+        });
+
+        item.addEventListener("mouseleave", () => {
+          cursor.style.transform = "scale(1)";
+          cursor.style.borderColor = "#ff6b6b";
+        });
+      });
+    </script>
+  </body>
+</html>

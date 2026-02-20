@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creative Studio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #000;
+        overflow-x: hidden;
+      }
+
+      /* 헤더 스타일 */
+      header {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        padding: 20px 40px;
+        z-index: 1000;
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: -1px;
+        color: white;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: white;
+        font-size: 14px;
+        transition: opacity 0.3s;
+      }
+
+      .nav-links a:hover {
+        opacity: 0.6;
+      }
+
+      /* 히어로 섹션 */
+      .hero {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background-color: #000;
+        overflow: hidden;
+      }
+
+      /* 비디오 컨테이너 */
+      .video-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      /* 비디오 백그라운드 - 비율 유지 */
+      .video-background {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%) scale(1.1);
+        z-index: 1;
+        filter: brightness(0.7);
+        transition: filter 0.5s ease;
+      }
+
+      /* 비디오 효과 필터 */
+      .video-filters {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* 색상 오버레이 */
+      .color-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          rgba(120, 119, 198, 0.3) 0%,
+          rgba(255, 119, 198, 0.2) 50%,
+          rgba(120, 219, 255, 0.3) 100%
+        );
+        mix-blend-mode: multiply;
+        animation: colorShift 10s ease-in-out infinite;
+      }
+
+      @keyframes colorShift {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      /* 스캔라인 효과 */
+      .scanlines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+        opacity: 0.4;
+      }
+
+      /* 노이즈 효과 */
+      .noise {
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj4KICA8ZmlsdGVyIGlkPSJub2lzZSI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSI0IiAvPgogIDwvZmlsdGVyPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNub2lzZSkiIG9wYWNpdHk9IjAuMDIiLz4KPC9zdmc+");
+        opacity: 0.03;
+        animation: noiseAnimation 0.2s steps(10) infinite;
+      }
+
+      @keyframes noiseAnimation {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        10% {
+          transform: translate(-5%, -5%);
+        }
+        20% {
+          transform: translate(-10%, 5%);
+        }
+        30% {
+          transform: translate(5%, -10%);
+        }
+        40% {
+          transform: translate(-5%, 15%);
+        }
+        50% {
+          transform: translate(-10%, 5%);
+        }
+        60% {
+          transform: translate(15%, 0);
+        }
+        70% {
+          transform: translate(0, 10%);
+        }
+        80% {
+          transform: translate(-15%, 0);
+        }
+        90% {
+          transform: translate(10%, 5%);
+        }
+      }
+
+      /* 비네트 효과 */
+      .vignette {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 0%,
+          rgba(0, 0, 0, 0.7) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* 백그라운드 효과 */
+      .background-effect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        opacity: 0;
+        animation: float 10s infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          opacity: 0;
+          transform: translateY(100vh) translateX(0);
+        }
+        10%,
+        90% {
+          opacity: 0.8;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(100px);
+        }
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 10;
+        color: white;
+        position: relative;
+      }
+
+      .dynamic-text {
+        font-size: clamp(50px, 10vw, 120px);
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 30px;
+        min-height: 120px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: -2px;
+      }
+
+      .text-wrapper {
+        position: relative;
+        display: inline-block;
+      }
+
+      .word {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        white-space: nowrap;
+      }
+
+      .word.active {
+        animation: quickFade 0.5s ease-in-out;
+      }
+
+      @keyframes quickFade {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.8) rotateX(90deg);
+          filter: blur(10px);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+          filter: blur(0px);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1.2) rotateX(-90deg);
+          filter: blur(10px);
+        }
+      }
+
+      /* 글리치 효과 */
+      .glitch {
+        position: relative;
+        color: white;
+        font-size: inherit;
+        font-weight: inherit;
+        text-shadow:
+          0 0 10px rgba(255, 255, 255, 0.5),
+          0 0 20px rgba(255, 255, 255, 0.3),
+          0 0 30px rgba(255, 255, 255, 0.2);
+        animation: glitch-skew 1s infinite linear alternate-reverse;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch::before {
+        animation: glitch-1 0.2s infinite;
+        color: #00ffff;
+        z-index: -1;
+        text-shadow: -2px 0 #00ffff;
+      }
+
+      .glitch::after {
+        animation: glitch-2 0.2s infinite;
+        color: #ff00ff;
+        z-index: -2;
+        text-shadow: 2px 0 #ff00ff;
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(33% 0 0 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(0 0 50% 0);
+          transform: translate(-2px, 2px);
+        }
+        80% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(2px, -2px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(0 0 60% 0);
+          transform: translate(2px, -2px);
+        }
+        40% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(-2px, 2px);
+        }
+        60% {
+          clip-path: inset(25% 0 0 0);
+          transform: translate(2px, -2px);
+        }
+        80% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(-2px, 2px);
+        }
+      }
+
+      @keyframes glitch-skew {
+        0%,
+        100% {
+          transform: skew(0deg);
+        }
+        20% {
+          transform: skew(0.5deg);
+        }
+        40% {
+          transform: skew(-0.5deg);
+        }
+        60% {
+          transform: skew(0.5deg);
+        }
+        80% {
+          transform: skew(-0.5deg);
+        }
+      }
+
+      .subtitle {
+        font-size: 20px;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 40px;
+        opacity: 0;
+        animation: fadeIn 1s forwards 1s;
+        font-weight: 300;
+        letter-spacing: 2px;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 18px 50px;
+        background-color: transparent;
+        color: white;
+        text-decoration: none;
+        border: 2px solid white;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: all 0.3s;
+        opacity: 0;
+        animation: fadeIn 1s forwards 1.5s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cta-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: white;
+        transition: left 0.3s;
+        z-index: -1;
+      }
+
+      .cta-button:hover {
+        color: black;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+      }
+
+      .cta-button:hover::before {
+        left: 0;
+      }
+
+      /* 비디오 효과 컨트롤 */
+      .effect-controls {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        z-index: 10;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .effect-toggle {
+        display: flex;
+        gap: 10px;
+      }
+
+      .effect-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      .effect-btn.active {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: white;
+      }
+
+      .effect-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+      }
+
+      /* 프로젝트 그리드 */
+      .projects {
+        padding: 100px 40px;
+        background-color: #0a0a0a;
+      }
+
+      .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .project-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        height: 400px;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .project-card:hover {
+        transform: scale(1.02);
+      }
+
+      .project-card img,
+      .project-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .project-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        color: white;
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .project-card:hover .project-overlay {
+        transform: translateY(0);
+      }
+
+      .project-title {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .project-category {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      /* 푸터 */
+      footer {
+        padding: 60px 40px;
+        background-color: #000;
+        color: white;
+        text-align: center;
+        border-top: 1px solid #222;
+      }
+
+      .footer-content {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 30px;
+      }
+
+      .social-links a {
+        color: white;
+        text-decoration: none;
+        font-size: 14px;
+        transition: opacity 0.3s;
+      }
+
+      .social-links a:hover {
+        opacity: 0.7;
+      }
+
+      /* 반응형 */
+      @media (max-width: 768px) {
+        header {
+          padding: 15px 20px;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .dynamic-text {
+          font-size: clamp(40px, 12vw, 80px);
+        }
+
+        .projects {
+          padding: 60px 20px;
+        }
+
+        .effect-controls {
+          bottom: 20px;
+          right: 20px;
+        }
+
+        .effect-toggle {
+          flex-wrap: wrap;
+          max-width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="logo">STUDIO</div>
+        <ul class="nav-links">
+          <li><a href="#work">Work</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <!-- 비디오 컨테이너 -->
+      <div class="video-container">
+        <video class="video-background" autoplay muted loop id="heroVideo">
+          <source
+            src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/2.mp4"
+            type="video/mp4"
+          />
+        </video>
+
+        <!-- 비디오 효과 레이어 -->
+        <div class="video-filters">
+          <div class="color-overlay" id="colorOverlay"></div>
+          <div class="scanlines" id="scanlines"></div>
+          <div class="noise" id="noise"></div>
+          <div class="vignette" id="vignette"></div>
+        </div>
+      </div>
+
+      <div class="background-effect">
+        <div id="particles"></div>
+      </div>
+
+      <div class="hero-content">
+        <h1 class="dynamic-text">
+          <div class="text-wrapper" id="dynamicText"></div>
+        </h1>
+        <p class="subtitle">We create digital experiences that matter</p>
+        <a href="#work" class="cta-button">View Our Work</a>
+      </div>
+
+      <!-- 효과 컨트롤 -->
+      <div class="effect-controls">
+        <div class="effect-toggle">
+          <button
+            class="effect-btn active"
+            data-effect="color"
+            title="Color Overlay"
+          >
+            Color
+          </button>
+          <button
+            class="effect-btn active"
+            data-effect="scan"
+            title="Scanlines"
+          >
+            Scan
+          </button>
+          <button class="effect-btn active" data-effect="noise" title="Noise">
+            Noise
+          </button>
+          <button
+            class="effect-btn active"
+            data-effect="vignette"
+            title="Vignette"
+          >
+            Vignette
+          </button>
+          <button class="effect-btn" data-effect="blur" title="Blur">
+            Blur
+          </button>
+          <button class="effect-btn" data-effect="grayscale" title="Grayscale">
+            B&W
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="projects" id="work">
+      <div class="projects-grid">
+        <div class="project-card">
+          <img src="https://picsum.photos/600/800?random=1" alt="Project 1" />
+          <div class="project-overlay">
+            <h3 class="project-title">Brand Identity</h3>
+            <p class="project-category">Visual Design</p>
+          </div>
+        </div>
+        <div class="project-card">
+          <video autoplay muted loop>
+            <source
+              src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/2.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="project-overlay">
+            <h3 class="project-title">Digital Campaign</h3>
+            <p class="project-category">Motion Design</p>
+          </div>
+        </div>
+        <div class="project-card">
+          <img src="https://picsum.photos/600/800?random=2" alt="Project 3" />
+          <div class="project-overlay">
+            <h3 class="project-title">Web Experience</h3>
+            <p class="project-category">UI/UX Design</p>
+          </div>
+        </div>
+        <div class="project-card">
+          <img src="https://picsum.photos/600/800?random=3" alt="Project 4" />
+          <div class="project-overlay">
+            <h3 class="project-title">Product Design</h3>
+            <p class="project-category">3D Visualization</p>
+          </div>
+        </div>
+        <div class="project-card">
+          <video autoplay muted loop>
+            <source
+              src="https://cdn.midjourney.com/video/c96f9782-ecbe-43a1-9018-3daaf56f179e/1.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div class="project-overlay">
+            <h3 class="project-title">Art Direction</h3>
+            <p class="project-category">Creative Campaign</p>
+          </div>
+        </div>
+        <div class="project-card">
+          <img src="https://picsum.photos/600/800?random=4" alt="Project 6" />
+          <div class="project-overlay">
+            <h3 class="project-title">Mobile App</h3>
+            <p class="project-category">Interface Design</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-content">
+        <h2>Let's create something amazing together</h2>
+        <div class="social-links">
+          <a href="#">Instagram</a>
+          <a href="#">Behance</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">Twitter</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // 비디오 소스 배열
+      const videoSources = [
+        "https://cdn.pixabay.com/vimeo/328940142/office-24640.mp4",
+        "https://cdn.pixabay.com/vimeo/456239589/abstract-48399.mp4",
+        "https://cdn.pixabay.com/vimeo/325999208/network-22669.mp4",
+        "https://cdn.pixabay.com/vimeo/363415904/technology-29765.mp4",
+      ];
+
+      // 랜덤 비디오 선택
+      const heroVideo = document.getElementById("heroVideo");
+      const randomVideo =
+        videoSources[Math.floor(Math.random() * videoSources.length)];
+      heroVideo.src = randomVideo;
+
+      // 효과 토글
+      const effectButtons = document.querySelectorAll(".effect-btn");
+      const videoElement = document.querySelector(".video-background");
+
+      effectButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          btn.classList.toggle("active");
+          const effect = btn.dataset.effect;
+
+          switch (effect) {
+            case "color":
+              document.getElementById("colorOverlay").style.display =
+                btn.classList.contains("active") ? "block" : "none";
+              break;
+            case "scan":
+              document.getElementById("scanlines").style.display =
+                btn.classList.contains("active") ? "block" : "none";
+              break;
+            case "noise":
+              document.getElementById("noise").style.display =
+                btn.classList.contains("active") ? "block" : "none";
+              break;
+            case "vignette":
+              document.getElementById("vignette").style.display =
+                btn.classList.contains("active") ? "block" : "none";
+              break;
+            case "blur":
+              if (btn.classList.contains("active")) {
+                videoElement.style.filter =
+                  videoElement.style.filter + " blur(3px)";
+              } else {
+                videoElement.style.filter = videoElement.style.filter.replace(
+                  " blur(3px)",
+                  "",
+                );
+              }
+              break;
+            case "grayscale":
+              if (btn.classList.contains("active")) {
+                videoElement.style.filter =
+                  videoElement.style.filter + " grayscale(100%)";
+              } else {
+                videoElement.style.filter = videoElement.style.filter.replace(
+                  " grayscale(100%)",
+                  "",
+                );
+              }
+              break;
+          }
+        });
+      });
+
+      // 파티클 생성
+      const particlesContainer = document.getElementById("particles");
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 10 + "s";
+        particle.style.animationDuration = Math.random() * 10 + 10 + "s";
+        particlesContainer.appendChild(particle);
+      }
+
+      // 빠른 텍스트 애니메이션
+      const phrases = [
+        "CREATE",
+        "DESIGN",
+        "INNOVATE",
+        "INSPIRE",
+        "TRANSFORM",
+        "IMAGINE",
+        "BUILD",
+        "CRAFT",
+        "DEVELOP",
+        "EVOLVE",
+        "DISRUPT",
+        "ELEVATE",
+      ];
+
+      const dynamicText = document.getElementById("dynamicText");
+      let currentIndex = 0;
+
+      function createWord(text) {
+        const word = document.createElement("div");
+        word.className = "word";
+        word.innerHTML = `<span class="glitch" data-text="${text}">${text}</span>`;
+        return word;
+      }
+
+      function animateText() {
+        // 이전 텍스트 제거
+        const currentWord = dynamicText.querySelector(".word.active");
+        if (currentWord) {
+          currentWord.classList.remove("active");
+          setTimeout(() => currentWord.remove(), 500);
+        }
+
+        // 새 텍스트 추가
+        const newWord = createWord(phrases[currentIndex]);
+        dynamicText.appendChild(newWord);
+
+        // 애니메이션 트리거
+        setTimeout(() => {
+          newWord.classList.add("active");
+        }, 10);
+
+        currentIndex = (currentIndex + 1) % phrases.length;
+      }
+
+      // 초기 텍스트 설정
+      animateText();
+
+      // 빠른 간격으로 텍스트 변경
+      setInterval(animateText, 400);
+
+      // 간헐적 글리치 효과
+      setInterval(() => {
+        const glitchElements = document.querySelectorAll(".glitch");
+        glitchElements.forEach((el) => {
+          el.style.animation = "none";
+          setTimeout(() => {
+            el.style.animation = "";
+          }, 100);
+        });
+      }, 3000);
+
+      // 부드러운 스크롤
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // 스크롤 시 헤더 스타일 변경
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+        const header = document.querySelector("header");
+
+        if (currentScroll > 100) {
+          header.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+        } else {
+          header.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+        }
+      });
+
+      // 비디오 로드 에러 처리
+      heroVideo.addEventListener("error", () => {
+        console.log("비디오 로드 실패, 다른 소스로 전환");
+        const currentIndex = videoSources.indexOf(heroVideo.src);
+        const nextIndex = (currentIndex + 1) % videoSources.length;
+        heroVideo.src = videoSources[nextIndex];
+      });
+
+      // 비디오 비율 유지를 위한 리사이즈 처리
+      function maintainVideoAspectRatio() {
+        const video = document.querySelector(".video-background");
+        const container = document.querySelector(".video-container");
+
+        const videoRatio = 16 / 9; // 일반적인 비디오 비율
+        const containerRatio = container.offsetWidth / container.offsetHeight;
+
+        if (containerRatio > videoRatio) {
+          // 컨테이너가 더 넓은 경우
+          video.style.width = "100%";
+          video.style.height = "auto";
+        } else {
+          // 컨테이너가 더 높은 경우
+          video.style.width = "auto";
+          video.style.height = "100%";
+        }
+      }
+
+      // 초기 실행 및 리사이즈 이벤트
+      window.addEventListener("load", maintainVideoAspectRatio);
+      window.addEventListener("resize", maintainVideoAspectRatio);
+    </script>
+  </body>
+</html>

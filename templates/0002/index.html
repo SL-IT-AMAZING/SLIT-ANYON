@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Portfolio - Dynamic Media</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-color: #0a0a0a;
+        --text-primary: #ffffff;
+        --text-secondary: #333333;
+        --text-faded: #1a1a1a;
+        --hover-color: #ffffff;
+        --accent-color: #ff0000;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* 스크롤바 스타일 */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-color);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--text-secondary);
+        border-radius: 2px;
+      }
+
+      .container {
+        width: 100%;
+        position: relative;
+      }
+
+      .header {
+        position: fixed;
+        top: 60px;
+        left: 80px;
+        z-index: 100;
+        mix-blend-mode: difference;
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+      }
+
+      .subtitle {
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        opacity: 0.7;
+      }
+
+      /* 텍스트 롤링 컨테이너 */
+      .text-roller {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 80px;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      .text-track {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .display-text {
+        position: absolute;
+        font-size: clamp(4rem, 10vw, 12rem);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        text-transform: uppercase;
+        line-height: 0.8;
+        font-family: "Inter", sans-serif;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+        /* 기본 상태 - 모든 텍스트를 초기에 숨김 */
+        opacity: 0;
+        transform: translateY(100px);
+        filter: blur(20px);
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+      }
+
+      /* 위치별 상태 */
+      .display-text.far-prev {
+        opacity: 0;
+        transform: translateY(-300px);
+        filter: blur(20px);
+      }
+
+      .display-text.prev-prev {
+        opacity: 0.1;
+        transform: translateY(-200px);
+        filter: blur(10px);
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+      }
+
+      .display-text.prev {
+        opacity: 0.3;
+        transform: translateY(-100px);
+        filter: blur(3px);
+        color: var(--text-faded);
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+      }
+
+      .display-text.active {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+        color: var(--text-primary);
+        -webkit-text-stroke: 0px;
+        z-index: 10;
+        pointer-events: auto;
+      }
+
+      .display-text.next {
+        opacity: 0.3;
+        transform: translateY(100px);
+        filter: blur(3px);
+        color: var(--text-faded);
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+      }
+
+      .display-text.next-next {
+        opacity: 0.1;
+        transform: translateY(200px);
+        filter: blur(10px);
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+      }
+
+      .display-text.far-next {
+        opacity: 0;
+        transform: translateY(300px);
+        filter: blur(20px);
+      }
+
+      .display-text.active:hover {
+        transform: translateX(40px);
+        color: var(--text-primary);
+        -webkit-text-stroke: 0px;
+      }
+
+      /* 번호 표시 */
+      .numbers-track {
+        position: fixed;
+        right: 80px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 15;
+      }
+
+      .link-number {
+        position: absolute;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        font-weight: 300;
+        transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-family: "Inter", sans-serif;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      .link-number.active {
+        opacity: 1;
+        color: var(--accent-color);
+        transform: translateY(0);
+      }
+
+      .link-number.prev {
+        opacity: 0.2;
+        transform: translateY(-40px);
+      }
+
+      .link-number.next {
+        opacity: 0.2;
+        transform: translateY(40px);
+      }
+
+      /* 스크롤 트리거 섹션 */
+      .scroll-sections {
+        position: relative;
+        padding-top: 50vh;
+        padding-bottom: 50vh;
+      }
+
+      .scroll-section {
+        height: 100vh;
+        position: relative;
+      }
+
+      /* 미디어 프리뷰 컨테이너 - 다이나믹 사이즈 */
+      .media-preview {
+        position: fixed;
+        bottom: 60px;
+        right: 60px;
+        max-width: 600px;
+        max-height: 80vh;
+        pointer-events: none;
+        z-index: 50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+      }
+
+      /* 미디어 래퍼 */
+      .media-wrapper {
+        position: relative;
+        opacity: 0;
+        transform: translateY(40px) scale(0.9) rotate(2deg);
+        transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .media-wrapper.active {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+
+      /* 다이나믹 미디어 스타일 */
+      .preview-media {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        width: auto;
+        height: auto;
+        border-radius: 4px;
+        filter: grayscale(20%) contrast(1.1);
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+      }
+
+      /* 세로형 이미지 */
+      .preview-media.portrait {
+        max-height: 70vh;
+      }
+
+      /* 가로형 이미지 */
+      .preview-media.landscape {
+        max-width: 500px;
+      }
+
+      /* 정사각형 이미지 */
+      .preview-media.square {
+        max-width: 400px;
+        max-height: 400px;
+      }
+
+      /* 비디오 스타일 */
+      .preview-video {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        width: auto;
+        height: auto;
+        border-radius: 4px;
+        filter: grayscale(20%) contrast(1.1);
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+      }
+
+      /* 다중 이미지 갤러리 */
+      .multi-image-gallery {
+        position: relative;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+      }
+
+      .gallery-image {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        width: auto;
+        height: auto;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        right: 0;
+        transition: opacity 1s ease;
+        filter: grayscale(20%) contrast(1.1);
+      }
+
+      .gallery-image.active {
+        opacity: 1;
+        position: relative;
+      }
+
+      /* 갤러리 인디케이터 */
+      .gallery-indicators {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 10;
+      }
+
+      .gallery-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .gallery-dot.active {
+        background: rgba(255, 255, 255, 0.9);
+        width: 20px;
+        border-radius: 3px;
+      }
+
+      /* Progress Indicator */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 200;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--accent-color);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      /* Progress Dots */
+      .progress-dots {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-secondary);
+        margin: 16px 0;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .dot.active {
+        background: var(--text-primary);
+        transform: scale(1.5);
+      }
+
+      /* 반응형 */
+      @media (max-width: 1200px) {
+        .media-preview {
+          max-width: 450px;
+          bottom: 40px;
+          right: 40px;
+        }
+
+        .preview-media.landscape {
+          max-width: 400px;
+        }
+
+        .preview-media.square {
+          max-width: 350px;
+          max-height: 350px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          left: 20px;
+          top: 40px;
+        }
+
+        .text-roller {
+          padding-left: 20px;
+        }
+
+        .display-text {
+          font-size: clamp(3rem, 12vw, 6rem);
+        }
+
+        .media-preview {
+          max-width: 300px;
+          max-height: 60vh;
+          bottom: 20px;
+          right: 20px;
+        }
+
+        .preview-media.portrait {
+          max-height: 50vh;
+        }
+
+        .preview-media.landscape {
+          max-width: 280px;
+        }
+
+        .preview-media.square {
+          max-width: 250px;
+          max-height: 250px;
+        }
+
+        .numbers-track {
+          right: 60px;
+        }
+
+        .progress-dots {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Progress Dots -->
+    <div class="progress-dots" id="progressDots"></div>
+
+    <div class="container">
+      <div class="header">
+        <h1>Creative<br />Studio</h1>
+        <p class="subtitle">Selected Works / 2020-2024</p>
+      </div>
+
+      <!-- 텍스트 롤링 영역 -->
+      <div class="text-roller">
+        <div class="text-track" id="textTrack"></div>
+      </div>
+
+      <!-- 번호 트랙 -->
+      <div class="numbers-track" id="numbersTrack"></div>
+
+      <!-- 스크롤 섹션들 -->
+      <div class="scroll-sections">
+        <!-- 세로형 이미지 -->
+        <div
+          class="scroll-section"
+          data-text="Architecture"
+          data-number="001"
+          data-media-type="image"
+          data-media="https://cdn.midjourney.com/62dee8d3-3655-4d49-be5d-c935d78e0798/0_1.png"
+        ></div>
+
+        <!-- 비디오 -->
+        <div
+          class="scroll-section"
+          data-text="Motion"
+          data-number="002"
+          data-media-type="video"
+          data-media="https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4"
+        ></div>
+
+        <!-- 가로형 이미지 갤러리 -->
+        <div
+          class="scroll-section"
+          data-text="Branding"
+          data-number="003"
+          data-media-type="gallery"
+          data-media="https://cdn.midjourney.com/a416bc82-85a9-47f3-85b4-66d7b21c296d/0_1.png, https://cdn.midjourney.com/a416bc82-85a9-47f3-85b4-66d7b21c296d/0_3.png, https://cdn.midjourney.com/48d1c85a-373e-4ceb-9d38-1b4ff8cf6cd2/0_1.png"
+        ></div>
+
+        <!-- 정사각형 이미지 -->
+        <div
+          class="scroll-section"
+          data-text="Digital"
+          data-number="004"
+          data-media-type="image"
+          data-media="https://cdn.midjourney.com/e3a0ee08-623f-4095-8387-9ce8250ebe9e/0_0.png"
+        ></div>
+
+        <!-- 혼합 비율 갤러리 -->
+        <div
+          class="scroll-section"
+          data-text="Editorial"
+          data-number="005"
+          data-media-type="gallery"
+          data-media="https://cdn.midjourney.com/f4a62280-a2ce-4f67-a60a-04576f943bb8/0_1.png,https://cdn.midjourney.com/f4a62280-a2ce-4f67-a60a-04576f943bb8/0_2.png"
+        ></div>
+
+        <!-- 가로형 이미지 -->
+        <div
+          class="scroll-section"
+          data-text="Visual"
+          data-number="006"
+          data-media-type="image"
+          data-media="https://cdn.midjourney.com/d526ef62-1b80-4145-a14a-f164b52aa80b/0_0.png"
+        ></div>
+      </div>
+    </div>
+
+    <!-- 미디어 프리뷰 영역 -->
+    <div class="media-preview">
+      <div class="media-wrapper" id="mediaWrapper"></div>
+    </div>
+
+    <script>
+      const sections = document.querySelectorAll(".scroll-section");
+      const textTrack = document.getElementById("textTrack");
+      const numbersTrack = document.getElementById("numbersTrack");
+      const mediaWrapper = document.getElementById("mediaWrapper");
+      const progressFill = document.getElementById("progressFill");
+      const progressDots = document.getElementById("progressDots");
+
+      let currentSection = -1;
+      let currentMedia = null;
+      let textElements = [];
+      let numberElements = [];
+      let galleryInterval = null;
+      let currentGalleryIndex = 0;
+
+      // 이미지 비율 판단 함수
+      function getImageOrientation(width, height) {
+        const ratio = width / height;
+        if (ratio > 1.2) return "landscape";
+        if (ratio < 0.8) return "portrait";
+        return "square";
+      }
+
+      // 초기화: 모든 텍스트와 번호 생성
+      function initializeElements() {
+        sections.forEach((section, index) => {
+          // 텍스트 생성
+          const text = document.createElement("a");
+          text.href = "#";
+          text.className = "display-text";
+          text.textContent = section.getAttribute("data-text");
+          text.setAttribute("data-media", section.getAttribute("data-media"));
+          text.setAttribute(
+            "data-media-type",
+            section.getAttribute("data-media-type"),
+          );
+          text.setAttribute("data-index", index);
+          textTrack.appendChild(text);
+          textElements.push(text);
+
+          // 번호 생성
+          const number = document.createElement("div");
+          number.className = "link-number";
+          number.textContent = section.getAttribute("data-number");
+          numbersTrack.appendChild(number);
+          numberElements.push(number);
+
+          // Progress dot 생성
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.setAttribute("data-index", index);
+          progressDots.appendChild(dot);
+
+          // 이벤트 리스너
+          text.addEventListener("mouseenter", function () {
+            if (this.classList.contains("active")) {
+              const mediaData = this.getAttribute("data-media");
+              const mediaType = this.getAttribute("data-media-type");
+              if (mediaData) showMedia(mediaData, mediaType);
+            }
+          });
+
+          text.addEventListener("click", (e) => {
+            e.preventDefault();
+          });
+
+          dot.addEventListener("click", () => {
+            scrollToSection(index);
+          });
+        });
+      }
+
+      // 미디어 표시 함수
+      function showMedia(mediaData, mediaType) {
+        if (currentMedia !== mediaData) {
+          clearGalleryInterval();
+          mediaWrapper.classList.remove("active");
+
+          setTimeout(() => {
+            mediaWrapper.innerHTML = "";
+
+            if (mediaType === "image") {
+              const img = document.createElement("img");
+              img.className = "preview-media";
+              img.src = mediaData;
+
+              img.onload = function () {
+                // 이미지 비율에 따른 클래스 추가
+                const orientation = getImageOrientation(
+                  this.naturalWidth,
+                  this.naturalHeight,
+                );
+                img.classList.add(orientation);
+                mediaWrapper.appendChild(img);
+                mediaWrapper.classList.add("active");
+              };
+            } else if (mediaType === "video") {
+              const video = document.createElement("video");
+              video.className = "preview-video";
+              video.src = mediaData;
+              video.autoplay = true;
+              video.loop = true;
+              video.muted = true;
+              video.playsInline = true;
+              mediaWrapper.appendChild(video);
+
+              video.onloadedmetadata = function () {
+                // 비디오 비율에 따른 클래스 추가
+                const orientation = getImageOrientation(
+                  this.videoWidth,
+                  this.videoHeight,
+                );
+                video.classList.add(orientation);
+                mediaWrapper.classList.add("active");
+                video.play();
+              };
+            } else if (mediaType === "gallery") {
+              const images = mediaData.split(",");
+              const gallery = document.createElement("div");
+              gallery.className = "multi-image-gallery";
+
+              let loadedImages = 0;
+              let galleryOrientation = "";
+
+              // 이미지들 추가
+              images.forEach((imgSrc, index) => {
+                const img = document.createElement("img");
+                img.className = "gallery-image";
+                if (index === 0) img.classList.add("active");
+                img.src = imgSrc.trim();
+
+                img.onload = function () {
+                  loadedImages++;
+
+                  // 첫 번째 이미지의 비율로 갤러리 크기 결정
+                  if (index === 0) {
+                    galleryOrientation = getImageOrientation(
+                      this.naturalWidth,
+                      this.naturalHeight,
+                    );
+                    img.classList.add(galleryOrientation);
+                  }
+
+                  // 모든 이미지가 로드되면 갤러리 표시
+                  if (loadedImages === images.length) {
+                    mediaWrapper.classList.add("active");
+                  }
+                };
+
+                gallery.appendChild(img);
+              });
+
+              // 인디케이터 추가
+              if (images.length > 1) {
+                const indicators = document.createElement("div");
+                indicators.className = "gallery-indicators";
+
+                images.forEach((_, index) => {
+                  const dot = document.createElement("div");
+                  dot.className = "gallery-dot";
+                  if (index === 0) dot.classList.add("active");
+                  indicators.appendChild(dot);
+                });
+
+                gallery.appendChild(indicators);
+              }
+
+              mediaWrapper.appendChild(gallery);
+
+              // 갤러리 자동 재생
+              if (images.length > 1) {
+                currentGalleryIndex = 0;
+                startGalleryRotation(gallery, images.length);
+              }
+            }
+
+            currentMedia = mediaData;
+          }, 300);
+        }
+      }
+
+      // 갤러리 자동 회전
+      function startGalleryRotation(gallery, imageCount) {
+        clearGalleryInterval();
+
+        galleryInterval = setInterval(() => {
+          const images = gallery.querySelectorAll(".gallery-image");
+          const dots = gallery.querySelectorAll(".gallery-dot");
+
+          images[currentGalleryIndex].classList.remove("active");
+          dots[currentGalleryIndex].classList.remove("active");
+
+          currentGalleryIndex = (currentGalleryIndex + 1) % imageCount;
+
+          images[currentGalleryIndex].classList.add("active");
+          dots[currentGalleryIndex].classList.add("active");
+        }, 3000);
+      }
+
+      // 갤러리 인터벌 클리어
+      function clearGalleryInterval() {
+        if (galleryInterval) {
+          clearInterval(galleryInterval);
+          galleryInterval = null;
+        }
+      }
+
+      // 섹션으로 스크롤
+      function scrollToSection(index) {
+        const targetSection = sections[index];
+        const rect = targetSection.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+
+        window.scrollTo({
+          top: top - window.innerHeight / 2 + rect.height / 2,
+          behavior: "smooth",
+        });
+      }
+
+      // 텍스트 위치 업데이트
+      function updateTextPositions(activeIndex) {
+        textElements.forEach((text, index) => {
+          // 모든 클래스 제거
+          text.classList.remove(
+            "far-prev",
+            "prev-prev",
+            "prev",
+            "active",
+            "next",
+            "next-next",
+            "far-next",
+          );
+
+          const diff = index - activeIndex;
+
+          // 위치에 따른 클래스 적용
+          if (diff <= -3) {
+            text.classList.add("far-prev");
+          } else if (diff === -2) {
+            text.classList.add("prev-prev");
+          } else if (diff === -1) {
+            text.classList.add("prev");
+          } else if (diff === 0) {
+            text.classList.add("active");
+          } else if (diff === 1) {
+            text.classList.add("next");
+          } else if (diff === 2) {
+            text.classList.add("next-next");
+          } else {
+            text.classList.add("far-next");
+          }
+        });
+
+        // 번호 업데이트
+        numberElements.forEach((number, index) => {
+          number.classList.remove("prev", "active", "next");
+          number.style.opacity = "0";
+
+          const diff = index - activeIndex;
+          if (diff === -1) {
+            number.classList.add("prev");
+          } else if (diff === 0) {
+            number.classList.add("active");
+          } else if (diff === 1) {
+            number.classList.add("next");
+          }
+        });
+
+        // Progress dots 업데이트
+        document.querySelectorAll(".dot").forEach((dot, index) => {
+          dot.classList.toggle("active", index === activeIndex);
+        });
+      }
+
+      // 스크롤 진행률 업데이트
+      function updateProgress() {
+        const scrollHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPosition = window.scrollY;
+        const progress = (scrollPosition / scrollHeight) * 100;
+        progressFill.style.width = progress + "%";
+      }
+
+      // 스크롤에 따른 섹션 감지
+      function updateActiveSection() {
+        const scrollPosition = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const scrollCenter = scrollPosition + windowHeight / 2;
+
+        // 스크롤이 최상단에 있을 때
+        if (scrollPosition < windowHeight / 2) {
+          if (currentSection !== 0) {
+            currentSection = 0;
+            updateTextPositions(0);
+            const section = sections[0];
+            const mediaData = section.getAttribute("data-media");
+            const mediaType = section.getAttribute("data-media-type");
+            if (mediaData) showMedia(mediaData, mediaType);
+          }
+          return;
+        }
+
+        // 각 섹션 확인
+        sections.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const sectionTop = rect.top + scrollPosition;
+          const sectionBottom = sectionTop + rect.height;
+
+          // 현재 스크롤 중심이 섹션 범위 내에 있는지 확인
+          if (scrollCenter >= sectionTop && scrollCenter < sectionBottom) {
+            if (currentSection !== index) {
+              currentSection = index;
+              updateTextPositions(index);
+
+              const mediaData = section.getAttribute("data-media");
+              const mediaType = section.getAttribute("data-media-type");
+              if (mediaData) showMedia(mediaData, mediaType);
+            }
+          }
+        });
+      }
+
+      // 이미지 프리로드
+      function preloadImage(url) {
+        const img = new Image();
+        img.src = url;
+      }
+
+      // 초기화
+      window.addEventListener("load", () => {
+        initializeElements();
+
+        // 첫 몇 개 이미지 프리로드
+        sections.forEach((section, index) => {
+          if (index < 3) {
+            const mediaData = section.getAttribute("data-media");
+            const mediaType = section.getAttribute("data-media-type");
+            if (mediaType === "image" && mediaData) {
+              preloadImage(mediaData);
+            } else if (mediaType === "gallery" && mediaData) {
+              const images = mediaData.split(",");
+              images.forEach((img) => preloadImage(img.trim()));
+            }
+          }
+        });
+
+        // 초기 상태 설정
+        updateActiveSection();
+        updateProgress();
+      });
+
+      // 스크롤 이벤트
+      let scrollTimeout;
+      window.addEventListener("scroll", () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          updateActiveSection();
+        }, 10);
+        updateProgress();
+      });
+
+      // 마우스 움직임에 따른 이미지 효과
+      let mouseX = 0,
+        mouseY = 0;
+      let currentX = 0,
+        currentY = 0;
+      const speed = 0.08;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animate() {
+        if (mediaWrapper.classList.contains("active")) {
+          const distX = (mouseX / window.innerWidth - 0.5) * 30;
+          const distY = (mouseY / window.innerHeight - 0.5) * 30;
+
+          currentX += (distX - currentX) * speed;
+          currentY += (distY - currentY) * speed;
+
+          mediaWrapper.style.transform = `
+                    translateY(${currentY}px) 
+                    translateX(${currentX}px) 
+                    scale(1)
+                    rotate(${currentX * 0.05}deg)
+                `;
+        }
+        requestAnimationFrame(animate);
+      }
+      animate();
+
+      // 페이지를 떠날 때 정리
+      window.addEventListener("beforeunload", () => {
+        clearGalleryInterval();
+      });
+    </script>
+  </body>
+</html>

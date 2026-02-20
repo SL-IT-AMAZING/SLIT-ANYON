@@ -1,0 +1,2524 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cozy Typography Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lora:wght@400;500;600&family=Crimson+Text:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+      :root {
+        --primary-color: #8b7355;
+        --secondary-color: #f5e6d3;
+        --accent-color: #d4a574;
+        --text-primary: #3a3a3a;
+        --text-secondary: #6b6b6b;
+        --transition-speed: 0.4s;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Lora", serif;
+        background-color: var(--secondary-color);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        line-height: 1.6;
+      }
+
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: var(--secondary-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        transition: opacity 0.8s ease;
+      }
+
+      .loading-text {
+        font-family: "Playfair Display", serif;
+        font-size: 3rem;
+        color: var(--primary-color);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      header {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: rgba(245, 230, 211, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        padding: 1.5rem 0;
+        transition: all var(--transition-speed) ease;
+        box-shadow: 0 2px 20px rgba(139, 115, 85, 0.1);
+      }
+
+      nav {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        font-weight: 900;
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .logo:hover {
+        letter-spacing: 2px;
+        color: var(--accent-color);
+      }
+
+      .nav-menu {
+        display: flex;
+        list-style: none;
+        gap: 2.5rem;
+      }
+
+      .nav-link {
+        font-family: "Crimson Text", serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-decoration: none;
+        position: relative;
+        transition: all var(--transition-speed) ease;
+        padding: 0.5rem 0;
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--accent-color);
+        transition: width var(--transition-speed) ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .nav-link:hover {
+        color: var(--primary-color);
+      }
+
+      .mobile-menu-toggle {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        gap: 4px;
+      }
+
+      .mobile-menu-toggle span {
+        width: 25px;
+        height: 3px;
+        background-color: var(--primary-color);
+        transition: all var(--transition-speed) ease;
+      }
+
+      main {
+        margin-top: 80px;
+        min-height: calc(100vh - 80px);
+      }
+
+      .page-section {
+        display: none;
+        animation: fadeIn 0.6s ease-in-out;
+      }
+
+      .page-section.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      #home {
+        position: relative;
+        height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      #p5-canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 1000px;
+        padding: 0 2rem;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        opacity: 0;
+        animation: slideUp 1s ease-out 0.5s forwards;
+      }
+
+      .hero-subtitle {
+        font-family: "Crimson Text", serif;
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+        color: var(--text-secondary);
+        margin-bottom: 3rem;
+        opacity: 0;
+        animation: slideUp 1s ease-out 0.7s forwards;
+      }
+
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(-20px);
+        }
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 1.2rem 3rem;
+        background-color: var(--primary-color);
+        color: var(--secondary-color);
+        font-family: "Crimson Text", serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 50px;
+        transition: all var(--transition-speed) ease;
+        opacity: 0;
+        animation: slideUp 1s ease-out 0.9s forwards;
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.3);
+      }
+
+      .cta-button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(139, 115, 85, 0.4);
+      }
+
+      .content-section {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 5rem 2rem;
+      }
+
+      .section-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        color: var(--primary-color);
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--accent-color);
+      }
+
+      .about-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+        margin-bottom: 4rem;
+      }
+
+      .about-text {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+      }
+
+      .about-text h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+      }
+
+      .about-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(139, 115, 85, 0.2);
+      }
+
+      .about-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform var(--transition-speed) ease;
+      }
+
+      .about-image:hover img {
+        transform: scale(1.05);
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 3rem;
+        margin-top: 4rem;
+      }
+
+      .service-card {
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        text-align: center;
+        transition: all var(--transition-speed) ease;
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.1);
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(139, 115, 85, 0.2);
+      }
+
+      .service-icon {
+        font-size: 3rem;
+        color: var(--accent-color);
+        margin-bottom: 1.5rem;
+      }
+
+      .service-title {
+        font-family: "Playfair Display", serif;
+        font-size: 1.8rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+      }
+
+      .service-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      .gallery-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        padding: 2rem 0;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.15);
+        transition: all var(--transition-speed) ease;
+        cursor: pointer;
+        aspect-ratio: 1;
+      }
+
+      .gallery-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(139, 115, 85, 0.25);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-speed) ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-item-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(139, 115, 85, 0.7) 100%
+        );
+        opacity: 0;
+        transition: opacity var(--transition-speed) ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 1.5rem;
+      }
+
+      .gallery-item:hover .gallery-item-overlay {
+        opacity: 1;
+      }
+
+      .gallery-item-title {
+        font-family: "Playfair Display", serif;
+        font-size: 1.2rem;
+        color: var(--secondary-color);
+        font-weight: 700;
+      }
+
+      .portfolio-filters {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        padding: 0.8rem 2rem;
+        background-color: transparent;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-family: "Crimson Text", serif;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .filter-btn:hover,
+      .filter-btn.active {
+        background-color: var(--primary-color);
+        color: var(--secondary-color);
+      }
+
+      .contact-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .contact-info {
+        padding: 2rem 0;
+      }
+
+      .contact-info h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 2rem;
+      }
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+      }
+
+      .contact-icon {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+
+      .contact-form {
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(139, 115, 85, 0.15);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-family: "Crimson Text", serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 1rem;
+        background-color: rgba(245, 230, 211, 0.5);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        font-family: "Lora", serif;
+        font-size: 1rem;
+        color: var(--text-primary);
+        transition: all var(--transition-speed) ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background-color: rgba(255, 255, 255, 0.8);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 1.2rem;
+        background-color: var(--primary-color);
+        color: var(--secondary-color);
+        font-family: "Crimson Text", serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .submit-btn:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.3);
+      }
+
+      .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 3rem;
+        margin-top: 3rem;
+      }
+
+      .blog-card {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.15);
+        transition: all var(--transition-speed) ease;
+      }
+
+      .blog-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(139, 115, 85, 0.25);
+      }
+
+      .blog-image {
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+      }
+
+      .blog-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-speed) ease;
+      }
+
+      .blog-card:hover .blog-image img {
+        transform: scale(1.1);
+      }
+
+      .blog-content {
+        padding: 2rem;
+      }
+
+      .blog-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .blog-category {
+        background-color: var(--accent-color);
+        color: var(--secondary-color);
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+
+      .blog-title {
+        font-family: "Playfair Display", serif;
+        font-size: 1.8rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        line-height: 1.3;
+      }
+
+      .blog-excerpt {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+      }
+
+      .read-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .read-more:hover {
+        gap: 1rem;
+        color: var(--accent-color);
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 3rem;
+        margin-top: 4rem;
+      }
+
+      .team-member {
+        text-align: center;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .team-member:hover {
+        transform: translateY(-10px);
+      }
+
+      .team-member-image {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 1.5rem;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.2);
+        transition: all var(--transition-speed) ease;
+      }
+
+      .team-member:hover .team-member-image {
+        box-shadow: 0 10px 30px rgba(139, 115, 85, 0.3);
+      }
+
+      .team-member-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-speed) ease;
+      }
+
+      .team-member:hover .team-member-image img {
+        transform: scale(1.1);
+      }
+
+      .team-member-name {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .team-member-role {
+        font-family: "Crimson Text", serif;
+        font-size: 1.1rem;
+        color: var(--accent-color);
+        margin-bottom: 1rem;
+      }
+
+      .team-member-bio {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        max-width: 300px;
+        margin: 0 auto;
+      }
+
+      .testimonials-slider {
+        max-width: 800px;
+        margin: 4rem auto 0;
+        position: relative;
+        overflow: hidden;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(139, 115, 85, 0.15);
+      }
+
+      .testimonial {
+        text-align: center;
+        opacity: 0;
+        display: none;
+        animation: fadeIn 0.6s ease-in-out forwards;
+      }
+
+      .testimonial.active {
+        display: block;
+        opacity: 1;
+      }
+
+      .testimonial-text {
+        font-family: "Crimson Text", serif;
+        font-size: 1.4rem;
+        font-style: italic;
+        color: var(--text-primary);
+        line-height: 1.8;
+        margin-bottom: 2rem;
+      }
+
+      .testimonial-author {
+        font-family: "Playfair Display", serif;
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        font-weight: 700;
+      }
+
+      .testimonial-role {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+      }
+
+      .slider-dots {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .slider-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--accent-color);
+        opacity: 0.3;
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .slider-dot.active {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+
+      footer {
+        background-color: var(--primary-color);
+        color: var(--secondary-color);
+        padding: 4rem 0 2rem;
+        margin-top: 5rem;
+      }
+
+      .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 3rem;
+      }
+
+      .footer-section h4 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .footer-section ul {
+        list-style: none;
+      }
+
+      .footer-section ul li {
+        margin-bottom: 0.8rem;
+      }
+
+      .footer-section a {
+        color: var(--secondary-color);
+        text-decoration: none;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .footer-section a:hover {
+        color: var(--accent-color);
+      }
+
+      .footer-bottom {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(245, 230, 211, 0.2);
+      }
+
+      .social-links {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .social-link {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(245, 230, 211, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .social-link:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-3px);
+      }
+
+      .lightbox {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .lightbox.active {
+        display: flex;
+      }
+
+      .lightbox-content {
+        max-width: 90%;
+        max-height: 90%;
+        position: relative;
+      }
+
+      .lightbox-content img,
+      .lightbox-content video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .lightbox-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        font-size: 2rem;
+        color: white;
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .lightbox-close:hover {
+        transform: rotate(90deg);
+      }
+
+      .video-gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 5px 20px rgba(139, 115, 85, 0.15);
+        transition: all var(--transition-speed) ease;
+        cursor: pointer;
+        aspect-ratio: 16/9;
+      }
+
+      .video-gallery-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .video-play-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-speed) ease;
+      }
+
+      .video-gallery-item:hover .video-play-icon {
+        transform: translate(-50%, -50%) scale(1.1);
+        background-color: var(--accent-color);
+      }
+
+      .scroll-indicator {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        40% {
+          transform: translateX(-50%) translateY(-20px);
+        }
+        60% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+      }
+
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background-color: var(--accent-color);
+        z-index: 9999;
+        transition: left 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      .page-transition.active.out {
+        left: 100%;
+      }
+
+      @media (max-width: 768px) {
+        .nav-menu {
+          position: fixed;
+          left: -100%;
+          top: 80px;
+          flex-direction: column;
+          background-color: rgba(245, 230, 211, 0.98);
+          width: 100%;
+          text-align: center;
+          transition: left var(--transition-speed) ease;
+          padding: 2rem 0;
+          box-shadow: 0 10px 30px rgba(139, 115, 85, 0.2);
+        }
+
+        .nav-menu.active {
+          left: 0;
+        }
+
+        .mobile-menu-toggle {
+          display: flex;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+          transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+          transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .hero-title {
+          font-size: clamp(2.5rem, 10vw, 4rem);
+        }
+
+        .about-content,
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+
+        .gallery-container {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 1rem;
+        }
+
+        .blog-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .content-section {
+          padding: 3rem 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: 2rem;
+        }
+
+        .hero-subtitle {
+          font-size: 1rem;
+        }
+
+        .section-title {
+          font-size: 2rem;
+        }
+
+        .gallery-container {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+
+        .contact-form {
+          padding: 2rem 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-screen">
+      <div class="loading-text">Loading...</div>
+    </div>
+
+    <div class="page-transition"></div>
+
+    <header>
+      <nav>
+        <a href="#" class="logo">Cozy Studio</a>
+        <ul class="nav-menu">
+          <li><a href="#home" class="nav-link" data-page="home">Home</a></li>
+          <li><a href="#about" class="nav-link" data-page="about">About</a></li>
+          <li>
+            <a href="#services" class="nav-link" data-page="services"
+              >Services</a
+            >
+          </li>
+          <li>
+            <a href="#gallery" class="nav-link" data-page="gallery">Gallery</a>
+          </li>
+          <li><a href="#blog" class="nav-link" data-page="blog">Blog</a></li>
+          <li><a href="#team" class="nav-link" data-page="team">Team</a></li>
+          <li>
+            <a href="#contact" class="nav-link" data-page="contact">Contact</a>
+          </li>
+        </ul>
+        <div class="mobile-menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section id="home" class="page-section active">
+        <div id="p5-canvas-container"></div>
+        <div class="hero-content">
+          <h1 class="hero-title">Welcome to Cozy Typography</h1>
+          <p class="hero-subtitle">
+            Where words become art and design tells stories
+          </p>
+          <a href="#gallery" class="cta-button" data-page="gallery"
+            >Explore Our Work</a
+          >
+        </div>
+        <div class="scroll-indicator">
+          <svg width="30" height="50" viewBox="0 0 30 50">
+            <rect
+              x="10"
+              y="10"
+              width="10"
+              height="20"
+              rx="5"
+              fill="none"
+              stroke="#8B7355"
+              stroke-width="2"
+            />
+            <circle cx="15" cy="20" r="3" fill="#8B7355">
+              <animate
+                attributeName="cy"
+                from="15"
+                to="25"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </circle>
+          </svg>
+        </div>
+      </section>
+
+      <section id="about" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">About Our Studio</h2>
+          <div class="about-content">
+            <div class="about-text">
+              <h3>Crafting Visual Stories</h3>
+              <p>
+                Welcome to our cozy corner of the creative world, where
+                typography meets innovation and design embraces warmth. Our
+                studio specializes in creating unique typographic experiences
+                that resonate with audiences and leave lasting impressions.
+              </p>
+              <p>
+                With over a decade of experience in visual communication, we
+                blend traditional typography principles with modern digital
+                techniques to create designs that are both timeless and
+                contemporary. Our approach is rooted in the belief that good
+                design should feel like coming home – comfortable, inviting, and
+                memorable.
+              </p>
+            </div>
+            <div class="about-image">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+                alt="Studio workspace"
+              />
+            </div>
+          </div>
+          <div class="about-content">
+            <div class="about-image">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+                alt="Creative process"
+              />
+            </div>
+            <div class="about-text">
+              <h3>Our Philosophy</h3>
+              <p>
+                We believe that typography is more than just arranging letters –
+                it's about creating emotional connections through visual
+                language. Every curve, every space, and every weight choice
+                contributes to the story we're telling.
+              </p>
+              <p>
+                Our cozy aesthetic isn't just a style choice; it's a reflection
+                of our approach to design. We create spaces where ideas can
+                flourish, where creativity feels natural, and where every
+                project is infused with warmth and personality.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">Our Services</h2>
+          <div class="services-grid">
+            <div class="service-card">
+              <div class="service-icon">✨</div>
+              <h3 class="service-title">Typography Design</h3>
+              <p class="service-description">
+                Custom typeface creation and typography systems that capture
+                your brand's unique voice and personality.
+              </p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon">🎨</div>
+              <h3 class="service-title">Brand Identity</h3>
+              <p class="service-description">
+                Comprehensive brand identity packages that create cohesive
+                visual languages across all touchpoints.
+              </p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon">📱</div>
+              <h3 class="service-title">Digital Experiences</h3>
+              <p class="service-description">
+                Interactive web experiences that blend beautiful typography with
+                engaging animations and user interactions.
+              </p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon">📚</div>
+              <h3 class="service-title">Editorial Design</h3>
+              <p class="service-description">
+                Magazine layouts, book designs, and editorial projects that
+                balance readability with visual impact.
+              </p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon">🎬</div>
+              <h3 class="service-title">Motion Typography</h3>
+              <p class="service-description">
+                Animated typography for videos, presentations, and digital
+                campaigns that bring words to life.
+              </p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon">🏆</div>
+              <h3 class="service-title">Creative Consulting</h3>
+              <p class="service-description">
+                Strategic creative direction and consulting to help elevate your
+                brand's visual communication.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="gallery" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">Our Gallery</h2>
+          <div class="portfolio-filters">
+            <button class="filter-btn active" data-filter="all">
+              All Works
+            </button>
+            <button class="filter-btn" data-filter="typography">
+              Typography
+            </button>
+            <button class="filter-btn" data-filter="branding">Branding</button>
+            <button class="filter-btn" data-filter="digital">Digital</button>
+            <button class="filter-btn" data-filter="motion">Motion</button>
+          </div>
+          <div class="gallery-container">
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+                alt="Typography Project 1"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Elegant Typography</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+                alt="Branding Project 1"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Identity</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+                alt="Digital Project 1"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Digital Experience</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+                alt="Typography Project 2"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Modern Letters</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+                alt="Branding Project 2"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Visual System</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+                alt="Digital Project 2"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Web Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+                alt="Typography Project 3"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Experimental Type</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+                alt="Branding Project 3"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Evolution</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+                alt="Digital Project 3"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Interactive Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+                alt="Typography Project 4"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Letter Forms</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+                alt="Branding Project 4"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Corporate Identity</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+                alt="Digital Project 4"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">UI Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+                alt="Typography Project 5"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Custom Typeface</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+                alt="Branding Project 5"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Guidelines</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                alt="Digital Project 5"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">App Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+                alt="Typography Project 6"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Display Type</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+                alt="Branding Project 6"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Logo Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png"
+                alt="Digital Project 6"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Website Concept</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+                alt="Typography Project 7"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Script Letters</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+                alt="Branding Project 7"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Packaging Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+                alt="Digital Project 7"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Digital Campaign</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png"
+                alt="Typography Project 8"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Serif Study</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                alt="Branding Project 8"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Rebranding</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png"
+                alt="Digital Project 8"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">E-commerce Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png"
+                alt="Typography Project 9"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Poster Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png"
+                alt="Branding Project 9"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Visual Language</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png"
+                alt="Digital Project 9"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Dashboard Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+                alt="Typography Project 10"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Book Cover</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png"
+                alt="Branding Project 10"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Stationery Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png"
+                alt="Digital Project 10"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Mobile App</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+                alt="Typography Project 11"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Editorial Layout</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png"
+                alt="Branding Project 11"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Collateral</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png"
+                alt="Digital Project 11"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Landing Page</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png"
+                alt="Typography Project 12"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Type Specimen</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+                alt="Branding Project 12"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Architecture</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png"
+                alt="Digital Project 12"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Social Media</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png"
+                alt="Typography Project 13"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Calligraphy</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png"
+                alt="Branding Project 13"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Environmental Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/6a4b41d5-dc90-4dc8-99ae-1dea2a581e16/0_0.png"
+                alt="Digital Project 13"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Interactive Story</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/6a4b41d5-dc90-4dc8-99ae-1dea2a581e16/0_1.png"
+                alt="Typography Project 14"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Magazine Design</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/6a4b41d5-dc90-4dc8-99ae-1dea2a581e16/0_2.png"
+                alt="Branding Project 14"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Story</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/6a4b41d5-dc90-4dc8-99ae-1dea2a581e16/0_3.png"
+                alt="Digital Project 14"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Portfolio Site</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="typography">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_1.png"
+                alt="Typography Project 15"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Lettering Art</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="branding">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_2.png"
+                alt="Branding Project 15"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Refresh</h4>
+              </div>
+            </div>
+            <div class="gallery-item" data-category="digital">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_3.png"
+                alt="Digital Project 15"
+              />
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Digital Publication</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Motion Graphics</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Animated Type</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Animation</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Title Sequence</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/1.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Logo Animation</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/2.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Kinetic Typography</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/3.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Explainer Video</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/0.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Social Campaign</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/1.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Product Launch</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/2.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Event Promo</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/3.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Brand Story</h4>
+              </div>
+            </div>
+            <div class="video-gallery-item" data-category="motion">
+              <video
+                src="https://cdn.midjourney.com/video/9b175753-1e05-4fb8-8138-70d6c0bd5368/2.mp4"
+                muted
+                loop
+              ></video>
+              <div class="video-play-icon">▶</div>
+              <div class="gallery-item-overlay">
+                <h4 class="gallery-item-title">Creative Showcase</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="blog" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">Latest Insights</h2>
+          <div class="blog-grid">
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+                  alt="Blog post 1"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Typography</span>
+                  <span class="blog-date">March 15, 2024</span>
+                </div>
+                <h3 class="blog-title">The Art of Cozy Typography</h3>
+                <p class="blog-excerpt">
+                  Exploring how typography can create warm, inviting spaces that
+                  resonate with audiences on an emotional level. Discover the
+                  principles behind our cozy design approach.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+                  alt="Blog post 2"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Design Trends</span>
+                  <span class="blog-date">March 10, 2024</span>
+                </div>
+                <h3 class="blog-title">2024 Typography Trends</h3>
+                <p class="blog-excerpt">
+                  A comprehensive look at the typography trends shaping the
+                  design landscape in 2024. From variable fonts to kinetic type,
+                  we explore what's next.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+                  alt="Blog post 3"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Case Study</span>
+                  <span class="blog-date">March 5, 2024</span>
+                </div>
+                <h3 class="blog-title">Behind the Brand: Cozy Coffee Co.</h3>
+                <p class="blog-excerpt">
+                  An in-depth case study of our recent branding project for Cozy
+                  Coffee Co., showcasing how typography can transform a brand's
+                  identity.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+                  alt="Blog post 4"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Tutorial</span>
+                  <span class="blog-date">February 28, 2024</span>
+                </div>
+                <h3 class="blog-title">
+                  Creating Animated Typography with p5.js
+                </h3>
+                <p class="blog-excerpt">
+                  A step-by-step guide to creating beautiful animated typography
+                  using p5.js. Perfect for designers looking to add motion to
+                  their work.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                  alt="Blog post 5"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Inspiration</span>
+                  <span class="blog-date">February 20, 2024</span>
+                </div>
+                <h3 class="blog-title">
+                  Finding Inspiration in Everyday Typography
+                </h3>
+                <p class="blog-excerpt">
+                  How to find typographic inspiration in the world around you.
+                  From street signs to coffee shops, typography is everywhere.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+            <article class="blog-card">
+              <div class="blog-image">
+                <img
+                  src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+                  alt="Blog post 6"
+                />
+              </div>
+              <div class="blog-content">
+                <div class="blog-meta">
+                  <span class="blog-category">Process</span>
+                  <span class="blog-date">February 15, 2024</span>
+                </div>
+                <h3 class="blog-title">Our Creative Process Revealed</h3>
+                <p class="blog-excerpt">
+                  A behind-the-scenes look at how we approach typography
+                  projects from concept to completion. Learn about our unique
+                  creative process.
+                </p>
+                <a href="#" class="read-more">Read More →</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="team" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">Meet Our Team</h2>
+          <div class="team-grid">
+            <div class="team-member">
+              <div class="team-member-image">
+                <img
+                  src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                  alt="Team member 1"
+                />
+              </div>
+              <h3 class="team-member-name">Sarah Chen</h3>
+              <p class="team-member-role">Creative Director</p>
+              <p class="team-member-bio">
+                With over 15 years of experience in typography and brand design,
+                Sarah leads our creative vision with passion and expertise.
+              </p>
+            </div>
+            <div class="team-member">
+              <div class="team-member-image">
+                <img
+                  src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png"
+                  alt="Team member 2"
+                />
+              </div>
+              <h3 class="team-member-name">Michael Torres</h3>
+              <p class="team-member-role">Lead Designer</p>
+              <p class="team-member-bio">
+                Michael specializes in creating innovative typographic solutions
+                that push the boundaries of traditional design.
+              </p>
+            </div>
+            <div class="team-member">
+              <div class="team-member-image">
+                <img
+                  src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+                  alt="Team member 3"
+                />
+              </div>
+              <h3 class="team-member-name">Emma Wilson</h3>
+              <p class="team-member-role">Motion Designer</p>
+              <p class="team-member-bio">
+                Emma brings typography to life through stunning animations and
+                interactive experiences that captivate audiences.
+              </p>
+            </div>
+            <div class="team-member">
+              <div class="team-member-image">
+                <img
+                  src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+                  alt="Team member 4"
+                />
+              </div>
+              <h3 class="team-member-name">James Park</h3>
+              <p class="team-member-role">UX Designer</p>
+              <p class="team-member-bio">
+                James ensures our typographic designs not only look beautiful
+                but also provide exceptional user experiences.
+              </p>
+            </div>
+          </div>
+          <div class="testimonials-slider">
+            <div class="testimonial active">
+              <p class="testimonial-text">
+                "Working with Cozy Studio transformed our brand completely.
+                Their attention to typographic detail and understanding of our
+                vision was exceptional."
+              </p>
+              <h4 class="testimonial-author">Alexandra Rivera</h4>
+              <p class="testimonial-role">CEO, Artisan Coffee Co.</p>
+            </div>
+            <div class="testimonial">
+              <p class="testimonial-text">
+                "The team's creativity and professionalism exceeded our
+                expectations. They created a visual language that perfectly
+                captures our brand essence."
+              </p>
+              <h4 class="testimonial-author">David Kim</h4>
+              <p class="testimonial-role">
+                Marketing Director, Tech Innovations
+              </p>
+            </div>
+            <div class="testimonial">
+              <p class="testimonial-text">
+                "Cozy Studio's approach to typography is both innovative and
+                timeless. They delivered a brand identity that will serve us for
+                years to come."
+              </p>
+              <h4 class="testimonial-author">Sophie Laurent</h4>
+              <p class="testimonial-role">Founder, Bloom Boutique</p>
+            </div>
+          </div>
+          <div class="slider-dots">
+            <span class="slider-dot active" data-slide="0"></span>
+            <span class="slider-dot" data-slide="1"></span>
+            <span class="slider-dot" data-slide="2"></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="page-section">
+        <div class="content-section">
+          <h2 class="section-title">Get in Touch</h2>
+          <div class="contact-container">
+            <div class="contact-info">
+              <h3>Let's Create Something Beautiful</h3>
+              <p style="margin-bottom: 2rem; color: var(--text-secondary)">
+                We'd love to hear about your project and discuss how we can help
+                bring your typographic vision to life.
+              </p>
+              <div class="contact-item">
+                <span class="contact-icon">📍</span>
+                <span
+                  >123 Design Street, Creative District<br />San Francisco, CA
+                  94105</span
+                >
+              </div>
+              <div class="contact-item">
+                <span class="contact-icon">📧</span>
+                <span>hello@cozystudio.design</span>
+              </div>
+              <div class="contact-item">
+                <span class="contact-icon">📱</span>
+                <span>+1 (555) 123-4567</span>
+              </div>
+              <div class="contact-item">
+                <span class="contact-icon">🕐</span>
+                <span>Mon-Fri: 9:00 AM - 6:00 PM PST</span>
+              </div>
+            </div>
+            <form class="contact-form">
+              <div class="form-group">
+                <label for="name">Your Name</label>
+                <input type="text" id="name" name="name" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required />
+              </div>
+              <div class="form-group">
+                <label for="project">Project Type</label>
+                <input
+                  type="text"
+                  id="project"
+                  name="project"
+                  placeholder="e.g., Brand Identity, Web Design"
+                />
+              </div>
+              <div class="form-group">
+                <label for="message">Tell Us About Your Project</label>
+                <textarea id="message" name="message" required></textarea>
+              </div>
+              <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>About Cozy Studio</h4>
+          <p>
+            We're a typography-focused design studio creating warm, inviting
+            visual experiences that connect with audiences on a deeper level.
+          </p>
+          <div class="social-links">
+            <a href="#" class="social-link">📷</a>
+            <a href="#" class="social-link">🐦</a>
+            <a href="#" class="social-link">💼</a>
+            <a href="#" class="social-link">🎨</a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#about">About Us</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#gallery">Portfolio</a></li>
+            <li><a href="#blog">Blog</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Services</h4>
+          <ul>
+            <li><a href="#">Typography Design</a></li>
+            <li><a href="#">Brand Identity</a></li>
+            <li><a href="#">Digital Design</a></li>
+            <li><a href="#">Motion Graphics</a></li>
+            <li><a href="#">Creative Consulting</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Newsletter</h4>
+          <p>
+            Subscribe to receive updates on our latest projects and typography
+            insights.
+          </p>
+          <form style="margin-top: 1rem">
+            <input
+              type="email"
+              placeholder="Your email"
+              style="
+                width: 100%;
+                padding: 0.8rem;
+                background-color: rgba(245, 230, 211, 0.1);
+                border: 1px solid rgba(245, 230, 211, 0.3);
+                border-radius: 5px;
+                color: var(--secondary-color);
+                margin-bottom: 0.5rem;
+              "
+            />
+            <button
+              type="submit"
+              style="
+                width: 100%;
+                padding: 0.8rem;
+                background-color: var(--accent-color);
+                border: none;
+                border-radius: 5px;
+                color: var(--secondary-color);
+                font-weight: 600;
+                cursor: pointer;
+                transition: all var(--transition-speed) ease;
+              "
+            >
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2024 Cozy Studio. All rights reserved. |
+          <a href="#" style="color: var(--accent-color)">Privacy Policy</a> |
+          <a href="#" style="color: var(--accent-color)">Terms of Service</a>
+        </p>
+      </div>
+    </footer>
+
+    <div class="lightbox">
+      <div class="lightbox-content">
+        <span class="lightbox-close">&times;</span>
+        <img src="" alt="Lightbox image" />
+      </div>
+    </div>
+
+    <script>
+      // p5.js animation for homepage
+      let sketch = function (p) {
+        let particles = [];
+        let textPoints = [];
+        let font;
+        let textSize = 100;
+        let text = "COZY";
+
+        p.preload = function () {
+          // Using default font since we can't load external fonts in p5
+        };
+
+        p.setup = function () {
+          let canvas = p.createCanvas(p.windowWidth, p.windowHeight - 80);
+          canvas.parent("p5-canvas-container");
+
+          // Create text points
+          p.textFont("Playfair Display");
+          p.textSize(textSize);
+          p.textAlign(p.CENTER, p.CENTER);
+
+          let bounds = p.textBounds(text, 0, 0);
+          let textImg = p.createGraphics(bounds.w + 20, bounds.h + 20);
+          textImg.textFont("Playfair Display");
+          textImg.textSize(textSize);
+          textImg.textAlign(p.CENTER, p.CENTER);
+          textImg.fill(255);
+          textImg.text(text, textImg.width / 2, textImg.height / 2);
+
+          // Sample points from text
+          for (let x = 0; x < textImg.width; x += 5) {
+            for (let y = 0; y < textImg.height; y += 5) {
+              let index = (x + y * textImg.width) * 4;
+              if (textImg.pixels[index] > 128) {
+                textPoints.push(
+                  p.createVector(
+                    x - textImg.width / 2 + p.width / 2,
+                    y - textImg.height / 2 + p.height / 2,
+                  ),
+                );
+              }
+            }
+          }
+
+          // Create particles
+          for (let i = 0; i < 150; i++) {
+            particles.push(new Particle(p));
+          }
+        };
+
+        p.draw = function () {
+          p.clear();
+
+          // Draw particles
+          particles.forEach((particle) => {
+            particle.update();
+            particle.display();
+          });
+
+          // Draw text effect
+          p.push();
+          p.translate(0, p.sin(p.frameCount * 0.01) * 10);
+          p.noStroke();
+          p.fill(139, 115, 85, 150);
+          p.textFont("Playfair Display");
+          p.textSize(textSize);
+          p.textAlign(p.CENTER, p.CENTER);
+          p.text(text, p.width / 2, p.height / 2);
+          p.pop();
+        };
+
+        p.windowResized = function () {
+          p.resizeCanvas(p.windowWidth, p.windowHeight - 80);
+        };
+
+        class Particle {
+          constructor(p5Instance) {
+            this.p = p5Instance;
+            this.pos = this.p.createVector(
+              this.p.random(this.p.width),
+              this.p.random(this.p.height),
+            );
+            this.vel = this.p.createVector(
+              this.p.random(-0.5, 0.5),
+              this.p.random(-0.5, 0.5),
+            );
+            this.size = this.p.random(2, 8);
+            this.alpha = this.p.random(20, 80);
+          }
+
+          update() {
+            this.pos.add(this.vel);
+
+            if (this.pos.x < 0 || this.pos.x > this.p.width) this.vel.x *= -1;
+            if (this.pos.y < 0 || this.pos.y > this.p.height) this.vel.y *= -1;
+
+            // Attract to mouse
+            let mouse = this.p.createVector(this.p.mouseX, this.p.mouseY);
+            let force = p5.Vector.sub(mouse, this.pos);
+            force.setMag(0.05);
+            this.vel.add(force);
+            this.vel.limit(2);
+          }
+
+          display() {
+            this.p.noStroke();
+            this.p.fill(212, 165, 116, this.alpha);
+            this.p.ellipse(this.pos.x, this.pos.y, this.size);
+          }
+        }
+      };
+
+      // Initialize p5.js
+      new p5(sketch);
+
+      // Page navigation
+      const navLinks = document.querySelectorAll(".nav-link, .cta-button");
+      const sections = document.querySelectorAll(".page-section");
+      const pageTransition = document.querySelector(".page-transition");
+
+      function showPage(pageId) {
+        // Trigger page transition
+        pageTransition.classList.add("active");
+
+        setTimeout(() => {
+          sections.forEach((section) => {
+            section.classList.remove("active");
+          });
+
+          const targetSection = document.getElementById(pageId);
+          if (targetSection) {
+            targetSection.classList.add("active");
+            window.scrollTo(0, 0);
+          }
+
+          pageTransition.classList.add("out");
+
+          setTimeout(() => {
+            pageTransition.classList.remove("active", "out");
+          }, 600);
+        }, 300);
+      }
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const pageId =
+            link.getAttribute("data-page") ||
+            link.getAttribute("href").substring(1);
+          showPage(pageId);
+
+          // Close mobile menu if open
+          navMenu.classList.remove("active");
+          mobileMenuToggle.classList.remove("active");
+        });
+      });
+
+      // Mobile menu toggle
+      const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
+      const navMenu = document.querySelector(".nav-menu");
+
+      mobileMenuToggle.addEventListener("click", () => {
+        navMenu.classList.toggle("active");
+        mobileMenuToggle.classList.toggle("active");
+      });
+
+      // Gallery filtering
+      const filterButtons = document.querySelectorAll(".filter-btn");
+      const galleryItems = document.querySelectorAll(
+        ".gallery-item, .video-gallery-item",
+      );
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const filter = button.getAttribute("data-filter");
+
+          filterButtons.forEach((btn) => btn.classList.remove("active"));
+          button.classList.add("active");
+
+          galleryItems.forEach((item) => {
+            if (
+              filter === "all" ||
+              item.getAttribute("data-category") === filter
+            ) {
+              item.style.display = "block";
+            } else {
+              item.style.display = "none";
+            }
+          });
+        });
+      });
+
+      // Lightbox functionality
+      const lightbox = document.querySelector(".lightbox");
+      const lightboxContent = document.querySelector(".lightbox-content");
+      const lightboxClose = document.querySelector(".lightbox-close");
+
+      galleryItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const img = item.querySelector("img");
+          const video = item.querySelector("video");
+
+          if (img) {
+            lightboxContent.innerHTML = `<span class="lightbox-close">&times;</span><img src="${img.src}" alt="${img.alt}">`;
+          } else if (video) {
+            lightboxContent.innerHTML = `<span class="lightbox-close">&times;</span><video src="${video.src}" controls autoplay></video>`;
+          }
+
+          lightbox.classList.add("active");
+
+          // Re-attach close event
+          document
+            .querySelector(".lightbox-close")
+            .addEventListener("click", () => {
+              lightbox.classList.remove("active");
+            });
+        });
+      });
+
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) {
+          lightbox.classList.remove("active");
+        }
+      });
+
+      // Testimonial slider
+      const testimonials = document.querySelectorAll(".testimonial");
+      const sliderDots = document.querySelectorAll(".slider-dot");
+      let currentTestimonial = 0;
+
+      function showTestimonial(index) {
+        testimonials.forEach((testimonial) =>
+          testimonial.classList.remove("active"),
+        );
+        sliderDots.forEach((dot) => dot.classList.remove("active"));
+
+        testimonials[index].classList.add("active");
+        sliderDots[index].classList.add("active");
+      }
+
+      sliderDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          currentTestimonial = index;
+          showTestimonial(currentTestimonial);
+        });
+      });
+
+      // Auto-rotate testimonials
+      setInterval(() => {
+        currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+        showTestimonial(currentTestimonial);
+      }, 5000);
+
+      // Form submission
+      const contactForm = document.querySelector(".contact-form");
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for your message! We'll get back to you soon.");
+        contactForm.reset();
+      });
+
+      // Header scroll effect
+      const header = document.querySelector("header");
+      let lastScroll = 0;
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 100) {
+          header.style.backgroundColor = "rgba(245, 230, 211, 0.98)";
+          header.style.boxShadow = "0 2px 20px rgba(139, 115, 85, 0.15)";
+        } else {
+          header.style.backgroundColor = "rgba(245, 230, 211, 0.95)";
+          header.style.boxShadow = "0 2px 20px rgba(139, 115, 85, 0.1)";
+        }
+
+        lastScroll = currentScroll;
+      });
+
+      // Loading screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".loading-screen").style.opacity = "0";
+          setTimeout(() => {
+            document.querySelector(".loading-screen").style.display = "none";
+          }, 800);
+        }, 1500);
+      });
+
+      // Smooth hover effects for gallery videos
+      const videoItems = document.querySelectorAll(".video-gallery-item video");
+      videoItems.forEach((video) => {
+        video.parentElement.addEventListener("mouseenter", () => {
+          video.play();
+        });
+        video.parentElement.addEventListener("mouseleave", () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+      });
+
+      // Newsletter form
+      const newsletterForm = document.querySelector("footer form");
+      newsletterForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for subscribing to our newsletter!");
+        newsletterForm.reset();
+      });
+
+      // Add subtle parallax effect to hero content
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const heroContent = document.querySelector(".hero-content");
+        if (heroContent && scrolled < window.innerHeight) {
+          heroContent.style.transform = `translateY(${scrolled * 0.3}px)`;
+        }
+      });
+
+      // Random page transition effects
+      const transitionEffects = ["translateX", "translateY", "scale", "rotate"];
+
+      function getRandomTransition() {
+        const effect =
+          transitionEffects[
+            Math.floor(Math.random() * transitionEffects.length)
+          ];
+        const pageTransition = document.querySelector(".page-transition");
+
+        switch (effect) {
+          case "translateX":
+            pageTransition.style.transform = "translateX(0)";
+            break;
+          case "translateY":
+            pageTransition.style.transform = "translateY(0)";
+            break;
+          case "scale":
+            pageTransition.style.transform = "scale(1)";
+            break;
+          case "rotate":
+            pageTransition.style.transform = "rotate(0deg)";
+            break;
+        }
+      }
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", () => {
+        // Set initial active page
+        showPage("home");
+      });
+    </script>
+  </body>
+</html>

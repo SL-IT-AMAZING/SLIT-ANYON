@@ -1,8 +1,1048 @@
 {
   "version": 1,
   "categories": [
-    { "id": "website", "label": "Website" },
-    { "id": "app", "label": "Application" }
+    {
+      "id": "website",
+      "label": "Website"
+    },
+    {
+      "id": "app",
+      "label": "App"
+    }
   ],
-  "templates": []
+  "templates": [
+    {
+      "id": "0001",
+      "title": "Creative Studio",
+      "description": "Creative Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0001",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0002",
+      "title": "Dark Portfolio - Dynamic Media",
+      "description": "Dark Portfolio - Dynamic Media - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0002",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0003",
+      "title": "Luxury Resort - Paradise Awaits",
+      "description": "Luxury Resort - Paradise Awaits - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0003",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0004",
+      "title": "Interactive Studio Portfolio",
+      "description": "Interactive Studio Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0004",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0005",
+      "title": "Interactive Portfolio - Modern Experience",
+      "description": "Interactive Portfolio - Modern Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0005",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0006",
+      "title": "Horizontal Gallery Experience",
+      "description": "Horizontal Gallery Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0006",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0007",
+      "title": "Immersive Full Screen Experience - 10 Pages",
+      "description": "Immersive Full Screen Experience - 10 Pages - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0007",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0008",
+      "title": "Spiral Gallery - Infinite Art Journey",
+      "description": "Spiral Gallery - Infinite Art Journey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0008",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0009",
+      "title": "Spiral Gallery Experience - Enhanced",
+      "description": "Spiral Gallery Experience - Enhanced - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0009",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0010",
+      "title": "Narrative Gallery - A Visual Journey",
+      "description": "Narrative Gallery - A Visual Journey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0010",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0011",
+      "title": "Circular Gallery Experience - Extended",
+      "description": "Circular Gallery Experience - Extended - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0011",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0012",
+      "title": "Immersive Gallery Experience",
+      "description": "Immersive Gallery Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0012",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0013",
+      "title": "Immersive Gallery Experience",
+      "description": "Immersive Gallery Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0013",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0014",
+      "title": "Immersive Gallery Experience",
+      "description": "Immersive Gallery Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0014",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0015",
+      "title": "3D Card Stack Gallery",
+      "description": "3D Card Stack Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0015",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0016",
+      "title": "Gallery Parallax Experience",
+      "description": "Gallery Parallax Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0016",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0017",
+      "title": "Immersive Gallery Experience",
+      "description": "Immersive Gallery Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0017",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0018",
+      "title": "Immersive Portfolio - Spatial Experience",
+      "description": "Immersive Portfolio - Spatial Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0018",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0019",
+      "title": "Liquid Dreams - Experimental Portfolio",
+      "description": "Liquid Dreams - Experimental Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0019",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0020",
+      "title": "Ethereal Gallery - Infinite Canvas",
+      "description": "Ethereal Gallery - Infinite Canvas - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0020",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0021",
+      "title": "TYPOGRAPHIC CHAOS - Experimental Portfolio",
+      "description": "TYPOGRAPHIC CHAOS - Experimental Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0021",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0022",
+      "title": "Typography Studio - Experimental Portfolio",
+      "description": "Typography Studio - Experimental Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0022",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0023",
+      "title": "Typography Portfolio - Luxury Design Experience",
+      "description": "Typography Portfolio - Luxury Design Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0023",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0024",
+      "title": "Typography Portfolio - Bold & Dynamic",
+      "description": "Typography Portfolio - Bold & Dynamic - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0024",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0025",
+      "title": "Typography Portfolio - Immersive Experience",
+      "description": "Typography Portfolio - Immersive Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0025",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0026",
+      "title": "Typography Portfolio - Experimental Design",
+      "description": "Typography Portfolio - Experimental Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0026",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0027",
+      "title": "NEXUS - Digital Art Studio",
+      "description": "NEXUS - Digital Art Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0027",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0028",
+      "title": "Immersive Portfolio - Reimagined",
+      "description": "Immersive Portfolio - Reimagined - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0028",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0029",
+      "title": "NEXUS - Digital Dimensions",
+      "description": "NEXUS - Digital Dimensions - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0029",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0030",
+      "title": "Orbital Studio - Beyond Boundaries",
+      "description": "Orbital Studio - Beyond Boundaries - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0030",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0031",
+      "title": "NEXUS - Digital Experience Studio",
+      "description": "NEXUS - Digital Experience Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0031",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0032",
+      "title": "FLUX - Experimental Portfolio",
+      "description": "FLUX - Experimental Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0032",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0033",
+      "title": "FLUX - Digital Art Studio",
+      "description": "FLUX - Digital Art Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0033",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0034",
+      "title": "ATELIER - Digital Art Studio",
+      "description": "ATELIER - Digital Art Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0034",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0035",
+      "title": "Creative Studio - Immersive Portfolio",
+      "description": "Creative Studio - Immersive Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0035",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0036",
+      "title": "Creative Studio - Immersive Portfolio",
+      "description": "Creative Studio - Immersive Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0036",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0037",
+      "title": "STUDIO — Digital Craft",
+      "description": "STUDIO — Digital Craft - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0037",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0038",
+      "title": "TYPOGRAPHIC STUDIO - Bold Digital Experiences",
+      "description": "TYPOGRAPHIC STUDIO - Bold Digital Experiences - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0038",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0039",
+      "title": "Artistic Gallery - Immersive Experience",
+      "description": "Artistic Gallery - Immersive Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0039",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0040",
+      "title": "ARTSCAPE - Experimental Digital Gallery",
+      "description": "ARTSCAPE - Experimental Digital Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0040",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0041",
+      "title": "ATELIER — Digital Art Studio",
+      "description": "ATELIER — Digital Art Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0041",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0042",
+      "title": "TYPOGRAPHIC ODYSSEY - An Artistic Journey",
+      "description": "TYPOGRAPHIC ODYSSEY - An Artistic Journey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0042",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0043",
+      "title": "Artistic Gallery - Experimental Design",
+      "description": "Artistic Gallery - Experimental Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0043",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0044",
+      "title": "ARTSPACE - Experimental Gallery",
+      "description": "ARTSPACE - Experimental Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0044",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0045",
+      "title": "VISION - Digital Art Gallery",
+      "description": "VISION - Digital Art Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0045",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0046",
+      "title": "BURST - Interactive Digital Gallery",
+      "description": "BURST - Interactive Digital Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0046",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0047",
+      "title": "NEXUS - Digital Experience Studio",
+      "description": "NEXUS - Digital Experience Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0047",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0048",
+      "title": "NEXUS - Digital Art Gallery",
+      "description": "NEXUS - Digital Art Gallery - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0048",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0049",
+      "title": "Typography & Mathematics - An Artistic Journey",
+      "description": "Typography & Mathematics - An Artistic Journey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0049",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0050",
+      "title": "Typographic Dimensions",
+      "description": "Typographic Dimensions - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0050",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0051",
+      "title": "Convergence - Where Visual Poetry Meets Digital Art",
+      "description": "Convergence - Where Visual Poetry Meets Digital Art - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0051",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0052",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0052",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0053",
+      "title": "TYPECRAFT - Typography Design Studio",
+      "description": "TYPECRAFT - Typography Design Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0053",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0054",
+      "title": "Visual Gallery - Multidimensional Experience",
+      "description": "Visual Gallery - Multidimensional Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0054",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0055",
+      "title": "TYPOGRAPHIC ODYSSEY",
+      "description": "TYPOGRAPHIC ODYSSEY - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0055",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0056",
+      "title": "TYPOGRAPHIC REVOLUTION",
+      "description": "TYPOGRAPHIC REVOLUTION - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0056",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0057",
+      "title": "HYPER STUDIO - Digital Experience",
+      "description": "HYPER STUDIO - Digital Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0057",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0058",
+      "title": "NEXUS STUDIO - Dimensional Portfolio",
+      "description": "NEXUS STUDIO - Dimensional Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0058",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0059",
+      "title": "HYPER STUDIO - Digital Chaos",
+      "description": "HYPER STUDIO - Digital Chaos - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0059",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0060",
+      "title": "HYPER STUDIO - Digital Artistry",
+      "description": "HYPER STUDIO - Digital Artistry - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0060",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0061",
+      "title": "RETRO STUDIO - Bold Typography Portfolio",
+      "description": "RETRO STUDIO - Bold Typography Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0061",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0062",
+      "title": "RETRO STUDIO - Bold Typography Portfolio",
+      "description": "RETRO STUDIO - Bold Typography Portfolio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0062",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0063",
+      "title": "NEON STUDIO - Digital Experience",
+      "description": "NEON STUDIO - Digital Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0063",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0064",
+      "title": "Immersive Portfolio - Spatial Experience",
+      "description": "Immersive Portfolio - Spatial Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0064",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0065",
+      "title": "NEON STUDIO - Digital Art Collective",
+      "description": "NEON STUDIO - Digital Art Collective - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0065",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0066",
+      "title": "NEON STUDIO - Digital Experience",
+      "description": "NEON STUDIO - Digital Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0066",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0067",
+      "title": "HYPERSTUDIO - Digital Experience Lab",
+      "description": "HYPERSTUDIO - Digital Experience Lab - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0067",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0068",
+      "title": "VOID - A Creative Odyssey",
+      "description": "VOID - A Creative Odyssey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0068",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0069",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0069",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0070",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0070",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0071",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0071",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0072",
+      "title": "RETRO DIMENSION - 3D Typography Experience",
+      "description": "RETRO DIMENSION - 3D Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0072",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0073",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0073",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0074",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0074",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0075",
+      "title": "RETRO STUDIO - Typography & Design",
+      "description": "RETRO STUDIO - Typography & Design - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0075",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0076",
+      "title": "TYPOSPACE - Creative Studio",
+      "description": "TYPOSPACE - Creative Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0076",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0077",
+      "title": "TYPE STUDIO - Typography & Motion",
+      "description": "TYPE STUDIO - Typography & Motion - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0077",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0078",
+      "title": "TYPECRAFT - Modern Typography Studio",
+      "description": "TYPECRAFT - Modern Typography Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0078",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0079",
+      "title": "AURORA - Digital Experience",
+      "description": "AURORA - Digital Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0079",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0080",
+      "title": "TYPOGRAPHIC DREAMS",
+      "description": "TYPOGRAPHIC DREAMS - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0080",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0081",
+      "title": "AVANT-GARDE STUDIO",
+      "description": "AVANT-GARDE STUDIO - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0081",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0082",
+      "title": "ATELIER - Typography in Motion",
+      "description": "ATELIER - Typography in Motion - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0082",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0083",
+      "title": "HYPETYPE - Typography Experience",
+      "description": "HYPETYPE - Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0083",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0084",
+      "title": "AVANT GARDE - Typography Experience",
+      "description": "AVANT GARDE - Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0084",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0085",
+      "title": "AVANT-GARDE STUDIO",
+      "description": "AVANT-GARDE STUDIO - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0085",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0086",
+      "title": "TYPOGRAPHIC ODYSSEY",
+      "description": "TYPOGRAPHIC ODYSSEY - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0086",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0087",
+      "title": "Cozy Typography Studio",
+      "description": "Cozy Typography Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0087",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0088",
+      "title": "COSMIC DREAMS - A Typography Journey",
+      "description": "COSMIC DREAMS - A Typography Journey - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0088",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0089",
+      "title": "STUDIO - Digital Experiences",
+      "description": "STUDIO - Digital Experiences - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0089",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0090",
+      "title": "NEXUS - Digital Experience Studio",
+      "description": "NEXUS - Digital Experience Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0090",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0091",
+      "title": "Ethereal Studio - Immersive Digital Experience",
+      "description": "Ethereal Studio - Immersive Digital Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0091",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0092",
+      "title": "ATELIER - Digital Craft Studio",
+      "description": "ATELIER - Digital Craft Studio - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0092",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0093",
+      "title": "AVANT-GARDE STUDIO",
+      "description": "AVANT-GARDE STUDIO - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0093",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0094",
+      "title": "AVANT-GARDE STUDIO",
+      "description": "AVANT-GARDE STUDIO - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0094",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0095",
+      "title": "AVANT-GARDE TYPOGRAPHY",
+      "description": "AVANT-GARDE TYPOGRAPHY - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0095",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0096",
+      "title": "AVANT-GARDE | Typography Experience",
+      "description": "AVANT-GARDE | Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0096",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0097",
+      "title": "AVANT-GARDE | Typography Experience",
+      "description": "AVANT-GARDE | Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0097",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0098",
+      "title": "RETRO VIBES - Typography & Motion",
+      "description": "RETRO VIBES - Typography & Motion - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0098",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0099",
+      "title": "RETRO FUTURE - Typography Experience",
+      "description": "RETRO FUTURE - Typography Experience - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0099",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "0100",
+      "title": "RETRO WAVE '85",
+      "description": "RETRO WAVE '85 - Single page landing template",
+      "category": "website",
+      "imageUrl": "",
+      "path": "0100",
+      "techStack": ["HTML", "CSS", "JavaScript"],
+      "tags": ["landing-page", "single-page"]
+    },
+    {
+      "id": "brillance-saas-landing-page",
+      "title": "Brillance SaaS Landing Page",
+      "description": "Brillance SaaS Landing Page - Next.js template with Tailwind CSS",
+      "category": "app",
+      "imageUrl": "",
+      "path": "brillance-saas-landing-page",
+      "type": "nextjs",
+      "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+      "tags": ["landing-page", "saas", "next.js"]
+    },
+    {
+      "id": "brutalist-ai-saas-landing-page",
+      "title": "Brutalist AI SaaS Landing Page",
+      "description": "Brutalist AI SaaS Landing Page - Next.js template with Tailwind CSS",
+      "category": "app",
+      "imageUrl": "",
+      "path": "brutalist-ai-saas-landing-page",
+      "type": "nextjs",
+      "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+      "tags": ["landing-page", "saas", "next.js"]
+    },
+    {
+      "id": "pointer-ai-landing-page",
+      "title": "Pointer AI Landing Page",
+      "description": "Pointer AI Landing Page - Next.js template with Tailwind CSS",
+      "category": "app",
+      "imageUrl": "",
+      "path": "pointer-ai-landing-page",
+      "type": "nextjs",
+      "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+      "tags": ["landing-page", "saas", "next.js"]
+    }
+  ]
 }

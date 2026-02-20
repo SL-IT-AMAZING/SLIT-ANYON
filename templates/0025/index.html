@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typography Portfolio - Immersive Experience</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,900&family=Space+Mono:wght@400;700&family=Oswald:wght@200;400;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Space Mono", monospace;
+        background: #0a0a0a;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* Loader */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hide {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.2em;
+        animation: glitch 1s infinite;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            2px 0 #ff00ff,
+            -2px 0 #00ffff;
+        }
+        25% {
+          text-shadow:
+            -2px 0 #ff00ff,
+            2px 0 #00ffff;
+        }
+        50% {
+          text-shadow:
+            2px 0 #00ffff,
+            -2px 0 #ff00ff;
+        }
+        75% {
+          text-shadow:
+            -2px 0 #00ffff,
+            2px 0 #ff00ff;
+        }
+      }
+
+      /* Hero Section with Typography */
+      .hero {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
+      }
+
+      .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        z-index: 1;
+      }
+
+      .hero-bg video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Massive Typography Container */
+      .typography-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        perspective: 1000px;
+      }
+
+      /* Main Title with Explosive Effects */
+      .main-title {
+        position: relative;
+        font-size: clamp(8rem, 20vw, 25rem);
+        font-family: "Bebas Neue", cursive;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -0.05em;
+        line-height: 0.8;
+        text-align: center;
+        mix-blend-mode: screen;
+      }
+
+      .title-word {
+        display: block;
+        position: relative;
+        animation: titleFloat 6s ease-in-out infinite;
+      }
+
+      .title-word:nth-child(1) {
+        animation-delay: 0s;
+        color: #ff006e;
+        text-shadow:
+          0 0 20px #ff006e,
+          0 0 40px #ff006e,
+          0 0 60px #ff006e,
+          0 0 80px #ff006e;
+      }
+
+      .title-word:nth-child(2) {
+        animation-delay: 0.2s;
+        color: #fb5607;
+        text-shadow:
+          0 0 20px #fb5607,
+          0 0 40px #fb5607,
+          0 0 60px #fb5607,
+          0 0 80px #fb5607;
+        transform: translateX(20px);
+      }
+
+      .title-word:nth-child(3) {
+        animation-delay: 0.4s;
+        color: #ffbe0b;
+        text-shadow:
+          0 0 20px #ffbe0b,
+          0 0 40px #ffbe0b,
+          0 0 60px #ffbe0b,
+          0 0 80px #ffbe0b;
+        transform: translateX(-20px);
+      }
+
+      @keyframes titleFloat {
+        0%,
+        100% {
+          transform: translateY(0) rotateX(0) rotateY(0);
+        }
+        25% {
+          transform: translateY(-20px) rotateX(5deg) rotateY(-5deg);
+        }
+        50% {
+          transform: translateY(0) rotateX(-5deg) rotateY(5deg);
+        }
+        75% {
+          transform: translateY(20px) rotateX(5deg) rotateY(-5deg);
+        }
+      }
+
+      /* Scattered Letters Effect */
+      .scattered-text {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .letter {
+        position: absolute;
+        font-size: clamp(2rem, 5vw, 6rem);
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        font-style: italic;
+        opacity: 0.1;
+        animation: letterFloat 20s infinite linear;
+      }
+
+      @keyframes letterFloat {
+        0% {
+          transform: translateY(110vh) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.1;
+        }
+        90% {
+          opacity: 0.1;
+        }
+        100% {
+          transform: translateY(-110vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      /* Morphing Background Text */
+      .bg-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 40vw;
+        font-family: "Oswald", sans-serif;
+        font-weight: 700;
+        opacity: 0.02;
+        white-space: nowrap;
+        z-index: 1;
+        animation: morphText 10s infinite;
+      }
+
+      @keyframes morphText {
+        0%,
+        100% {
+          letter-spacing: -0.5em;
+          filter: blur(0px);
+        }
+        50% {
+          letter-spacing: 0.5em;
+          filter: blur(5px);
+        }
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 30px 50px;
+        mix-blend-mode: difference;
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 2rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.1em;
+        animation: logoGlitch 5s infinite;
+      }
+
+      @keyframes logoGlitch {
+        0%,
+        100% {
+          transform: translate(0);
+        }
+        20% {
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          transform: translate(-2px, -2px);
+        }
+        60% {
+          transform: translate(2px, 2px);
+        }
+        80% {
+          transform: translate(2px, -2px);
+        }
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      /* Scroll Indicator */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+      }
+
+      .scroll-text {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        writing-mode: vertical-lr;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(10px);
+        }
+      }
+
+      /* Gallery Section */
+      .gallery {
+        position: relative;
+        padding: 150px 0;
+        background: #0a0a0a;
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 100px;
+      }
+
+      .gallery-title {
+        font-size: clamp(4rem, 10vw, 8rem);
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .gallery-title::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        -webkit-text-stroke: 2px #fff;
+        animation: outline 4s infinite;
+      }
+
+      @keyframes outline {
+        0%,
+        100% {
+          transform: translate(0);
+        }
+        50% {
+          transform: translate(10px, -10px);
+        }
+      }
+
+      /* Masonry Grid */
+      .masonry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        padding: 0 50px;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .grid-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transform: scale(0.95);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .grid-item:hover {
+        transform: scale(1);
+        z-index: 10;
+      }
+
+      .grid-item.tall {
+        grid-row: span 2;
+      }
+
+      .grid-item.wide {
+        grid-column: span 2;
+      }
+
+      .grid-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .grid-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(0, 0, 0, 0.8) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.5s;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 30px;
+      }
+
+      .grid-item:hover .grid-overlay {
+        opacity: 1;
+      }
+
+      .grid-title {
+        font-size: 2rem;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 0.05em;
+        margin-bottom: 10px;
+        transform: translateY(20px);
+        transition: transform 0.5s;
+      }
+
+      .grid-item:hover .grid-title {
+        transform: translateY(0);
+      }
+
+      /* Text Section */
+      .text-section {
+        padding: 200px 50px;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .floating-quote {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-family: "Playfair Display", serif;
+        font-style: italic;
+        font-weight: 400;
+        line-height: 1.2;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Interactive Text Effect */
+      .interactive-text {
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s;
+      }
+
+      .interactive-text:hover {
+        color: transparent;
+        -webkit-text-stroke: 2px #fff;
+      }
+
+      .interactive-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: #ff006e;
+        clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+        transition: clip-path 0.5s;
+      }
+
+      .interactive-text:hover::after {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      }
+
+      /* Contact Section */
+      .contact {
+        padding: 150px 50px;
+        background: #000;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contact-bg-text {
+        position: absolute;
+        font-size: 20vw;
+        font-family: "Bebas Neue", cursive;
+        opacity: 0.05;
+        white-space: nowrap;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        pointer-events: none;
+      }
+
+      .contact-content {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-family: "Bebas Neue", cursive;
+        margin-bottom: 50px;
+        animation: textWave 3s ease-in-out infinite;
+      }
+
+      @keyframes textWave {
+        0%,
+        100% {
+          transform: skewY(0deg);
+        }
+        50% {
+          transform: skewY(-5deg);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .main-title {
+          font-size: clamp(5rem, 15vw, 10rem);
+        }
+
+        .masonry-grid {
+          grid-template-columns: 1fr;
+          padding: 0 20px;
+        }
+
+        .grid-item.wide {
+          grid-column: span 1;
+        }
+
+        nav {
+          padding: 20px;
+        }
+
+        .nav-menu {
+          display: none;
+        }
+      }
+
+      /* Cursor Effects */
+      .cursor-follower {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transition: transform 0.2s;
+      }
+
+      /* Footer */
+      footer {
+        padding: 50px;
+        text-align: center;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Cursor Follower -->
+    <div class="cursor-follower" id="cursor"></div>
+
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">TYPECRAFT</div>
+        <ul class="nav-menu">
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="hero-bg">
+        <video autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+
+      <div class="bg-text">CREATE</div>
+
+      <div class="typography-container">
+        <h1 class="main-title">
+          <span class="title-word">TYPE</span>
+          <span class="title-word">CRAFT</span>
+          <span class="title-word">STUDIO</span>
+        </h1>
+      </div>
+
+      <div class="scattered-text" id="scatteredText"></div>
+
+      <div class="scroll-indicator">
+        <div class="scroll-text">SCROLL</div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-header">
+        <h2 class="gallery-title" data-text="VISUAL SYMPHONY">
+          VISUAL SYMPHONY
+        </h2>
+        <p class="interactive-text" data-text="EXPLORE OUR CREATIVE UNIVERSE">
+          EXPLORE OUR CREATIVE UNIVERSE
+        </p>
+      </div>
+
+      <div class="masonry-grid">
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Project 1"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">NEON DREAMS</h3>
+            <p>Digital Art Collection</p>
+          </div>
+        </div>
+        <div class="grid-item tall">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Project 2"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">ABSTRACT REALITY</h3>
+            <p>Experimental Design</p>
+          </div>
+        </div>
+        <div class="grid-item wide">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Project 3"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">FUTURE VISION</h3>
+            <p>Conceptual Series</p>
+          </div>
+        </div>
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+            alt="Project 4"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">CHROMATIC FLOW</h3>
+            <p>Color Studies</p>
+          </div>
+        </div>
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+            alt="Project 5"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">GEOMETRIC POETRY</h3>
+            <p>Form Exploration</p>
+          </div>
+        </div>
+        <div class="grid-item tall">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+            alt="Project 6"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">LIGHT SYMPHONY</h3>
+            <p>Luminous Art</p>
+          </div>
+        </div>
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png"
+            alt="Project 7"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">DIGITAL ESSENCE</h3>
+            <p>Tech Art Fusion</p>
+          </div>
+        </div>
+        <div class="grid-item wide">
+          <img
+            src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+            alt="Project 8"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">MOTION STATIC</h3>
+            <p>Dynamic Stills</p>
+          </div>
+        </div>
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png"
+            alt="Project 9"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">ETHEREAL SPACE</h3>
+            <p>Atmospheric Design</p>
+          </div>
+        </div>
+        <div class="grid-item">
+          <img
+            src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+            alt="Project 10"
+          />
+          <div class="grid-overlay">
+            <h3 class="grid-title">QUANTUM LEAP</h3>
+            <p>Future Forward</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Text Section -->
+    <section class="text-section" id="about">
+      <p class="floating-quote">
+        "We don't just create designs, we craft experiences that transcend the
+        digital realm and touch the soul of imagination."
+      </p>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+      <div class="contact-bg-text">CONTACT</div>
+      <div class="contact-content">
+        <h2 class="contact-title">LET'S CREATE MAGIC</h2>
+        <p class="interactive-text" data-text="hello@typecraft.studio">
+          hello@typecraft.studio
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2024 TYPECRAFT STUDIO. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <script>
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hide");
+        }, 1500);
+      });
+
+      // Cursor follower
+      const cursor = document.getElementById("cursor");
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 10 + "px";
+        cursor.style.top = e.clientY - 10 + "px";
+      });
+
+      // Scattered letters
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+      const scatteredContainer = document.getElementById("scatteredText");
+
+      function createScatteredLetter() {
+        const letter = document.createElement("div");
+        letter.className = "letter";
+        letter.textContent =
+          letters[Math.floor(Math.random() * letters.length)];
+        letter.style.left = Math.random() * 100 + "%";
+        letter.style.animationDuration = Math.random() * 10 + 15 + "s";
+        letter.style.animationDelay = Math.random() * 5 + "s";
+        letter.style.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+        scatteredContainer.appendChild(letter);
+
+        setTimeout(() => {
+          letter.remove();
+        }, 25000);
+      }
+
+      // Create initial letters
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => createScatteredLetter(), i * 200);
+      }
+
+      // Continue creating letters
+      setInterval(createScatteredLetter, 1000);
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Parallax effect on scroll
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const bgText = document.querySelector(".bg-text");
+        if (bgText) {
+          bgText.style.transform = `translate(-50%, -50%) translateY(${scrolled * 0.5}px)`;
+        }
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = "running";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document.querySelectorAll(".floating-quote, .grid-item").forEach((el) => {
+        if (el.classList.contains("floating-quote")) {
+          el.style.animationPlayState = "paused";
+        }
+        observer.observe(el);
+      });
+
+      // Interactive text hover effect
+      document.querySelectorAll(".interactive-text").forEach((text) => {
+        text.addEventListener("mouseenter", () => {
+          cursor.style.transform = "scale(2)";
+        });
+        text.addEventListener("mouseleave", () => {
+          cursor.style.transform = "scale(1)";
+        });
+      });
+
+      // Title animation on mouse move
+      const mainTitle = document.querySelector(".main-title");
+      document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+
+        if (mainTitle) {
+          mainTitle.style.transform = `perspective(1000px) rotateY(${x}deg) rotateX(${-y}deg)`;
+        }
+      });
+    </script>
+  </body>
+</html>

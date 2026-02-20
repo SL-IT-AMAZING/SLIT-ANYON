@@ -118,6 +118,11 @@ __pycache__/
 # Storybook
 storybook-static/
 
+# Template build artifacts (Next.js static export)
+templates/*/out/
+templates/*/.next/
+templates/*/node_modules/
+
 # Vendor binaries (downloaded via `npm run fetch-vendor`)
 vendor/
 

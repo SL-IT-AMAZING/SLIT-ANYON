@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Convergence - Where Visual Poetry Meets Digital Art</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,900;1,400&family=Inter:wght@100;300;400;700;900&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #0a0a0a;
+        --white: #ffffff;
+        --accent: #ff6b6b;
+        --gold: #ffd93d;
+        --blue: #4ecdc4;
+        --purple: #a8e6cf;
+        --transition: cubic-bezier(0.86, 0, 0.07, 1);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--primary);
+        color: var(--white);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--white);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.1s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        transition: all 0.3s ease;
+      }
+
+      .cursor.hover {
+        transform: scale(2);
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 1s ease;
+      }
+
+      .loader-text {
+        font-family: "Playfair Display", serif;
+        font-size: 4rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-text::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--accent);
+        animation: loadingBar 2s ease-in-out forwards;
+      }
+
+      @keyframes loadingBar {
+        to {
+          width: 100%;
+        }
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 30px 50px;
+        z-index: 1000;
+        mix-blend-mode: difference;
+      }
+
+      .nav-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+        color: var(--white);
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-link {
+        color: var(--white);
+        text-decoration: none;
+        font-weight: 300;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--white);
+        transition: width 0.3s ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      /* Hero Section with Video Background */
+      .hero {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        filter: brightness(0.4);
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+        position: relative;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.03em;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero-subtitle {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(1.2rem, 3vw, 2rem);
+        font-weight: 300;
+        font-style: italic;
+        opacity: 0;
+        animation: fadeIn 1s ease forwards;
+        animation-delay: 1s;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Scroll Indicator */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+
+      .scroll-indicator::before {
+        content: "";
+        display: block;
+        width: 20px;
+        height: 30px;
+        border: 2px solid var(--white);
+        border-radius: 10px;
+        position: relative;
+      }
+
+      .scroll-indicator::after {
+        content: "";
+        display: block;
+        width: 4px;
+        height: 8px;
+        background: var(--white);
+        border-radius: 2px;
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: scrollDot 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(10px);
+        }
+      }
+
+      @keyframes scrollDot {
+        0% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(10px);
+        }
+      }
+
+      /* Image Gallery with Text Overlays */
+      .gallery {
+        padding: 150px 0;
+        position: relative;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-auto-rows: 400px;
+        gap: 30px;
+        padding: 0 50px;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .gallery-item:nth-child(1) {
+        grid-column: span 8;
+        grid-row: span 2;
+      }
+      .gallery-item:nth-child(2) {
+        grid-column: span 4;
+      }
+      .gallery-item:nth-child(3) {
+        grid-column: span 4;
+      }
+      .gallery-item:nth-child(4) {
+        grid-column: span 6;
+      }
+      .gallery-item:nth-child(5) {
+        grid-column: span 6;
+      }
+      .gallery-item:nth-child(6) {
+        grid-column: span 4;
+        grid-row: span 2;
+      }
+      .gallery-item:nth-child(7) {
+        grid-column: span 4;
+      }
+      .gallery-item:nth-child(8) {
+        grid-column: span 4;
+      }
+
+      .gallery-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 1s var(--transition);
+      }
+
+      .gallery-item:hover .gallery-image {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0.8) 100%
+        );
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 40px;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-text {
+        transform: translateY(20px);
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover .gallery-text {
+        transform: translateY(0);
+      }
+
+      .gallery-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 5rem;
+        line-height: 1;
+        color: var(--accent);
+        opacity: 0.8;
+      }
+
+      .gallery-title {
+        font-family: "Playfair Display", serif;
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin: 10px 0;
+        letter-spacing: -0.02em;
+      }
+
+      .gallery-description {
+        font-weight: 300;
+        line-height: 1.6;
+        opacity: 0.9;
+        max-width: 400px;
+      }
+
+      /* Video Section with Typography */
+      .video-section {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+      }
+
+      .video-content {
+        text-align: center;
+        z-index: 2;
+        max-width: 1000px;
+        padding: 0 50px;
+      }
+
+      .video-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 8vw, 7rem);
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 30px;
+        mix-blend-mode: difference;
+      }
+
+      .video-quote {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-style: italic;
+        font-weight: 300;
+        line-height: 1.4;
+        opacity: 0.9;
+      }
+
+      /* Split Screen Section */
+      .split-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 100vh;
+      }
+
+      .split-media {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .split-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .split-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+        background: var(--white);
+        color: var(--primary);
+      }
+
+      .split-text {
+        max-width: 500px;
+      }
+
+      .split-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        margin-bottom: 30px;
+        line-height: 1.1;
+      }
+
+      .split-description {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        font-weight: 300;
+        margin-bottom: 40px;
+      }
+
+      .split-link {
+        display: inline-block;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 0.1em;
+        color: var(--primary);
+        text-decoration: none;
+        position: relative;
+        padding-bottom: 5px;
+      }
+
+      .split-link::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.5s ease;
+      }
+
+      .split-link:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      /* Parallax Text Section */
+      .parallax-section {
+        padding: 200px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .parallax-layer {
+        position: absolute;
+        width: 100%;
+        font-family: "Bebas Neue", cursive;
+        font-size: 15rem;
+        letter-spacing: -0.02em;
+        opacity: 0.05;
+        white-space: nowrap;
+        user-select: none;
+      }
+
+      .parallax-layer:nth-child(1) {
+        top: 10%;
+        left: -10%;
+      }
+
+      .parallax-layer:nth-child(2) {
+        bottom: 20%;
+        right: -10%;
+      }
+
+      .parallax-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 50px;
+      }
+
+      .parallax-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 40px;
+        line-height: 1.1;
+      }
+
+      .parallax-text {
+        font-size: 1.3rem;
+        line-height: 1.8;
+        font-weight: 300;
+        opacity: 0.9;
+      }
+
+      /* Masonry Layout */
+      .masonry {
+        padding: 150px 50px;
+        columns: 4;
+        column-gap: 30px;
+      }
+
+      .masonry-item {
+        break-inside: avoid;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .masonry-media {
+        width: 100%;
+        display: block;
+        transition: transform 0.5s ease;
+      }
+
+      .masonry-item:hover .masonry-media {
+        transform: scale(1.05);
+      }
+
+      .masonry-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.5s ease;
+      }
+
+      .masonry-item:hover .masonry-overlay {
+        transform: translateY(0);
+      }
+
+      .masonry-title {
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+      }
+
+      .masonry-subtitle {
+        font-weight: 300;
+        opacity: 0.8;
+        font-size: 0.9rem;
+      }
+
+      /* Cinematic Section */
+      .cinematic {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cinematic-video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .cinematic-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1;
+      }
+
+      .cinematic-content {
+        z-index: 2;
+        text-align: center;
+        max-width: 1200px;
+        padding: 0 50px;
+      }
+
+      .cinematic-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 10vw, 9rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        position: relative;
+      }
+
+      .cinematic-title::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        -webkit-text-stroke: 2px var(--white);
+        z-index: -1;
+        transform: translate(5px, 5px);
+        opacity: 0.5;
+      }
+
+      /* Text Animation Section */
+      .text-animation {
+        padding: 200px 0;
+        background: var(--white);
+        color: var(--primary);
+        overflow: hidden;
+      }
+
+      .text-animation-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 50px;
+      }
+
+      .animated-text {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 8vw, 7rem);
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 50px;
+      }
+
+      .animated-text span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(100px) rotateX(90deg);
+        animation: textReveal 1s ease forwards;
+        animation-delay: calc(var(--i) * 0.05s);
+        transform-origin: bottom;
+      }
+
+      @keyframes textReveal {
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateX(0);
+        }
+      }
+
+      .animated-line {
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .animated-line span {
+        display: block;
+        transform: translateY(100%);
+        animation: lineReveal 1s ease forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes lineReveal {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      /* Footer */
+      footer {
+        padding: 100px 50px 50px;
+        background: var(--primary);
+        color: var(--white);
+      }
+
+      .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 80px;
+      }
+
+      .footer-main h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 20px;
+        letter-spacing: -0.02em;
+      }
+
+      .footer-description {
+        font-weight: 300;
+        line-height: 1.8;
+        opacity: 0.8;
+        max-width: 500px;
+      }
+
+      .footer-links h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.5rem;
+        letter-spacing: 0.1em;
+        margin-bottom: 20px;
+      }
+
+      .footer-links ul {
+        list-style: none;
+      }
+
+      .footer-links li {
+        margin-bottom: 15px;
+      }
+
+      .footer-links a {
+        color: var(--white);
+        text-decoration: none;
+        font-weight: 300;
+        transition: opacity 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        opacity: 0.6;
+      }
+
+      .footer-bottom {
+        margin-top: 80px;
+        padding-top: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* Responsive */
+      @media (max-width: 1200px) {
+        .masonry {
+          columns: 3;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .nav-menu {
+          display: none;
+        }
+
+        .gallery-grid {
+          grid-template-columns: 1fr;
+          padding: 0 20px;
+        }
+
+        .gallery-item {
+          grid-column: span 1 !important;
+          grid-row: span 1 !important;
+        }
+
+        .split-section {
+          grid-template-columns: 1fr;
+        }
+
+        .split-content {
+          padding: 50px 30px;
+        }
+
+        .masonry {
+          columns: 2;
+          padding: 100px 20px;
+        }
+
+        .footer-content {
+          grid-template-columns: 1fr;
+          gap: 50px;
+        }
+
+        .cursor,
+        .cursor-follower {
+          display: none;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .masonry {
+          columns: 1;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 15vw, 5rem);
+        }
+
+        .animated-text {
+          font-size: clamp(2.5rem, 12vw, 4rem);
+        }
+      }
+
+      /* Smooth Scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Selection */
+      ::selection {
+        background: var(--accent);
+        color: var(--white);
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--primary);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--gold);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">CONVERGENCE</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursorFollower"></div>
+
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-wrapper">
+        <div class="logo">CONVERGENCE</div>
+        <ul class="nav-menu">
+          <li><a href="#home" class="nav-link">HOME</a></li>
+          <li><a href="#gallery" class="nav-link">GALLERY</a></li>
+          <li><a href="#experience" class="nav-link">EXPERIENCE</a></li>
+          <li><a href="#about" class="nav-link">ABOUT</a></li>
+          <li><a href="#contact" class="nav-link">CONTACT</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <video class="hero-video" autoplay muted loop>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span style="--i: 0">VISUAL</span><br />
+          <span style="--i: 1">POETRY</span><br />
+          <span style="--i: 2">IN MOTION</span>
+        </h1>
+        <p class="hero-subtitle">Where every frame tells a story</p>
+      </div>
+      <div class="scroll-indicator"></div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Gallery 1"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">01</div>
+              <h3 class="gallery-title">ETHEREAL DREAMS</h3>
+              <p class="gallery-description">
+                A journey through the subconscious mind where reality blends
+                with imagination
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Gallery 2"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">02</div>
+              <h3 class="gallery-title">COSMIC FLOW</h3>
+              <p class="gallery-description">
+                Exploring the infinite patterns of the universe
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+            alt="Gallery 3"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">03</div>
+              <h3 class="gallery-title">DIGITAL NATURE</h3>
+              <p class="gallery-description">
+                When technology meets organic beauty
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+            alt="Gallery 4"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">04</div>
+              <h3 class="gallery-title">ABSTRACT REALITY</h3>
+              <p class="gallery-description">
+                Breaking the boundaries of perception
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+            alt="Gallery 5"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">05</div>
+              <h3 class="gallery-title">NEON DREAMS</h3>
+              <p class="gallery-description">Urban landscapes reimagined</p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+            alt="Gallery 6"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">06</div>
+              <h3 class="gallery-title">METAMORPHOSIS</h3>
+              <p class="gallery-description">
+                Constant evolution and transformation
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+            alt="Gallery 7"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">07</div>
+              <h3 class="gallery-title">QUANTUM LEAP</h3>
+              <p class="gallery-description">
+                Exploring dimensional boundaries
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+            alt="Gallery 8"
+            class="gallery-image"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-text">
+              <div class="gallery-number">08</div>
+              <h3 class="gallery-title">SYNTHESIS</h3>
+              <p class="gallery-description">The fusion of art and science</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Video Section with Typography -->
+    <section class="video-section">
+      <video class="video-bg" autoplay muted loop>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div class="video-content">
+        <h2 class="video-title">BEYOND THE VISIBLE</h2>
+        <p class="video-quote">
+          "Art is not what you see, but what you make others see through the
+          lens of imagination"
+        </p>
+      </div>
+    </section>
+
+    <!-- Split Screen Section -->
+    <section class="split-section">
+      <div class="split-media">
+        <img
+          src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+          alt="Split Image"
+          class="split-image"
+        />
+      </div>
+      <div class="split-content">
+        <div class="split-text">
+          <h2 class="split-title">THE ART OF SEEING DIFFERENTLY</h2>
+          <p class="split-description">
+            In a world saturated with images, we seek to create visual
+            experiences that transcend the ordinary. Each frame is carefully
+            crafted to evoke emotion, provoke thought, and inspire wonder.
+          </p>
+          <a href="#" class="split-link">EXPLORE OUR VISION →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Parallax Text Section -->
+    <section class="parallax-section" id="experience">
+      <div class="parallax-layer" data-speed="0.5">EXPERIENCE</div>
+      <div class="parallax-layer" data-speed="0.8">INNOVATION</div>
+      <div class="parallax-content">
+        <h2 class="parallax-title">PUSHING BOUNDARIES</h2>
+        <p class="parallax-text">
+          We believe in the power of visual storytelling to transform
+          perspectives and create meaningful connections. Our work explores the
+          intersection of technology, art, and human emotion.
+        </p>
+      </div>
+    </section>
+
+    <!-- Masonry Layout -->
+    <section class="masonry">
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+          alt="Masonry 1"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">LIGHT STUDIES</h4>
+          <p class="masonry-subtitle">Exploring luminescence</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <video class="masonry-media" autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">MOTION POETRY</h4>
+          <p class="masonry-subtitle">Movement as language</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+          alt="Masonry 3"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">COLOR THEORY</h4>
+          <p class="masonry-subtitle">Emotional palettes</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+          alt="Masonry 4"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">TEXTURE PLAY</h4>
+          <p class="masonry-subtitle">Tactile visuals</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+          alt="Masonry 5"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">FORM STUDIES</h4>
+          <p class="masonry-subtitle">Geometric harmony</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <video class="masonry-media" autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">TIME LAPSE</h4>
+          <p class="masonry-subtitle">Temporal dynamics</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+          alt="Masonry 7"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">SHADOW PLAY</h4>
+          <p class="masonry-subtitle">Light and darkness</p>
+        </div>
+      </div>
+      <div class="masonry-item">
+        <img
+          src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+          alt="Masonry 8"
+          class="masonry-media"
+        />
+        <div class="masonry-overlay">
+          <h4 class="masonry-title">REFLECTION</h4>
+          <p class="masonry-subtitle">Mirror worlds</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cinematic Section -->
+    <section class="cinematic">
+      <video class="cinematic-video" autoplay muted loop>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div class="cinematic-overlay"></div>
+      <div class="cinematic-content">
+        <h2 class="cinematic-title" data-text="CINEMATIC">CINEMATIC</h2>
+      </div>
+    </section>
+
+    <!-- Text Animation Section -->
+    <section class="text-animation" id="about">
+      <div class="text-animation-container">
+        <div class="animated-text">
+          <span style="--i: 0">W</span><span style="--i: 1">E</span>
+          <span style="--i: 2"> </span>
+          <span style="--i: 3">C</span><span style="--i: 4">R</span
+          ><span style="--i: 5">E</span><span style="--i: 6">A</span
+          ><span style="--i: 7">T</span><span style="--i: 8">E</span>
+        </div>
+        <div class="animated-line">
+          <span style="--i: 0">EXPERIENCES THAT RESONATE</span>
+        </div>
+        <div class="animated-line">
+          <span style="--i: 1">STORIES THAT INSPIRE</span>
+        </div>
+        <div class="animated-line">
+          <span style="--i: 2">VISIONS THAT TRANSFORM</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+      <div class="footer-content">
+        <div class="footer-main">
+          <h2>LET'S CREATE TOGETHER</h2>
+          <p class="footer-description">
+            Ready to bring your vision to life? We're here to transform ideas
+            into extraordinary visual experiences that captivate, inspire, and
+            leave lasting impressions.
+          </p>
+        </div>
+        <div class="footer-links">
+          <h3>EXPLORE</h3>
+          <ul>
+            <li><a href="#">Projects</a></li>
+            <li><a href="#">Process</a></li>
+            <li><a href="#">Team</a></li>
+            <li><a href="#">Careers</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h3>CONNECT</h3>
+          <ul>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Behance</a></li>
+            <li><a href="#">Vimeo</a></li>
+            <li><a href="#">Email</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 Convergence. All rights reserved.</p>
+        <p>Crafted with passion and pixels</p>
+      </div>
+    </footer>
+
+    <script>
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").style.opacity = "0";
+          setTimeout(() => {
+            document.getElementById("loader").style.display = "none";
+          }, 1000);
+        }, 2000);
+      });
+
+      // Custom Cursor
+      const cursor = document.getElementById("cursor");
+      const cursorFollower = document.getElementById("cursorFollower");
+      const links = document.querySelectorAll(
+        "a, button, .gallery-item, .masonry-item",
+      );
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 10 + "px";
+        cursor.style.top = e.clientY - 10 + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 20 + "px";
+          cursorFollower.style.top = e.clientY - 20 + "px";
+        }, 100);
+      });
+
+      links.forEach((link) => {
+        link.addEventListener("mouseenter", () => {
+          cursor.classList.add("hover");
+          cursorFollower.style.transform = "scale(2)";
+        });
+
+        link.addEventListener("mouseleave", () => {
+          cursor.classList.remove("hover");
+          cursorFollower.style.transform = "scale(1)";
+        });
+      });
+
+      // Parallax Effect
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".parallax-layer");
+
+        parallaxElements.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+
+      // Smooth Scroll for Navigation Links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Intersection Observer for Animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document
+        .querySelectorAll(".gallery-item, .masonry-item, .split-content")
+        .forEach((el) => {
+          el.style.opacity = "0";
+          el.style.transform = "translateY(50px)";
+          el.style.transition = "all 1s ease";
+          observer.observe(el);
+        });
+
+      // Video Lazy Loading
+      const videos = document.querySelectorAll("video");
+      const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.play();
+          } else {
+            entry.target.pause();
+          }
+        });
+      });
+
+      videos.forEach((video) => {
+        videoObserver.observe(video);
+      });
+
+      // Dynamic Text Animation on Scroll
+      const animatedTextElements = document.querySelectorAll(
+        ".animated-text span, .animated-line span",
+      );
+      const textObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.animationPlayState = "running";
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+
+      animatedTextElements.forEach((el) => {
+        el.style.animationPlayState = "paused";
+        textObserver.observe(el);
+      });
+
+      // Gallery Hover Effect Enhancement
+      const galleryItems = document.querySelectorAll(".gallery-item");
+
+      galleryItems.forEach((item) => {
+        const image = item.querySelector(".gallery-image");
+        const overlay = item.querySelector(".gallery-overlay");
+
+        item.addEventListener("mousemove", (e) => {
+          const rect = item.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const percentX = (x - centerX) / centerX;
+          const percentY = (y - centerY) / centerY;
+
+          image.style.transform = `scale(1.1) translate(${percentX * 10}px, ${percentY * 10}px)`;
+        });
+
+        item.addEventListener("mouseleave", () => {
+          image.style.transform = "scale(1)";
+        });
+      });
+
+      // Navigation Scroll Effect
+      const nav = document.querySelector("nav");
+      let lastScroll = 0;
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > lastScroll && currentScroll > 100) {
+          nav.style.transform = "translateY(-100%)";
+        } else {
+          nav.style.transform = "translateY(0)";
+        }
+
+        lastScroll = currentScroll;
+      });
+
+      // Add transition to nav
+      nav.style.transition = "transform 0.3s ease";
+    </script>
+  </body>
+</html>

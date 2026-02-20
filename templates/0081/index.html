@@ -1,0 +1,1972 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AVANT-GARDE STUDIO</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@400;900&family=Inter:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+
+    <style>
+      /* Dior-inspired color palette */
+      :root {
+        --primary-color: #1a1a1a; /* Deep Black */
+        --secondary-color: #f5f5f5; /* Pearl White */
+        --accent-color: #c9a961; /* Champagne Gold */
+        --text-primary: #1a1a1a;
+        --text-secondary: #f5f5f5;
+        --text-accent: #c9a961;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--secondary-color);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Canvas Background */
+      #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.3;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px 50px;
+        background: rgba(245, 245, 245, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(201, 169, 97, 0.3);
+      }
+
+      nav.scrolled {
+        padding: 15px 50px;
+        background: rgba(26, 26, 26, 0.95);
+      }
+
+      nav.scrolled .nav-links a {
+        color: var(--text-secondary);
+      }
+
+      nav.scrolled .logo {
+        color: var(--accent-color);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        letter-spacing: 3px;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 400;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--accent-color);
+        transition: width 0.3s ease;
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Mobile Menu */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-toggle span {
+        width: 25px;
+        height: 2px;
+        background: var(--primary-color);
+        margin: 3px 0;
+        transition: 0.3s;
+      }
+
+      /* Sections */
+      section {
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 100px 50px;
+      }
+
+      /* Hero Section */
+      #hero {
+        background: var(--secondary-color);
+        position: relative;
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 10;
+        position: relative;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 15vw, 12rem);
+        font-weight: 900;
+        line-height: 0.9;
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+        transition: font-size 0.5s ease;
+      }
+
+      .hero-title.shrink {
+        font-size: clamp(2rem, 8vw, 6rem);
+      }
+
+      .hero-subtitle {
+        font-family: "Inter", sans-serif;
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 300;
+        letter-spacing: 5px;
+        color: var(--accent-color);
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease 0.3s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Floating Typography */
+      .floating-text {
+        position: fixed;
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--accent-color);
+        opacity: 0.3;
+        pointer-events: none;
+        z-index: 100;
+        transition: all 0.3s ease;
+      }
+
+      /* About Section */
+      #about {
+        background: var(--primary-color);
+        color: var(--text-secondary);
+      }
+
+      .about-container {
+        max-width: 1200px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-text h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        margin-bottom: 30px;
+        color: var(--accent-color);
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+
+      .about-text.visible h2 {
+        animation: slideInLeft 0.8s ease forwards;
+      }
+
+      @keyframes slideInLeft {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .about-text p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+
+      .about-text.visible p {
+        animation: slideInLeft 0.8s ease 0.2s forwards;
+      }
+
+      .about-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(201, 169, 97, 0.3);
+      }
+
+      .about-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform 0.5s ease;
+      }
+
+      .about-image:hover img {
+        transform: scale(1.05);
+      }
+
+      /* Gallery Section */
+      #gallery {
+        background: var(--secondary-color);
+        padding: 100px 50px;
+      }
+
+      .gallery-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .gallery-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .gallery-header h2::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: var(--accent-color);
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transform: translateY(50px);
+        opacity: 0;
+        transition: all 0.5s ease;
+      }
+
+      .gallery-item.visible {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(26, 26, 26, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-overlay h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        color: var(--accent-color);
+        letter-spacing: 3px;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+      }
+
+      .gallery-item:hover .gallery-overlay h3 {
+        transform: translateY(0);
+      }
+
+      /* Services Section */
+      #services {
+        background: var(--primary-color);
+        color: var(--text-secondary);
+      }
+
+      .services-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .services-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        color: var(--accent-color);
+        margin-bottom: 60px;
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 50px;
+        margin-top: 60px;
+      }
+
+      .service-card {
+        background: rgba(245, 245, 245, 0.05);
+        padding: 40px;
+        border-radius: 10px;
+        border: 1px solid rgba(201, 169, 97, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(201, 169, 97, 0.1) 0%,
+          transparent 70%
+        );
+        transform: rotate(45deg);
+        transition: all 0.5s ease;
+        opacity: 0;
+      }
+
+      .service-card:hover::before {
+        opacity: 1;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--accent-color);
+      }
+
+      .service-icon {
+        font-size: 3rem;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+      }
+
+      .service-card h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        color: var(--text-secondary);
+      }
+
+      .service-card p {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: rgba(245, 245, 245, 0.8);
+      }
+
+      /* Portfolio Section */
+      #portfolio {
+        background: var(--secondary-color);
+      }
+
+      .portfolio-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .portfolio-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .portfolio-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        color: var(--primary-color);
+        margin-bottom: 30px;
+      }
+
+      .portfolio-filters {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 60px;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        background: none;
+        border: 2px solid var(--accent-color);
+        color: var(--primary-color);
+        padding: 10px 30px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .filter-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--accent-color);
+        transition: left 0.3s ease;
+        z-index: -1;
+      }
+
+      .filter-btn:hover::before,
+      .filter-btn.active::before {
+        left: 0;
+      }
+
+      .filter-btn:hover,
+      .filter-btn.active {
+        color: var(--primary-color);
+      }
+
+      .portfolio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+      }
+
+      .portfolio-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(26, 26, 26, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .portfolio-item:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(201, 169, 97, 0.3);
+      }
+
+      .portfolio-item img {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .portfolio-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .portfolio-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(
+          to top,
+          rgba(26, 26, 26, 0.9) 0%,
+          transparent 100%
+        );
+        padding: 30px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+      }
+
+      .portfolio-item:hover .portfolio-info {
+        transform: translateY(0);
+      }
+
+      .portfolio-info h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.8rem;
+        color: var(--accent-color);
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+      }
+
+      .portfolio-info p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      /* Video Section */
+      #videos {
+        background: var(--primary-color);
+        color: var(--text-secondary);
+      }
+
+      .videos-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .videos-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .videos-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        color: var(--accent-color);
+        margin-bottom: 20px;
+      }
+
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 40px;
+      }
+
+      .video-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        background: rgba(245, 245, 245, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .video-item:hover {
+        transform: scale(1.02);
+        box-shadow: 0 20px 60px rgba(201, 169, 97, 0.3);
+      }
+
+      .video-item video {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+      }
+
+      .video-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .video-item:hover .video-controls {
+        opacity: 1;
+      }
+
+      .play-btn {
+        background: var(--accent-color);
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .play-btn:hover {
+        transform: scale(1.1);
+        background: var(--secondary-color);
+      }
+
+      .play-btn::after {
+        content: "▶";
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin-left: 3px;
+      }
+
+      /* Contact Section */
+      #contact {
+        background: var(--secondary-color);
+        position: relative;
+      }
+
+      .contact-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .contact-info h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        color: var(--primary-color);
+        margin-bottom: 30px;
+      }
+
+      .contact-info p {
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        margin-bottom: 40px;
+        line-height: 1.8;
+      }
+
+      .contact-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+      }
+
+      .contact-item i {
+        color: var(--accent-color);
+        font-size: 1.5rem;
+        width: 30px;
+      }
+
+      .contact-form {
+        background: var(--primary-color);
+        padding: 60px;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(26, 26, 26, 0.2);
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+      }
+
+      .form-group label {
+        display: block;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        color: var(--accent-color);
+        margin-bottom: 10px;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        background: rgba(245, 245, 245, 0.1);
+        border: 1px solid rgba(201, 169, 97, 0.3);
+        border-radius: 5px;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background: rgba(245, 245, 245, 0.15);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+      }
+
+      .submit-btn {
+        background: var(--accent-color);
+        color: var(--primary-color);
+        border: none;
+        padding: 15px 50px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--secondary-color);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.5s ease;
+      }
+
+      .submit-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .submit-btn:hover {
+        color: var(--primary-color);
+      }
+
+      .submit-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Footer */
+      footer {
+        background: var(--primary-color);
+        color: var(--text-secondary);
+        padding: 50px;
+        text-align: center;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .social-links a {
+        color: var(--accent-color);
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .social-links a:hover {
+        color: var(--text-secondary);
+        transform: translateY(-5px);
+      }
+
+      .footer-text {
+        font-size: 0.9rem;
+        color: rgba(245, 245, 245, 0.6);
+      }
+
+      /* Page Transition Effects */
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--accent-color);
+        z-index: 10000;
+        transition: left 0.5s ease;
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      /* Scroll Animations */
+      .fade-in {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .slide-in-left {
+        opacity: 0;
+        transform: translateX(-50px);
+        transition: all 0.8s ease;
+      }
+
+      .slide-in-left.visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .slide-in-right {
+        opacity: 0;
+        transform: translateX(50px);
+        transition: all 0.8s ease;
+      }
+
+      .slide-in-right.visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .scale-in {
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.8s ease;
+      }
+
+      .scale-in.visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .nav-links {
+          position: fixed;
+          top: 0;
+          right: -100%;
+          width: 100%;
+          height: 100vh;
+          background: var(--primary-color);
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          transition: right 0.3s ease;
+        }
+
+        .nav-links.active {
+          right: 0;
+        }
+
+        .nav-links a {
+          color: var(--text-secondary);
+          font-size: 2rem;
+          margin: 20px 0;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        .about-container,
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .gallery-grid,
+        .portfolio-grid {
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .video-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        section {
+          padding: 80px 30px;
+        }
+
+        nav {
+          padding: 15px 30px;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 12vw, 8rem);
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-form {
+          padding: 40px;
+        }
+
+        .portfolio-filters {
+          gap: 15px;
+        }
+
+        .filter-btn {
+          padding: 8px 20px;
+          font-size: 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: clamp(2.5rem, 10vw, 6rem);
+        }
+
+        .hero-subtitle {
+          font-size: 0.9rem;
+          letter-spacing: 3px;
+        }
+
+        section {
+          padding: 60px 20px;
+        }
+
+        .gallery-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery-item img {
+          height: 300px;
+        }
+
+        .contact-form {
+          padding: 30px;
+        }
+
+        .submit-btn {
+          width: 100%;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 3rem;
+        color: var(--accent-color);
+        letter-spacing: 5px;
+        animation: pulse 1.5s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s ease;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: rgba(201, 169, 97, 0.1);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s ease;
+        z-index: 9998;
+      }
+
+      .cursor.hover {
+        transform: translate(-50%, -50%) scale(2);
+        background: var(--accent-color);
+      }
+
+      /* Smooth Reveal Animations */
+      .reveal {
+        position: relative;
+        opacity: 0;
+        transition: all 1s ease;
+      }
+
+      .reveal.active {
+        opacity: 1;
+      }
+
+      .reveal.active.fade-bottom {
+        animation: fade-bottom 1s ease;
+      }
+
+      .reveal.active.fade-left {
+        animation: fade-left 1s ease;
+      }
+
+      .reveal.active.fade-right {
+        animation: fade-right 1s ease;
+      }
+
+      @keyframes fade-bottom {
+        0% {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fade-left {
+        0% {
+          transform: translateX(-50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fade-right {
+        0% {
+          transform: translateX(50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* Typography Effects */
+      .text-split {
+        overflow: hidden;
+      }
+
+      .text-split span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(100%);
+        animation: text-reveal 0.6s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+      }
+
+      @keyframes text-reveal {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Parallax Elements */
+      .parallax-element {
+        position: absolute;
+        transition: transform 0.5s ease-out;
+      }
+
+      /* Glitch Effect */
+      .glitch {
+        position: relative;
+        color: var(--accent-color);
+        font-size: 4rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-shadow:
+          0.05em 0 0 rgba(255, 0, 0, 0.75),
+          -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+          0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+        animation: glitch 1s infinite;
+      }
+
+      @keyframes glitch {
+        0% {
+          text-shadow:
+            0.05em 0 0 rgba(255, 0, 0, 0.75),
+            -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+            0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        14% {
+          text-shadow:
+            0.05em 0 0 rgba(255, 0, 0, 0.75),
+            -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+            0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        15% {
+          text-shadow:
+            -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+            0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+            -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        49% {
+          text-shadow:
+            -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+            0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+            -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        50% {
+          text-shadow:
+            0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+            0.05em 0 0 rgba(0, 255, 0, 0.75),
+            0 -0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        99% {
+          text-shadow:
+            0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+            0.05em 0 0 rgba(0, 255, 0, 0.75),
+            0 -0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+        100% {
+          text-shadow:
+            -0.025em 0 0 rgba(255, 0, 0, 0.75),
+            -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
+            -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Page Transition -->
+    <div class="page-transition"></div>
+
+    <!-- Canvas Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <a href="#hero" class="logo">AVANT-GARDE</a>
+        <div class="menu-toggle" id="menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="#hero">HOME</a></li>
+          <li><a href="#about">ABOUT</a></li>
+          <li><a href="#gallery">GALLERY</a></li>
+          <li><a href="#services">SERVICES</a></li>
+          <li><a href="#portfolio">PORTFOLIO</a></li>
+          <li><a href="#videos">VIDEOS</a></li>
+          <li><a href="#contact">CONTACT</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+      <div class="hero-content">
+        <h1 class="hero-title" id="hero-title">AVANT<br />GARDE</h1>
+        <p class="hero-subtitle">PUSHING BOUNDARIES OF DESIGN</p>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+      <div class="about-container">
+        <div class="about-text reveal fade-left">
+          <h2>ABOUT US</h2>
+          <p>
+            We are a creative studio that specializes in pushing the boundaries
+            of digital design and visual storytelling. Our team combines
+            artistic vision with cutting-edge technology to create experiences
+            that captivate and inspire.
+          </p>
+          <p>
+            Founded on the principles of innovation and excellence, we believe
+            in the power of design to transform ideas into reality. Every
+            project we undertake is an opportunity to challenge conventions and
+            create something truly extraordinary.
+          </p>
+        </div>
+        <div class="about-image reveal fade-right">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="About Us"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+      <div class="gallery-container">
+        <div class="gallery-header reveal fade-bottom">
+          <h2>GALLERY</h2>
+          <p>Explore our collection of visual masterpieces</p>
+        </div>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+              alt="Gallery 1"
+            />
+            <div class="gallery-overlay">
+              <h3>ETHEREAL DREAMS</h3>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              alt="Gallery 2"
+            />
+            <div class="gallery-overlay">
+              <h3>URBAN SYMPHONY</h3>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+              alt="Gallery 3"
+            />
+            <div class="gallery-overlay">
+              <h3>ABSTRACT REALITY</h3>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="Gallery 4"
+            />
+            <div class="gallery-overlay">
+              <h3>DIGITAL ESSENCE</h3>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Gallery 5"
+            />
+            <div class="gallery-overlay">
+              <h3>FUTURISTIC VISION</h3>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="Gallery 6"
+            />
+            <div class="gallery-overlay">
+              <h3>CHROMATIC FLOW</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services">
+      <div class="services-container">
+        <div class="services-header reveal fade-bottom">
+          <h2>OUR SERVICES</h2>
+          <p>
+            Transforming visions into reality through innovative design
+            solutions
+          </p>
+        </div>
+        <div class="services-grid">
+          <div class="service-card reveal scale-in">
+            <div class="service-icon">✦</div>
+            <h3>BRAND IDENTITY</h3>
+            <p>
+              Creating distinctive brand identities that resonate with your
+              audience and stand the test of time.
+            </p>
+          </div>
+          <div class="service-card reveal scale-in">
+            <div class="service-icon">◈</div>
+            <h3>WEB DESIGN</h3>
+            <p>
+              Crafting immersive digital experiences that blend aesthetics with
+              functionality and performance.
+            </p>
+          </div>
+          <div class="service-card reveal scale-in">
+            <div class="service-icon">✧</div>
+            <h3>MOTION GRAPHICS</h3>
+            <p>
+              Bringing stories to life through dynamic animations and
+              captivating visual narratives.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio">
+      <div class="portfolio-container">
+        <div class="portfolio-header reveal fade-bottom">
+          <h2>PORTFOLIO</h2>
+          <p>A showcase of our finest work and creative achievements</p>
+        </div>
+        <div class="portfolio-filters">
+          <button class="filter-btn active" data-filter="all">ALL</button>
+          <button class="filter-btn" data-filter="branding">BRANDING</button>
+          <button class="filter-btn" data-filter="web">WEB DESIGN</button>
+          <button class="filter-btn" data-filter="motion">MOTION</button>
+        </div>
+        <div class="portfolio-grid">
+          <div class="portfolio-item" data-category="branding">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Portfolio 1"
+            />
+            <div class="portfolio-info">
+              <h3>LUXURY BRAND</h3>
+              <p>Complete brand identity for high-end fashion</p>
+            </div>
+          </div>
+          <div class="portfolio-item" data-category="web">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+              alt="Portfolio 2"
+            />
+            <div class="portfolio-info">
+              <h3>DIGITAL PLATFORM</h3>
+              <p>Interactive web experience with immersive UI</p>
+            </div>
+          </div>
+          <div class="portfolio-item" data-category="motion">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+              alt="Portfolio 3"
+            />
+            <div class="portfolio-info">
+              <h3>MOTION CAMPAIGN</h3>
+              <p>Dynamic visual storytelling for global campaign</p>
+            </div>
+          </div>
+          <div class="portfolio-item" data-category="branding">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Portfolio 4"
+            />
+            <div class="portfolio-info">
+              <h3>TECH STARTUP</h3>
+              <p>Modern identity for innovative technology company</p>
+            </div>
+          </div>
+          <div class="portfolio-item" data-category="web">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+              alt="Portfolio 5"
+            />
+            <div class="portfolio-info">
+              <h3>E-COMMERCE</h3>
+              <p>Sleek online shopping experience</p>
+            </div>
+          </div>
+          <div class="portfolio-item" data-category="motion">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+              alt="Portfolio 6"
+            />
+            <div class="portfolio-info">
+              <h3>PRODUCT LAUNCH</h3>
+              <p>Cinematic reveal for luxury product line</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Videos Section -->
+    <section id="videos">
+      <div class="videos-container">
+        <div class="videos-header reveal fade-bottom">
+          <h2>MOTION SHOWCASE</h2>
+          <p>Experience our dynamic visual storytelling</p>
+        </div>
+        <div class="video-grid">
+          <div class="video-item reveal scale-in">
+            <video
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+              muted
+              loop
+            ></video>
+            <div class="video-controls">
+              <button class="play-btn"></button>
+            </div>
+          </div>
+          <div class="video-item reveal scale-in">
+            <video
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+              muted
+              loop
+            ></video>
+            <div class="video-controls">
+              <button class="play-btn"></button>
+            </div>
+          </div>
+          <div class="video-item reveal scale-in">
+            <video
+              src="https://cdn.midjourney.com/video/b51a5306-72ce-4194-9755-2c3244095f98/1.mp4"
+              muted
+              loop
+            ></video>
+            <div class="video-controls">
+              <button class="play-btn"></button>
+            </div>
+          </div>
+          <div class="video-item reveal scale-in">
+            <video
+              src="https://cdn.midjourney.com/video/e157daf9-019a-42f1-ac66-cc39c2802c39/0.mp4"
+              muted
+              loop
+            ></video>
+            <div class="video-controls">
+              <button class="play-btn"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+      <div class="contact-container">
+        <div class="contact-info reveal fade-left">
+          <h2>LET'S CREATE</h2>
+          <p>
+            Ready to transform your vision into reality? We're here to help you
+            create something extraordinary.
+          </p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <i>📍</i>
+              <span>123 Design Street, Creative City, CC 12345</span>
+            </div>
+            <div class="contact-item">
+              <i>📧</i>
+              <span>hello@avantgarde.studio</span>
+            </div>
+            <div class="contact-item">
+              <i>📱</i>
+              <span>+1 (555) 123-4567</span>
+            </div>
+          </div>
+        </div>
+        <div class="contact-form reveal fade-right">
+          <form id="contact-form">
+            <div class="form-group">
+              <label for="name">NAME</label>
+              <input type="text" id="name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label for="email">EMAIL</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+            <div class="form-group">
+              <label for="message">MESSAGE</label>
+              <textarea id="message" name="message" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">
+              <span>SEND MESSAGE</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="#">📷</a>
+          <a href="#">🐦</a>
+          <a href="#">💼</a>
+          <a href="#">🎨</a>
+        </div>
+        <p class="footer-text">
+          © 2025 AVANT-GARDE STUDIO. ALL RIGHTS RESERVED.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // p5.js Background Animation
+      let particles = [];
+      let canvas;
+
+      function setup() {
+        canvas = createCanvas(windowWidth, windowHeight);
+        canvas.parent("canvas-container");
+
+        for (let i = 0; i < 50; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      function draw() {
+        clear();
+
+        particles.forEach((particle) => {
+          particle.update();
+          particle.display();
+          particle.connect();
+        });
+      }
+
+      function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+      }
+
+      class Particle {
+        constructor() {
+          this.pos = createVector(random(width), random(height));
+          this.vel = createVector(random(-1, 1), random(-1, 1));
+          this.size = random(2, 5);
+        }
+
+        update() {
+          this.pos.add(this.vel);
+
+          if (this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+          if (this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+        }
+
+        display() {
+          noStroke();
+          fill(201, 169, 97, 100);
+          ellipse(this.pos.x, this.pos.y, this.size);
+        }
+
+        connect() {
+          particles.forEach((particle) => {
+            let d = dist(
+              this.pos.x,
+              this.pos.y,
+              particle.pos.x,
+              particle.pos.y,
+            );
+            if (d < 150) {
+              stroke(201, 169, 97, map(d, 0, 150, 100, 0));
+              strokeWeight(0.5);
+              line(this.pos.x, this.pos.y, particle.pos.x, particle.pos.y);
+            }
+          });
+        }
+      }
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX + "px";
+          cursorFollower.style.top = e.clientY + "px";
+        }, 100);
+      });
+
+      document.querySelectorAll("a, button").forEach((element) => {
+        element.addEventListener("mouseenter", () => {
+          cursor.classList.add("hover");
+        });
+
+        element.addEventListener("mouseleave", () => {
+          cursor.classList.remove("hover");
+        });
+      });
+
+      // Navigation
+      const navbar = document.getElementById("navbar");
+      const menuToggle = document.getElementById("menu-toggle");
+      const navLinks = document.getElementById("nav-links");
+
+      menuToggle.addEventListener("click", () => {
+        navLinks.classList.toggle("active");
+        menuToggle.classList.toggle("active");
+      });
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 100) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      // Hero Title Animation
+      const heroTitle = document.getElementById("hero-title");
+      let lastScrollY = window.scrollY;
+
+      window.addEventListener("scroll", () => {
+        const currentScrollY = window.scrollY;
+        const scrollPercentage = currentScrollY / window.innerHeight;
+
+        if (scrollPercentage > 0.2) {
+          heroTitle.classList.add("shrink");
+        } else {
+          heroTitle.classList.remove("shrink");
+        }
+
+        lastScrollY = currentScrollY;
+      });
+
+      // Floating Text
+      const floatingTexts = [
+        "DESIGN",
+        "CREATE",
+        "INNOVATE",
+        "INSPIRE",
+        "TRANSFORM",
+      ];
+      let floatingTextIndex = 0;
+
+      function createFloatingText() {
+        const text = document.createElement("div");
+        text.className = "floating-text";
+        text.textContent = floatingTexts[floatingTextIndex];
+        text.style.left = Math.random() * window.innerWidth + "px";
+        text.style.top =
+          window.scrollY + Math.random() * window.innerHeight + "px";
+        document.body.appendChild(text);
+
+        floatingTextIndex = (floatingTextIndex + 1) % floatingTexts.length;
+
+        setTimeout(() => {
+          text.remove();
+        }, 5000);
+      }
+
+      setInterval(createFloatingText, 2000);
+
+      // Scroll Animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+
+            if (entry.target.classList.contains("gallery-item")) {
+              const items = document.querySelectorAll(".gallery-item");
+              items.forEach((item, index) => {
+                setTimeout(() => {
+                  item.classList.add("visible");
+                }, index * 100);
+              });
+            }
+          }
+        });
+      }, observerOptions);
+
+      document
+        .querySelectorAll(".reveal, .gallery-item, .about-text")
+        .forEach((el) => {
+          observer.observe(el);
+        });
+
+      // Portfolio Filter
+      const filterBtns = document.querySelectorAll(".filter-btn");
+      const portfolioItems = document.querySelectorAll(".portfolio-item");
+
+      filterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          filterBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          const filter = btn.dataset.filter;
+
+          portfolioItems.forEach((item) => {
+            if (filter === "all" || item.dataset.category === filter) {
+              item.style.display = "block";
+              setTimeout(() => {
+                item.style.opacity = "1";
+                item.style.transform = "scale(1)";
+              }, 10);
+            } else {
+              item.style.opacity = "0";
+              item.style.transform = "scale(0.8)";
+              setTimeout(() => {
+                item.style.display = "none";
+              }, 300);
+            }
+          });
+        });
+      });
+
+      // Video Controls
+      const videoItems = document.querySelectorAll(".video-item");
+
+      videoItems.forEach((item) => {
+        const video = item.querySelector("video");
+        const playBtn = item.querySelector(".play-btn");
+
+        playBtn.addEventListener("click", () => {
+          if (video.paused) {
+            video.play();
+            playBtn.innerHTML = "❚❚";
+          } else {
+            video.pause();
+            playBtn.innerHTML = "";
+          }
+        });
+
+        item.addEventListener("mouseenter", () => {
+          video.play();
+        });
+
+        item.addEventListener("mouseleave", () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+      });
+
+      // Form Submission
+      const contactForm = document.getElementById("contact-form");
+
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Add animation
+        const submitBtn = contactForm.querySelector(".submit-btn");
+        submitBtn.innerHTML = "<span>SENDING...</span>";
+
+        setTimeout(() => {
+          submitBtn.innerHTML = "<span>MESSAGE SENT!</span>";
+          contactForm.reset();
+
+          setTimeout(() => {
+            submitBtn.innerHTML = "<span>SEND MESSAGE</span>";
+          }, 2000);
+        }, 1500);
+      });
+
+      // Page Transitions
+      const pageTransition = document.querySelector(".page-transition");
+      const links = document.querySelectorAll('a[href^="#"]');
+
+      links.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(link.getAttribute("href"));
+
+          pageTransition.classList.add("active");
+
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: "smooth" });
+            pageTransition.classList.remove("active");
+          }, 500);
+        });
+      });
+
+      // Parallax Effect
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".parallax-element");
+
+        parallaxElements.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          element.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+      });
+
+      // Text Split Animation
+      const splitTextElements = document.querySelectorAll(".text-split");
+
+      splitTextElements.forEach((element) => {
+        const text = element.textContent;
+        element.innerHTML = "";
+
+        text.split("").forEach((char, index) => {
+          const span = document.createElement("span");
+          span.textContent = char === " " ? "\u00A0" : char;
+          span.style.animationDelay = `${index * 0.05}s`;
+          element.appendChild(span);
+        });
+      });
+
+      // Random Page Effects
+      const effects = ["scale", "rotate", "skew", "blur"];
+      let currentEffect = 0;
+
+      function applyRandomEffect() {
+        const sections = document.querySelectorAll("section");
+        const effect = effects[currentEffect];
+
+        sections.forEach((section) => {
+          section.style.transition = "all 0.5s ease";
+
+          switch (effect) {
+            case "scale":
+              section.style.transform = "scale(0.98)";
+              break;
+            case "rotate":
+              section.style.transform = "rotate(0.5deg)";
+              break;
+            case "skew":
+              section.style.transform = "skewY(0.5deg)";
+              break;
+            case "blur":
+              section.style.filter = "blur(0.5px)";
+              break;
+          }
+
+          setTimeout(() => {
+            section.style.transform = "";
+            section.style.filter = "";
+          }, 500);
+        });
+
+        currentEffect = (currentEffect + 1) % effects.length;
+      }
+
+      // Apply effect every 10 seconds
+      setInterval(applyRandomEffect, 10000);
+
+      // Mobile Menu Close on Link Click
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          navLinks.classList.remove("active");
+          menuToggle.classList.remove("active");
+        });
+      });
+
+      // Smooth Reveal on Scroll
+      function reveal() {
+        const reveals = document.querySelectorAll(".reveal");
+
+        reveals.forEach((element) => {
+          const windowHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const elementVisible = 150;
+
+          if (elementTop < windowHeight - elementVisible) {
+            element.classList.add("active");
+          }
+        });
+      }
+
+      window.addEventListener("scroll", reveal);
+      reveal();
+    </script>
+  </body>
+</html>

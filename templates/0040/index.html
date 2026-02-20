@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARTSCAPE - Experimental Digital Gallery</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #fff;
+        --secondary: #000;
+        --accent: #ff0066;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: none;
+        position: relative;
+        min-height: 100vh;
+      }
+
+      /* 액체 커서 효과 */
+      .liquid-cursor {
+        position: fixed;
+        width: 30px;
+        height: 30px;
+        pointer-events: none;
+        z-index: 10000;
+        mix-blend-mode: exclusion;
+      }
+
+      .liquid-cursor::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border-radius: 50%;
+        transform: scale(1);
+        transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      .liquid-cursor.expand::before {
+        transform: scale(3);
+      }
+
+      .liquid-cursor.contract::before {
+        transform: scale(0.5);
+      }
+
+      /* 플로팅 네비게이션 오브 */
+      .nav-orb {
+        position: fixed;
+        top: 40px;
+        right: 40px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1000;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        overflow: hidden;
+      }
+
+      .nav-orb:hover {
+        transform: scale(1.1) rotate(180deg);
+        background: rgba(255, 0, 102, 0.2);
+      }
+
+      .nav-orb::before {
+        content: "☰";
+        font-size: 24px;
+        transition: all 0.3s;
+      }
+
+      .nav-orb.active {
+        width: 300px;
+        height: 400px;
+        border-radius: 30px;
+        right: 20px;
+        top: 20px;
+      }
+
+      .nav-orb.active::before {
+        content: "✕";
+        position: absolute;
+        top: 20px;
+        right: 20px;
+      }
+
+      /* 숨겨진 메뉴 */
+      .hidden-menu {
+        position: absolute;
+        top: 60px;
+        left: 20px;
+        right: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s;
+      }
+
+      .nav-orb.active .hidden-menu {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .menu-item {
+        display: block;
+        padding: 15px 0;
+        color: #fff;
+        text-decoration: none;
+        font-size: 20px;
+        font-weight: 300;
+        letter-spacing: 2px;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .menu-item::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+
+      .menu-item:hover::after {
+        width: 100%;
+      }
+
+      /* 메인 캔버스 - 분할된 그리드 시스템 */
+      .art-canvas {
+        position: relative;
+        width: 100vw;
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2px;
+        background: #111;
+        padding: 2px;
+        padding-bottom: 150px; /* 스크롤 갤러리 공간 확보 */
+      }
+
+      /* 각 아트 셀 */
+      .art-cell {
+        position: relative;
+        overflow: hidden;
+        background: #000;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 300px;
+      }
+
+      .art-cell:hover {
+        z-index: 10;
+        transform: scale(1.05);
+        box-shadow: 0 20px 60px rgba(255, 0, 102, 0.3);
+      }
+
+      .art-cell img,
+      .art-cell video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.8s;
+        filter: grayscale(100%);
+      }
+
+      .art-cell:hover img,
+      .art-cell:hover video {
+        filter: grayscale(0%);
+        transform: scale(1.1);
+      }
+
+      /* 플로팅 텍스트 레이어 - 개선 */
+      .floating-text {
+        position: fixed;
+        font-size: clamp(2rem, 6vw, 6rem);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        pointer-events: none;
+        z-index: 100;
+        mix-blend-mode: difference;
+        animation: float-text 30s infinite linear;
+        white-space: nowrap;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      @keyframes float-text {
+        0% {
+          transform: translateX(100vw) translateY(-50%) rotate(-2deg);
+        }
+        100% {
+          transform: translateX(-100%) translateY(-50%) rotate(2deg);
+        }
+      }
+
+      /* 인터랙티브 정보 패널 */
+      .info-panel {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        height: 60vh;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(30px);
+        transition: bottom 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 500;
+        padding: 60px 40px;
+        overflow-y: auto;
+      }
+
+      .info-panel.active {
+        bottom: 0;
+      }
+
+      .info-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .info-close:hover {
+        background: var(--accent);
+        transform: rotate(90deg);
+      }
+
+      /* 프로젝트 상세 */
+      .project-detail {
+        display: none;
+        animation: fadeIn 0.6s;
+      }
+
+      .project-detail.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .project-title {
+        font-size: clamp(2rem, 5vw, 4rem);
+        margin-bottom: 20px;
+        background: linear-gradient(45deg, #fff, var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .project-description {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        opacity: 0.8;
+        max-width: 800px;
+      }
+
+      /* 3D 타이틀 효과 - 개선 */
+      .hero-title {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(3rem, 12vw, 10rem);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        z-index: 50;
+        pointer-events: none;
+        mix-blend-mode: exclusion;
+        animation: breathe 4s infinite ease-in-out;
+        white-space: nowrap;
+        text-align: center;
+        width: 100%;
+        padding: 0 20px;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.1;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.05);
+          opacity: 0.3;
+        }
+      }
+
+      /* 사이드 스크롤 갤러리 - 위치 개선 */
+      .scroll-gallery {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        height: 120px;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        z-index: 200;
+        padding: 10px 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(20px);
+        border-radius: 15px;
+        padding: 10px;
+      }
+
+      .scroll-gallery::-webkit-scrollbar {
+        display: none;
+      }
+
+      .gallery-thumb {
+        flex: 0 0 auto;
+        width: 180px;
+        height: 100px;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .gallery-thumb:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(255, 0, 102, 0.3);
+      }
+
+      .gallery-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* 로딩 화면 */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-size: 2rem;
+        letter-spacing: 0.5em;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* 타이포그래피 효과 추가 */
+      .type-effect {
+        position: fixed;
+        font-size: clamp(8rem, 20vw, 20rem);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+        text-stroke: 1px rgba(255, 255, 255, 0.1);
+        z-index: 5;
+        pointer-events: none;
+        white-space: nowrap;
+        text-transform: uppercase;
+      }
+
+      .type-effect.top {
+        top: 10%;
+        left: 50%;
+        transform: translateX(-50%) rotate(-5deg);
+        animation: drift-left 40s infinite linear;
+      }
+
+      .type-effect.bottom {
+        bottom: 10%;
+        right: -100%;
+        animation: drift-right 35s infinite linear;
+      }
+
+      @keyframes drift-left {
+        0% {
+          transform: translateX(-50%) rotate(-5deg);
+        }
+        100% {
+          transform: translateX(-150%) rotate(-5deg);
+        }
+      }
+
+      @keyframes drift-right {
+        0% {
+          right: -100%;
+        }
+        100% {
+          right: 100%;
+        }
+      }
+
+      /* 모바일 반응형 - 개선 */
+      @media (max-width: 768px) {
+        .nav-orb {
+          width: 60px;
+          height: 60px;
+          top: 20px;
+          right: 20px;
+        }
+
+        .nav-orb.active {
+          width: calc(100vw - 40px);
+          height: 300px;
+        }
+
+        .art-canvas {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 10px;
+          padding-bottom: 150px;
+        }
+
+        .hero-title {
+          font-size: clamp(2.5rem, 15vw, 5rem);
+        }
+
+        .floating-text {
+          font-size: clamp(1.5rem, 8vw, 3rem);
+          animation-duration: 20s;
+        }
+
+        .type-effect {
+          font-size: clamp(4rem, 15vw, 8rem);
+        }
+
+        .info-panel {
+          height: 80vh;
+          padding: 40px 20px;
+        }
+
+        .scroll-gallery {
+          height: 80px;
+          bottom: 10px;
+          left: 10px;
+          right: 10px;
+        }
+
+        .gallery-thumb {
+          width: 120px;
+          height: 60px;
+        }
+
+        .art-cell {
+          min-height: 200px;
+        }
+      }
+
+      /* 특수 효과 - 글리치 개선 */
+      .glitch {
+        position: relative;
+        animation: glitch 3s infinite;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch::before {
+        animation: glitch-1 0.5s infinite;
+        color: #ff0066;
+        z-index: -1;
+      }
+
+      .glitch::after {
+        animation: glitch-2 0.5s infinite;
+        color: #00ffff;
+        z-index: -2;
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(-1px, 1px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        30% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(2px, -1px);
+        }
+        50% {
+          clip-path: inset(40% 0 40% 0);
+          transform: translate(-2px, 2px);
+        }
+        70% {
+          clip-path: inset(70% 0 20% 0);
+          transform: translate(1px, -2px);
+        }
+      }
+
+      /* 텍스트 선택 방지 */
+      .hero-title,
+      .floating-text,
+      .type-effect {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 로딩 화면 -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- 액체 커서 -->
+    <div class="liquid-cursor" id="cursor"></div>
+
+    <!-- 타이포그래피 배경 효과 -->
+    <div class="type-effect top">DIGITAL</div>
+    <div class="type-effect bottom">ARTSCAPE</div>
+
+    <!-- 플로팅 네비게이션 오브 -->
+    <div class="nav-orb" id="navOrb">
+      <div class="hidden-menu">
+        <a href="#" class="menu-item" data-section="gallery">GALLERY</a>
+        <a href="#" class="menu-item" data-section="about">ABOUT</a>
+        <a href="#" class="menu-item" data-section="contact">CONTACT</a>
+        <a href="#" class="menu-item" data-section="archive">ARCHIVE</a>
+      </div>
+    </div>
+
+    <!-- 3D 타이틀 -->
+    <h1 class="hero-title glitch" data-text="ARTSCAPE">ARTSCAPE</h1>
+
+    <!-- 플로팅 텍스트 -->
+    <div class="floating-text">EXPERIMENTAL × DIGITAL × ART × GALLERY</div>
+
+    <!-- 메인 아트 캔버스 -->
+    <div class="art-canvas" id="artCanvas">
+      <!-- 동적으로 생성됩니다 -->
+    </div>
+
+    <!-- 인터랙티브 정보 패널 -->
+    <div class="info-panel" id="infoPanel">
+      <div class="info-close" onclick="closeInfo()">✕</div>
+      <div class="project-detail" id="projectDetail">
+        <!-- 동적으로 생성됩니다 -->
+      </div>
+    </div>
+
+    <!-- 사이드 스크롤 갤러리 -->
+    <div class="scroll-gallery" id="scrollGallery">
+      <!-- 동적으로 생성됩니다 -->
+    </div>
+
+    <script>
+      // 이미지 및 비디오 데이터
+      const mediaData = [
+        // 이미지들
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Digital Dreams",
+          description: "An exploration of consciousness in the digital age",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "Neon Nights",
+          description: "Urban landscapes reimagined",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "Synthetic Nature",
+          description: "Where organic meets artificial",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Future Memories",
+          description: "Nostalgia for times yet to come",
+        },
+
+        // 비디오
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+          title: "Motion Study #1",
+          description: "Kinetic exploration of form",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Chromatic Waves",
+          description: "Color theory in motion",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "Abstract Reality",
+          description: "Breaking down perception",
+        },
+
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+          title: "Motion Study #2",
+          description: "Fluid dynamics visualization",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "Data Landscapes",
+          description: "Information as terrain",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "Neural Networks",
+          description: "Visualizing AI consciousness",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Quantum Fields",
+          description: "Subatomic interactions",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "Time Fragments",
+          description: "Temporal discontinuity",
+        },
+
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+          title: "Motion Study #3",
+          description: "Geometric transformations",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+          title: "Void Spaces",
+          description: "The beauty of emptiness",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+          title: "Light Sculptures",
+          description: "Photon manipulation art",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+          title: "Organic Machines",
+          description: "Biomechanical fusion",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+          title: "Crystal Growth",
+          description: "Algorithmic mineralogy",
+        },
+
+        {
+          type: "video",
+          src: "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4",
+          title: "Motion Study #4",
+          description: "Particle systems",
+        },
+
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+          title: "Echo Chambers",
+          description: "Sound visualization",
+        },
+        {
+          type: "image",
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+          title: "Fractal Dreams",
+          description: "Infinite regression",
+        },
+      ];
+
+      // 추가 이미지들
+      const additionalImages = [
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png",
+        "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png",
+        "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png",
+      ];
+
+      // 액체 커서 효과
+      const cursor = document.getElementById("cursor");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+
+        cursor.style.left = cursorX - 15 + "px";
+        cursor.style.top = cursorY - 15 + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // 커서 인터랙션
+      document.addEventListener("mousedown", () =>
+        cursor.classList.add("contract"),
+      );
+      document.addEventListener("mouseup", () =>
+        cursor.classList.remove("contract"),
+      );
+
+      // 네비게이션 오브 토글
+      const navOrb = document.getElementById("navOrb");
+      navOrb.addEventListener("click", function (e) {
+        if (e.target.classList.contains("menu-item")) return;
+        this.classList.toggle("active");
+      });
+
+      // 메뉴 아이템 클릭
+      document.querySelectorAll(".menu-item").forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          navOrb.classList.remove("active");
+          // 섹션별 동작 구현 가능
+        });
+      });
+
+      // 아트 캔버스 생성
+      function createArtCanvas() {
+        const canvas = document.getElementById("artCanvas");
+        const shuffled = [...mediaData].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach((media, index) => {
+          const cell = document.createElement("div");
+          cell.className = "art-cell";
+          cell.style.animationDelay = `${index * 0.05}s`;
+
+          if (media.type === "video") {
+            const video = document.createElement("video");
+            video.src = media.src;
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            cell.appendChild(video);
+          } else {
+            const img = document.createElement("img");
+            img.src = media.src;
+            img.alt = media.title;
+            img.loading = "lazy";
+            cell.appendChild(img);
+          }
+
+          cell.addEventListener("click", () => showProjectDetail(media));
+          canvas.appendChild(cell);
+        });
+      }
+
+      // 스크롤 갤러리 생성
+      function createScrollGallery() {
+        const gallery = document.getElementById("scrollGallery");
+
+        additionalImages.forEach((src, index) => {
+          const thumb = document.createElement("div");
+          thumb.className = "gallery-thumb";
+          thumb.innerHTML = `<img src="${src}" alt="Gallery ${index + 1}" loading="lazy">`;
+          thumb.addEventListener("click", () => {
+            showProjectDetail({
+              type: "image",
+              src: src,
+              title: `Gallery Piece ${index + 1}`,
+              description: "Part of our extended collection",
+            });
+          });
+          gallery.appendChild(thumb);
+        });
+      }
+
+      // 프로젝트 상세 표시
+      function showProjectDetail(media) {
+        const panel = document.getElementById("infoPanel");
+        const detail = document.getElementById("projectDetail");
+
+        detail.innerHTML = `
+                <h2 class="project-title">${media.title}</h2>
+                <p class="project-description">${media.description}</p>
+                <div style="margin-top: 30px;">
+                    ${
+                      media.type === "video"
+                        ? `<video src="${media.src}" autoplay loop muted style="width: 100%; max-width: 600px; border-radius: 10px;"></video>`
+                        : `<img src="${media.src}" alt="${media.title}" style="width: 100%; max-width: 600px; border-radius: 10px;">`
+                    }
+                </div>
+            `;
+
+        detail.classList.add("active");
+        panel.classList.add("active");
+      }
+
+      // 정보 패널 닫기
+      function closeInfo() {
+        document.getElementById("infoPanel").classList.remove("active");
+        setTimeout(() => {
+          document.getElementById("projectDetail").classList.remove("active");
+        }, 300);
+      }
+
+      // ESC 키로 패널 닫기
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeInfo();
+          navOrb.classList.remove("active");
+        }
+      });
+
+      // 호버 효과 업데이트
+      function updateHoverEffects() {
+        const interactiveElements = document.querySelectorAll(
+          "a, button, .nav-orb, .art-cell, .gallery-thumb, .info-close",
+        );
+        interactiveElements.forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursor.classList.add("expand"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursor.classList.remove("expand"),
+          );
+        });
+      }
+
+      // 로딩 완료
+      window.addEventListener("load", () => {
+        createArtCanvas();
+        createScrollGallery();
+        updateHoverEffects();
+
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // 스크롤 갤러리 자동 스크롤
+      const scrollGallery = document.getElementById("scrollGallery");
+      let scrollPos = 0;
+      let scrollDirection = 1;
+      let isHovering = false;
+
+      scrollGallery.addEventListener("mouseenter", () => (isHovering = true));
+      scrollGallery.addEventListener("mouseleave", () => (isHovering = false));
+
+      function autoScroll() {
+        if (!isHovering && scrollGallery.children.length > 0) {
+          scrollPos += scrollDirection * 0.5;
+
+          if (
+            scrollPos >=
+            scrollGallery.scrollWidth - scrollGallery.clientWidth
+          ) {
+            scrollDirection = -1;
+          } else if (scrollPos <= 0) {
+            scrollDirection = 1;
+          }
+
+          scrollGallery.scrollLeft = scrollPos;
+        }
+        requestAnimationFrame(autoScroll);
+      }
+      autoScroll();
+
+      // 터치 지원
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+          // 왼쪽 스와이프
+          console.log("Swiped left");
+        }
+        if (touchEndX > touchStartX + 50) {
+          // 오른쪽 스와이프
+          console.log("Swiped right");
+        }
+      }
+
+      // 성능 최적화를 위한 Intersection Observer
+      const observerOptions = {
+        root: null,
+        rootMargin: "50px",
+        threshold: 0.01,
+      };
+
+      const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) {
+              img.src = img.dataset.src;
+              img.removeAttribute("data-src");
+              imageObserver.unobserve(img);
+            }
+          }
+        });
+      }, observerOptions);
+
+      // 모든 이미지에 lazy loading 적용
+      document.querySelectorAll("img[data-src]").forEach((img) => {
+        imageObserver.observe(img);
+      });
+    </script>
+  </body>
+</html>

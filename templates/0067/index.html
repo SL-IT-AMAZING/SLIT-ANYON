@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HYPERSTUDIO - Digital Experience Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              float: "float 6s ease-in-out infinite",
+              glow: "glow 2s ease-in-out infinite",
+              "slide-up": "slideUp 0.5s ease-out",
+              "slide-in": "slideIn 0.5s ease-out",
+              morph: "morph 8s ease-in-out infinite",
+              glitch: "glitch 2s ease-in-out infinite",
+              "rotate-3d": "rotate3d 20s linear infinite",
+            },
+            keyframes: {
+              float: {
+                "0%, 100%": { transform: "translateY(0)" },
+                "50%": { transform: "translateY(-20px)" },
+              },
+              glow: {
+                "0%, 100%": { opacity: 0.5 },
+                "50%": { opacity: 1 },
+              },
+              slideUp: {
+                "0%": { transform: "translateY(100px)", opacity: 0 },
+                "100%": { transform: "translateY(0)", opacity: 1 },
+              },
+              slideIn: {
+                "0%": { transform: "translateX(-100px)", opacity: 0 },
+                "100%": { transform: "translateX(0)", opacity: 1 },
+              },
+              morph: {
+                "0%, 100%": { borderRadius: "60% 40% 30% 70%/60% 30% 70% 40%" },
+                "50%": { borderRadius: "30% 60% 70% 40%/50% 60% 30% 60%" },
+              },
+              glitch: {
+                "0%, 100%": { transform: "translate(0)" },
+                "20%": { transform: "translate(-2px, 2px)" },
+                "40%": { transform: "translate(-2px, -2px)" },
+                "60%": { transform: "translate(2px, 2px)" },
+                "80%": { transform: "translate(2px, -2px)" },
+              },
+              rotate3d: {
+                "0%": { transform: "rotate3d(0, 1, 0, 0deg)" },
+                "100%": { transform: "rotate3d(0, 1, 0, 360deg)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #000;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff);
+        border-radius: 4px;
+      }
+
+      /* Noise texture overlay */
+      .noise::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        right: -50%;
+        bottom: -50%;
+        width: 200%;
+        height: 200%;
+        background: transparent
+          url('data:image/svg+xml,%3Csvg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.03"/%3E%3C/svg%3E');
+        pointer-events: none;
+        animation: noise 1s steps(10) infinite;
+      }
+
+      @keyframes noise {
+        0% {
+          transform: translate(0, 0);
+        }
+        10% {
+          transform: translate(-5%, -5%);
+        }
+        20% {
+          transform: translate(-10%, 5%);
+        }
+        30% {
+          transform: translate(5%, -10%);
+        }
+        40% {
+          transform: translate(-5%, 15%);
+        }
+        50% {
+          transform: translate(-10%, 5%);
+        }
+        60% {
+          transform: translate(15%, 0);
+        }
+        70% {
+          transform: translate(0, 10%);
+        }
+        80% {
+          transform: translate(-15%, 0);
+        }
+        90% {
+          transform: translate(10%, 5%);
+        }
+        100% {
+          transform: translate(5%, 0);
+        }
+      }
+
+      /* Magnetic cursor effect */
+      .magnetic {
+        transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      /* Text gradient animation */
+      .gradient-text {
+        background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff, #ff006e);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient-shift 3s ease infinite;
+      }
+
+      @keyframes gradient-shift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      /* Liquid effect */
+      .liquid {
+        filter: url("#liquid");
+      }
+
+      /* Perspective text */
+      .perspective-text {
+        transform: perspective(500px) rotateX(25deg);
+      }
+
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white overflow-x-hidden">
+    <!-- SVG Filters -->
+    <svg style="position: absolute; width: 0; height: 0">
+      <filter id="liquid">
+        <feTurbulence
+          type="turbulence"
+          baseFrequency="0.015"
+          numOctaves="2"
+          result="turbulence"
+        />
+        <feDisplacementMap
+          in2="turbulence"
+          in="SourceGraphic"
+          scale="10"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
+
+    <!-- Custom Cursor -->
+    <div
+      id="cursor"
+      class="fixed w-8 h-8 border-2 border-white rounded-full pointer-events-none z-[9999] mix-blend-difference transition-all duration-100"
+    ></div>
+    <div
+      id="cursor-follower"
+      class="fixed w-40 h-40 border border-white/20 rounded-full pointer-events-none z-[9998] transition-all duration-300"
+    ></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 right-0 z-[1000] px-6 py-4 bg-black/50 backdrop-blur-xl border-b border-white/10"
+    >
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="text-2xl font-bold gradient-text">HYPERSTUDIO</div>
+        <div class="hidden md:flex gap-8">
+          <a
+            href="#home"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Home</a
+          >
+          <a
+            href="#showcase"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Showcase</a
+          >
+          <a
+            href="#about"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >About</a
+          >
+          <a
+            href="#work"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Work</a
+          >
+          <a
+            href="#process"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Process</a
+          >
+          <a
+            href="#team"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Team</a
+          >
+          <a
+            href="#lab"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Lab</a
+          >
+          <a
+            href="#contact"
+            class="nav-link magnetic hover:text-purple-400 transition-colors"
+            >Contact</a
+          >
+        </div>
+        <button id="menu-toggle" class="md:hidden">
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div
+      id="mobile-menu"
+      class="fixed inset-0 bg-black z-[999] transform translate-x-full transition-transform duration-300"
+    >
+      <div
+        class="flex flex-col items-center justify-center h-full gap-8 text-2xl"
+      >
+        <a
+          href="#home"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Home</a
+        >
+        <a
+          href="#showcase"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Showcase</a
+        >
+        <a
+          href="#about"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >About</a
+        >
+        <a
+          href="#work"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Work</a
+        >
+        <a
+          href="#process"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Process</a
+        >
+        <a
+          href="#team"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Team</a
+        >
+        <a
+          href="#lab"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Lab</a
+        >
+        <a
+          href="#contact"
+          class="mobile-link hover:text-purple-400 transition-colors"
+          >Contact</a
+        >
+      </div>
+    </div>
+
+    <!-- Page 1: Hero Section -->
+    <section
+      id="home"
+      class="min-h-screen relative flex items-center justify-center overflow-hidden noise"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-blue-900/20"
+      ></div>
+
+      <!-- Floating shapes -->
+      <div class="absolute inset-0">
+        <div
+          class="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-float"
+        ></div>
+        <div
+          class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float"
+          style="animation-delay: 2s"
+        ></div>
+        <div
+          class="absolute top-1/2 left-1/2 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-float"
+          style="animation-delay: 4s"
+        ></div>
+      </div>
+
+      <div class="relative z-10 text-center px-6">
+        <h1 class="text-6xl md:text-8xl font-bold mb-6 animate-slide-up">
+          <span class="block gradient-text">HYPER</span>
+          <span class="block text-white perspective-text">STUDIO</span>
+        </h1>
+        <p
+          class="text-xl md:text-2xl text-gray-300 mb-8 animate-slide-up"
+          style="animation-delay: 0.2s"
+        >
+          Where Reality Meets Digital Dreams
+        </p>
+        <div
+          class="flex gap-4 justify-center animate-slide-up"
+          style="animation-delay: 0.4s"
+        >
+          <button
+            class="px-8 py-3 bg-white text-black font-semibold rounded-full hover:scale-110 transition-transform magnetic"
+          >
+            Explore Work
+          </button>
+          <button
+            class="px-8 py-3 border-2 border-white rounded-full hover:bg-white hover:text-black transition-all magnetic"
+          >
+            Start Project
+          </button>
+        </div>
+      </div>
+
+      <!-- Scroll indicator -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div
+          class="w-6 h-10 border-2 border-white rounded-full flex justify-center"
+        >
+          <div class="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 2: Interactive Showcase -->
+    <section id="showcase" class="min-h-screen relative py-20 overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-16 gradient-text"
+        >
+          Featured Projects
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Project Cards with Hover Effects -->
+          <div
+            class="project-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/50 to-blue-900/50 p-1 hover:scale-105 transition-transform duration-300"
+          >
+            <div class="relative overflow-hidden rounded-2xl bg-black">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+                alt="Project 1"
+                class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6"
+              >
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Neural Interface</h3>
+                  <p class="text-gray-300">Next-gen UI/UX Design</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="project-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-900/50 to-purple-900/50 p-1 hover:scale-105 transition-transform duration-300"
+          >
+            <div class="relative overflow-hidden rounded-2xl bg-black">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+                alt="Project 2"
+                class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6"
+              >
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Quantum Flow</h3>
+                  <p class="text-gray-300">Interactive Experience</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="project-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900/50 to-green-900/50 p-1 hover:scale-105 transition-transform duration-300"
+          >
+            <div class="relative overflow-hidden rounded-2xl bg-black">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+                alt="Project 3"
+                class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6"
+              >
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Cyber Dreams</h3>
+                  <p class="text-gray-300">Digital Art Installation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Gallery -->
+        <div class="mt-16 relative">
+          <div class="overflow-hidden rounded-3xl">
+            <div
+              class="flex transition-transform duration-500"
+              id="gallery-slider"
+            >
+              <img
+                src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+                alt="Gallery 1"
+                class="w-full h-96 object-cover flex-shrink-0"
+              />
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+                alt="Gallery 2"
+                class="w-full h-96 object-cover flex-shrink-0"
+              />
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+                alt="Gallery 3"
+                class="w-full h-96 object-cover flex-shrink-0"
+              />
+            </div>
+          </div>
+          <button
+            onclick="prevSlide()"
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+          </button>
+          <button
+            onclick="nextSlide()"
+            class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 3: About Section with Parallax -->
+    <section id="about" class="min-h-screen relative py-20 overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-black"
+      ></div>
+
+      <!-- Parallax elements -->
+      <div class="parallax-container absolute inset-0">
+        <div
+          class="parallax-element absolute top-20 left-10 w-32 h-32 animate-morph bg-purple-500/20"
+        ></div>
+        <div
+          class="parallax-element absolute bottom-20 right-10 w-48 h-48 animate-morph bg-blue-500/20"
+          style="animation-delay: 2s"
+        ></div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <h2 class="text-5xl md:text-7xl font-bold text-center mb-16">
+          <span class="gradient-text">Who We Are</span>
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <p class="text-xl text-gray-300 leading-relaxed">
+              We are digital architects, crafting experiences that transcend the
+              boundaries between reality and imagination.
+            </p>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              Our team combines cutting-edge technology with artistic vision to
+              create immersive digital environments that captivate and inspire.
+            </p>
+            <div class="grid grid-cols-2 gap-6 mt-8">
+              <div
+                class="text-center p-6 bg-white/5 rounded-2xl backdrop-blur-sm"
+              >
+                <div class="text-4xl font-bold gradient-text">150+</div>
+                <div class="text-gray-400 mt-2">Projects Completed</div>
+              </div>
+              <div
+                class="text-center p-6 bg-white/5 rounded-2xl backdrop-blur-sm"
+              >
+                <div class="text-4xl font-bold gradient-text">50+</div>
+                <div class="text-gray-400 mt-2">Global Clients</div>
+              </div>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="relative rounded-3xl overflow-hidden animate-float">
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+                alt="About"
+                class="w-full h-auto"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-tr from-purple-900/50 to-transparent"
+              ></div>
+            </div>
+            <div
+              class="absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-2xl opacity-50"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 4: Work Process with Timeline -->
+    <section
+      id="process"
+      class="min-h-screen relative py-20 overflow-hidden noise"
+    >
+      <div class="max-w-6xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-20 gradient-text"
+        >
+          Our Process
+        </h2>
+
+        <!-- Interactive Timeline -->
+        <div class="relative">
+          <div
+            class="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-purple-500 to-blue-500"
+          ></div>
+
+          <div class="space-y-20">
+            <div class="timeline-item relative flex items-center">
+              <div class="w-full md:w-1/2 md:pr-12 text-right">
+                <div
+                  class="bg-black/50 backdrop-blur-sm p-8 rounded-2xl border border-purple-500/30 hover:border-purple-500 transition-colors"
+                >
+                  <h3 class="text-2xl font-bold mb-4">01. Discover</h3>
+                  <p class="text-gray-400">
+                    We dive deep into understanding your vision, goals, and
+                    target audience.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-purple-500 rounded-full border-4 border-black"
+              ></div>
+              <div class="hidden md:block w-1/2 pl-12">
+                <img
+                  src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png"
+                  alt="Discover"
+                  class="rounded-2xl w-64 h-48 object-cover"
+                />
+              </div>
+            </div>
+
+            <div class="timeline-item relative flex items-center">
+              <div class="hidden md:block w-1/2 pr-12 text-right">
+                <img
+                  src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png"
+                  alt="Design"
+                  class="rounded-2xl w-64 h-48 object-cover ml-auto"
+                />
+              </div>
+              <div
+                class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-blue-500 rounded-full border-4 border-black"
+              ></div>
+              <div class="w-full md:w-1/2 md:pl-12">
+                <div
+                  class="bg-black/50 backdrop-blur-sm p-8 rounded-2xl border border-blue-500/30 hover:border-blue-500 transition-colors"
+                >
+                  <h3 class="text-2xl font-bold mb-4">02. Design</h3>
+                  <p class="text-gray-400">
+                    Creating stunning visuals and intuitive user experiences
+                    that captivate.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="timeline-item relative flex items-center">
+              <div class="w-full md:w-1/2 md:pr-12 text-right">
+                <div
+                  class="bg-black/50 backdrop-blur-sm p-8 rounded-2xl border border-pink-500/30 hover:border-pink-500 transition-colors"
+                >
+                  <h3 class="text-2xl font-bold mb-4">03. Develop</h3>
+                  <p class="text-gray-400">
+                    Building robust, scalable solutions with cutting-edge
+                    technologies.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-pink-500 rounded-full border-4 border-black"
+              ></div>
+              <div class="hidden md:block w-1/2 pl-12">
+                <img
+                  src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png"
+                  alt="Develop"
+                  class="rounded-2xl w-64 h-48 object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 5: Work Gallery with Filters -->
+    <section id="work" class="min-h-screen relative py-20 overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-12 gradient-text"
+        >
+          Our Work
+        </h2>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+          <button
+            class="filter-btn active px-6 py-2 rounded-full bg-white text-black font-semibold hover:scale-110 transition-transform"
+            data-filter="all"
+          >
+            All
+          </button>
+          <button
+            class="filter-btn px-6 py-2 rounded-full border-2 border-white hover:bg-white hover:text-black transition-all"
+            data-filter="web"
+          >
+            Web Design
+          </button>
+          <button
+            class="filter-btn px-6 py-2 rounded-full border-2 border-white hover:bg-white hover:text-black transition-all"
+            data-filter="brand"
+          >
+            Branding
+          </button>
+          <button
+            class="filter-btn px-6 py-2 rounded-full border-2 border-white hover:bg-white hover:text-black transition-all"
+            data-filter="motion"
+          >
+            Motion
+          </button>
+        </div>
+
+        <!-- Masonry Grid -->
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          id="work-grid"
+        >
+          <div
+            class="work-item web group relative overflow-hidden rounded-2xl"
+            data-category="web"
+          >
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+              alt="Web Project 1"
+              class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">E-Commerce Platform</h3>
+                <p class="text-gray-300">Modern shopping experience</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="work-item brand group relative overflow-hidden rounded-2xl lg:row-span-2"
+            data-category="brand"
+          >
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+              alt="Brand Project 1"
+              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">Tech Startup Identity</h3>
+                <p class="text-gray-300">Complete brand overhaul</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="work-item motion group relative overflow-hidden rounded-2xl"
+            data-category="motion"
+          >
+            <video
+              autoplay
+              muted
+              loop
+              class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+            >
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">Motion Graphics</h3>
+                <p class="text-gray-300">Dynamic visual storytelling</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="work-item web group relative overflow-hidden rounded-2xl"
+            data-category="web"
+          >
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+              alt="Web Project 2"
+              class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">SaaS Dashboard</h3>
+                <p class="text-gray-300">Data visualization platform</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="work-item brand group relative overflow-hidden rounded-2xl"
+            data-category="brand"
+          >
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+              alt="Brand Project 2"
+              class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">Fashion Brand</h3>
+                <p class="text-gray-300">Luxury redefined</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="work-item motion group relative overflow-hidden rounded-2xl"
+            data-category="motion"
+          >
+            <video
+              autoplay
+              muted
+              loop
+              class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+            >
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div
+              class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-center transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <h3 class="text-2xl font-bold mb-2">Product Launch</h3>
+                <p class="text-gray-300">Cinematic reveal</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 6: Team Section with 3D Cards -->
+    <section id="team" class="min-h-screen relative py-20 overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-purple-900/10 to-black"
+      ></div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-16 gradient-text"
+        >
+          Meet The Team
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <!-- Team Member Cards -->
+          <div class="team-card group relative">
+            <div
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-1"
+            >
+              <div class="bg-black rounded-2xl p-6 h-full">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+                  alt="Team Member 1"
+                  class="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                />
+                <h3 class="text-xl font-bold text-center mb-2">Alex Chen</h3>
+                <p class="text-gray-400 text-center mb-4">Creative Director</p>
+                <div
+                  class="flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+                      />
+                    </svg>
+                  </a>
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="team-card group relative">
+            <div
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900/50 to-purple-900/50 p-1"
+            >
+              <div class="bg-black rounded-2xl p-6 h-full">
+                <img
+                  src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                  alt="Team Member 2"
+                  class="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                />
+                <h3 class="text-xl font-bold text-center mb-2">Sarah Kim</h3>
+                <p class="text-gray-400 text-center mb-4">Lead Developer</p>
+                <div
+                  class="flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                      />
+                    </svg>
+                  </a>
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="team-card group relative">
+            <div
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-900/50 to-blue-900/50 p-1"
+            >
+              <div class="bg-black rounded-2xl p-6 h-full">
+                <img
+                  src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+                  alt="Team Member 3"
+                  class="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                />
+                <h3 class="text-xl font-bold text-center mb-2">
+                  Marcus Johnson
+                </h3>
+                <p class="text-gray-400 text-center mb-4">UI/UX Designer</p>
+                <div
+                  class="flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                      />
+                    </svg>
+                  </a>
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="team-card group relative">
+            <div
+              class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-900/50 to-blue-900/50 p-1"
+            >
+              <div class="bg-black rounded-2xl p-6 h-full">
+                <img
+                  src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png"
+                  alt="Team Member 4"
+                  class="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                />
+                <h3 class="text-xl font-bold text-center mb-2">Emma Wilson</h3>
+                <p class="text-gray-400 text-center mb-4">Motion Designer</p>
+                <div
+                  class="flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"
+                      />
+                    </svg>
+                  </a>
+                  <a
+                    href="#"
+                    class="text-white hover:text-purple-400 transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 7: Experimental Lab -->
+    <section id="lab" class="min-h-screen relative py-20 overflow-hidden">
+      <div class="absolute inset-0">
+        <canvas id="particle-canvas" class="w-full h-full"></canvas>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-16 gradient-text"
+        >
+          Experimental Lab
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-12">
+          <!-- Interactive Elements -->
+          <div class="space-y-8">
+            <div
+              class="bg-black/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/30 transition-colors"
+            >
+              <h3 class="text-2xl font-bold mb-4">WebGL Experiments</h3>
+              <div
+                class="aspect-video bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-2xl flex items-center justify-center"
+              >
+                <div class="text-6xl animate-rotate-3d">🔮</div>
+              </div>
+            </div>
+
+            <div
+              class="bg-black/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/30 transition-colors"
+            >
+              <h3 class="text-2xl font-bold mb-4">AI-Generated Art</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <img
+                  src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png"
+                  alt="AI Art 1"
+                  class="rounded-xl hover:scale-105 transition-transform"
+                />
+                <img
+                  src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png"
+                  alt="AI Art 2"
+                  class="rounded-xl hover:scale-105 transition-transform"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-8">
+            <div
+              class="bg-black/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/30 transition-colors"
+            >
+              <h3 class="text-2xl font-bold mb-4">Interactive Physics</h3>
+              <div
+                id="physics-demo"
+                class="aspect-video bg-gradient-to-br from-pink-900/50 to-purple-900/50 rounded-2xl relative overflow-hidden"
+              >
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="grid grid-cols-3 gap-4">
+                    <div
+                      class="w-16 h-16 bg-white/20 rounded-full animate-bounce"
+                      style="animation-delay: 0s"
+                    ></div>
+                    <div
+                      class="w-16 h-16 bg-white/20 rounded-full animate-bounce"
+                      style="animation-delay: 0.2s"
+                    ></div>
+                    <div
+                      class="w-16 h-16 bg-white/20 rounded-full animate-bounce"
+                      style="animation-delay: 0.4s"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-black/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/30 transition-colors"
+            >
+              <h3 class="text-2xl font-bold mb-4">Sound Visualization</h3>
+              <div class="space-y-2">
+                <div
+                  class="h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-pulse"
+                ></div>
+                <div
+                  class="h-2 bg-gradient-to-r from-blue-500 to-pink-500 rounded-full animate-pulse"
+                  style="animation-delay: 0.2s"
+                ></div>
+                <div
+                  class="h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse"
+                  style="animation-delay: 0.4s"
+                ></div>
+                <div
+                  class="h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-pulse"
+                  style="animation-delay: 0.6s"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 8: Contact Section -->
+    <section
+      id="contact"
+      class="min-h-screen relative py-20 overflow-hidden noise"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-black"
+      ></div>
+
+      <div class="relative z-10 max-w-4xl mx-auto px-6">
+        <h2
+          class="text-5xl md:text-7xl font-bold text-center mb-16 gradient-text"
+        >
+          Let's Connect
+        </h2>
+
+        <div
+          class="bg-black/50 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10"
+        >
+          <form class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium mb-2">Name</label>
+                <input
+                  type="text"
+                  class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder="john@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2">Project Type</label>
+              <select
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 transition-colors"
+              >
+                <option>Web Design</option>
+                <option>Branding</option>
+                <option>Motion Design</option>
+                <option>Full Package</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2">Message</label>
+              <textarea
+                rows="6"
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                placeholder="Tell us about your project..."
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold rounded-xl hover:scale-105 transition-transform"
+            >
+              Send Message
+            </button>
+          </form>
+
+          <div class="mt-12 grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div class="text-3xl mb-2">📧</div>
+              <p class="text-gray-400">hello@hyperstudio.com</p>
+            </div>
+            <div>
+              <div class="text-3xl mb-2">📱</div>
+              <p class="text-gray-400">+1 (555) 123-4567</p>
+            </div>
+            <div>
+              <div class="text-3xl mb-2">📍</div>
+              <p class="text-gray-400">San Francisco, CA</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-6 border-t border-white/10">
+      <div
+        class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center"
+      >
+        <div class="text-gray-400">
+          © 2024 HYPERSTUDIO. All rights reserved.
+        </div>
+        <div class="flex gap-6 mt-4 md:mt-0">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"
+            >Twitter</a
+          >
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"
+            >Instagram</a
+          >
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"
+            >LinkedIn</a
+          >
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"
+            >Behance</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Custom cursor
+      const cursor = document.getElementById("cursor");
+      const cursorFollower = document.getElementById("cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX - 16 + "px";
+        cursor.style.top = e.clientY - 16 + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 80 + "px";
+          cursorFollower.style.top = e.clientY - 80 + "px";
+        }, 100);
+      });
+
+      // Magnetic effect
+      document.querySelectorAll(".magnetic").forEach((elem) => {
+        elem.addEventListener("mousemove", (e) => {
+          const rect = elem.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          elem.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+
+        elem.addEventListener("mouseleave", () => {
+          elem.style.transform = "translate(0, 0)";
+        });
+      });
+
+      // Mobile menu
+      const menuToggle = document.getElementById("menu-toggle");
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      menuToggle.addEventListener("click", () => {
+        mobileMenu.classList.toggle("translate-x-full");
+      });
+
+      // Close mobile menu on link click
+      document.querySelectorAll(".mobile-link").forEach((link) => {
+        link.addEventListener("click", () => {
+          mobileMenu.classList.add("translate-x-full");
+        });
+      });
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Gallery slider
+      let currentSlide = 0;
+      const slider = document.getElementById("gallery-slider");
+      const totalSlides = 3;
+
+      function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        updateSlider();
+      }
+
+      function prevSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        updateSlider();
+      }
+
+      function updateSlider() {
+        slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+      }
+
+      // Auto-play slider
+      setInterval(nextSlide, 5000);
+
+      // Work filter
+      const filterBtns = document.querySelectorAll(".filter-btn");
+      const workItems = document.querySelectorAll(".work-item");
+
+      filterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // Update active button
+          filterBtns.forEach((b) => {
+            b.classList.remove("bg-white", "text-black");
+            b.classList.add("border-2", "border-white");
+          });
+          btn.classList.add("bg-white", "text-black");
+          btn.classList.remove("border-2", "border-white");
+
+          // Filter items
+          const filter = btn.dataset.filter;
+          workItems.forEach((item) => {
+            if (filter === "all" || item.dataset.category === filter) {
+              item.style.display = "block";
+              setTimeout(() => {
+                item.style.opacity = "1";
+                item.style.transform = "scale(1)";
+              }, 10);
+            } else {
+              item.style.opacity = "0";
+              item.style.transform = "scale(0.8)";
+              setTimeout(() => {
+                item.style.display = "none";
+              }, 300);
+            }
+          });
+        });
+      });
+
+      // Particle canvas
+      const canvas = document.getElementById("particle-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const particleCount = 100;
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 3 + 1;
+          this.speedX = Math.random() * 3 - 1.5;
+          this.speedY = Math.random() * 3 - 1.5;
+          this.opacity = Math.random() * 0.5 + 0.2;
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          if (this.x > canvas.width) this.x = 0;
+          if (this.x < 0) this.x = canvas.width;
+          if (this.y > canvas.height) this.y = 0;
+          if (this.y < 0) this.y = canvas.height;
+        }
+
+        draw() {
+          ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Initialize particles
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach((particle) => {
+          particle.update();
+          particle.draw();
+        });
+
+        // Draw connections
+        particles.forEach((a, index) => {
+          particles.slice(index + 1).forEach((b) => {
+            const distance = Math.sqrt(
+              Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2),
+            );
+            if (distance < 100) {
+              ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - distance / 100)})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          });
+        });
+
+        requestAnimationFrame(animateParticles);
+      }
+
+      animateParticles();
+
+      // Resize handler
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+
+      // Form submission
+      document.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for your message! We'll get back to you soon.");
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-slide-up");
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document
+        .querySelectorAll(".project-card, .team-card, .timeline-item")
+        .forEach((el) => {
+          observer.observe(el);
+        });
+    </script>
+  </body>
+</html>

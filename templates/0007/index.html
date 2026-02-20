@@ -1,0 +1,2093 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Immersive Full Screen Experience - 10 Pages</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #0a0a0a;
+        --accent-color: #ff4757;
+        --secondary-color: #3742fa;
+        --tertiary-color: #00d2d3;
+        --quaternary-color: #feca57;
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --transition-duration: 1.5s;
+      }
+
+      html {
+        overflow: hidden;
+        height: 100%;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background-color: var(--primary-color);
+        color: var(--text-light);
+        overflow: hidden;
+        cursor: none;
+        height: 100%;
+        position: relative;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 40px;
+        height: 40px;
+        border: 2px solid var(--text-light);
+        border-radius: 50%;
+        position: fixed;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        transition: all 0.15s ease;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 71, 87, 0.3),
+          transparent
+        );
+        border-radius: 50%;
+        position: fixed;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        transition: all 0.5s ease;
+        z-index: 9998;
+        filter: blur(5px);
+      }
+
+      .cursor.hover {
+        transform: translate(-50%, -50%) scale(2);
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        mix-blend-mode: normal;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        padding: 1rem 3rem;
+        z-index: 1000;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+        backdrop-filter: blur(20px);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 100%;
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: bold;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2.5rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--text-light);
+        text-decoration: none;
+        position: relative;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        transition: width 0.3s ease;
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Hamburger Menu */
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-toggle span {
+        width: 30px;
+        height: 3px;
+        background: var(--text-light);
+        transition: all 0.3s ease;
+      }
+
+      /* Main Container */
+      .main-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Sections */
+      .section {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(1.1) translateY(50px);
+        transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .section.active {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1) translateY(0);
+      }
+
+      /* Full Screen Background */
+      .background-media {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .background-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.4);
+        transform: scale(1.1);
+        transition:
+          transform 20s ease-out,
+          filter 1s ease;
+      }
+
+      .section.active .background-image {
+        transform: scale(1.15);
+      }
+
+      /* Video Background */
+      .background-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.3);
+      }
+
+      /* Content Overlay */
+      .content-overlay {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 5% 40px 5%;
+        z-index: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        align-items: center;
+        min-height: min-content;
+      }
+
+      .content-wrapper.centered {
+        grid-template-columns: 1fr;
+        text-align: center;
+        max-width: 1200px;
+      }
+
+      .content-wrapper.reverse {
+        direction: rtl;
+      }
+
+      .content-wrapper.reverse .text-content {
+        direction: ltr;
+      }
+
+      /* Text Content */
+      .text-content {
+        position: relative;
+        z-index: 10;
+        padding: 2rem 0;
+      }
+
+      .section-number {
+        font-size: clamp(8rem, 12vw, 12rem);
+        font-weight: 900;
+        opacity: 0.05;
+        position: absolute;
+        top: -4rem;
+        left: -3rem;
+        line-height: 1;
+        letter-spacing: -10px;
+      }
+
+      h1 {
+        font-size: clamp(3rem, 6vw, 5.5rem);
+        font-weight: 900;
+        line-height: 0.9;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: -3px;
+      }
+
+      .title-line {
+        display: block;
+        overflow: hidden;
+      }
+
+      .title-reveal {
+        display: inline-block;
+        transform: translateY(120%);
+        animation: titleReveal 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      @keyframes titleReveal {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .subtitle {
+        font-size: clamp(1.3rem, 2.5vw, 2rem);
+        font-weight: 300;
+        margin-bottom: 1.5rem;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+        animation-delay: 0.6s;
+        background: linear-gradient(
+          90deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .description {
+        font-size: clamp(1rem, 1.5vw, 1.2rem);
+        line-height: 1.8;
+        margin-bottom: 2rem;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+        animation-delay: 0.8s;
+        max-width: 600px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .cta-group {
+        display: flex;
+        gap: 1.5rem;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+        animation-delay: 1s;
+        flex-wrap: wrap;
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 1.2rem 3rem;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        white-space: nowrap;
+      }
+
+      .cta-primary {
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        color: var(--text-light);
+        border: none;
+      }
+
+      .cta-secondary {
+        background: transparent;
+        color: var(--text-light);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .cta-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: left 0.4s ease;
+      }
+
+      .cta-button:hover::before {
+        left: 0;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(255, 71, 87, 0.3);
+      }
+
+      /* Feature Cards */
+      .feature-content {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        position: relative;
+        padding: 2rem 0;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2.5rem;
+        border-radius: 20px;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .feature-card:nth-child(1) {
+        animation-delay: 0.4s;
+      }
+      .feature-card:nth-child(2) {
+        animation-delay: 0.6s;
+      }
+      .feature-card:nth-child(3) {
+        animation-delay: 0.8s;
+      }
+      .feature-card:nth-child(4) {
+        animation-delay: 0.5s;
+      }
+      .feature-card:nth-child(5) {
+        animation-delay: 0.7s;
+      }
+      .feature-card:nth-child(6) {
+        animation-delay: 0.9s;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--accent-color);
+        box-shadow: 0 20px 40px rgba(255, 71, 87, 0.2);
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .feature-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+      }
+
+      .feature-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.7);
+        flex-grow: 1;
+      }
+
+      /* Gallery Grid */
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        width: 100%;
+        padding: 2rem 0;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        height: 300px;
+        opacity: 0;
+        transform: scale(0.8);
+        animation: scaleIn 1s ease forwards;
+      }
+
+      .gallery-item:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .gallery-item:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .gallery-item:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      @keyframes scaleIn {
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        padding: 1.5rem;
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      .gallery-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .gallery-category {
+        color: var(--accent-color);
+        font-size: 0.9rem;
+      }
+
+      /* Stats Section */
+      .stats-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3rem;
+        text-align: center;
+        width: 100%;
+        max-width: 1000px;
+        margin: 3rem auto 0;
+        padding: 2rem 0;
+      }
+
+      .stat-item {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .stat-item:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .stat-item:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .stat-item:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+      .stat-item:nth-child(4) {
+        animation-delay: 0.8s;
+      }
+
+      .stat-number {
+        font-size: clamp(2.5rem, 4vw, 3.5rem);
+        font-weight: 900;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      /* Team Grid */
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2.5rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 0;
+      }
+
+      .team-member {
+        text-align: center;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .team-member:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .team-member:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .team-member:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+      .team-member:nth-child(4) {
+        animation-delay: 0.8s;
+      }
+
+      .member-photo {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 0 auto 1.5rem;
+        position: relative;
+      }
+
+      .member-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+      }
+
+      .team-member:hover .member-photo img {
+        transform: scale(1.1);
+      }
+
+      .member-name {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .member-role {
+        color: var(--accent-color);
+        font-size: 1rem;
+      }
+
+      /* Timeline */
+      .timeline {
+        position: relative;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 0;
+      }
+
+      .timeline::after {
+        content: "";
+        position: absolute;
+        width: 4px;
+        background: linear-gradient(
+          to bottom,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        margin-left: -2px;
+      }
+
+      .timeline-item {
+        padding: 10px 40px;
+        position: relative;
+        width: 50%;
+        opacity: 0;
+        transform: translateX(-50px);
+        animation: slideIn 1s ease forwards;
+      }
+
+      .timeline-item:nth-child(odd) {
+        left: 0;
+      }
+
+      .timeline-item:nth-child(even) {
+        left: 50%;
+        transform: translateX(50px);
+      }
+
+      .timeline-item:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .timeline-item:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .timeline-item:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+      .timeline-item:nth-child(4) {
+        animation-delay: 0.8s;
+      }
+
+      @keyframes slideIn {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .timeline-content {
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .timeline-year {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: var(--accent-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .timeline-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .timeline-description {
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+
+      /* Contact Form */
+      .contact-form {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem 0;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      .form-group.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .form-textarea {
+        min-height: 150px;
+        resize: vertical;
+      }
+
+      .form-input:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Floating Elements */
+      .floating-shapes {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      .shape {
+        position: absolute;
+        opacity: 0.1;
+        animation: float 20s infinite ease-in-out;
+      }
+
+      .shape-1 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, var(--accent-color), transparent);
+        border-radius: 50%;
+        top: -200px;
+        right: -200px;
+        filter: blur(80px);
+        animation-delay: 0s;
+      }
+
+      .shape-2 {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          var(--secondary-color),
+          transparent
+        );
+        border-radius: 50%;
+        bottom: -300px;
+        left: -300px;
+        filter: blur(100px);
+        animation-delay: 10s;
+      }
+
+      .shape-3 {
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(
+          45deg,
+          var(--tertiary-color),
+          var(--quaternary-color)
+        );
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        filter: blur(60px);
+        animation: rotate 30s linear infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(100px, -100px) scale(1.2);
+        }
+        66% {
+          transform: translate(-100px, 100px) scale(0.8);
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* Navigation Dots */
+      .nav-dots {
+        position: fixed;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        margin: 1rem 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        background: transparent;
+      }
+
+      .dot::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: var(--accent-color);
+        transition: all 0.3s ease;
+      }
+
+      .dot.active::before {
+        width: 100%;
+        height: 100%;
+      }
+
+      .dot:hover {
+        border-color: var(--accent-color);
+        transform: scale(1.3);
+      }
+
+      /* Progress Bar */
+      .progress-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 1000;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        width: 10%;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 10px var(--accent-color);
+      }
+
+      /* Particles */
+      .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: var(--text-light);
+        border-radius: 50%;
+        opacity: 0.3;
+        animation: particle-float 15s infinite linear;
+      }
+
+      @keyframes particle-float {
+        from {
+          transform: translateY(100vh) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.3;
+        }
+        90% {
+          opacity: 0.3;
+        }
+        to {
+          transform: translateY(-100vh) translateX(100px);
+          opacity: 0;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 1400px) {
+        .feature-content {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .gallery-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .content-wrapper {
+          grid-template-columns: 1fr;
+          text-align: center;
+          gap: 3rem;
+        }
+
+        .content-wrapper.reverse {
+          direction: ltr;
+        }
+
+        .team-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stats-container {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 2rem;
+        }
+
+        h1 {
+          font-size: clamp(2.5rem, 8vw, 4rem);
+        }
+
+        .timeline-item {
+          width: 100%;
+          padding-left: 70px;
+          padding-right: 25px;
+        }
+
+        .timeline-item:nth-child(even) {
+          left: 0;
+        }
+
+        .timeline::after {
+          left: 31px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        nav {
+          padding: 1rem 1.5rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        .nav-dots {
+          right: 1rem;
+        }
+
+        .dot {
+          width: 8px;
+          height: 8px;
+          margin: 0.8rem 0;
+        }
+
+        .content-overlay {
+          padding: 60px 3% 30px 3%;
+        }
+
+        h1 {
+          font-size: clamp(2rem, 10vw, 3rem);
+        }
+
+        .subtitle {
+          font-size: clamp(1.1rem, 3vw, 1.5rem);
+        }
+
+        .description {
+          font-size: 0.95rem;
+        }
+
+        .cta-group {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .cta-button {
+          width: 100%;
+          text-align: center;
+          padding: 1rem 2rem;
+        }
+
+        .feature-content {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+
+        .feature-card {
+          padding: 2rem;
+          min-height: auto;
+        }
+
+        .gallery-grid {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+
+        .gallery-item {
+          height: 250px;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+
+        .stats-container {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cursor,
+        .cursor-follower {
+          display: none;
+        }
+
+        body {
+          cursor: auto;
+        }
+
+        .section-number {
+          font-size: clamp(6rem, 15vw, 8rem);
+          top: -3rem;
+          left: -2rem;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .content-overlay {
+          padding: 60px 5% 20px 5%;
+        }
+
+        h1 {
+          font-size: clamp(2rem, 6vw, 3.5rem);
+          margin-bottom: 1rem;
+        }
+
+        .subtitle {
+          margin-bottom: 1rem;
+        }
+
+        .description {
+          margin-bottom: 1.5rem;
+        }
+
+        .feature-card {
+          min-height: 200px;
+          padding: 1.5rem;
+        }
+
+        .gallery-item {
+          height: 200px;
+        }
+
+        .member-photo {
+          width: 120px;
+          height: 120px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">VERTEX</div>
+        <ul class="nav-links">
+          <li><a href="#" data-section="0">Home</a></li>
+          <li><a href="#" data-section="1">About</a></li>
+          <li><a href="#" data-section="2">Services</a></li>
+          <li><a href="#" data-section="3">Portfolio</a></li>
+          <li><a href="#" data-section="4">Process</a></li>
+          <li><a href="#" data-section="5">Team</a></li>
+          <li><a href="#" data-section="6">Timeline</a></li>
+          <li><a href="#" data-section="7">Testimonials</a></li>
+          <li><a href="#" data-section="8">Blog</a></li>
+          <li><a href="#" data-section="9">Contact</a></li>
+        </ul>
+        <div class="menu-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Floating Shapes -->
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+      </div>
+
+      <!-- Particles -->
+      <div class="particles" id="particles"></div>
+
+      <!-- Section 1 - Hero -->
+      <section class="section active" data-section="0">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_1.png"
+            alt="Hero Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper">
+            <div class="text-content">
+              <span class="section-number">01</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Beyond</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Digital</span
+                  ></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.4s"
+                    >Boundaries</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">차원을 넘어서는 디지털 경험</p>
+              <p class="description">
+                우리는 상상을 현실로 만들고, 불가능을 가능으로 바꿉니다.
+                혁신적인 기술과 창의적인 디자인으로 당신의 브랜드에 새로운
+                생명을 불어넣습니다.
+              </p>
+              <div class="cta-group">
+                <a href="#" class="cta-button cta-primary">시작하기</a>
+                <a href="#" class="cta-button cta-secondary">더 알아보기</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2 - About -->
+      <section class="section" data-section="1">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_0.png"
+            alt="About Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper reverse">
+            <div class="text-content">
+              <span class="section-number">02</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Creative</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Agency</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">혁신을 디자인하다</p>
+              <p class="description">
+                10년간의 경험과 열정으로 디지털 세계를 선도합니다. 우리는 단순한
+                에이전시가 아닌, 당신의 성장 파트너입니다. 창의성과 기술의
+                완벽한 조화로 브랜드의 가치를 극대화합니다.
+              </p>
+              <div class="stats-container">
+                <div class="stat-item">
+                  <div class="stat-number">150+</div>
+                  <div class="stat-label">완료된 프로젝트</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">50+</div>
+                  <div class="stat-label">글로벌 클라이언트</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">15+</div>
+                  <div class="stat-label">수상 경력</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">99%</div>
+                  <div class="stat-label">고객 만족도</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3 - Services -->
+      <section class="section" data-section="2">
+        <div class="background-media">
+          <video autoplay muted loop class="background-video">
+            <source
+              src="https://cdn.midjourney.com/video/bbab7ae5-f289-4954-8536-b944f42252be/1.mp4"
+              type="video/mp4"
+            />
+            <img
+              src="https://cdn.midjourney.com/2272f4a9-af7e-46f0-ba09-fbb2834ef574/0_3.png"
+              alt="Fallback"
+              class="background-image"
+            />
+          </video>
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">03</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Our</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Services</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">전문성과 창의성의 만남</p>
+            </div>
+            <div class="feature-content">
+              <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">웹 개발</h3>
+                <p class="feature-description">
+                  최신 기술 스택을 활용한 빠르고 안정적인 웹 애플리케이션 개발
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">UI/UX 디자인</h3>
+                <p class="feature-description">
+                  사용자 중심의 직관적이고 아름다운 인터페이스 디자인
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">브랜딩</h3>
+                <p class="feature-description">
+                  독창적이고 기억에 남는 브랜드 아이덴티티 구축
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3 class="feature-title">모바일 앱</h3>
+                <p class="feature-description">
+                  iOS와 Android를 위한 네이티브 및 크로스 플랫폼 앱 개발
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">디지털 마케팅</h3>
+                <p class="feature-description">
+                  데이터 기반의 효과적인 디지털 마케팅 전략 수립 및 실행
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3 class="feature-title">컨설팅</h3>
+                <p class="feature-description">
+                  비즈니스 목표 달성을 위한 맞춤형 디지털 전략 컨설팅
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4 - Portfolio -->
+      <section class="section" data-section="3">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_3.png"
+            alt="Portfolio Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">04</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Featured</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Works</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">우리가 만든 걸작들</p>
+            </div>
+            <div class="gallery-grid">
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_2.png"
+                  alt="Project 1"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">Tech Startup Platform</h3>
+                  <p class="gallery-category">Web Development</p>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_1.png"
+                  alt="Project 2"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">Brand Identity Design</h3>
+                  <p class="gallery-category">Branding</p>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/272959e4-8f3f-4c62-8e2f-9a754ba5f261/0_0.png"
+                  alt="Project 3"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">E-commerce Solution</h3>
+                  <p class="gallery-category">Web & Mobile</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5 - Process -->
+      <section class="section" data-section="4">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/39a94585-100e-40ad-add1-48e4931200be/0_3.png"
+            alt="Process Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper">
+            <div class="text-content">
+              <span class="section-number">05</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Our</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Process</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">완벽을 향한 여정</p>
+              <p class="description">
+                체계적이고 효율적인 프로세스를 통해 최고의 결과물을
+                만들어냅니다. 각 단계마다 클라이언트와 긴밀히 소통하며
+                프로젝트를 진행합니다.
+              </p>
+              <div class="cta-group">
+                <a href="#" class="cta-button cta-primary">프로세스 상세보기</a>
+              </div>
+            </div>
+            <div class="feature-content">
+              <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3 class="feature-title">1. 리서치</h3>
+                <p class="feature-description">
+                  시장 조사와 사용자 분석을 통한 인사이트 도출
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">✏️</div>
+                <h3 class="feature-title">2. 기획</h3>
+                <p class="feature-description">전략 수립과 와이어프레임 제작</p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">3. 디자인</h3>
+                <p class="feature-description">
+                  비주얼 컨셉 개발과 UI/UX 디자인
+                </p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">💻</div>
+                <h3 class="feature-title">4. 개발</h3>
+                <p class="feature-description">최신 기술을 활용한 구현</p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🧪</div>
+                <h3 class="feature-title">5. 테스트</h3>
+                <p class="feature-description">품질 보증과 사용자 테스트</p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">6. 런칭</h3>
+                <p class="feature-description">배포와 지속적인 모니터링</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6 - Team -->
+      <section class="section" data-section="5">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/39a94585-100e-40ad-add1-48e4931200be/0_2.png"
+            alt="Team Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">06</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Meet Our</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Team</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">열정과 재능이 만나는 곳</p>
+            </div>
+            <div class="team-grid">
+              <div class="team-member">
+                <div class="member-photo">
+                  <img
+                    src="https://cdn.midjourney.com/39a94585-100e-40ad-add1-48e4931200be/0_1.png"
+                    alt="Team Member 1"
+                  />
+                </div>
+                <h3 class="member-name">김민수</h3>
+                <p class="member-role">CEO & Founder</p>
+              </div>
+              <div class="team-member">
+                <div class="member-photo">
+                  <img
+                    src="https://cdn.midjourney.com/39a94585-100e-40ad-add1-48e4931200be/0_0.png"
+                    alt="Team Member 2"
+                  />
+                </div>
+                <h3 class="member-name">이지은</h3>
+                <p class="member-role">Creative Director</p>
+              </div>
+              <div class="team-member">
+                <div class="member-photo">
+                  <img
+                    src="https://cdn.midjourney.com/cb571eb8-c7e4-4c64-b4b8-1b15d8ad0e7f/0_1.png"
+                    alt="Team Member 3"
+                  />
+                </div>
+                <h3 class="member-name">박준호</h3>
+                <p class="member-role">Tech Lead</p>
+              </div>
+              <div class="team-member">
+                <div class="member-photo">
+                  <img
+                    src="https://cdn.midjourney.com/cb571eb8-c7e4-4c64-b4b8-1b15d8ad0e7f/0_2.png"
+                    alt="Team Member 4"
+                  />
+                </div>
+                <h3 class="member-name">최서연</h3>
+                <p class="member-role">UX Designer</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7 - Timeline -->
+      <section class="section" data-section="6">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/cb571eb8-c7e4-4c64-b4b8-1b15d8ad0e7f/0_3.png"
+            alt="Timeline Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">07</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Our</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Journey</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">성장의 발자취</p>
+            </div>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-content">
+                  <h3 class="timeline-year">2020</h3>
+                  <h4 class="timeline-title">회사 설립</h4>
+                  <p class="timeline-description">
+                    작은 스타트업으로 시작한 우리의 여정
+                  </p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-content">
+                  <h3 class="timeline-year">2021</h3>
+                  <h4 class="timeline-title">첫 대형 프로젝트</h4>
+                  <p class="timeline-description">
+                    글로벌 기업과의 첫 협업 프로젝트 성공
+                  </p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-content">
+                  <h3 class="timeline-year">2023</h3>
+                  <h4 class="timeline-title">해외 진출</h4>
+                  <p class="timeline-description">
+                    아시아 시장을 넘어 글로벌 시장으로 확장
+                  </p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-content">
+                  <h3 class="timeline-year">2025</h3>
+                  <h4 class="timeline-title">업계 선도</h4>
+                  <p class="timeline-description">
+                    디지털 에이전시 분야의 리더로 성장
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8 - Testimonials -->
+      <section class="section" data-section="7">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/1de7a57d-8f2c-4a21-882d-695cc25f5272/0_1.png"
+            alt="Testimonials Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">08</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Client</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Stories</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">고객이 들려주는 성공 이야기</p>
+            </div>
+            <div class="feature-content">
+              <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <p class="feature-description">
+                  "VERTEX와의 협업은 우리 회사에 혁신을 가져왔습니다. 전문성과
+                  창의성이 완벽하게 조화된 팀입니다."
+                </p>
+                <h3 class="feature-title">Electronics</h3>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <p class="feature-description">
+                  "기대 이상의 결과물을 만들어주었습니다. 디테일한 부분까지
+                  신경써주는 모습이 인상적이었습니다."
+                </p>
+                <h3 class="feature-title">Display</h3>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <p class="feature-description">
+                  "프로젝트 전반에 걸쳐 뛰어난 커뮤니케이션과 전문적인 접근
+                  방식을 보여주었습니다."
+                </p>
+                <h3 class="feature-title">Motors</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 9 - Blog/News -->
+      <section class="section" data-section="8">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/1de7a57d-8f2c-4a21-882d-695cc25f5272/0_2.png"
+            alt="Blog Background"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">09</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Latest</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Insights</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">트렌드와 인사이트를 공유합니다</p>
+            </div>
+            <div class="gallery-grid">
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/1de7a57d-8f2c-4a21-882d-695cc25f5272/0_3.png"
+                  alt="Blog 1"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">2025 웹 디자인 트렌드</h3>
+                  <p class="gallery-category">Design Trends</p>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/1de7a57d-8f2c-4a21-882d-695cc25f5272/0_0.png"
+                  alt="Blog 2"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">AI와 디자인의 미래</h3>
+                  <p class="gallery-category">Technology</p>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img
+                  src="https://cdn.midjourney.com/f40d3e40-066c-4451-9955-dc9e52ae8997/0_1.png"
+                  alt="Blog 3"
+                />
+                <div class="gallery-overlay">
+                  <h3 class="gallery-title">성공적인 브랜딩 전략</h3>
+                  <p class="gallery-category">Branding</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 10 - Contact -->
+      <section class="section" data-section="9">
+        <div class="background-media">
+          <img
+            src="https://cdn.midjourney.com/f40d3e40-066c-4451-9955-dc9e52ae8997/0_2.png"
+            class="background-image"
+          />
+        </div>
+        <div class="content-overlay">
+          <div class="content-wrapper centered">
+            <div class="text-content">
+              <span class="section-number">10</span>
+              <h1>
+                <span class="title-line"
+                  ><span class="title-reveal">Let's</span></span
+                >
+                <span class="title-line"
+                  ><span class="title-reveal" style="animation-delay: 0.2s"
+                    >Connect</span
+                  ></span
+                >
+              </h1>
+              <p class="subtitle">함께 미래를 만들어갑시다</p>
+              <p class="description">
+                당신의 비전을 현실로 만들 준비가 되었습니다. 지금 바로
+                연락주세요.
+              </p>
+            </div>
+            <div class="contact-form">
+              <form>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">이름</label>
+                    <input
+                      type="text"
+                      class="form-input"
+                      placeholder="홍길동"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">이메일</label>
+                    <input
+                      type="email"
+                      class="form-input"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div class="form-group full-width">
+                    <label class="form-label">메시지</label>
+                    <textarea
+                      class="form-textarea"
+                      placeholder="프로젝트에 대해 알려주세요..."
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="cta-group">
+                  <button type="submit" class="cta-button cta-primary">
+                    메시지 보내기
+                  </button>
+                  <a
+                    href="mailto:hello@vertex.com"
+                    class="cta-button cta-secondary"
+                    >hello@vertex.com</a
+                  >
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="nav-dots">
+      <div class="dot active" data-section="0"></div>
+      <div class="dot" data-section="1"></div>
+      <div class="dot" data-section="2"></div>
+      <div class="dot" data-section="3"></div>
+      <div class="dot" data-section="4"></div>
+      <div class="dot" data-section="5"></div>
+      <div class="dot" data-section="6"></div>
+      <div class="dot" data-section="7"></div>
+      <div class="dot" data-section="8"></div>
+      <div class="dot" data-section="9"></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+
+    <script>
+      // Create particles
+      const particlesContainer = document.getElementById("particles");
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 15 + "s";
+        particle.style.animationDuration = 15 + Math.random() * 10 + "s";
+        particlesContainer.appendChild(particle);
+      }
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX + "px";
+          cursorFollower.style.top = e.clientY + "px";
+        }, 100);
+      });
+
+      // Cursor hover effect
+      const hoverElements = document.querySelectorAll(
+        "a, button, .dot, .feature-card, .gallery-item, .team-member, .timeline-content",
+      );
+      hoverElements.forEach((element) => {
+        element.addEventListener("mouseenter", () => {
+          cursor.classList.add("hover");
+          cursorFollower.style.transform = "translate(-50%, -50%) scale(1.5)";
+        });
+        element.addEventListener("mouseleave", () => {
+          cursor.classList.remove("hover");
+          cursorFollower.style.transform = "translate(-50%, -50%) scale(1)";
+        });
+      });
+
+      // Section Navigation
+      let currentSection = 0;
+      const sections = document.querySelectorAll(".section");
+      const dots = document.querySelectorAll(".dot");
+      const progressFill = document.querySelector(".progress-fill");
+      const navLinks = document.querySelectorAll(".nav-links a");
+      const totalSections = sections.length;
+
+      function showSection(index) {
+        // Hide all sections
+        sections.forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        // Show target section
+        setTimeout(() => {
+          sections[index].classList.add("active");
+
+          // Play video if exists
+          const video = sections[index].querySelector("video");
+          if (video) {
+            video.play();
+          }
+        }, 100);
+
+        // Update dots
+        dots.forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+
+        // Update progress bar
+        progressFill.style.width = `${((index + 1) / totalSections) * 100}%`;
+
+        // Reset animations for new section
+        const newSection = sections[index];
+        const animatedElements = newSection.querySelectorAll(
+          ".title-reveal, .subtitle, .description, .cta-group, .feature-card, .gallery-item, .stat-item, .team-member, .timeline-item, .form-group",
+        );
+
+        animatedElements.forEach((element) => {
+          element.style.animation = "none";
+          setTimeout(() => {
+            element.style.animation = "";
+          }, 50);
+        });
+
+        currentSection = index;
+      }
+
+      // Dot navigation
+      dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          showSection(index);
+        });
+      });
+
+      // Nav links
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const sectionIndex = parseInt(link.dataset.section);
+          showSection(sectionIndex);
+        });
+      });
+
+      // Wheel navigation with throttle
+      let isScrolling = false;
+      let touchStartY = 0;
+
+      function handleScroll(direction) {
+        if (isScrolling) return;
+
+        isScrolling = true;
+
+        if (direction > 0 && currentSection < totalSections - 1) {
+          showSection(currentSection + 1);
+        } else if (direction < 0 && currentSection > 0) {
+          showSection(currentSection - 1);
+        }
+
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1500);
+      }
+
+      // Mouse wheel
+      document.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        handleScroll(e.deltaY);
+      });
+
+      // Touch navigation
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+
+        if (Math.abs(diff) > 50) {
+          handleScroll(diff);
+        }
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === " ") {
+          e.preventDefault();
+          handleScroll(1);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          handleScroll(-1);
+        } else if (e.key >= "0" && e.key <= "9") {
+          const index = parseInt(e.key);
+          if (index < totalSections) {
+            showSection(index);
+          }
+        }
+      });
+
+      // Parallax effect on mouse move
+      document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+
+        const shapes = document.querySelectorAll(".shape");
+        shapes.forEach((shape, index) => {
+          const speed = (index + 1) * 0.5;
+          shape.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+        });
+
+        const activeImage = document.querySelector(
+          ".section.active .background-image",
+        );
+        if (activeImage) {
+          activeImage.style.transform = `scale(1.15) translate(${x * 0.3}px, ${y * 0.3}px)`;
+        }
+      });
+
+      // Form submission
+      const contactForm = document.querySelector("form");
+      if (contactForm) {
+        contactForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("메시지가 전송되었습니다!");
+          contactForm.reset();
+        });
+      }
+
+      // Mobile menu toggle
+      const menuToggle = document.querySelector(".menu-toggle");
+      const navLinksContainer = document.querySelector(".nav-links");
+
+      menuToggle.addEventListener("click", () => {
+        navLinksContainer.classList.toggle("active");
+        menuToggle.classList.toggle("active");
+      });
+
+      // Initialize
+      showSection(0);
+
+      // Prevent default scroll
+      window.addEventListener(
+        "touchmove",
+        (e) => {
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+    </script>
+  </body>
+</html>

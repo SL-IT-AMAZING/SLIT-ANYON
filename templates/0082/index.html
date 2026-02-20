@@ -1,0 +1,2168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATELIER - Typography in Motion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@100;300;400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+      :root {
+        --primary-dark: #1a1a1a;
+        --primary-light: #f8f8f8;
+        --accent-warm: #e8d5c4;
+        --accent-cool: #c4d5e8;
+        --neutral-gray: #6b6b6b;
+        --transition-speed: 0.6s;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      #p5-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        opacity: 0.3;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background: rgba(248, 248, 248, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        padding: 20px 5%;
+        transition: all var(--transition-speed) ease;
+        border-bottom: 1px solid rgba(26, 26, 26, 0.1);
+      }
+
+      nav.scrolled {
+        padding: 15px 5%;
+        box-shadow: 0 5px 20px rgba(26, 26, 26, 0.1);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2.5rem;
+        letter-spacing: 3px;
+        transition: all var(--transition-speed) ease;
+        cursor: pointer;
+        background: linear-gradient(
+          45deg,
+          var(--primary-dark),
+          var(--neutral-gray)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .logo:hover {
+        letter-spacing: 8px;
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-link {
+        text-decoration: none;
+        color: var(--primary-dark);
+        font-weight: 300;
+        letter-spacing: 1px;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        transition: width 0.3s ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        gap: 4px;
+      }
+
+      .hamburger span {
+        width: 25px;
+        height: 2px;
+        background: var(--primary-dark);
+        transition: all 0.3s ease;
+      }
+
+      /* Sections */
+      section {
+        min-height: 100vh;
+        padding: 120px 5% 80px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* Hero Section */
+      #hero {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: linear-gradient(
+          135deg,
+          var(--accent-warm) 0%,
+          var(--primary-light) 50%,
+          var(--accent-cool) 100%
+        );
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 15vw, 12rem);
+        font-weight: 700;
+        line-height: 0.9;
+        letter-spacing: -5px;
+        opacity: 0;
+        transform: translateY(100px);
+        animation: fadeInUp 1.5s ease forwards;
+        background: linear-gradient(
+          180deg,
+          var(--primary-dark) 0%,
+          var(--neutral-gray) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero-subtitle {
+        font-family: "Inter", sans-serif;
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 100;
+        letter-spacing: 10px;
+        margin-top: 30px;
+        opacity: 0;
+        animation: fadeInUp 1.5s ease 0.5s forwards;
+        color: var(--neutral-gray);
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        40% {
+          transform: translateX(-50%) translateY(-20px);
+        }
+        60% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+      }
+
+      /* About Section */
+      #about {
+        background: var(--primary-light);
+      }
+
+      .about-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-text h2 {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 6rem);
+        letter-spacing: 2px;
+        margin-bottom: 30px;
+        opacity: 0;
+        transform: translateX(-50px);
+        color: var(--primary-dark);
+      }
+
+      .about-text p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        font-weight: 300;
+        opacity: 0;
+        transform: translateX(-50px);
+        color: var(--neutral-gray);
+      }
+
+      .about-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        opacity: 0;
+        transform: scale(0.8);
+        box-shadow: 0 20px 40px rgba(26, 26, 26, 0.1);
+      }
+
+      .about-image img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .about-image:hover img {
+        transform: scale(1.05);
+      }
+
+      /* Gallery Section */
+      #gallery {
+        background: linear-gradient(
+          180deg,
+          var(--primary-light) 0%,
+          var(--accent-warm) 100%
+        );
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .gallery-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-style: italic;
+        opacity: 0;
+        transform: rotateX(90deg);
+        transform-origin: bottom;
+        color: var(--primary-dark);
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 5px;
+        cursor: pointer;
+        opacity: 0;
+        transform: translateY(50px);
+        box-shadow: 0 10px 30px rgba(26, 26, 26, 0.1);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        transition: all 0.6s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+        filter: brightness(0.8);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(26, 26, 26, 0.9), transparent);
+        padding: 30px;
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      .gallery-overlay h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.8rem;
+        color: var(--primary-light);
+        letter-spacing: 2px;
+      }
+
+      /* Portfolio Section */
+      #portfolio {
+        background: var(--primary-light);
+      }
+
+      .portfolio-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .portfolio-title {
+        font-family: "Inter", sans-serif;
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 900;
+        letter-spacing: -2px;
+        position: relative;
+        display: inline-block;
+        color: var(--primary-dark);
+      }
+
+      .portfolio-title::before {
+        content: attr(data-text);
+        position: absolute;
+        left: 2px;
+        top: 2px;
+        color: var(--accent-cool);
+        z-index: -1;
+      }
+
+      .portfolio-showcase {
+        display: flex;
+        flex-direction: column;
+        gap: 100px;
+      }
+
+      .portfolio-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+
+      .portfolio-item:nth-child(even) {
+        direction: rtl;
+      }
+
+      .portfolio-item:nth-child(even) > * {
+        direction: ltr;
+      }
+
+      .portfolio-info h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: var(--primary-dark);
+      }
+
+      .portfolio-info p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        font-weight: 300;
+        margin-bottom: 30px;
+        color: var(--neutral-gray);
+      }
+
+      .portfolio-link {
+        display: inline-block;
+        padding: 15px 40px;
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        text-decoration: none;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .portfolio-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        transition: left 0.3s ease;
+      }
+
+      .portfolio-link:hover::before {
+        left: 0;
+      }
+
+      .portfolio-link span {
+        position: relative;
+        z-index: 1;
+      }
+
+      .portfolio-link:hover {
+        color: var(--primary-dark);
+      }
+
+      .portfolio-media {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 20px 40px rgba(26, 26, 26, 0.15);
+      }
+
+      .portfolio-media img,
+      .portfolio-media video {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      /* Services Section */
+      #services {
+        background: linear-gradient(
+          135deg,
+          var(--accent-cool) 0%,
+          var(--primary-light) 50%,
+          var(--accent-warm) 100%
+        );
+      }
+
+      .services-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .services-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 12vw, 10rem);
+        letter-spacing: 5px;
+        background: linear-gradient(
+          45deg,
+          var(--primary-dark),
+          var(--neutral-gray)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        opacity: 0;
+        transform: scale(0.5);
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 50px;
+      }
+
+      .service-card {
+        background: rgba(248, 248, 248, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 50px;
+        text-align: center;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(50px) rotateX(15deg);
+        transform-origin: bottom;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(26, 26, 26, 0.1);
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--accent-warm) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+      }
+
+      .service-card:hover::before {
+        opacity: 0.3;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px) rotateX(0);
+        box-shadow: 0 20px 40px rgba(26, 26, 26, 0.15);
+      }
+
+      .service-number {
+        font-family: "Playfair Display", serif;
+        font-size: 5rem;
+        font-style: italic;
+        color: var(--accent-cool);
+        margin-bottom: 20px;
+      }
+
+      .service-card h3 {
+        font-family: "Inter", sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+        color: var(--primary-dark);
+      }
+
+      .service-card p {
+        font-size: 1rem;
+        line-height: 1.6;
+        font-weight: 300;
+        color: var(--neutral-gray);
+      }
+
+      /* Blog Section */
+      #blog {
+        background: var(--primary-light);
+      }
+
+      .blog-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .blog-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 8vw, 6rem);
+        position: relative;
+        display: inline-block;
+        color: var(--primary-dark);
+      }
+
+      .blog-title span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(50px) rotate(10deg);
+      }
+
+      .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+      }
+
+      .blog-card {
+        background: linear-gradient(
+          135deg,
+          var(--accent-warm) 0%,
+          var(--primary-light) 100%
+        );
+        overflow: hidden;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: scale(0.9);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(26, 26, 26, 0.1);
+      }
+
+      .blog-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 15px 35px rgba(26, 26, 26, 0.15);
+      }
+
+      .blog-image {
+        height: 250px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .blog-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .blog-card:hover .blog-image img {
+        transform: scale(1.1);
+      }
+
+      .blog-content {
+        padding: 40px;
+      }
+
+      .blog-date {
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 300;
+        letter-spacing: 2px;
+        color: var(--neutral-gray);
+        margin-bottom: 15px;
+      }
+
+      .blog-content h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        margin-bottom: 15px;
+        line-height: 1.2;
+        color: var(--primary-dark);
+      }
+
+      .blog-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+        font-weight: 300;
+        margin-bottom: 20px;
+        color: var(--neutral-gray);
+      }
+
+      .blog-link {
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        color: var(--primary-dark);
+        text-decoration: none;
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .blog-link::after {
+        content: "→";
+        margin-left: 10px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .blog-link:hover::after {
+        margin-left: 20px;
+      }
+
+      /* Contact Section */
+      #contact {
+        background: linear-gradient(
+          180deg,
+          var(--primary-dark) 0%,
+          #2a2a2a 100%
+        );
+        color: var(--primary-light);
+      }
+
+      .contact-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .contact-info h2 {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 6rem);
+        letter-spacing: 3px;
+        margin-bottom: 40px;
+        opacity: 0;
+        transform: translateX(-50px);
+        background: linear-gradient(
+          90deg,
+          var(--primary-light),
+          var(--accent-cool)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .contact-info p {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        font-weight: 300;
+        margin-bottom: 40px;
+        opacity: 0;
+        transform: translateX(-50px);
+        color: rgba(248, 248, 248, 0.8);
+      }
+
+      .contact-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 1.1rem;
+        font-weight: 300;
+        color: var(--accent-warm);
+      }
+
+      .contact-form {
+        background: linear-gradient(
+          135deg,
+          var(--accent-warm) 0%,
+          var(--primary-light) 100%
+        );
+        padding: 60px;
+        border-radius: 10px;
+        opacity: 0;
+        transform: translateX(50px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+      }
+
+      .form-group label {
+        display: block;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        color: var(--primary-dark);
+        margin-bottom: 10px;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        background: rgba(248, 248, 248, 0.8);
+        border: 1px solid var(--primary-dark);
+        color: var(--primary-dark);
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border-radius: 5px;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-cool);
+        background: rgba(248, 248, 248, 1);
+        box-shadow: 0 0 0 3px rgba(196, 213, 232, 0.3);
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        border: none;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.3rem;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border-radius: 5px;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.6s ease;
+      }
+
+      .submit-btn:hover::before {
+        width: 300%;
+        height: 300%;
+      }
+
+      .submit-btn:hover {
+        color: var(--primary-dark);
+      }
+
+      .submit-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Footer */
+      footer {
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        padding: 40px 5%;
+        text-align: center;
+        border-top: 1px solid rgba(248, 248, 248, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .social-links a {
+        color: var(--primary-light);
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .social-links a:hover {
+        color: var(--accent-warm);
+        transform: translateY(-5px);
+      }
+
+      .footer-text {
+        font-family: "Inter", sans-serif;
+        font-weight: 300;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        color: rgba(248, 248, 248, 0.6);
+      }
+
+      /* Scroll Effects */
+      .scroll-reveal {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.8s ease;
+      }
+
+      .scroll-reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Typography Animations */
+      .text-split span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(50px) rotate(5deg);
+        transition: all 0.6s ease;
+      }
+
+      .text-split.active span {
+        opacity: 1;
+        transform: translateY(0) rotate(0);
+      }
+
+      /* Page Transitions */
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        z-index: 10000;
+        transition: left 0.6s ease;
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .nav-menu {
+          position: fixed;
+          left: -100%;
+          top: 70px;
+          flex-direction: column;
+          background: var(--primary-light);
+          width: 100%;
+          text-align: center;
+          transition: 0.3s;
+          box-shadow: 0 10px 27px rgba(26, 26, 26, 0.05);
+          padding: 40px 0;
+        }
+
+        .nav-menu.active {
+          left: 0;
+        }
+
+        .hamburger {
+          display: flex;
+        }
+
+        .hamburger.active span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(1) {
+          transform: translateY(6px) rotate(45deg);
+        }
+
+        .hamburger.active span:nth-child(3) {
+          transform: translateY(-6px) rotate(-45deg);
+        }
+
+        .about-content,
+        .contact-container,
+        .portfolio-item {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .portfolio-item:nth-child(even) {
+          direction: ltr;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 12vw, 8rem);
+        }
+
+        .services-grid,
+        .blog-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery-grid {
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+      }
+
+      @media (max-width: 768px) {
+        section {
+          padding: 100px 5% 60px;
+        }
+
+        .hero-title {
+          letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+          letter-spacing: 5px;
+        }
+
+        .contact-form {
+          padding: 40px 30px;
+        }
+
+        .services-title {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .portfolio-title {
+          font-size: clamp(2rem, 8vw, 3rem);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .logo {
+          font-size: 2rem;
+        }
+
+        .hero-title {
+          font-size: clamp(2.5rem, 10vw, 5rem);
+        }
+
+        .gallery-item {
+          height: 300px;
+        }
+
+        .service-card {
+          padding: 30px;
+        }
+
+        .blog-content {
+          padding: 30px;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--primary-light);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        letter-spacing: 10px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(
+          90deg,
+          var(--primary-dark),
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .loader-text::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-dark);
+        animation: loadingSlide 2s ease-in-out infinite;
+      }
+
+      @keyframes loadingSlide {
+        0% {
+          left: -100%;
+        }
+        50% {
+          left: 100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--primary-dark);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.1s ease;
+        z-index: 10002;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          45deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        opacity: 0.3;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        z-index: 10001;
+      }
+
+      /* Hover Effects */
+      a:hover ~ .cursor {
+        transform: scale(2);
+        background: var(--accent-cool);
+      }
+
+      button:hover ~ .cursor {
+        transform: scale(2);
+        background: var(--accent-warm);
+      }
+
+      /* Parallax Effects */
+      .parallax-element {
+        transition: transform 0.6s ease-out;
+      }
+
+      /* Text Animations */
+      .word-rotate {
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+        vertical-align: bottom;
+      }
+
+      .word-rotate span {
+        display: inline-block;
+        position: relative;
+        animation: wordRotate 10s infinite;
+      }
+
+      @keyframes wordRotate {
+        0%,
+        20% {
+          transform: translateY(0);
+        }
+        25%,
+        45% {
+          transform: translateY(-100%);
+        }
+        50%,
+        70% {
+          transform: translateY(-200%);
+        }
+        75%,
+        95% {
+          transform: translateY(-300%);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      /* Glitch Effect */
+      .glitch {
+        position: relative;
+        color: var(--primary-dark);
+        font-size: inherit;
+        font-weight: inherit;
+        letter-spacing: inherit;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--accent-cool);
+        z-index: -1;
+      }
+
+      .glitch::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--accent-warm);
+        z-index: -2;
+      }
+
+      @keyframes glitch-1 {
+        0% {
+          clip: rect(44px, 450px, 56px, 0);
+        }
+        5% {
+          clip: rect(12px, 450px, 59px, 0);
+        }
+        10% {
+          clip: rect(48px, 450px, 61px, 0);
+        }
+        15% {
+          clip: rect(42px, 450px, 73px, 0);
+        }
+        20% {
+          clip: rect(63px, 450px, 27px, 0);
+        }
+        25% {
+          clip: rect(34px, 450px, 55px, 0);
+        }
+        30% {
+          clip: rect(86px, 450px, 73px, 0);
+        }
+        35% {
+          clip: rect(20px, 450px, 20px, 0);
+        }
+        40% {
+          clip: rect(26px, 450px, 60px, 0);
+        }
+        45% {
+          clip: rect(25px, 450px, 66px, 0);
+        }
+        50% {
+          clip: rect(57px, 450px, 98px, 0);
+        }
+        55% {
+          clip: rect(5px, 450px, 46px, 0);
+        }
+        60% {
+          clip: rect(82px, 450px, 31px, 0);
+        }
+        65% {
+          clip: rect(54px, 450px, 27px, 0);
+        }
+        70% {
+          clip: rect(28px, 450px, 99px, 0);
+        }
+        75% {
+          clip: rect(45px, 450px, 69px, 0);
+        }
+        80% {
+          clip: rect(23px, 450px, 30px, 0);
+        }
+        85% {
+          clip: rect(54px, 450px, 84px, 0);
+        }
+        90% {
+          clip: rect(45px, 450px, 47px, 0);
+        }
+        95% {
+          clip: rect(37px, 450px, 20px, 0);
+        }
+        100% {
+          clip: rect(4px, 450px, 91px, 0);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0% {
+          clip: rect(65px, 450px, 119px, 0);
+        }
+        5% {
+          clip: rect(52px, 450px, 74px, 0);
+        }
+        10% {
+          clip: rect(79px, 450px, 85px, 0);
+        }
+        15% {
+          clip: rect(75px, 450px, 5px, 0);
+        }
+        20% {
+          clip: rect(15px, 450px, 66px, 0);
+        }
+        25% {
+          clip: rect(84px, 450px, 31px, 0);
+        }
+        30% {
+          clip: rect(48px, 450px, 94px, 0);
+        }
+        35% {
+          clip: rect(20px, 450px, 62px, 0);
+        }
+        40% {
+          clip: rect(46px, 450px, 44px, 0);
+        }
+        45% {
+          clip: rect(25px, 450px, 10px, 0);
+        }
+        50% {
+          clip: rect(57px, 450px, 96px, 0);
+        }
+        55% {
+          clip: rect(88px, 450px, 91px, 0);
+        }
+        60% {
+          clip: rect(79px, 450px, 43px, 0);
+        }
+        65% {
+          clip: rect(47px, 450px, 93px, 0);
+        }
+        70% {
+          clip: rect(69px, 450px, 58px, 0);
+        }
+        75% {
+          clip: rect(4px, 450px, 57px, 0);
+        }
+        80% {
+          clip: rect(92px, 450px, 49px, 0);
+        }
+        85% {
+          clip: rect(96px, 450px, 86px, 0);
+        }
+        90% {
+          clip: rect(80px, 450px, 18px, 0);
+        }
+        95% {
+          clip: rect(50px, 450px, 81px, 0);
+        }
+        100% {
+          clip: rect(71px, 450px, 52px, 0);
+        }
+      }
+
+      /* Magnetic Buttons */
+      .magnetic-btn {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      /* Scroll Progress */
+      .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cool),
+          var(--accent-warm)
+        );
+        z-index: 10003;
+        transition: width 0.1s ease;
+      }
+
+      /* Noise Background */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.02;
+        z-index: 1;
+      }
+
+      .noise::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj4KPGZpbHRlciBpZD0iYSI+CjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIuNzUiIG51bU9jdGF2ZXM9IjEwIi8+CjwvZmlsdGVyPgo8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjYSkiIG9wYWNpdHk9IjEiLz4KPC9zdmc+");
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress"></div>
+
+    <!-- Noise Background -->
+    <div class="noise"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Page Transition -->
+    <div class="page-transition"></div>
+
+    <!-- P5.js Canvas -->
+    <div id="p5-canvas"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <div class="logo">ATELIER</div>
+        <ul class="nav-menu">
+          <li><a href="#hero" class="nav-link">HOME</a></li>
+          <li><a href="#about" class="nav-link">ABOUT</a></li>
+          <li><a href="#gallery" class="nav-link">GALLERY</a></li>
+          <li><a href="#portfolio" class="nav-link">PORTFOLIO</a></li>
+          <li><a href="#services" class="nav-link">SERVICES</a></li>
+          <li><a href="#blog" class="nav-link">BLOG</a></li>
+          <li><a href="#contact" class="nav-link">CONTACT</a></li>
+        </ul>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title">CREATIVE<br />ATELIER</h1>
+          <p class="hero-subtitle">TYPOGRAPHY IN MOTION</p>
+        </div>
+        <div class="scroll-indicator">
+          <svg width="30" height="50" viewBox="0 0 30 50">
+            <rect
+              x="10"
+              y="10"
+              width="10"
+              height="20"
+              rx="5"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            />
+            <circle
+              cx="15"
+              cy="20"
+              r="3"
+              fill="currentColor"
+              class="scroll-dot"
+            />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+      <div class="container">
+        <div class="about-content">
+          <div class="about-text">
+            <h2 class="scroll-reveal">ABOUT US</h2>
+            <p class="scroll-reveal">
+              We are a creative studio specializing in typography-driven design
+              and motion graphics. Our passion lies in transforming words into
+              visual experiences that captivate and inspire.
+            </p>
+            <p class="scroll-reveal">
+              With a focus on minimalist aesthetics and bold statements, we
+              create digital experiences that push the boundaries of
+              conventional design.
+            </p>
+          </div>
+          <div class="about-image scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&auto=format&fit=crop"
+              alt="About"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+      <div class="container">
+        <div class="gallery-header">
+          <h2 class="scroll-reveal">VISUAL GALLERY</h2>
+        </div>
+        <div class="gallery-grid">
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=600&auto=format&fit=crop"
+              alt="Gallery 1"
+            />
+            <div class="gallery-overlay">
+              <h3>MINIMAL ELEGANCE</h3>
+            </div>
+          </div>
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop"
+              alt="Gallery 2"
+            />
+            <div class="gallery-overlay">
+              <h3>BOLD STATEMENTS</h3>
+            </div>
+          </div>
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=600&auto=format&fit=crop"
+              alt="Gallery 3"
+            />
+            <div class="gallery-overlay">
+              <h3>DYNAMIC MOTION</h3>
+            </div>
+          </div>
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=600&auto=format&fit=crop"
+              alt="Gallery 4"
+            />
+            <div class="gallery-overlay">
+              <h3>CREATIVE VISION</h3>
+            </div>
+          </div>
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop"
+              alt="Gallery 5"
+            />
+            <div class="gallery-overlay">
+              <h3>ARTISTIC FLOW</h3>
+            </div>
+          </div>
+          <div class="gallery-item scroll-reveal">
+            <img
+              src="https://images.unsplash.com/photo-1524634126442-357e0eac3c14?w=600&auto=format&fit=crop"
+              alt="Gallery 6"
+            />
+            <div class="gallery-overlay">
+              <h3>MODERN AESTHETIC</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio">
+      <div class="container">
+        <div class="portfolio-header">
+          <h2 class="portfolio-title" data-text="FEATURED WORKS">
+            FEATURED WORKS
+          </h2>
+        </div>
+        <div class="portfolio-showcase">
+          <div class="portfolio-item scroll-reveal">
+            <div class="portfolio-info">
+              <h3>Typography Motion</h3>
+              <p>
+                An exploration of kinetic typography and fluid motion design,
+                creating seamless transitions between form and meaning.
+              </p>
+              <a href="#" class="portfolio-link"><span>VIEW PROJECT</span></a>
+            </div>
+            <div class="portfolio-media">
+              <img
+                src="https://images.unsplash.com/photo-1611532736579-6b16e2b50449?w=800&auto=format&fit=crop"
+                alt="Portfolio 1"
+              />
+            </div>
+          </div>
+          <div class="portfolio-item scroll-reveal">
+            <div class="portfolio-info">
+              <h3>Visual Identity</h3>
+              <p>
+                A comprehensive brand identity system built on the principles of
+                minimalism and typographic hierarchy.
+              </p>
+              <a href="#" class="portfolio-link"><span>VIEW PROJECT</span></a>
+            </div>
+            <div class="portfolio-media">
+              <img
+                src="https://images.unsplash.com/photo-1600132806370-bf17e65e942f?w=800&auto=format&fit=crop"
+                alt="Portfolio 2"
+              />
+            </div>
+          </div>
+          <div class="portfolio-item scroll-reveal">
+            <div class="portfolio-info">
+              <h3>Digital Experience</h3>
+              <p>
+                Interactive web experiences that blend typography, motion, and
+                user engagement into cohesive digital narratives.
+              </p>
+              <a href="#" class="portfolio-link"><span>VIEW PROJECT</span></a>
+            </div>
+            <div class="portfolio-media">
+              <img
+                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop"
+                alt="Portfolio 3"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services">
+      <div class="container">
+        <div class="services-header">
+          <h2 class="services-title scroll-reveal">SERVICES</h2>
+        </div>
+        <div class="services-grid">
+          <div class="service-card scroll-reveal">
+            <div class="service-number">01</div>
+            <h3>TYPOGRAPHY DESIGN</h3>
+            <p>
+              Custom typography solutions that communicate your brand's unique
+              voice through carefully crafted letterforms and type systems.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">02</div>
+            <h3>MOTION GRAPHICS</h3>
+            <p>
+              Dynamic animations and kinetic typography that bring your message
+              to life with fluid movements and engaging transitions.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">03</div>
+            <h3>BRAND IDENTITY</h3>
+            <p>
+              Comprehensive visual identity systems that establish a strong and
+              memorable presence across all touchpoints.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">04</div>
+            <h3>WEB DESIGN</h3>
+            <p>
+              Innovative web experiences that seamlessly blend aesthetics with
+              functionality, creating immersive digital environments.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">05</div>
+            <h3>CREATIVE DIRECTION</h3>
+            <p>
+              Strategic creative guidance that ensures your visual communication
+              aligns with your brand vision and business objectives.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">06</div>
+            <h3>DIGITAL EXPERIENCES</h3>
+            <p>
+              Interactive installations and digital experiences that engage
+              audiences through innovative use of technology and design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="blog">
+      <div class="container">
+        <div class="blog-header">
+          <h2 class="blog-title text-split">
+            <span>C</span><span>R</span><span>E</span><span>A</span
+            ><span>T</span><span>I</span><span>V</span><span>E</span>
+            <span> </span>
+            <span>J</span><span>O</span><span>U</span><span>R</span
+            ><span>N</span><span>A</span><span>L</span>
+          </h2>
+        </div>
+        <div class="blog-grid">
+          <article class="blog-card scroll-reveal">
+            <div class="blog-image">
+              <img
+                src="https://images.unsplash.com/photo-1617050318658-a9a3175e34cb?w=600&auto=format&fit=crop"
+                alt="Blog 1"
+              />
+            </div>
+            <div class="blog-content">
+              <p class="blog-date">JANUARY 15, 2025</p>
+              <h3>The Art of Minimalist Typography</h3>
+              <p>
+                Exploring the power of negative space and restraint in
+                contemporary type design.
+              </p>
+              <a href="#" class="blog-link">READ MORE</a>
+            </div>
+          </article>
+          <article class="blog-card scroll-reveal">
+            <div class="blog-image">
+              <img
+                src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&auto=format&fit=crop"
+                alt="Blog 2"
+              />
+            </div>
+            <div class="blog-content">
+              <p class="blog-date">JANUARY 10, 2025</p>
+              <h3>Motion Design Trends 2025</h3>
+              <p>
+                A look at the emerging trends shaping the future of motion
+                graphics and animation.
+              </p>
+              <a href="#" class="blog-link">READ MORE</a>
+            </div>
+          </article>
+          <article class="blog-card scroll-reveal">
+            <div class="blog-image">
+              <img
+                src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=600&auto=format&fit=crop"
+                alt="Blog 3"
+              />
+            </div>
+            <div class="blog-content">
+              <p class="blog-date">JANUARY 5, 2025</p>
+              <h3>Creating Emotional Typography</h3>
+              <p>
+                How to infuse emotion and personality into your typographic
+                compositions.
+              </p>
+              <a href="#" class="blog-link">READ MORE</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+      <div class="container">
+        <div class="contact-container">
+          <div class="contact-info">
+            <h2 class="scroll-reveal">LET'S CREATE TOGETHER</h2>
+            <p class="scroll-reveal">
+              Ready to transform your ideas into stunning visual experiences?
+              We're here to help bring your vision to life.
+            </p>
+            <div class="contact-details scroll-reveal">
+              <div class="contact-item">
+                <span>📧</span>
+                <span>hello@atelier.studio</span>
+              </div>
+              <div class="contact-item">
+                <span>📱</span>
+                <span>+1 (555) 123-4567</span>
+              </div>
+              <div class="contact-item">
+                <span>📍</span>
+                <span>New York, NY 10013</span>
+              </div>
+            </div>
+          </div>
+          <form class="contact-form scroll-reveal">
+            <div class="form-group">
+              <label for="name">NAME</label>
+              <input type="text" id="name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label for="email">EMAIL</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+            <div class="form-group">
+              <label for="message">MESSAGE</label>
+              <textarea
+                id="message"
+                name="message"
+                rows="5"
+                required
+              ></textarea>
+            </div>
+            <button type="submit" class="submit-btn magnetic-btn">
+              <span>SEND MESSAGE</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="#">IN</a>
+          <a href="#">TW</a>
+          <a href="#">IG</a>
+          <a href="#">BE</a>
+        </div>
+        <p class="footer-text">© 2025 ATELIER. ALL RIGHTS RESERVED.</p>
+      </div>
+    </footer>
+
+    <script>
+      // P5.js Background Animation
+      let particles = [];
+      let canvas;
+
+      function setup() {
+        canvas = createCanvas(windowWidth, windowHeight);
+        canvas.parent("p5-canvas");
+
+        for (let i = 0; i < 50; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      function draw() {
+        clear();
+
+        particles.forEach((particle) => {
+          particle.update();
+          particle.display();
+          particle.checkMouse();
+        });
+
+        // Connect nearby particles
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            let d = dist(
+              particles[i].x,
+              particles[i].y,
+              particles[j].x,
+              particles[j].y,
+            );
+            if (d < 100) {
+              stroke(26, 26, 26, 50 - d / 2);
+              strokeWeight(0.5);
+              line(
+                particles[i].x,
+                particles[i].y,
+                particles[j].x,
+                particles[j].y,
+              );
+            }
+          }
+        }
+      }
+
+      function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+      }
+
+      class Particle {
+        constructor() {
+          this.x = random(width);
+          this.y = random(height);
+          this.vx = random(-1, 1);
+          this.vy = random(-1, 1);
+          this.size = random(2, 5);
+        }
+
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+
+          if (this.x < 0 || this.x > width) this.vx *= -1;
+          if (this.y < 0 || this.y > height) this.vy *= -1;
+        }
+
+        display() {
+          noStroke();
+          fill(26, 26, 26, 100);
+          ellipse(this.x, this.y, this.size);
+        }
+
+        checkMouse() {
+          let d = dist(mouseX, mouseY, this.x, this.y);
+          if (d < 100) {
+            let angle = atan2(this.y - mouseY, this.x - mouseX);
+            let force = (100 - d) / 100;
+            this.vx += cos(angle) * force * 0.5;
+            this.vy += sin(angle) * force * 0.5;
+          }
+        }
+      }
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 10 + "px";
+          cursorFollower.style.top = e.clientY - 10 + "px";
+        }, 100);
+      });
+
+      // Hide cursor on mobile
+      if ("ontouchstart" in window) {
+        cursor.style.display = "none";
+        cursorFollower.style.display = "none";
+      }
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Navigation
+      const navbar = document.getElementById("navbar");
+      const hamburger = document.querySelector(".hamburger");
+      const navMenu = document.querySelector(".nav-menu");
+      const navLinks = document.querySelectorAll(".nav-link");
+
+      // Scroll effect for navbar
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 100) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+
+        // Update scroll progress
+        const scrollProgress = document.querySelector(".scroll-progress");
+        const scrollPercent =
+          (window.scrollY /
+            (document.documentElement.scrollHeight - window.innerHeight)) *
+          100;
+        scrollProgress.style.width = scrollPercent + "%";
+      });
+
+      // Mobile menu toggle
+      hamburger.addEventListener("click", () => {
+        hamburger.classList.toggle("active");
+        navMenu.classList.toggle("active");
+      });
+
+      // Close mobile menu on link click
+      navLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          hamburger.classList.remove("active");
+          navMenu.classList.remove("active");
+        });
+      });
+
+      // Smooth scroll for navigation links
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute("href");
+          const targetSection = document.querySelector(targetId);
+          targetSection.scrollIntoView({ behavior: "smooth" });
+        });
+      });
+
+      // Scroll Reveal Animation
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+
+            // Special animation for gallery items
+            if (entry.target.classList.contains("gallery-item")) {
+              entry.target.style.transitionDelay = Math.random() * 0.3 + "s";
+            }
+
+            // Special animation for service cards
+            if (entry.target.classList.contains("service-card")) {
+              entry.target.style.transitionDelay = Math.random() * 0.5 + "s";
+            }
+          }
+        });
+      }, observerOptions);
+
+      // Observe all elements with scroll-reveal class
+      document.querySelectorAll(".scroll-reveal").forEach((el) => {
+        observer.observe(el);
+      });
+
+      // Text Split Animation
+      const textSplitElements = document.querySelectorAll(".text-split");
+      textSplitElements.forEach((element) => {
+        const spans = element.querySelectorAll("span");
+        spans.forEach((span, index) => {
+          span.style.transitionDelay = index * 0.05 + "s";
+        });
+      });
+
+      const textObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+          }
+        });
+      }, observerOptions);
+
+      textSplitElements.forEach((el) => {
+        textObserver.observe(el);
+      });
+
+      // Parallax Effect
+      document.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".parallax-element");
+
+        parallaxElements.forEach((element) => {
+          const speed = element.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+
+      // Magnetic Button Effect
+      document.querySelectorAll(".magnetic-btn").forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "translate(0, 0)";
+        });
+      });
+
+      // Form Submission
+      const contactForm = document.querySelector(".contact-form");
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Add submission animation
+        const submitBtn = contactForm.querySelector(".submit-btn");
+        submitBtn.innerHTML = "<span>SENDING...</span>";
+
+        setTimeout(() => {
+          submitBtn.innerHTML = "<span>MESSAGE SENT!</span>";
+          contactForm.reset();
+
+          setTimeout(() => {
+            submitBtn.innerHTML = "<span>SEND MESSAGE</span>";
+          }, 2000);
+        }, 1500);
+      });
+
+      // Page Transition Effect
+      const pageTransition = document.querySelector(".page-transition");
+
+      document.querySelectorAll("a").forEach((link) => {
+        if (link.getAttribute("href").startsWith("#")) return;
+
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const href = link.getAttribute("href");
+
+          pageTransition.classList.add("active");
+
+          setTimeout(() => {
+            window.location.href = href;
+          }, 600);
+        });
+      });
+
+      // Scroll-based Typography Animation
+      const heroTitle = document.querySelector(".hero-title");
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const heroSection = document.querySelector("#hero");
+        const heroHeight = heroSection.offsetHeight;
+
+        if (scrolled < heroHeight) {
+          const scale = 1 - (scrolled / heroHeight) * 0.5;
+          const opacity = 1 - scrolled / heroHeight;
+          heroTitle.style.transform = `scale(${scale})`;
+          heroTitle.style.opacity = opacity;
+        }
+      });
+
+      // Dynamic text accumulation effect
+      const aboutText = document.querySelector(".about-text h2");
+      if (aboutText) {
+        const originalText = aboutText.textContent;
+        aboutText.textContent = "";
+        let charIndex = 0;
+
+        const typeText = () => {
+          if (charIndex < originalText.length) {
+            aboutText.textContent += originalText[charIndex];
+            charIndex++;
+            setTimeout(typeText, 100);
+          }
+        };
+
+        const aboutObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                typeText();
+                aboutObserver.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+
+        aboutObserver.observe(aboutText);
+      }
+
+      // Random page transition effects
+      const transitionEffects = ["slide", "fade", "rotate", "scale"];
+      let currentEffect = 0;
+
+      function getRandomTransition() {
+        currentEffect = (currentEffect + 1) % transitionEffects.length;
+        return transitionEffects[currentEffect];
+      }
+
+      // Apply random transition to sections
+      const sections = document.querySelectorAll("section");
+      sections.forEach((section, index) => {
+        if (index > 0) {
+          section.style.transition = `all 0.8s ease`;
+        }
+      });
+
+      // Initialize animations
+      document.addEventListener("DOMContentLoaded", () => {
+        // Animate hero elements
+        setTimeout(() => {
+          document.querySelector(".hero-title").style.opacity = "1";
+          document.querySelector(".hero-title").style.transform =
+            "translateY(0)";
+        }, 500);
+
+        setTimeout(() => {
+          document.querySelector(".hero-subtitle").style.opacity = "1";
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>

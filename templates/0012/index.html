@@ -1,0 +1,1682 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Immersive Gallery Experience</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;700&family=Inter:wght@100;300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #ff6b6b;
+        --secondary: #4ecdc4;
+        --accent: #ffe66d;
+        --dark: #2c3e50;
+        --light: #f7f9fc;
+        --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-4: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--light);
+        color: var(--dark);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Magnetic Cursor */
+      .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--primary);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 10001;
+        transition: transform 0.1s ease;
+      }
+
+      .cursor-outline {
+        width: 40px;
+        height: 40px;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 10000;
+        transition: all 0.3s ease;
+        opacity: 0.5;
+      }
+
+      .cursor-outline.hover {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 107, 107, 0.1);
+        backdrop-filter: blur(5px);
+      }
+
+      /* Floating Navigation Orbs */
+      .nav-orbs {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-orb {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-orb::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        padding: 2px;
+        background: var(--gradient-1);
+        -webkit-mask:
+          linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .nav-orb:hover::before,
+      .nav-orb.active::before {
+        opacity: 1;
+      }
+
+      .nav-orb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-orb.active {
+        transform: scale(1.15);
+        background: var(--gradient-1);
+      }
+
+      .nav-orb.active span {
+        color: white;
+        font-weight: 700;
+      }
+
+      .nav-orb span {
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--dark);
+        z-index: 1;
+        position: relative;
+      }
+
+      .nav-orb .orb-label {
+        position: absolute;
+        right: 80px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-orb:hover .orb-label {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      /* Page Container */
+      .page-container {
+        position: relative;
+        width: 100vw;
+        min-height: 100vh;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .page-container.active {
+        display: block;
+        opacity: 1;
+      }
+
+      /* Home Page - Circular Gallery */
+      .gallery-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .circular-gallery {
+        position: relative;
+        width: 80vmin;
+        height: 80vmin;
+        animation: rotate 60s linear infinite;
+        animation-play-state: paused;
+      }
+
+      .circular-gallery.active {
+        animation-play-state: running;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .gallery-item {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .gallery-item:nth-child(1) {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) rotate(0deg);
+        background: var(--gradient-1);
+      }
+      .gallery-item:nth-child(2) {
+        top: 15%;
+        right: 15%;
+        transform: rotate(45deg);
+        background: var(--gradient-2);
+      }
+      .gallery-item:nth-child(3) {
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%) rotate(90deg);
+        background: var(--gradient-3);
+      }
+      .gallery-item:nth-child(4) {
+        bottom: 15%;
+        right: 15%;
+        transform: rotate(135deg);
+        background: var(--gradient-4);
+      }
+      .gallery-item:nth-child(5) {
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) rotate(180deg);
+        background: var(--gradient-1);
+      }
+      .gallery-item:nth-child(6) {
+        bottom: 15%;
+        left: 15%;
+        transform: rotate(225deg);
+        background: var(--gradient-2);
+      }
+      .gallery-item:nth-child(7) {
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%) rotate(270deg);
+        background: var(--gradient-3);
+      }
+      .gallery-item:nth-child(8) {
+        top: 15%;
+        left: 15%;
+        transform: rotate(315deg);
+        background: var(--gradient-4);
+      }
+
+      .gallery-item.expanded {
+        width: 400px;
+        height: 400px;
+        z-index: 100;
+        border-radius: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      }
+
+      .gallery-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.5s ease;
+      }
+
+      .gallery-item:hover .gallery-media {
+        transform: scale(1.1);
+      }
+
+      .gallery-content {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 20px;
+        color: white;
+      }
+
+      .gallery-item:hover .gallery-content,
+      .gallery-item.expanded .gallery-content {
+        opacity: 1;
+      }
+
+      .gallery-title {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .gallery-subtitle {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      /* Center Info Display */
+      .center-info {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      .center-title {
+        font-family: "Playfair Display", serif;
+        font-size: 60px;
+        font-weight: 700;
+        background: var(--gradient-1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        opacity: 0;
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .center-subtitle {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 18px;
+        color: var(--dark);
+        opacity: 0;
+        animation: fadeInUp 1s ease 0.2s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+      }
+
+      /* Explore Page */
+      .explore-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        padding: 120px 40px 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .explore-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .explore-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      }
+
+      .explore-card-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+      }
+
+      .explore-card-content {
+        padding: 30px;
+      }
+
+      .explore-card-title {
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .explore-card-description {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+
+      .explore-card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        color: #999;
+      }
+
+      .explore-card-tag {
+        background: var(--gradient-1);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      /* Artists Page */
+      .artists-container {
+        padding: 120px 40px 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .artists-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .artists-title {
+        font-family: "Playfair Display", serif;
+        font-size: 48px;
+        margin-bottom: 20px;
+        background: var(--gradient-2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .artists-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+      }
+
+      .artist-card {
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .artist-avatar {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .artist-card:hover .artist-avatar {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .artist-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .artist-name {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .artist-style {
+        color: #666;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      .artist-stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+      }
+
+      .artist-stat {
+        text-align: center;
+      }
+
+      .artist-stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .artist-stat-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Collections Page */
+      .collections-container {
+        padding: 120px 40px 40px;
+      }
+
+      .collections-hero {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .collections-title {
+        font-family: "Playfair Display", serif;
+        font-size: 48px;
+        margin-bottom: 20px;
+        background: var(--gradient-3);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .collections-masonry {
+        columns: 3;
+        column-gap: 30px;
+      }
+
+      .collection-item {
+        break-inside: avoid;
+        margin-bottom: 30px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .collection-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .collection-item img,
+      .collection-item video {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .collection-overlay {
+        position: relative;
+        background: white;
+        padding: 20px;
+      }
+
+      .collection-name {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .collection-count {
+        font-size: 14px;
+        color: #666;
+      }
+
+      /* Floating Particles */
+      .particles {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float 20s infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0);
+        }
+        25% {
+          transform: translateY(-100px) translateX(50px);
+        }
+        50% {
+          transform: translateY(-50px) translateX(-50px);
+        }
+        75% {
+          transform: translateY(-150px) translateX(25px);
+        }
+      }
+
+      /* Color Theme Switcher */
+      .theme-switcher {
+        position: fixed;
+        bottom: 40px;
+        left: 40px;
+        display: flex;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .theme-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .theme-dot::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        color: white;
+        font-size: 20px;
+        transition: transform 0.3s ease;
+      }
+
+      .theme-dot.active::after {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .theme-dot:hover {
+        transform: scale(1.2);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .theme-1 {
+        background: var(--gradient-1);
+      }
+      .theme-2 {
+        background: var(--gradient-2);
+      }
+      .theme-3 {
+        background: var(--gradient-3);
+      }
+      .theme-4 {
+        background: var(--gradient-4);
+      }
+
+      /* Info Panel */
+      .info-panel {
+        position: fixed;
+        top: 0;
+        left: -400px;
+        width: 400px;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 999;
+        padding: 40px;
+        overflow-y: auto;
+      }
+
+      .info-panel.active {
+        left: 0;
+      }
+
+      .info-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .info-close:hover {
+        background: var(--primary);
+        color: white;
+        transform: rotate(90deg);
+      }
+
+      /* Mobile Optimization */
+      @media (max-width: 768px) {
+        body {
+          cursor: auto;
+        }
+
+        .cursor-dot,
+        .cursor-outline {
+          display: none;
+        }
+
+        .nav-orbs {
+          right: 20px;
+          gap: 15px;
+        }
+
+        .nav-orb {
+          width: 50px;
+          height: 50px;
+        }
+
+        .circular-gallery {
+          width: 90vmin;
+          height: 90vmin;
+        }
+
+        .gallery-item {
+          width: 150px;
+          height: 150px;
+        }
+
+        .center-title {
+          font-size: 40px;
+        }
+
+        .theme-switcher {
+          bottom: 20px;
+          left: 20px;
+        }
+
+        .info-panel {
+          width: 100vw;
+        }
+
+        .collections-masonry {
+          columns: 1;
+        }
+
+        .explore-grid,
+        .artists-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: var(--light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-circle {
+        width: 60px;
+        height: 60px;
+        border: 3px solid transparent;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Glassmorphism Header */
+      .header {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        border-radius: 30px;
+        padding: 15px 40px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+      }
+
+      .logo {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        background: var(--gradient-1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        cursor: pointer;
+      }
+
+      .header-nav {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+      }
+
+      .header-nav a {
+        text-decoration: none;
+        color: var(--dark);
+        font-size: 14px;
+        font-weight: 500;
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+      }
+
+      .header-nav a:hover,
+      .header-nav a.active {
+        color: var(--primary);
+      }
+
+      .header-nav a.active::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+      }
+
+      /* 3D Tilt Effect */
+      .tilt-container {
+        transform-style: preserve-3d;
+        transition: transform 0.5s ease;
+      }
+
+      /* Scroll Progress */
+      .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--gradient-1);
+        transform-origin: left;
+        transform: scaleX(0);
+        z-index: 1001;
+        transition: transform 0.3s ease;
+      }
+
+      /* Page Transition Effect */
+      @keyframes pageIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .page-container.active > * {
+        animation: pageIn 0.6s ease forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-circle"></div>
+    </div>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Glassmorphism Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo" onclick="navigateToPage('home')">ARTFLOW</div>
+        <nav>
+          <ul class="header-nav">
+            <li><a onclick="navigateToPage('home')" id="nav-home">Home</a></li>
+            <li>
+              <a onclick="navigateToPage('explore')" id="nav-explore"
+                >Explore</a
+              >
+            </li>
+            <li>
+              <a onclick="navigateToPage('artists')" id="nav-artists"
+                >Artists</a
+              >
+            </li>
+            <li>
+              <a onclick="navigateToPage('collections')" id="nav-collections"
+                >Collections</a
+              >
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Floating Navigation Orbs -->
+    <nav class="nav-orbs">
+      <div class="nav-orb active" data-section="0" onclick="navigateWithOrb(0)">
+        <span>01</span>
+        <div class="orb-label">Home</div>
+      </div>
+      <div class="nav-orb" data-section="1" onclick="navigateWithOrb(1)">
+        <span>02</span>
+        <div class="orb-label">Explore</div>
+      </div>
+      <div class="nav-orb" data-section="2" onclick="navigateWithOrb(2)">
+        <span>03</span>
+        <div class="orb-label">Artists</div>
+      </div>
+      <div class="nav-orb" data-section="3" onclick="navigateWithOrb(3)">
+        <span>04</span>
+        <div class="orb-label">Collections</div>
+      </div>
+    </nav>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Home Page -->
+    <div class="page-container active" id="page-home">
+      <div class="gallery-container">
+        <div class="tilt-container">
+          <div class="circular-gallery" id="circularGallery">
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=1"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Chromatic Dreams</h3>
+                <p class="gallery-subtitle">Digital Art Collection</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=2"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Urban Reflections</h3>
+                <p class="gallery-subtitle">Photography Series</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=3"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Neon Nights</h3>
+                <p class="gallery-subtitle">Light Art Series</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=4"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Gradient Flow</h3>
+                <p class="gallery-subtitle">Contemporary Design</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=5"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Abstract Motion</h3>
+                <p class="gallery-subtitle">Experimental Art</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=6"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Geometric Visions</h3>
+                <p class="gallery-subtitle">Digital Sculpture</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=7"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Holographic Future</h3>
+                <p class="gallery-subtitle">3D Art Experience</p>
+              </div>
+            </div>
+            <div class="gallery-item" data-tilt>
+              <img
+                class="gallery-media"
+                src="https://picsum.photos/400/400?random=8"
+                alt="Gallery Image"
+              />
+              <div class="gallery-content">
+                <h3 class="gallery-title">Vibrant Cosmos</h3>
+                <p class="gallery-subtitle">Space Art Collection</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="center-info">
+            <h1 class="center-title">IMMERSIVE</h1>
+            <p class="center-subtitle">Experience Art in Motion</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explore Page -->
+    <div class="page-container" id="page-explore">
+      <div class="explore-grid">
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=9"
+            alt="Digital Art"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Digital Renaissance</h3>
+            <p class="explore-card-description">
+              Explore the intersection of classical art and modern technology
+              through AI-generated masterpieces.
+            </p>
+            <div class="explore-card-meta">
+              <span>24 Artworks</span>
+              <span class="explore-card-tag">Featured</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=10"
+            alt="Abstract Art"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Abstract Emotions</h3>
+            <p class="explore-card-description">
+              A journey through color and form that speaks directly to the soul.
+            </p>
+            <div class="explore-card-meta">
+              <span>18 Artworks</span>
+              <span class="explore-card-tag">New</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=11"
+            alt="Sculpture"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Modern Sculptures</h3>
+            <p class="explore-card-description">
+              Three-dimensional expressions that challenge perception and space.
+            </p>
+            <div class="explore-card-meta">
+              <span>32 Artworks</span>
+              <span class="explore-card-tag">Popular</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=12"
+            alt="Photography"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Captured Moments</h3>
+            <p class="explore-card-description">
+              Photography that transcends documentation to become pure art.
+            </p>
+            <div class="explore-card-meta">
+              <span>45 Artworks</span>
+              <span class="explore-card-tag">Trending</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=13"
+            alt="Installation"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Immersive Installations</h3>
+            <p class="explore-card-description">
+              Step into worlds created by visionary artists pushing boundaries.
+            </p>
+            <div class="explore-card-meta">
+              <span>12 Artworks</span>
+              <span class="explore-card-tag">Exclusive</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-card">
+          <img
+            class="explore-card-image"
+            src="https://picsum.photos/400/300?random=14"
+            alt="Generative"
+          />
+          <div class="explore-card-content">
+            <h3 class="explore-card-title">Generative Worlds</h3>
+            <p class="explore-card-description">
+              Algorithm-driven art that creates infinite possibilities.
+            </p>
+            <div class="explore-card-meta">
+              <span>28 Artworks</span>
+              <span class="explore-card-tag">Innovation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Artists Page -->
+    <div class="page-container" id="page-artists">
+      <div class="artists-container">
+        <div class="artists-header">
+          <h1 class="artists-title">Featured Artists</h1>
+          <p style="color: #666; font-size: 18px">
+            Discover the creative minds shaping the future of digital art
+          </p>
+        </div>
+        <div class="artists-grid">
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=15" alt="Artist" />
+            </div>
+            <h3 class="artist-name">Elena Rodriguez</h3>
+            <p class="artist-style">Digital Surrealism</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">127</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">45K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=16" alt="Artist" />
+            </div>
+            <h3 class="artist-name">Marcus Chen</h3>
+            <p class="artist-style">Generative Art</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">89</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">32K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=17" alt="Artist" />
+            </div>
+            <h3 class="artist-name">Sophie Laurent</h3>
+            <p class="artist-style">Abstract Expression</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">156</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">58K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=18" alt="Artist" />
+            </div>
+            <h3 class="artist-name">David Kim</h3>
+            <p class="artist-style">3D Sculptures</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">67</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">21K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=19" alt="Artist" />
+            </div>
+            <h3 class="artist-name">Aria Thompson</h3>
+            <p class="artist-style">Motion Graphics</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">93</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">38K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+          <div class="artist-card">
+            <div class="artist-avatar">
+              <img src="https://picsum.photos/200/200?random=20" alt="Artist" />
+            </div>
+            <h3 class="artist-name">Leo Nakamura</h3>
+            <p class="artist-style">Neo-Minimalism</p>
+            <div class="artist-stats">
+              <div class="artist-stat">
+                <div class="artist-stat-number">112</div>
+                <div class="artist-stat-label">Works</div>
+              </div>
+              <div class="artist-stat">
+                <div class="artist-stat-number">41K</div>
+                <div class="artist-stat-label">Followers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collections Page -->
+    <div class="page-container" id="page-collections">
+      <div class="collections-container">
+        <div class="collections-hero">
+          <h1 class="collections-title">Curated Collections</h1>
+          <p style="color: #666; font-size: 18px">
+            Handpicked artworks organized by theme, style, and emotion
+          </p>
+        </div>
+        <div class="collections-masonry">
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/600?random=21"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Neon Dreams</h3>
+              <p class="collection-count">24 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/450?random=22"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Urban Landscapes</h3>
+              <p class="collection-count">18 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/500?random=23"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Color Theory</h3>
+              <p class="collection-count">32 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/700?random=24"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Sacred Geometry</h3>
+              <p class="collection-count">27 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/450?random=25"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Gradient Flows</h3>
+              <p class="collection-count">19 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/550?random=26"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Nature Abstracts</h3>
+              <p class="collection-count">15 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/550?random=27"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Cosmic Journey</h3>
+              <p class="collection-count">36 Artworks</p>
+            </div>
+          </div>
+          <div class="collection-item">
+            <img
+              src="https://picsum.photos/400/480?random=28"
+              alt="Collection"
+            />
+            <div class="collection-overlay">
+              <h3 class="collection-name">Future Visions</h3>
+              <p class="collection-count">29 Artworks</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Theme Switcher -->
+    <div class="theme-switcher">
+      <div class="theme-dot theme-1 active" data-theme="1"></div>
+      <div class="theme-dot theme-2" data-theme="2"></div>
+      <div class="theme-dot theme-3" data-theme="3"></div>
+      <div class="theme-dot theme-4" data-theme="4"></div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="infoPanel">
+      <div class="info-close" onclick="closeInfoPanel()">×</div>
+      <h2
+        style="
+          font-family: &quot;Playfair Display&quot;, serif;
+          font-size: 36px;
+          margin-bottom: 20px;
+        "
+      >
+        About This Experience
+      </h2>
+      <p style="line-height: 1.8; color: #666; margin-bottom: 30px">
+        Welcome to ARTFLOW, an immersive digital gallery that reimagines how we
+        experience art. Navigate through our circular gallery, explore vibrant
+        collections, and discover the future of artistic expression.
+      </p>
+      <h3
+        style="
+          font-family: &quot;Space Grotesk&quot;, sans-serif;
+          font-size: 20px;
+          margin-bottom: 15px;
+        "
+      >
+        Features
+      </h3>
+      <ul style="list-style: none; padding: 0">
+        <li style="margin-bottom: 10px">🎨 Dynamic color themes</li>
+        <li style="margin-bottom: 10px">🔄 360° rotating gallery</li>
+        <li style="margin-bottom: 10px">🖱️ Magnetic cursor interactions</li>
+        <li style="margin-bottom: 10px">📱 Fully responsive design</li>
+      </ul>
+    </div>
+
+    <script>
+      // Page Navigation
+      let currentPage = "home";
+      const pages = ["home", "explore", "artists", "collections"];
+
+      function navigateToPage(pageName) {
+        // Hide all pages
+        document.querySelectorAll(".page-container").forEach((page) => {
+          page.classList.remove("active");
+        });
+
+        // Show selected page
+        setTimeout(() => {
+          document.getElementById(`page-${pageName}`).classList.add("active");
+        }, 100);
+
+        // Update navigation
+        document.querySelectorAll(".header-nav a").forEach((link) => {
+          link.classList.remove("active");
+        });
+        document.getElementById(`nav-${pageName}`).classList.add("active");
+
+        // Update orbs
+        const pageIndex = pages.indexOf(pageName);
+        updateOrbs(pageIndex);
+
+        currentPage = pageName;
+      }
+
+      function navigateWithOrb(index) {
+        const pageName = pages[index];
+        navigateToPage(pageName);
+
+        // Add ripple effect to clicked orb
+        const orb = document.querySelector(`[data-section="${index}"]`);
+        orb.style.transform = "scale(0.9)";
+        setTimeout(() => {
+          orb.style.transform = "";
+        }, 200);
+      }
+
+      function updateOrbs(activeIndex) {
+        document.querySelectorAll(".nav-orb").forEach((orb, index) => {
+          orb.classList.remove("active");
+          if (index === activeIndex) {
+            orb.classList.add("active");
+          }
+        });
+      }
+
+      // Custom Cursor
+      const cursorDot = document.querySelector(".cursor-dot");
+      const cursorOutline = document.querySelector(".cursor-outline");
+      let cursorX = 0,
+        cursorY = 0;
+      let outlineX = 0,
+        outlineY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        cursorX = e.clientX;
+        cursorY = e.clientY;
+        cursorDot.style.left = cursorX + "px";
+        cursorDot.style.top = cursorY + "px";
+      });
+
+      function animateOutline() {
+        outlineX += (cursorX - outlineX) * 0.1;
+        outlineY += (cursorY - outlineY) * 0.1;
+        cursorOutline.style.left = outlineX + "px";
+        cursorOutline.style.top = outlineY + "px";
+        requestAnimationFrame(animateOutline);
+      }
+      animateOutline();
+
+      // Hover effects
+      const hoverElements = document.querySelectorAll(
+        "a, button, .nav-orb, .gallery-item, .theme-dot, .info-close, .explore-card, .artist-card, .collection-item",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () =>
+          cursorOutline.classList.add("hover"),
+        );
+        el.addEventListener("mouseleave", () =>
+          cursorOutline.classList.remove("hover"),
+        );
+      });
+
+      // Gallery rotation
+      const circularGallery = document.getElementById("circularGallery");
+      let isRotating = false;
+
+      document.addEventListener("mousemove", (e) => {
+        if (!isRotating || currentPage !== "home") return;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const angleRad = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const angleDeg = angleRad * (180 / Math.PI);
+        circularGallery.style.transform = `rotate(${angleDeg}deg)`;
+      });
+
+      // Toggle rotation with space bar
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space" && currentPage === "home") {
+          e.preventDefault();
+          circularGallery.classList.toggle("active");
+        }
+      });
+
+      // Gallery item interactions
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      galleryItems.forEach((item, index) => {
+        item.addEventListener("click", function () {
+          this.classList.toggle("expanded");
+
+          // Magnetic effect on nearby items
+          galleryItems.forEach((otherItem, otherIndex) => {
+            if (otherIndex !== index) {
+              const distance = Math.abs(otherIndex - index);
+              if (distance === 1) {
+                otherItem.style.transform += " scale(0.9)";
+                setTimeout(() => {
+                  otherItem.style.transform = otherItem.style.transform.replace(
+                    " scale(0.9)",
+                    "",
+                  );
+                }, 300);
+              }
+            }
+          });
+        });
+      });
+
+      // Theme switcher
+      const themeDots = document.querySelectorAll(".theme-dot");
+      const gradients = [
+        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+        "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      ];
+
+      themeDots.forEach((dot, index) => {
+        dot.addEventListener("click", function () {
+          themeDots.forEach((d) => d.classList.remove("active"));
+          this.classList.add("active");
+
+          // Update gradient colors
+          document.documentElement.style.setProperty(
+            "--gradient-1",
+            gradients[index],
+          );
+
+          // Update all gradient text
+          const gradientElements = document.querySelectorAll(
+            ".center-title, .logo, .artists-title, .collections-title",
+          );
+          gradientElements.forEach((el) => {
+            el.style.background = gradients[index];
+            el.style.webkitBackgroundClip = "text";
+          });
+        });
+      });
+
+      // Particles
+      function createParticles() {
+        const particlesContainer = document.getElementById("particles");
+        for (let i = 0; i < 50; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.top = Math.random() * 100 + "%";
+          particle.style.animationDelay = Math.random() * 20 + "s";
+          particle.style.animationDuration = 15 + Math.random() * 10 + "s";
+          particlesContainer.appendChild(particle);
+        }
+      }
+      createParticles();
+
+      // 3D Tilt Effect
+      const tiltContainer = document.querySelector(".tilt-container");
+      document.addEventListener("mousemove", (e) => {
+        if (currentPage !== "home") return;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const moveX = (e.clientX - centerX) / centerX;
+        const moveY = (e.clientY - centerY) / centerY;
+
+        tiltContainer.style.transform = `perspective(1000px) rotateY(${moveX * 5}deg) rotateX(${-moveY * 5}deg)`;
+      });
+
+      // Info panel
+      function closeInfoPanel() {
+        document.getElementById("infoPanel").classList.remove("active");
+      }
+
+      // Open info panel with keyboard shortcut
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "i" || e.key === "I") {
+          document.getElementById("infoPanel").classList.toggle("active");
+        }
+      });
+
+      // Scroll progress (for scrollable pages)
+      window.addEventListener("scroll", () => {
+        const scrolled =
+          (window.scrollY /
+            (document.documentElement.scrollHeight - window.innerHeight)) *
+          100;
+        document.getElementById("scrollProgress").style.transform =
+          `scaleX(${scrolled / 100})`;
+      });
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Mobile touch support
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let currentRotation = 0;
+
+      circularGallery.addEventListener("touchstart", (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      });
+
+      circularGallery.addEventListener("touchmove", (e) => {
+        if (!touchStartX || !touchStartY) return;
+
+        let touchEndX = e.touches[0].clientX;
+        let touchEndY = e.touches[0].clientY;
+
+        let diffX = touchStartX - touchEndX;
+        let diffY = touchStartY - touchEndY;
+
+        currentRotation += diffX * 0.5;
+        circularGallery.style.transform = `rotate(${currentRotation}deg)`;
+
+        touchStartX = touchEndX;
+        touchStartY = touchEndY;
+      });
+
+      circularGallery.addEventListener("touchend", () => {
+        touchStartX = 0;
+        touchStartY = 0;
+      });
+
+      // Add keyboard navigation between pages
+      document.addEventListener("keydown", (e) => {
+        const currentIndex = pages.indexOf(currentPage);
+        if (e.key === "ArrowRight" && currentIndex < pages.length - 1) {
+          navigateToPage(pages[currentIndex + 1]);
+        } else if (e.key === "ArrowLeft" && currentIndex > 0) {
+          navigateToPage(pages[currentIndex - 1]);
+        }
+      });
+    </script>
+  </body>
+</html>

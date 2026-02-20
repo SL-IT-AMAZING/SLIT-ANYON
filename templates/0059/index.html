@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HYPER STUDIO - Digital Chaos</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --color-1: #ff006e;
+        --color-2: #8338ec;
+        --color-3: #ffbe0b;
+        --bg-dark: #0a0a0a;
+        --text-light: #ffffff;
+      }
+
+      body {
+        font-family: "Arial Black", sans-serif;
+        background: var(--bg-dark);
+        color: var(--text-light);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor-trail {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: screen;
+      }
+
+      /* Navigation */
+      .nav-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: rgba(10, 10, 10, 0.9);
+        backdrop-filter: blur(20px);
+        border-bottom: 2px solid var(--color-1);
+      }
+
+      .nav-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(
+          45deg,
+          var(--color-1),
+          var(--color-2),
+          var(--color-3)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient-shift 3s ease infinite;
+      }
+
+      @keyframes gradient-shift {
+        0%,
+        100% {
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          filter: hue-rotate(180deg);
+        }
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--text-light);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--color-1);
+        transition: width 0.3s;
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Page Indicator */
+      .page-dots {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 15px 0;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .dot.active {
+        background: var(--color-1);
+        transform: scale(1.5);
+      }
+
+      .dot.active::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        border: 2px solid var(--color-1);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(2);
+          opacity: 0;
+        }
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 40px 80px;
+      }
+
+      /* Section 1: Hero Typography - ENHANCED */
+      .hero-section {
+        background: var(--bg-dark);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .hero-content {
+        text-align: center;
+        z-index: 2;
+        position: relative;
+        width: 100%;
+        max-width: 100vw;
+        transform-style: preserve-3d;
+        perspective: 1000px;
+      }
+
+      .hero-title {
+        font-size: clamp(5rem, 18vw, 16rem);
+        font-weight: 900;
+        line-height: 0.85;
+        text-transform: uppercase;
+        letter-spacing: -0.08em;
+        margin: 0;
+        position: relative;
+      }
+
+      .hero-title .line {
+        display: block;
+        position: relative;
+        overflow: visible;
+        margin: -0.1em 0;
+      }
+
+      .hero-title .line span {
+        display: inline-block;
+        animation: slide-up 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation-delay: calc(var(--i) * 0.15s);
+        transform: translateY(120%) rotateX(-90deg);
+        transform-origin: center bottom;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes slide-up {
+        to {
+          transform: translateY(0) rotateX(0);
+        }
+      }
+
+      /* Enhanced Glitch Effect */
+      .glitch-text {
+        position: relative;
+        color: var(--color-1);
+        animation: glitch 3s infinite;
+        text-shadow:
+          0 0 10px var(--color-1),
+          0 0 20px var(--color-1),
+          0 0 40px var(--color-1),
+          0 0 80px var(--color-1);
+      }
+
+      .glitch-text::before,
+      .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+      }
+
+      .glitch-text::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--color-2);
+        z-index: -1;
+        text-shadow: 2px 2px 0 var(--color-2);
+      }
+
+      .glitch-text::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--color-3);
+        z-index: -2;
+        text-shadow: -2px -2px 0 var(--color-3);
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            0 0 10px var(--color-1),
+            0 0 20px var(--color-1),
+            0 0 40px var(--color-1),
+            0 0 80px var(--color-1);
+        }
+        50% {
+          text-shadow:
+            0 0 20px var(--color-1),
+            0 0 40px var(--color-1),
+            0 0 60px var(--color-1),
+            0 0 100px var(--color-1);
+        }
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-5px, 5px) skew(1deg);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(5px, -5px) skew(-1deg);
+        }
+        60% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(-3px, 3px) skew(0.5deg);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(60% 0 20% 0);
+          transform: translate(3px, -3px) skew(-1deg);
+        }
+        40% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(-5px, 5px) skew(1deg);
+        }
+        60% {
+          clip-path: inset(30% 0 50% 0);
+          transform: translate(2px, -4px) skew(-0.5deg);
+        }
+      }
+
+      /* Mirror Effect */
+      .hero-title::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 30%
+        );
+        transform: scaleY(-1) translateY(-100%);
+        opacity: 0.3;
+        filter: blur(2px);
+        mask-image: linear-gradient(to bottom, white 0%, transparent 50%);
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          white 0%,
+          transparent 50%
+        );
+      }
+
+      /* Floating Animation */
+      .hero-title .line:nth-child(1) {
+        animation: float-1 6s ease-in-out infinite;
+      }
+
+      .hero-title .line:nth-child(2) {
+        animation: float-2 6s ease-in-out infinite;
+      }
+
+      .hero-title .line:nth-child(3) {
+        animation: float-3 6s ease-in-out infinite;
+      }
+
+      @keyframes float-1 {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0) rotate(0);
+        }
+        33% {
+          transform: translateY(-10px) translateX(5px) rotate(1deg);
+        }
+        66% {
+          transform: translateY(5px) translateX(-5px) rotate(-1deg);
+        }
+      }
+
+      @keyframes float-2 {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0) rotate(0);
+        }
+        33% {
+          transform: translateY(10px) translateX(-10px) rotate(-1deg);
+        }
+        66% {
+          transform: translateY(-5px) translateX(10px) rotate(1deg);
+        }
+      }
+
+      @keyframes float-3 {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0) rotate(0);
+        }
+        33% {
+          transform: translateY(-5px) translateX(-5px) rotate(0.5deg);
+        }
+        66% {
+          transform: translateY(10px) translateX(5px) rotate(-0.5deg);
+        }
+      }
+
+      /* Interactive Hover Effects */
+      .hero-title .line span {
+        cursor: pointer;
+        position: relative;
+      }
+
+      .hero-title .line span:hover {
+        animation: bounce 0.5s ease;
+        color: var(--color-3);
+        text-shadow:
+          0 0 20px var(--color-3),
+          0 0 40px var(--color-3),
+          0 0 60px var(--color-3);
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: scale(1) translateY(0);
+        }
+        50% {
+          transform: scale(1.2) translateY(-20px);
+        }
+      }
+
+      /* Background Particles Enhanced */
+      .particle-field {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: var(--color-1);
+        border-radius: 50%;
+        opacity: 0;
+        animation: particle-float 10s infinite linear;
+      }
+
+      .particle:nth-child(odd) {
+        background: var(--color-2);
+        animation-duration: 15s;
+      }
+
+      .particle:nth-child(3n) {
+        background: var(--color-3);
+        animation-duration: 20s;
+      }
+
+      @keyframes particle-float {
+        0% {
+          transform: translateY(100vh) translateX(0) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(100px) scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      /* Mathematical Background Effect */
+      .math-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        opacity: 0.5;
+      }
+
+      /* Section 2: About with Fourier Transform Visualization */
+      .about-section {
+        background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a1a 100%);
+      }
+
+      .about-content {
+        max-width: 1200px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+      }
+
+      .about-text h2 {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 30px;
+        background: linear-gradient(45deg, var(--color-2), var(--color-3));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .about-text p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.8;
+        margin-bottom: 20px;
+        font-family: Arial, sans-serif;
+      }
+
+      .fourier-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Section 3: Gallery with Bezier Curve Animations */
+      .gallery-section {
+        background: var(--bg-dark);
+        position: relative;
+        padding: 120px 40px;
+      }
+
+      .gallery-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        text-align: center;
+        margin-bottom: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: var(--color-3);
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .gallery-item {
+        position: relative;
+        height: 350px;
+        overflow: hidden;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover {
+        transform: scale(1.03) rotate(1deg);
+        box-shadow: 0 20px 40px rgba(255, 0, 110, 0.3);
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.05);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 50%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: flex-end;
+        padding: 25px;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-overlay h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+
+      /* Section 4: Services with Particle Physics */
+      .services-section {
+        background: linear-gradient(180deg, #1a1a1a 0%, var(--bg-dark) 100%);
+        position: relative;
+        padding: 120px 40px;
+      }
+
+      .services-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        text-align: center;
+        margin-bottom: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: var(--color-1);
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .service-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 20px;
+        padding: 35px 25px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+        min-height: 250px;
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--color-1),
+          var(--color-2),
+          var(--color-3)
+        );
+        border-radius: 20px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: -1;
+      }
+
+      .service-card:hover::before {
+        opacity: 1;
+      }
+
+      .service-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .service-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+      }
+
+      .service-title {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+        font-weight: 700;
+      }
+
+      .service-card p {
+        font-size: 1rem;
+        line-height: 1.6;
+        opacity: 0.8;
+        font-family: Arial, sans-serif;
+      }
+
+      /* Section 5: Process with Wave Function */
+      .process-section {
+        background: var(--bg-dark);
+        position: relative;
+        overflow: hidden;
+        padding: 120px 40px;
+      }
+
+      .process-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        text-align: center;
+        margin-bottom: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: var(--color-2);
+      }
+
+      .wave-container {
+        position: absolute;
+        width: 100%;
+        height: 250px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+      }
+
+      .process-steps {
+        display: flex;
+        justify-content: space-around;
+        max-width: 1000px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+
+      .process-step {
+        text-align: center;
+        flex: 1;
+        min-width: 250px;
+        padding: 30px 20px;
+      }
+
+      .step-number {
+        font-size: 4rem;
+        font-weight: 900;
+        color: var(--color-3);
+        margin-bottom: 15px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .step-number::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: var(--color-3);
+      }
+
+      .process-step h3 {
+        font-size: 1.4rem;
+        margin-bottom: 10px;
+      }
+
+      .process-step p {
+        font-size: 1rem;
+        opacity: 0.8;
+        font-family: Arial, sans-serif;
+      }
+
+      /* Section 6: Team with Orbital Motion */
+      .team-section {
+        background: linear-gradient(135deg, #1a1a1a 0%, var(--bg-dark) 100%);
+        position: relative;
+        padding: 120px 40px;
+      }
+
+      .team-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        text-align: center;
+        margin-bottom: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+        background: linear-gradient(45deg, var(--color-1), var(--color-3));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .orbital-container {
+        position: relative;
+        width: min(500px, 90vw);
+        height: min(500px, 90vw);
+        margin: 0 auto;
+      }
+
+      .orbit {
+        position: absolute;
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: rotate 20s linear infinite;
+      }
+
+      .orbit:nth-child(1) {
+        width: 150px;
+        height: 150px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .orbit:nth-child(2) {
+        width: 280px;
+        height: 280px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-duration: 30s;
+        animation-direction: reverse;
+      }
+
+      .orbit:nth-child(3) {
+        width: 400px;
+        height: 400px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-duration: 40s;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      .team-member {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid var(--color-1);
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .team-member img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .team-member:hover {
+        transform: scale(1.15);
+        border-color: var(--color-3);
+        box-shadow: 0 0 25px var(--color-3);
+      }
+
+      /* Section 7: Contact with Matrix Rain */
+      .contact-section {
+        background: var(--bg-dark);
+        position: relative;
+        overflow: hidden;
+        padding: 120px 40px;
+      }
+
+      .matrix-rain {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .contact-content {
+        position: relative;
+        z-index: 2;
+        max-width: 700px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        color: var(--color-1);
+      }
+
+      .contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+      }
+
+      .form-group {
+        position: relative;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s;
+        font-family: Arial, sans-serif;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--color-1);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .submit-btn {
+        padding: 18px 50px;
+        background: linear-gradient(45deg, var(--color-1), var(--color-2));
+        border: none;
+        border-radius: 50px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .submit-btn:hover::before {
+        width: 400px;
+        height: 400px;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 0, 110, 0.5);
+      }
+
+      /* Video Background for specific sections */
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        z-index: 0;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .nav-container {
+          padding: 15px 20px;
+        }
+
+        .section {
+          padding: 100px 20px 60px;
+        }
+
+        .hero-title {
+          font-size: clamp(4rem, 15vw, 8rem);
+        }
+
+        .gallery-title,
+        .services-title,
+        .process-title,
+        .team-title,
+        .contact-title,
+        .about-text h2 {
+          font-size: clamp(2.5rem, 10vw, 5rem);
+        }
+
+        .about-content {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .gallery-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .gallery-item {
+          height: 300px;
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .process-steps {
+          flex-direction: column;
+          gap: 40px;
+        }
+
+        .orbital-container {
+          width: 350px;
+          height: 350px;
+        }
+
+        .orbit:nth-child(1) {
+          width: 120px;
+          height: 120px;
+        }
+
+        .orbit:nth-child(2) {
+          width: 220px;
+          height: 220px;
+        }
+
+        .orbit:nth-child(3) {
+          width: 320px;
+          height: 320px;
+        }
+
+        .team-member {
+          width: 60px;
+          height: 60px;
+        }
+
+        .page-dots {
+          right: 15px;
+        }
+
+        .dot {
+          width: 10px;
+          height: 10px;
+          margin: 12px 0;
+        }
+
+        .fourier-container {
+          height: 300px;
+        }
+
+        .step-number {
+          font-size: 3rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+          font-size: 16px; /* Prevents zoom on iOS */
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: clamp(3rem, 16vw, 6rem);
+          letter-spacing: -0.05em;
+        }
+
+        .gallery-title,
+        .services-title,
+        .process-title,
+        .team-title,
+        .contact-title,
+        .about-text h2 {
+          font-size: clamp(2rem, 12vw, 4rem);
+        }
+
+        .orbital-container {
+          width: 280px;
+          height: 280px;
+        }
+
+        .team-member {
+          width: 50px;
+          height: 50px;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        background: linear-gradient(
+          45deg,
+          var(--color-1),
+          var(--color-2),
+          var(--color-3)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 1s infinite;
+      }
+
+      /* Ensure images don't overflow */
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* Prevent horizontal scroll */
+      html,
+      body {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Custom Cursor Trail -->
+    <div class="cursor-trail" id="cursor1"></div>
+    <div class="cursor-trail" id="cursor2"></div>
+    <div class="cursor-trail" id="cursor3"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+      <div class="nav-wrapper">
+        <div class="logo">HYPER</div>
+        <ul class="nav-links">
+          <li><a href="#home">HOME</a></li>
+          <li><a href="#about">ABOUT</a></li>
+          <li><a href="#gallery">GALLERY</a></li>
+          <li><a href="#services">SERVICES</a></li>
+          <li><a href="#process">PROCESS</a></li>
+          <li><a href="#team">TEAM</a></li>
+          <li><a href="#contact">CONTACT</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Page Indicator -->
+    <div class="page-dots">
+      <div class="dot active" data-section="0"></div>
+      <div class="dot" data-section="1"></div>
+      <div class="dot" data-section="2"></div>
+      <div class="dot" data-section="3"></div>
+      <div class="dot" data-section="4"></div>
+      <div class="dot" data-section="5"></div>
+      <div class="dot" data-section="6"></div>
+    </div>
+
+    <!-- Section 1: Hero -->
+    <section class="section hero-section" id="home">
+      <div class="particle-field" id="particleField"></div>
+      <canvas class="math-canvas" id="mathCanvas"></canvas>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span class="line">
+            <span style="--i: 0">WE</span>
+            <span style="--i: 1"> CREATE</span>
+          </span>
+          <span class="line">
+            <span class="glitch-text" data-text="DIGITAL" style="--i: 2"
+              >DIGITAL</span
+            >
+          </span>
+          <span class="line">
+            <span style="--i: 3">CHAOS</span>
+          </span>
+        </h1>
+      </div>
+    </section>
+
+    <!-- Section 2: About -->
+    <section class="section about-section" id="about">
+      <div class="about-content">
+        <div class="about-text">
+          <h2>BREAK THE RULES</h2>
+          <p>
+            We're not your typical design studio. We blend art, mathematics, and
+            chaos theory to create experiences that defy convention.
+          </p>
+          <p>
+            Our algorithms dream in colors you've never seen. Our interfaces
+            respond to thoughts you haven't had yet.
+          </p>
+          <p>Welcome to the future of digital expression.</p>
+        </div>
+        <div class="fourier-container">
+          <canvas id="fourierCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Gallery -->
+    <section class="section gallery-section" id="gallery">
+      <h2 class="gallery-title">VISUAL ANARCHY</h2>
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Project 1"
+          />
+          <div class="gallery-overlay">
+            <h3>NEON DREAMS</h3>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Project 2"
+          />
+          <div class="gallery-overlay">
+            <h3>CYBER PUNK</h3>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Project 3"
+          />
+          <div class="gallery-overlay">
+            <h3>QUANTUM LEAP</h3>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+            alt="Project 4"
+          />
+          <div class="gallery-overlay">
+            <h3>DIGITAL RIOT</h3>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+            alt="Project 5"
+          />
+          <div class="gallery-overlay">
+            <h3>FUTURE SHOCK</h3>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+            alt="Project 6"
+          />
+          <div class="gallery-overlay">
+            <h3>CHROME DREAMS</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Services -->
+    <section class="section services-section" id="services">
+      <canvas class="particle-physics" id="particleCanvas"></canvas>
+      <h2 class="services-title">WHAT WE DESTROY</h2>
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-icon">🚀</div>
+          <h3 class="service-title">BRAND EXPLOSION</h3>
+          <p>
+            We don't build brands. We detonate them into existence with the
+            force of a thousand suns.
+          </p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">⚡</div>
+          <h3 class="service-title">INTERFACE ANARCHY</h3>
+          <p>
+            User interfaces that break every rule while somehow making perfect
+            sense.
+          </p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🎨</div>
+          <h3 class="service-title">MOTION MADNESS</h3>
+          <p>
+            Animations that exist in dimensions your physics teacher warned you
+            about.
+          </p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🔮</div>
+          <h3 class="service-title">FUTURE TECH</h3>
+          <p>We use technology from 2050. Don't ask how we got it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Process -->
+    <section class="section process-section" id="process">
+      <video class="video-bg" autoplay muted loop playsinline>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <h2 class="process-title">OUR CHAOS THEORY</h2>
+      <div class="wave-container">
+        <canvas id="waveCanvas"></canvas>
+      </div>
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="step-number">01</div>
+          <h3>IDEATE</h3>
+          <p>We start where others fear to tread</p>
+        </div>
+        <div class="process-step">
+          <div class="step-number">02</div>
+          <h3>DESTROY</h3>
+          <p>Break everything that came before</p>
+        </div>
+        <div class="process-step">
+          <div class="step-number">03</div>
+          <h3>REBUILD</h3>
+          <p>Create something impossibly new</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Team -->
+    <section class="section team-section" id="team">
+      <h2 class="team-title">DIGITAL REBELS</h2>
+      <div class="orbital-container">
+        <div class="orbit"></div>
+        <div class="orbit"></div>
+        <div class="orbit"></div>
+        <div
+          class="team-member"
+          style="top: 10%; left: 50%; transform: translateX(-50%)"
+        >
+          <img
+            src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png"
+            alt="Team 1"
+          />
+        </div>
+        <div
+          class="team-member"
+          style="top: 50%; right: 5%; transform: translateY(-50%)"
+        >
+          <img
+            src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png"
+            alt="Team 2"
+          />
+        </div>
+        <div
+          class="team-member"
+          style="bottom: 10%; left: 50%; transform: translateX(-50%)"
+        >
+          <img
+            src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png"
+            alt="Team 3"
+          />
+        </div>
+        <div
+          class="team-member"
+          style="top: 50%; left: 5%; transform: translateY(-50%)"
+        >
+          <img
+            src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png"
+            alt="Team 4"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Contact -->
+    <section class="section contact-section" id="contact">
+      <canvas class="matrix-rain" id="matrixCanvas"></canvas>
+      <div class="contact-content">
+        <h2 class="contact-title">JOIN THE REVOLUTION</h2>
+        <form class="contact-form">
+          <div class="form-group">
+            <input type="text" placeholder="YOUR NAME" required />
+          </div>
+          <div class="form-group">
+            <input type="email" placeholder="YOUR EMAIL" required />
+          </div>
+          <div class="form-group">
+            <textarea
+              rows="5"
+              placeholder="DESCRIBE YOUR WILDEST DIGITAL DREAM"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="submit-btn">IGNITE</button>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Create particle field
+      const particleField = document.getElementById("particleField");
+      for (let i = 0; i < 100; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 20 + "s";
+        particle.style.animationDuration = 10 + Math.random() * 20 + "s";
+        particleField.appendChild(particle);
+      }
+
+      // Custom Cursor Trail
+      const cursors = [
+        document.getElementById("cursor1"),
+        document.getElementById("cursor2"),
+        document.getElementById("cursor3"),
+      ];
+
+      const colors = ["#FF006E", "#8338EC", "#FFBE0B"];
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = [0, 0, 0],
+        cursorY = [0, 0, 0];
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursors() {
+        cursors.forEach((cursor, i) => {
+          const speed = 0.1 - i * 0.02;
+          cursorX[i] += (mouseX - cursorX[i]) * speed;
+          cursorY[i] += (mouseY - cursorY[i]) * speed;
+
+          cursor.style.left = cursorX[i] - 10 + "px";
+          cursor.style.top = cursorY[i] - 10 + "px";
+          cursor.style.background = colors[i];
+          cursor.style.transform = `scale(${1 - i * 0.2})`;
+        });
+        requestAnimationFrame(animateCursors);
+      }
+      animateCursors();
+
+      // Mathematical Canvas Background
+      const mathCanvas = document.getElementById("mathCanvas");
+      const mathCtx = mathCanvas.getContext("2d");
+
+      function resizeCanvas() {
+        mathCanvas.width = window.innerWidth;
+        mathCanvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      let time = 0;
+      function drawMathBackground() {
+        mathCtx.fillStyle = "rgba(10, 10, 10, 0.02)";
+        mathCtx.fillRect(0, 0, mathCanvas.width, mathCanvas.height);
+
+        // Complex mathematical pattern
+        mathCtx.strokeStyle = `rgba(255, 0, 110, 0.2)`;
+        mathCtx.lineWidth = 2;
+
+        for (let j = 0; j < 3; j++) {
+          mathCtx.beginPath();
+          const scale = Math.min(mathCanvas.width, mathCanvas.height) * 0.3;
+          const offsetX = mathCanvas.width / 2;
+          const offsetY = mathCanvas.height / 2;
+
+          for (let i = 0; i < 200; i++) {
+            const t = (i / 200) * Math.PI * 4;
+            const radius = scale * (1 + 0.3 * Math.sin(5 * t + time));
+            const x =
+              offsetX +
+              radius * Math.cos(t + (j * Math.PI) / 3) * Math.sin(2 * t + time);
+            const y =
+              offsetY +
+              radius * Math.sin(t + (j * Math.PI) / 3) * Math.cos(3 * t);
+
+            if (i === 0) {
+              mathCtx.moveTo(x, y);
+            } else {
+              mathCtx.lineTo(x, y);
+            }
+          }
+
+          mathCtx.strokeStyle = `rgba(${j === 0 ? 255 : 0}, ${j === 1 ? 255 : 0}, ${j === 2 ? 255 : 0}, 0.15)`;
+          mathCtx.stroke();
+        }
+
+        time += 0.005;
+        requestAnimationFrame(drawMathBackground);
+      }
+      drawMathBackground();
+
+      // Interactive text hover effect
+      document.querySelectorAll(".hero-title .line span").forEach((span) => {
+        span.addEventListener("mouseenter", function () {
+          this.style.transform = "scale(1.1) translateY(-10px) rotateZ(2deg)";
+        });
+        span.addEventListener("mouseleave", function () {
+          this.style.transform = "scale(1) translateY(0) rotateZ(0)";
+        });
+      });
+
+      // Fourier Transform Visualization
+      const fourierCanvas = document.getElementById("fourierCanvas");
+      if (fourierCanvas) {
+        const fourierCtx = fourierCanvas.getContext("2d");
+        const container = fourierCanvas.parentElement;
+
+        function resizeFourierCanvas() {
+          fourierCanvas.width = container.offsetWidth;
+          fourierCanvas.height = container.offsetHeight;
+        }
+        resizeFourierCanvas();
+        window.addEventListener("resize", resizeFourierCanvas);
+
+        let fourierTime = 0;
+        const epicycles = [
+          { radius: 80, frequency: 1, phase: 0 },
+          { radius: 40, frequency: 3, phase: Math.PI / 4 },
+          { radius: 25, frequency: 5, phase: Math.PI / 2 },
+          { radius: 15, frequency: 7, phase: Math.PI },
+        ];
+
+        const path = [];
+
+        function drawFourier() {
+          fourierCtx.fillStyle = "rgba(10, 10, 10, 0.05)";
+          fourierCtx.fillRect(0, 0, fourierCanvas.width, fourierCanvas.height);
+
+          let x = fourierCanvas.width / 2;
+          let y = fourierCanvas.height / 2;
+
+          // Draw epicycles
+          epicycles.forEach((epicycle, i) => {
+            const prevX = x;
+            const prevY = y;
+
+            x +=
+              epicycle.radius *
+              Math.cos(epicycle.frequency * fourierTime + epicycle.phase);
+            y +=
+              epicycle.radius *
+              Math.sin(epicycle.frequency * fourierTime + epicycle.phase);
+
+            // Draw circle
+            fourierCtx.strokeStyle = `rgba(131, 56, 236, ${0.3 - i * 0.05})`;
+            fourierCtx.lineWidth = 2;
+            fourierCtx.beginPath();
+            fourierCtx.arc(prevX, prevY, epicycle.radius, 0, Math.PI * 2);
+            fourierCtx.stroke();
+
+            // Draw radius
+            fourierCtx.beginPath();
+            fourierCtx.moveTo(prevX, prevY);
+            fourierCtx.lineTo(x, y);
+            fourierCtx.stroke();
+          });
+
+          // Add to path
+          path.unshift({ x, y });
+          if (path.length > 200) path.pop();
+
+          // Draw path
+          fourierCtx.strokeStyle = "#FFBE0B";
+          fourierCtx.lineWidth = 3;
+          fourierCtx.beginPath();
+          path.forEach((point, i) => {
+            if (i === 0) {
+              fourierCtx.moveTo(point.x, point.y);
+            } else {
+              fourierCtx.lineTo(point.x, point.y);
+            }
+          });
+          fourierCtx.stroke();
+
+          fourierTime += 0.02;
+          requestAnimationFrame(drawFourier);
+        }
+        drawFourier();
+      }
+
+      // Wave Function Animation
+      const waveCanvas = document.getElementById("waveCanvas");
+      if (waveCanvas) {
+        const waveCtx = waveCanvas.getContext("2d");
+
+        function resizeWaveCanvas() {
+          waveCanvas.width = window.innerWidth;
+          waveCanvas.height = 250;
+        }
+        resizeWaveCanvas();
+        window.addEventListener("resize", resizeWaveCanvas);
+
+        let waveTime = 0;
+
+        function drawWave() {
+          waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+          // Multiple wave interference pattern
+          for (let wave = 0; wave < 3; wave++) {
+            waveCtx.strokeStyle = colors[wave];
+            waveCtx.lineWidth = 2;
+            waveCtx.globalAlpha = 0.5;
+            waveCtx.beginPath();
+
+            for (let x = 0; x < waveCanvas.width; x++) {
+              const frequency = 0.01 + wave * 0.005;
+              const amplitude = 40 - wave * 10;
+              const phase = (wave * Math.PI) / 3;
+              const y =
+                waveCanvas.height / 2 +
+                amplitude *
+                  Math.sin(x * frequency + waveTime + phase) *
+                  Math.sin(x * 0.001);
+
+              if (x === 0) {
+                waveCtx.moveTo(x, y);
+              } else {
+                waveCtx.lineTo(x, y);
+              }
+            }
+
+            waveCtx.stroke();
+          }
+
+          waveTime += 0.05;
+          requestAnimationFrame(drawWave);
+        }
+        drawWave();
+      }
+
+      // Matrix Rain Effect
+      const matrixCanvas = document.getElementById("matrixCanvas");
+      if (matrixCanvas) {
+        const matrixCtx = matrixCanvas.getContext("2d");
+
+        function resizeMatrixCanvas() {
+          matrixCanvas.width = window.innerWidth;
+          matrixCanvas.height = window.innerHeight;
+        }
+        resizeMatrixCanvas();
+        window.addEventListener("resize", resizeMatrixCanvas);
+
+        const fontSize = 14;
+        const columns = Math.floor(matrixCanvas.width / fontSize);
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+          drops[i] = Math.random() * -100;
+        }
+
+        const matrixChars =
+          "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        function drawMatrix() {
+          matrixCtx.fillStyle = "rgba(10, 10, 10, 0.05)";
+          matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+
+          matrixCtx.fillStyle = "#FF006E";
+          matrixCtx.font = fontSize + "px monospace";
+
+          for (let i = 0; i < drops.length; i++) {
+            const text =
+              matrixChars[Math.floor(Math.random() * matrixChars.length)];
+            matrixCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (
+              drops[i] * fontSize > matrixCanvas.height &&
+              Math.random() > 0.975
+            ) {
+              drops[i] = 0;
+            }
+
+            drops[i]++;
+          }
+
+          requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+      }
+
+      // Smooth Scroll
+      const sections = document.querySelectorAll(".section");
+      const dots = document.querySelectorAll(".dot");
+      let currentSection = 0;
+      let isScrolling = false;
+
+      function updateDots() {
+        dots.forEach((dot, index) => {
+          dot.classList.toggle("active", index === currentSection);
+        });
+      }
+
+      function scrollToSection(index) {
+        if (isScrolling || index < 0 || index >= sections.length) return;
+
+        isScrolling = true;
+        currentSection = index;
+
+        sections[index].scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        updateDots();
+
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      }
+
+      // Wheel Navigation
+      let wheelTimeout;
+      window.addEventListener("wheel", (e) => {
+        if (isScrolling) return;
+
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+          if (e.deltaY > 0) {
+            scrollToSection(currentSection + 1);
+          } else {
+            scrollToSection(currentSection - 1);
+          }
+        }, 50);
+      });
+
+      // Touch Navigation for mobile
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndY < touchStartY - 50) {
+          scrollToSection(currentSection + 1);
+        }
+        if (touchEndY > touchStartY + 50) {
+          scrollToSection(currentSection - 1);
+        }
+      }
+
+      // Keyboard Navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") {
+          scrollToSection(currentSection + 1);
+        } else if (e.key === "ArrowUp") {
+          scrollToSection(currentSection - 1);
+        }
+      });
+
+      // Dot Navigation
+      dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          scrollToSection(index);
+        });
+      });
+
+      // Nav Links
+      document.querySelectorAll(".nav-links a").forEach((link, index) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          scrollToSection(index);
+        });
+      });
+
+      // Form Submit
+      document
+        .querySelector(".contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Welcome to the revolution! We'll be in touch soon.");
+        });
+
+      // Intersection Observer for current section
+      const observerOptions = {
+        threshold: 0.5,
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Array.from(sections).indexOf(entry.target);
+            currentSection = index;
+            updateDots();
+          }
+        });
+      }, observerOptions);
+
+      sections.forEach((section) => observer.observe(section));
+    </script>
+  </body>
+</html>

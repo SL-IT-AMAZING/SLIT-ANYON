@@ -21,11 +21,19 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
       onClick={handleCardClick}
       className="overflow-hidden cursor-pointer group hover:shadow-md transition-shadow duration-200"
     >
-      <img
-        src={template.imageUrl}
-        alt={template.title}
-        className="w-full h-48 object-cover group-hover:opacity-90 transition-opacity duration-200"
-      />
+      <div className="relative w-full h-48 overflow-hidden bg-muted">
+        {template.imageUrl ? (
+          <img
+            src={template.imageUrl}
+            alt={template.title}
+            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-200"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-muted-foreground/20 select-none">
+            {template.title.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
       <CardContent className="p-4">
         {template.category && (
           <Badge variant="outline" className="text-xs capitalize">

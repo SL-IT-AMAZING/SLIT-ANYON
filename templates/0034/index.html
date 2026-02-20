@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATELIER - Digital Art Studio</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #1a1a1a;
+        --accent-color: #ff6b6b;
+        --text-light: #666;
+        --text-dark: #111;
+        --bg-light: #fafafa;
+        --bg-cream: #f5f2ed;
+        --transition: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-snap-type: y proximity;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-light);
+        color: var(--text-dark);
+        overflow-x: hidden;
+        line-height: 1.6;
+      }
+
+      /* Smooth Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-light);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 4px;
+      }
+
+      /* Typography */
+      .display-font {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* Magnetic Button Effect */
+      .magnetic-wrap {
+        position: relative;
+        display: inline-block;
+      }
+
+      /* Navigation */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        mix-blend-mode: difference;
+        transition: all 0.6s var(--transition);
+      }
+
+      header.scrolled {
+        background: rgba(250, 250, 250, 0.95);
+        backdrop-filter: blur(20px);
+        mix-blend-mode: normal;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+
+      nav {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        color: #fff;
+        transition: color 0.3s;
+      }
+
+      header.scrolled .logo {
+        color: var(--text-dark);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        position: relative;
+        transition: all 0.3s;
+        padding: 5px 0;
+      }
+
+      header.scrolled .nav-links a {
+        color: var(--text-dark);
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: currentColor;
+        transition: width 0.3s var(--transition);
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Menu Toggle */
+      .menu-toggle {
+        display: none;
+        width: 30px;
+        height: 30px;
+        position: relative;
+        cursor: pointer;
+        z-index: 1001;
+      }
+
+      .menu-toggle span {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #fff;
+        transition: all 0.3s var(--transition);
+      }
+
+      header.scrolled .menu-toggle span {
+        background: var(--text-dark);
+      }
+
+      .menu-toggle span:nth-child(1) {
+        top: 8px;
+      }
+
+      .menu-toggle span:nth-child(2) {
+        bottom: 8px;
+      }
+
+      .menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg);
+        top: 14px;
+      }
+
+      .menu-toggle.active span:nth-child(2) {
+        transform: rotate(-45deg);
+        bottom: 14px;
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        position: relative;
+        scroll-snap-align: start;
+      }
+
+      /* Hero Section with Horizontal Scroll Gallery */
+      .hero {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background: var(--primary-color);
+      }
+
+      .hero-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 10;
+        width: 90%;
+        max-width: 1200px;
+      }
+
+      .hero-title {
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        color: #fff;
+        mix-blend-mode: difference;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 300;
+        color: #fff;
+        margin-top: 20px;
+        opacity: 0.8;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      /* Horizontal Scroll Gallery */
+      .gallery-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .gallery-track {
+        display: flex;
+        height: 100%;
+        transition: transform 0.8s var(--transition);
+        will-change: transform;
+      }
+
+      .gallery-item {
+        flex: 0 0 100vw;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gallery-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scale(1.1);
+        transition: transform 8s var(--transition);
+      }
+
+      .gallery-item.active .gallery-image {
+        transform: scale(1);
+      }
+
+      /* Gallery Navigation */
+      .gallery-nav {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 20;
+      }
+
+      .gallery-dot {
+        width: 60px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gallery-dot::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: #fff;
+        transition: width 3s linear;
+      }
+
+      .gallery-dot.active::after {
+        width: 100%;
+      }
+
+      /* About Section - Split Layout */
+      .about {
+        padding: 120px 40px;
+        background: var(--bg-cream);
+        display: flex;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .about-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-content h2 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        line-height: 1;
+        margin-bottom: 30px;
+        letter-spacing: -0.03em;
+      }
+
+      .about-content p {
+        font-size: 18px;
+        color: var(--text-light);
+        margin-bottom: 20px;
+        line-height: 1.8;
+      }
+
+      .about-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .stat {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--accent-color);
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-light);
+        margin-top: 10px;
+      }
+
+      .about-image {
+        position: relative;
+        height: 600px;
+        overflow: hidden;
+        border-radius: 20px;
+      }
+
+      .about-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s var(--transition);
+      }
+
+      .about-image:hover img {
+        transform: scale(1.05);
+      }
+
+      /* Works Section - Masonry Grid */
+      .works {
+        padding: 120px 40px;
+        background: #fff;
+      }
+
+      .works-header {
+        max-width: 1400px;
+        margin: 0 auto 80px;
+        text-align: center;
+      }
+
+      .works-header h2 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        margin-bottom: 20px;
+        letter-spacing: -0.03em;
+      }
+
+      .filter-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 40px;
+        flex-wrap: wrap;
+      }
+
+      .filter-tab {
+        padding: 12px 30px;
+        background: transparent;
+        border: 1px solid #ddd;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .filter-tab.active,
+      .filter-tab:hover {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+      }
+
+      .works-grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        grid-auto-flow: dense;
+      }
+
+      .work-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #f5f5f5;
+      }
+
+      .work-item.large {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+
+      .work-item.tall {
+        grid-row: span 2;
+      }
+
+      .work-item.wide {
+        grid-column: span 2;
+      }
+
+      .work-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s var(--transition);
+      }
+
+      .work-item:hover .work-image {
+        transform: scale(1.1);
+      }
+
+      .work-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(0, 0, 0, 0.8) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 40px;
+      }
+
+      .work-item:hover .work-overlay {
+        opacity: 1;
+      }
+
+      .work-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 10px;
+        transform: translateY(20px);
+        transition: transform 0.4s;
+      }
+
+      .work-category {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transform: translateY(20px);
+        transition: transform 0.4s 0.1s;
+      }
+
+      .work-item:hover .work-title,
+      .work-item:hover .work-category {
+        transform: translateY(0);
+      }
+
+      /* Process Section */
+      .process {
+        padding: 120px 40px;
+        background: var(--bg-cream);
+      }
+
+      .process-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .process h2 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        text-align: center;
+        margin-bottom: 80px;
+        letter-spacing: -0.03em;
+      }
+
+      .process-timeline {
+        position: relative;
+        padding: 40px 0;
+      }
+
+      .process-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #ddd;
+        transform: translateX(-50%);
+      }
+
+      .process-step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 100px;
+        position: relative;
+      }
+
+      .process-step:nth-child(even) {
+        flex-direction: row-reverse;
+      }
+
+      .process-content {
+        flex: 1;
+        padding: 40px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        position: relative;
+        transition: transform 0.3s;
+      }
+
+      .process-content:hover {
+        transform: translateY(-10px);
+      }
+
+      .process-number {
+        position: absolute;
+        top: -30px;
+        left: 40px;
+        font-size: 80px;
+        font-weight: 900;
+        color: var(--accent-color);
+        opacity: 0.2;
+        line-height: 1;
+      }
+
+      .process-step:nth-child(even) .process-number {
+        left: auto;
+        right: 40px;
+      }
+
+      .process-dot {
+        width: 30px;
+        height: 30px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        box-shadow: 0 0 0 8px var(--bg-cream);
+      }
+
+      .process-content h3 {
+        font-size: 28px;
+        margin-bottom: 15px;
+      }
+
+      .process-content p {
+        color: var(--text-light);
+        line-height: 1.8;
+      }
+
+      /* Team Section */
+      .team {
+        padding: 120px 40px;
+        background: #fff;
+      }
+
+      .team-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .team h2 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        text-align: center;
+        margin-bottom: 80px;
+        letter-spacing: -0.03em;
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+      }
+
+      .team-member {
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .member-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 20px;
+        filter: grayscale(100%);
+        transition: all 0.4s;
+      }
+
+      .team-member:hover .member-image {
+        filter: grayscale(0%);
+        transform: scale(0.98);
+      }
+
+      .member-info {
+        margin-top: 30px;
+      }
+
+      .member-name {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .member-role {
+        font-size: 16px;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      /* Video Section */
+      .video-section {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+      }
+
+      .video-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 0;
+      }
+
+      .video-content {
+        text-align: center;
+        z-index: 1;
+        color: #fff;
+        padding: 40px;
+      }
+
+      .video-content h2 {
+        font-size: clamp(3rem, 8vw, 6rem);
+        margin-bottom: 30px;
+        letter-spacing: -0.03em;
+      }
+
+      .play-button {
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 50px auto 0;
+        cursor: pointer;
+        transition: all 0.3s;
+        backdrop-filter: blur(10px);
+      }
+
+      .play-button:hover {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .play-icon {
+        width: 0;
+        height: 0;
+        border-left: 20px solid #fff;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+        margin-left: 5px;
+      }
+
+      /* Contact Section */
+      .contact {
+        padding: 120px 40px;
+        background: var(--primary-color);
+        color: #fff;
+      }
+
+      .contact-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+      }
+
+      .contact-info h2 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        margin-bottom: 30px;
+        letter-spacing: -0.03em;
+      }
+
+      .contact-info p {
+        font-size: 20px;
+        opacity: 0.8;
+        margin-bottom: 40px;
+        line-height: 1.6;
+      }
+
+      .contact-details {
+        margin-top: 60px;
+      }
+
+      .contact-item {
+        margin-bottom: 30px;
+      }
+
+      .contact-label {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.6;
+        margin-bottom: 10px;
+      }
+
+      .contact-value {
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .contact-form {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 60px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 10px;
+        opacity: 0.8;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.3s;
+      }
+
+      .form-group input::placeholder,
+      .form-group textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 18px;
+        background: #fff;
+        color: var(--primary-color);
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+      }
+
+      /* Footer */
+      footer {
+        background: #000;
+        color: #fff;
+        padding: 60px 40px;
+        text-align: center;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .social-links a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+      }
+
+      .social-links a:hover {
+        opacity: 1;
+      }
+
+      .copyright {
+        font-size: 14px;
+        opacity: 0.5;
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-size: 80px;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -0.05em;
+        overflow: hidden;
+      }
+
+      .loader-text span {
+        display: inline-block;
+        transform: translateY(100%);
+        animation: loaderText 0.8s forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes loaderText {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      /* Reveal Animations */
+      .reveal {
+        opacity: 0;
+        transform: translateY(60px);
+        transition: all 0.8s var(--transition);
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 1024px) {
+        .about-container,
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 60px;
+        }
+
+        .process-step {
+          flex-direction: column !important;
+        }
+
+        .process-line {
+          display: none;
+        }
+
+        .works-grid {
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .work-item.large,
+        .work-item.wide {
+          grid-column: span 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        header {
+          padding: 15px 20px;
+        }
+
+        .nav-links {
+          position: fixed;
+          top: 0;
+          right: -100%;
+          width: 100%;
+          height: 100vh;
+          background: var(--bg-light);
+          flex-direction: column;
+          justify-content: center;
+          gap: 30px;
+          transition: right 0.3s;
+        }
+
+        .nav-links.active {
+          right: 0;
+        }
+
+        .nav-links a {
+          color: var(--text-dark);
+          font-size: 24px;
+        }
+
+        .menu-toggle {
+          display: block;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .section {
+          padding: 80px 20px;
+        }
+
+        h2 {
+          font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .about-stats {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-form {
+          padding: 40px 30px;
+        }
+
+        .process-content {
+          padding: 30px 20px;
+        }
+
+        .gallery-nav {
+          bottom: 20px;
+        }
+
+        .gallery-dot {
+          width: 40px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: clamp(2.5rem, 12vw, 4rem);
+        }
+
+        .filter-tabs {
+          gap: 10px;
+        }
+
+        .filter-tab {
+          padding: 10px 20px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-text">
+        <span style="--i: 0">A</span>
+        <span style="--i: 1">T</span>
+        <span style="--i: 2">E</span>
+        <span style="--i: 3">L</span>
+        <span style="--i: 4">I</span>
+        <span style="--i: 5">E</span>
+        <span style="--i: 6">R</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <header id="header">
+      <nav>
+        <div class="logo display-font">ATELIER</div>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="#hero">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#works">Works</a></li>
+          <li><a href="#process">Process</a></li>
+          <li><a href="#team">Team</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="menu-toggle" id="menuToggle">
+          <span></span>
+          <span></span>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero Section with Gallery -->
+    <section class="section hero" id="hero">
+      <div class="gallery-wrapper">
+        <div class="gallery-track" id="galleryTrack">
+          <div class="gallery-item active">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              alt="Gallery 1"
+              class="gallery-image"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              alt="Gallery 2"
+              class="gallery-image"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              alt="Gallery 3"
+              class="gallery-image"
+            />
+          </div>
+          <div class="gallery-item">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Gallery 4"
+              class="gallery-image"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title display-font">DIGITAL<br />ATELIER</h1>
+        <p class="hero-subtitle">Where Art Meets Technology</p>
+      </div>
+      <div class="gallery-nav" id="galleryNav"></div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section about" id="about">
+      <div class="about-container">
+        <div class="about-content reveal">
+          <h2 class="display-font">
+            We craft digital experiences that inspire
+          </h2>
+          <p>
+            Founded in 2020, ATELIER is a creative studio specializing in
+            cutting-edge digital design and development. We believe in the power
+            of aesthetics combined with functionality.
+          </p>
+          <p>
+            Our team of passionate creators works at the intersection of art and
+            technology, pushing boundaries and redefining what's possible in the
+            digital realm.
+          </p>
+          <div class="about-stats">
+            <div class="stat">
+              <div class="stat-number">150+</div>
+              <div class="stat-label">Projects Completed</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">50+</div>
+              <div class="stat-label">Happy Clients</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">25+</div>
+              <div class="stat-label">Team Members</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">15+</div>
+              <div class="stat-label">Awards Won</div>
+            </div>
+          </div>
+        </div>
+        <div class="about-image reveal">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+            alt="About Us"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Works Section -->
+    <section class="section works" id="works">
+      <div class="works-header reveal">
+        <h2 class="display-font">Selected Works</h2>
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="branding">Branding</button>
+          <button class="filter-tab" data-filter="web">Web Design</button>
+          <button class="filter-tab" data-filter="motion">Motion</button>
+          <button class="filter-tab" data-filter="art">Digital Art</button>
+        </div>
+      </div>
+      <div class="works-grid">
+        <div class="work-item large reveal" data-category="branding">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+            alt="Work 1"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Brand Evolution</h3>
+            <p class="work-category">Branding</p>
+          </div>
+        </div>
+        <div class="work-item reveal" data-category="web">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+            alt="Work 2"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Digital Platform</h3>
+            <p class="work-category">Web Design</p>
+          </div>
+        </div>
+        <div class="work-item tall reveal" data-category="art">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+            alt="Work 3"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Abstract Series</h3>
+            <p class="work-category">Digital Art</p>
+          </div>
+        </div>
+        <div class="work-item reveal" data-category="motion">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+            alt="Work 4"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Motion Graphics</h3>
+            <p class="work-category">Motion</p>
+          </div>
+        </div>
+        <div class="work-item wide reveal" data-category="branding">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+            alt="Work 5"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Visual Identity</h3>
+            <p class="work-category">Branding</p>
+          </div>
+        </div>
+        <div class="work-item reveal" data-category="web">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+            alt="Work 6"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">E-commerce</h3>
+            <p class="work-category">Web Design</p>
+          </div>
+        </div>
+        <div class="work-item reveal" data-category="art">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+            alt="Work 7"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Digital Sculpture</h3>
+            <p class="work-category">Digital Art</p>
+          </div>
+        </div>
+        <div class="work-item tall reveal" data-category="motion">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+            alt="Work 8"
+            class="work-image"
+          />
+          <div class="work-overlay">
+            <h3 class="work-title">Animation Reel</h3>
+            <p class="work-category">Motion</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="section process" id="process">
+      <div class="process-container">
+        <h2 class="display-font reveal">Our Process</h2>
+        <div class="process-timeline">
+          <div class="process-line"></div>
+          <div class="process-step reveal">
+            <div class="process-content">
+              <div class="process-number">01</div>
+              <h3>Discovery</h3>
+              <p>
+                We begin by understanding your vision, goals, and target
+                audience through comprehensive research and strategy sessions.
+              </p>
+            </div>
+            <div class="process-dot"></div>
+            <div class="process-spacer"></div>
+          </div>
+          <div class="process-step reveal">
+            <div class="process-spacer"></div>
+            <div class="process-dot"></div>
+            <div class="process-content">
+              <div class="process-number">02</div>
+              <h3>Design</h3>
+              <p>
+                Our creative team transforms insights into stunning visual
+                concepts that capture your brand's essence.
+              </p>
+            </div>
+          </div>
+          <div class="process-step reveal">
+            <div class="process-content">
+              <div class="process-number">03</div>
+              <h3>Development</h3>
+              <p>
+                We bring designs to life with cutting-edge technology and
+                meticulous attention to detail.
+              </p>
+            </div>
+            <div class="process-dot"></div>
+            <div class="process-spacer"></div>
+          </div>
+          <div class="process-step reveal">
+            <div class="process-spacer"></div>
+            <div class="process-dot"></div>
+            <div class="process-content">
+              <div class="process-number">04</div>
+              <h3>Launch</h3>
+              <p>
+                We ensure a flawless launch and provide ongoing support to help
+                your project thrive.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="section team" id="team">
+      <div class="team-container">
+        <h2 class="display-font reveal">Meet Our Team</h2>
+        <div class="team-grid">
+          <div class="team-member reveal">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+              alt="Team Member 1"
+              class="member-image"
+            />
+            <div class="member-info">
+              <h3 class="member-name">Alex Chen</h3>
+              <p class="member-role">Creative Director</p>
+            </div>
+          </div>
+          <div class="team-member reveal">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+              alt="Team Member 2"
+              class="member-image"
+            />
+            <div class="member-info">
+              <h3 class="member-name">Sarah Johnson</h3>
+              <p class="member-role">Lead Designer</p>
+            </div>
+          </div>
+          <div class="team-member reveal">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+              alt="Team Member 3"
+              class="member-image"
+            />
+            <div class="member-info">
+              <h3 class="member-name">Marcus Williams</h3>
+              <p class="member-role">Tech Lead</p>
+            </div>
+          </div>
+          <div class="team-member reveal">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png"
+              alt="Team Member 4"
+              class="member-image"
+            />
+            <div class="member-info">
+              <h3 class="member-name">Emma Davis</h3>
+              <p class="member-role">Motion Designer</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Video Section -->
+    <section class="section video-section">
+      <video class="video-bg" autoplay muted loop playsinline>
+        <source
+          src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div class="video-overlay"></div>
+      <div class="video-content reveal">
+        <h2 class="display-font">Watch Our Story</h2>
+        <p>Discover how we transform ideas into digital masterpieces</p>
+        <div class="play-button" id="playButton">
+          <div class="play-icon"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact" id="contact">
+      <div class="contact-container">
+        <div class="contact-info reveal">
+          <h2 class="display-font">Let's create something amazing together</h2>
+          <p>
+            Ready to transform your digital presence? We're here to help bring
+            your vision to life.
+          </p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <div class="contact-label">Email</div>
+              <div class="contact-value">hello@atelier.studio</div>
+            </div>
+            <div class="contact-item">
+              <div class="contact-label">Phone</div>
+              <div class="contact-value">+1 (555) 123-4567</div>
+            </div>
+            <div class="contact-item">
+              <div class="contact-label">Address</div>
+              <div class="contact-value">
+                123 Creative Street<br />San Francisco, CA 94107
+              </div>
+            </div>
+          </div>
+        </div>
+        <form class="contact-form reveal">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div class="form-group">
+            <label for="project">Project Type</label>
+            <input
+              type="text"
+              id="project"
+              name="project"
+              placeholder="e.g. Web Design, Branding"
+            />
+          </div>
+          <div class="form-group">
+            <label for="message">Tell us about your project</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="submit-btn">Send Message</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="#">Instagram</a>
+          <a href="#">Behance</a>
+          <a href="#">Dribbble</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">Twitter</a>
+        </div>
+        <div class="copyright">&copy; 2025 ATELIER. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <script>
+      // Loading animation
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Gallery functionality
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      const galleryNav = document.getElementById("galleryNav");
+      const galleryTrack = document.getElementById("galleryTrack");
+      let currentSlide = 0;
+      let autoplayInterval;
+
+      // Create navigation dots
+      galleryItems.forEach((_, index) => {
+        const dot = document.createElement("div");
+        dot.className = "gallery-dot";
+        if (index === 0) dot.classList.add("active");
+        dot.addEventListener("click", () => goToSlide(index));
+        galleryNav.appendChild(dot);
+      });
+
+      function goToSlide(index) {
+        currentSlide = index;
+        galleryTrack.style.transform = `translateX(-${index * 100}vw)`;
+
+        // Update active states
+        document.querySelectorAll(".gallery-dot").forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+
+        galleryItems.forEach((item, i) => {
+          item.classList.toggle("active", i === index);
+        });
+
+        // Reset autoplay
+        clearInterval(autoplayInterval);
+        startAutoplay();
+      }
+
+      function nextSlide() {
+        goToSlide((currentSlide + 1) % galleryItems.length);
+      }
+
+      function startAutoplay() {
+        autoplayInterval = setInterval(nextSlide, 5000);
+      }
+
+      startAutoplay();
+
+      // Navigation scroll effect
+      const header = document.getElementById("header");
+      let lastScroll = 0;
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 100) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+
+        lastScroll = currentScroll;
+      });
+
+      // Mobile menu toggle
+      const menuToggle = document.getElementById("menuToggle");
+      const navLinks = document.getElementById("navLinks");
+
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("active");
+        navLinks.classList.toggle("active");
+      });
+
+      // Close mobile menu on link click
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          menuToggle.classList.remove("active");
+          navLinks.classList.remove("active");
+        });
+      });
+
+      // Reveal animations
+      const reveals = document.querySelectorAll(".reveal");
+
+      function checkReveal() {
+        reveals.forEach((element) => {
+          const windowHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const elementVisible = 150;
+
+          if (elementTop < windowHeight - elementVisible) {
+            element.classList.add("active");
+          }
+        });
+      }
+
+      window.addEventListener("scroll", checkReveal);
+      checkReveal();
+
+      // Filter functionality
+      const filterTabs = document.querySelectorAll(".filter-tab");
+      const workItems = document.querySelectorAll(".work-item");
+
+      filterTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const filter = tab.dataset.filter;
+
+          // Update active tab
+          filterTabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          // Filter items
+          workItems.forEach((item) => {
+            if (filter === "all" || item.dataset.category === filter) {
+              item.style.display = "block";
+              setTimeout(() => (item.style.opacity = "1"), 10);
+            } else {
+              item.style.opacity = "0";
+              setTimeout(() => (item.style.display = "none"), 300);
+            }
+          });
+        });
+      });
+
+      // Smooth scrolling for navigation links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Form submission
+      document
+        .querySelector(".contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Thank you for your message! We'll get back to you soon.");
+          e.target.reset();
+        });
+
+      // Play button functionality
+      const playButton = document.getElementById("playButton");
+      const videoBg = document.querySelector(".video-bg");
+
+      playButton.addEventListener("click", () => {
+        if (videoBg.paused) {
+          videoBg.play();
+          playButton.innerHTML =
+            '<div style="width: 20px; height: 20px; display: flex; gap: 5px;"><div style="width: 6px; height: 100%; background: #fff;"></div><div style="width: 6px; height: 100%; background: #fff;"></div></div>';
+        } else {
+          videoBg.pause();
+          playButton.innerHTML = '<div class="play-icon"></div>';
+        }
+      });
+
+      // Parallax effect for images
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(
+          ".gallery-image, .about-image img, .member-image",
+        );
+
+        parallaxElements.forEach((element) => {
+          const speed = 0.5;
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translateY(${yPos}px)`;
+        });
+      });
+
+      // Magnetic button effect
+      document
+        .querySelectorAll(".submit-btn, .play-button, .filter-tab")
+        .forEach((button) => {
+          button.addEventListener("mousemove", (e) => {
+            const rect = button.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+
+            button.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+          });
+
+          button.addEventListener("mouseleave", () => {
+            button.style.transform = "translate(0, 0)";
+          });
+        });
+    </script>
+  </body>
+</html>

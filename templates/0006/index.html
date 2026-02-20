@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Horizontal Gallery Experience</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Montserrat:wght@100;300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-color: #0a0a0a;
+        --text-light: #999;
+        --transition: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background-color: var(--bg-color);
+        color: #fff;
+        overflow-y: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: screen;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.2s ease,
+          height 0.2s ease;
+      }
+
+      .cursor.large {
+        width: 150px;
+        height: 150px;
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: linear-gradient(
+          to bottom,
+          rgba(10, 10, 10, 0.95),
+          transparent
+        );
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 28px;
+        letter-spacing: 2px;
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        text-decoration: none;
+        color: var(--text-light);
+        font-size: 13px;
+        font-weight: 300;
+        letter-spacing: 1px;
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+      }
+
+      .nav-menu a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: #fff;
+        transition: width 0.3s var(--transition);
+      }
+
+      .nav-menu a:hover {
+        color: #fff;
+      }
+
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* Horizontal Scroll Container */
+      .horizontal-container {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        transition: transform 0.8s var(--transition);
+      }
+
+      .section {
+        min-width: 100vw;
+        height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px 20px;
+      }
+
+      /* Gallery Grid */
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: minmax(200px, auto);
+        gap: 15px;
+        width: 100%;
+        max-width: 1600px;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 20px;
+      }
+
+      /* Scrollbar Styling */
+      .gallery-grid::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .gallery-grid::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .gallery-grid::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+      }
+
+      /* Gallery Items */
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        background: #111;
+        border-radius: 8px;
+        transition: all 0.5s var(--transition);
+      }
+
+      .gallery-item:nth-child(5n + 1) {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+
+      .gallery-item:nth-child(7n + 2) {
+        grid-column: span 2;
+      }
+
+      .gallery-item:nth-child(11n + 3) {
+        grid-row: span 2;
+      }
+
+      /* Text Items */
+      .text-item {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        cursor: default;
+        transition: all 0.5s ease;
+      }
+
+      .text-item:hover {
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .text-item.quote {
+        grid-column: span 3;
+        grid-row: span 2;
+      }
+
+      .text-item.statement {
+        grid-column: span 2;
+        grid-row: span 1;
+      }
+
+      .text-content h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 20px;
+        font-style: italic;
+      }
+
+      .text-content h3 {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 32px;
+        font-weight: 300;
+        line-height: 1.3;
+        margin-bottom: 15px;
+      }
+
+      .text-content p {
+        font-family: "Montserrat", sans-serif;
+        font-size: 16px;
+        font-weight: 300;
+        line-height: 1.8;
+        opacity: 0.8;
+      }
+
+      .text-content .author {
+        font-family: "Montserrat", sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 20px;
+        opacity: 0.6;
+      }
+
+      .text-content .large-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 72px;
+        letter-spacing: 3px;
+        line-height: 1;
+      }
+
+      .gallery-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.2);
+        transition: all 0.5s var(--transition);
+        transform: scale(1);
+      }
+
+      .gallery-item.active .gallery-media {
+        filter: grayscale(0%) contrast(1);
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 60%,
+          rgba(0, 0, 0, 0.9)
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 20px;
+      }
+
+      .gallery-item.active .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-number {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 32px;
+        opacity: 0.2;
+        transition: all 0.4s ease;
+      }
+
+      .gallery-item.active .gallery-number {
+        opacity: 0.4;
+        transform: translate(5px, 5px);
+      }
+
+      .gallery-title {
+        font-family: "Playfair Display", serif;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 5px;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.4s ease 0.1s;
+      }
+
+      .gallery-item.active .gallery-title {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .gallery-subtitle {
+        font-family: "Montserrat", sans-serif;
+        font-size: 13px;
+        font-weight: 300;
+        color: var(--text-light);
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.4s ease 0.2s;
+      }
+
+      .gallery-item.active .gallery-subtitle {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Section Titles */
+      .section-title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: "Bebas Neue", cursive;
+        font-size: 120px;
+        letter-spacing: 10px;
+        opacity: 0.05;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
+      /* Loading */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 24px;
+        letter-spacing: 4px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 1200px) {
+        .gallery-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .text-content h2 {
+          font-size: 36px;
+        }
+
+        .text-content .large-text {
+          font-size: 48px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          cursor: auto;
+        }
+
+        .cursor {
+          display: none;
+        }
+
+        .gallery-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        .section-title {
+          font-size: 60px;
+        }
+
+        .gallery-item .gallery-media {
+          filter: grayscale(0%);
+        }
+
+        .text-content h2 {
+          font-size: 28px;
+        }
+
+        .text-content h3 {
+          font-size: 24px;
+        }
+
+        .text-content .large-text {
+          font-size: 36px;
+        }
+
+        .text-item.quote,
+        .text-item.statement {
+          grid-column: span 2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING EXPERIENCE</div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <nav class="nav-container">
+        <div class="logo">HORIZONTAL GALLERY</div>
+        <ul class="nav-menu">
+          <li><a onclick="scrollToSection(0)">FEATURED</a></li>
+          <li><a onclick="scrollToSection(1)">COLLECTIONS</a></li>
+          <li><a onclick="scrollToSection(2)">ARTISTS</a></li>
+          <li><a onclick="scrollToSection(3)">EXHIBITIONS</a></li>
+          <li><a onclick="scrollToSection(4)">ARCHIVE</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Horizontal Container -->
+    <div class="horizontal-container" id="horizontalContainer">
+      <!-- Section 1: Featured -->
+      <section class="section">
+        <h2 class="section-title">FEATURED</h2>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <span class="gallery-number">01</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Ethereal Landscapes</h3>
+              <p class="gallery-subtitle">Digital Art Collection</p>
+            </div>
+          </div>
+
+          <div class="text-item quote">
+            <div class="text-content">
+              <h2>"Art is not what you see, but what you make others see."</h2>
+              <p class="author">— Edgar Degas</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">02</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Motion Studies</h3>
+              <p class="gallery-subtitle">Video Installation</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">03</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Urban Fragments</h3>
+              <p class="gallery-subtitle">Photography Series</p>
+            </div>
+          </div>
+
+          <div class="text-item statement">
+            <div class="text-content">
+              <h3>Contemporary Vision</h3>
+              <p>
+                Exploring the boundaries between digital and physical realms
+                through innovative artistic expression.
+              </p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">04</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Nature in Motion</h3>
+              <p class="gallery-subtitle">Video Art</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">05</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Chromatic Dreams</h3>
+              <p class="gallery-subtitle">Contemporary Art</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">06</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Minimal Forms</h3>
+              <p class="gallery-subtitle">Sculptural Photography</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Collections -->
+      <section class="section">
+        <h2 class="section-title">COLLECTIONS</h2>
+        <div class="gallery-grid">
+          <div class="text-item">
+            <div class="text-content">
+              <div class="large-text">2024</div>
+              <p>COLLECTION</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">07</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Abstract Reality</h3>
+              <p class="gallery-subtitle">Mixed Media</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">08</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Animated Dreams</h3>
+              <p class="gallery-subtitle">Animation Art</p>
+            </div>
+          </div>
+
+          <div class="text-item quote">
+            <div class="text-content">
+              <h2>
+                "Every artist dips his brush in his own soul, and paints his own
+                nature into his pictures."
+              </h2>
+              <p class="author">— Henry Ward Beecher</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">09</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Geometric Visions</h3>
+              <p class="gallery-subtitle">Digital Sculpture</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">10</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Time Fragments</h3>
+              <p class="gallery-subtitle">Conceptual Art</p>
+            </div>
+          </div>
+
+          <div class="text-item statement">
+            <div class="text-content">
+              <h3>Curated Excellence</h3>
+              <p>
+                A carefully selected collection showcasing the evolution of
+                contemporary digital artistry.
+              </p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">11</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Fluid Dynamics</h3>
+              <p class="gallery-subtitle">Video Sculpture</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Artists -->
+      <section class="section">
+        <h2 class="section-title">ARTISTS</h2>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <span class="gallery-number">12</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Artist Portfolio</h3>
+              <p class="gallery-subtitle">Contemporary Works</p>
+            </div>
+          </div>
+
+          <div class="text-item">
+            <div class="text-content">
+              <h3>Featured Artists</h3>
+              <p>
+                Discover the visionaries shaping tomorrow's artistic landscape.
+              </p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">13</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Video Artist</h3>
+              <p class="gallery-subtitle">Moving Images</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">14</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Emerging Talent</h3>
+              <p class="gallery-subtitle">New Voices</p>
+            </div>
+          </div>
+
+          <div class="text-item quote">
+            <div class="text-content">
+              <h2>
+                "The purpose of art is washing the dust of daily life off our
+                souls."
+              </h2>
+              <p class="author">— Pablo Picasso</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">15</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Master Works</h3>
+              <p class="gallery-subtitle">Established Artist</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">16</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Experimental Film</h3>
+              <p class="gallery-subtitle">Avant-garde Cinema</p>
+            </div>
+          </div>
+
+          <div class="text-item">
+            <div class="text-content">
+              <div class="large-text">32</div>
+              <p>ARTISTS FEATURED</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Exhibitions -->
+      <section class="section">
+        <h2 class="section-title">EXHIBITIONS</h2>
+        <div class="gallery-grid">
+          <div class="text-item statement">
+            <div class="text-content">
+              <h3>Current Exhibition</h3>
+              <p>
+                Experience immersive installations that challenge perception and
+                redefine space.
+              </p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">17</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Current Show</h3>
+              <p class="gallery-subtitle">Main Gallery</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">18</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/348150cc-43eb-4b80-b00c-a39ee9b38cb8/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Video Exhibition</h3>
+              <p class="gallery-subtitle">Screening Room</p>
+            </div>
+          </div>
+
+          <div class="text-item quote">
+            <div class="text-content">
+              <h2>
+                "Art enables us to find ourselves and lose ourselves at the same
+                time."
+              </h2>
+              <p class="author">— Thomas Merton</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">19</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_3.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Group Show</h3>
+              <p class="gallery-subtitle">Collective Vision</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">20</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Solo Exhibition</h3>
+              <p class="gallery-subtitle">Featured Artist</p>
+            </div>
+          </div>
+
+          <div class="text-item">
+            <div class="text-content">
+              <h3>Visit Us</h3>
+              <p>Open Tuesday to Sunday<br />10:00 AM - 8:00 PM</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Archive -->
+      <section class="section">
+        <h2 class="section-title">ARCHIVE</h2>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <span class="gallery-number">21</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Past Exhibition</h3>
+              <p class="gallery-subtitle">2023 Collection</p>
+            </div>
+          </div>
+
+          <div class="text-item">
+            <div class="text-content">
+              <div class="large-text">EST.</div>
+              <div class="large-text">2020</div>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">22</span>
+            <video class="gallery-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Archive Footage</h3>
+              <p class="gallery-subtitle">Historical Documentation</p>
+            </div>
+          </div>
+
+          <div class="text-item quote">
+            <div class="text-content">
+              <h2>
+                "The artist is nothing without the gift, but the gift is nothing
+                without work."
+              </h2>
+              <p class="author">— Émile Zola</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">23</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_2.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Classic Works</h3>
+              <p class="gallery-subtitle">Permanent Collection</p>
+            </div>
+          </div>
+
+          <div class="gallery-item">
+            <span class="gallery-number">24</span>
+            <img
+              class="gallery-media"
+              src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_3.png"
+              alt="Gallery Image"
+            />
+            <div class="gallery-overlay">
+              <h3 class="gallery-title">Archive Material</h3>
+              <p class="gallery-subtitle">Research Collection</p>
+            </div>
+          </div>
+
+          <div class="text-item statement">
+            <div class="text-content">
+              <h3>Preserving History</h3>
+              <p>
+                Four years of groundbreaking exhibitions and artistic innovation
+                archived for future generations.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Custom Cursor with area detection
+      const cursor = document.querySelector(".cursor");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        // Check which gallery items are near the cursor
+        const galleryItems = document.querySelectorAll(
+          ".gallery-item:not(.text-item)",
+        );
+        galleryItems.forEach((item) => {
+          const rect = item.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const distance = Math.sqrt(
+            Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2),
+          );
+
+          if (distance < 150) {
+            item.classList.add("active");
+            cursor.classList.add("large");
+          } else {
+            item.classList.remove("active");
+          }
+        });
+
+        // Reset cursor size if not near any item
+        const activeItems = document.querySelectorAll(".gallery-item.active");
+        if (activeItems.length === 0) {
+          cursor.classList.remove("large");
+        }
+      });
+
+      function animateCursor() {
+        cursorX += (mouseX - cursorX) * 0.2;
+        cursorY += (mouseY - cursorY) * 0.2;
+        cursor.style.left = cursorX + "px";
+        cursor.style.top = cursorY + "px";
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Horizontal scroll navigation
+      let currentSection = 0;
+      const totalSections = 5;
+
+      function scrollToSection(index) {
+        if (index >= 0 && index < totalSections) {
+          currentSection = index;
+          const container = document.getElementById("horizontalContainer");
+          container.style.transform = `translateX(-${index * 100}vw)`;
+        }
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" && currentSection < totalSections - 1) {
+          scrollToSection(currentSection + 1);
+        } else if (e.key === "ArrowLeft" && currentSection > 0) {
+          scrollToSection(currentSection - 1);
+        }
+      });
+
+      // Mouse wheel horizontal scroll
+      let isScrolling = false;
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          if (!isScrolling) {
+            isScrolling = true;
+
+            if (e.deltaY > 0 && currentSection < totalSections - 1) {
+              scrollToSection(currentSection + 1);
+            } else if (e.deltaY < 0 && currentSection > 0) {
+              scrollToSection(currentSection - 1);
+            }
+
+            setTimeout(() => {
+              isScrolling = false;
+            }, 800);
+          }
+        },
+        { passive: true },
+      );
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Touch support for mobile
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (
+          touchEndX < touchStartX - 50 &&
+          currentSection < totalSections - 1
+        ) {
+          scrollToSection(currentSection + 1);
+        }
+        if (touchEndX > touchStartX + 50 && currentSection > 0) {
+          scrollToSection(currentSection - 1);
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,3 +1,5 @@
+export type TemplateType = "html" | "nextjs";
+
 export interface TemplateCategory {
   id: string;
   label: string;
@@ -10,6 +12,7 @@ export interface Template {
   category: string;
   imageUrl: string;
   path: string;
+  type?: TemplateType;
   techStack?: string[];
   tags?: string[];
   features?: string[];

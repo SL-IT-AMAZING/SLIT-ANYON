@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Narrative Gallery - A Visual Journey</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Oswald:wght@200;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-dark: #050505;
+        --bg-medium: #0f0f0f;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --accent: #ff6b6b;
+        --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor with Trail Effect */
+      .cursor-main {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--text-primary);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 10000;
+        transition:
+          transform 0.15s ease-out,
+          border-color 0.3s ease;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-trail {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.3s ease-out;
+      }
+
+      .cursor-main.hover {
+        transform: scale(2);
+        border-color: var(--accent);
+      }
+
+      /* Floating Navigation Orbs */
+      .nav-orbs {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .nav-orb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .nav-orb::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+        color: var(--text-secondary);
+      }
+
+      .nav-orb:hover::before {
+        opacity: 1;
+      }
+
+      .nav-orb.active {
+        background: var(--text-primary);
+        transform: scale(1.5);
+      }
+
+      /* Main Container */
+      .story-container {
+        position: relative;
+        width: 100%;
+      }
+
+      /* Story Sections */
+      .story-section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+      }
+
+      /* Chapter Indicator */
+      .chapter-indicator {
+        position: fixed;
+        top: 40px;
+        left: 40px;
+        z-index: 1000;
+        font-family: "Oswald", sans-serif;
+        font-weight: 200;
+        font-size: 14px;
+        letter-spacing: 3px;
+        color: var(--text-secondary);
+        transition: all 0.5s ease;
+      }
+
+      .chapter-number {
+        font-size: 48px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-top: 5px;
+      }
+
+      /* Hero Section */
+      .hero-section {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 10;
+      }
+
+      .hero-title h1 {
+        font-family: "Bodoni Moda", serif;
+        font-size: clamp(60px, 8vw, 120px);
+        font-weight: 400;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1.2s ease forwards 0.5s;
+      }
+
+      .hero-subtitle {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 16px;
+        font-weight: 300;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        opacity: 0;
+        animation: fadeInUp 1.2s ease forwards 0.8s;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero-bg-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: "Oswald", sans-serif;
+        font-size: 40vw;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.02);
+        letter-spacing: -20px;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
+      /* Floating Gallery Grid */
+      .floating-grid {
+        position: relative;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 20px;
+        padding: 100px 20px;
+      }
+
+      .float-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: var(--bg-medium);
+        cursor: pointer;
+        transition: all 0.6s var(--transition-smooth);
+      }
+
+      .float-item:nth-child(1) {
+        grid-column: span 5;
+        grid-row: span 2;
+        transform: translateY(0);
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .float-item:nth-child(2) {
+        grid-column: span 3;
+        transform: translateY(40px);
+        animation: float 6s ease-in-out infinite 1s;
+      }
+
+      .float-item:nth-child(3) {
+        grid-column: span 4;
+        grid-row: span 2;
+        transform: translateY(-20px);
+        animation: float 6s ease-in-out infinite 2s;
+      }
+
+      .float-item:nth-child(4) {
+        grid-column: span 3;
+        transform: translateY(60px);
+        animation: float 6s ease-in-out infinite 0.5s;
+      }
+
+      .float-item:nth-child(5) {
+        grid-column: span 6;
+        transform: translateY(-40px);
+        animation: float 6s ease-in-out infinite 1.5s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      .float-item:hover {
+        transform: scale(1.05) translateY(-10px) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        z-index: 10;
+      }
+
+      .float-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.6s ease;
+        filter: brightness(0.7);
+      }
+
+      .float-item:hover .float-media {
+        filter: brightness(1);
+        transform: scale(1.1);
+      }
+
+      .float-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+      }
+
+      .float-item:hover .float-content {
+        transform: translateY(0);
+      }
+
+      .float-title {
+        font-family: "Crimson Text", serif;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .float-description {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* Text Block Variations */
+      .text-block {
+        padding: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.4s ease;
+      }
+
+      .text-block:hover {
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .quote-large {
+        font-family: "Bodoni Moda", serif;
+        font-size: clamp(32px, 4vw, 48px);
+        font-style: italic;
+        line-height: 1.3;
+        margin-bottom: 20px;
+      }
+
+      .quote-author {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      /* Split Screen Section */
+      .split-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 100vh;
+        position: relative;
+      }
+
+      .split-left {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        background: var(--bg-medium);
+      }
+
+      .split-right {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .split-content {
+        max-width: 500px;
+      }
+
+      .split-content h2 {
+        font-family: "Bodoni Moda", serif;
+        font-size: clamp(40px, 5vw, 64px);
+        font-weight: 400;
+        margin-bottom: 30px;
+        line-height: 1.1;
+      }
+
+      .split-content p {
+        font-size: 18px;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+      }
+
+      .split-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scale(1.1);
+        transition: transform 8s ease;
+      }
+
+      .split-right:hover .split-media {
+        transform: scale(1);
+      }
+
+      /* Masonry Gallery */
+      .masonry-section {
+        padding: 100px 40px;
+        position: relative;
+      }
+
+      .masonry-grid {
+        columns: 4;
+        column-gap: 20px;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .masonry-item {
+        break-inside: avoid;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .masonry-item:hover {
+        transform: translateY(-5px);
+      }
+
+      .masonry-media {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: all 0.5s ease;
+      }
+
+      .masonry-item:hover .masonry-media {
+        transform: scale(1.05);
+      }
+
+      .masonry-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .masonry-item:hover .masonry-overlay {
+        opacity: 1;
+      }
+
+      .masonry-number {
+        font-family: "Oswald", sans-serif;
+        font-size: 48px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      /* Fullscreen Video Section */
+      .video-section {
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .video-bg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        transform: translate(-50%, -50%);
+        object-fit: cover;
+        filter: brightness(0.3);
+      }
+
+      .video-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 800px;
+        padding: 40px;
+      }
+
+      .video-content h2 {
+        font-family: "Bodoni Moda", serif;
+        font-size: clamp(48px, 6vw, 80px);
+        font-weight: 400;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .video-content p {
+        font-size: 20px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        opacity: 0;
+        animation: fadeInUp 1s ease forwards 0.3s;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 80px 40px;
+        text-align: center;
+        background: var(--bg-medium);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .footer-title {
+        font-family: "Oswald", sans-serif;
+        font-size: 120px;
+        font-weight: 600;
+        letter-spacing: -5px;
+        opacity: 0.05;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+      }
+
+      .footer-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        letter-spacing: 1px;
+        transition: color 0.3s ease;
+        cursor: pointer;
+      }
+
+      .footer-links a:hover {
+        color: var(--text-primary);
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-dark);
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.8s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-bar {
+        width: 200px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 0 auto 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: var(--text-primary);
+        animation: loadProgress 2s ease forwards;
+      }
+
+      @keyframes loadProgress {
+        from {
+          width: 0;
+        }
+        to {
+          width: 100%;
+        }
+      }
+
+      .loader-text {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        body {
+          cursor: auto;
+        }
+
+        .cursor-main,
+        .cursor-trail {
+          display: none;
+        }
+
+        .floating-grid {
+          grid-template-columns: repeat(6, 1fr);
+        }
+
+        .split-section {
+          grid-template-columns: 1fr;
+        }
+
+        .split-left {
+          min-height: 50vh;
+        }
+
+        .masonry-grid {
+          columns: 2;
+        }
+
+        .nav-orbs {
+          right: 20px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero-title h1 {
+          font-size: 48px;
+        }
+
+        .floating-grid {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .float-item {
+          grid-column: span 1 !important;
+          animation: none !important;
+        }
+
+        .chapter-indicator {
+          top: 20px;
+          left: 20px;
+        }
+
+        .masonry-grid {
+          columns: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor-main"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+        <div class="loader-text">Creating Experience</div>
+      </div>
+    </div>
+
+    <!-- Chapter Indicator -->
+    <div class="chapter-indicator">
+      <span>Chapter</span>
+      <span class="chapter-number" id="chapterNumber">01</span>
+    </div>
+
+    <!-- Navigation Orbs -->
+    <nav class="nav-orbs">
+      <div
+        class="nav-orb active"
+        data-title="Intro"
+        onclick="scrollToChapter(0)"
+      ></div>
+      <div
+        class="nav-orb"
+        data-title="Gallery"
+        onclick="scrollToChapter(1)"
+      ></div>
+      <div
+        class="nav-orb"
+        data-title="Story"
+        onclick="scrollToChapter(2)"
+      ></div>
+      <div
+        class="nav-orb"
+        data-title="Works"
+        onclick="scrollToChapter(3)"
+      ></div>
+      <div
+        class="nav-orb"
+        data-title="Vision"
+        onclick="scrollToChapter(4)"
+      ></div>
+      <div class="nav-orb" data-title="End" onclick="scrollToChapter(5)"></div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="story-container">
+      <!-- Hero Section -->
+      <section class="story-section hero-section" data-chapter="01">
+        <div class="hero-bg-text">ART</div>
+        <div class="hero-title">
+          <h1>Narrative Gallery</h1>
+          <p class="hero-subtitle">A Journey Through Visual Stories</p>
+        </div>
+      </section>
+
+      <!-- Floating Gallery Grid -->
+      <section class="story-section" data-chapter="02">
+        <div class="floating-grid">
+          <div class="float-item">
+            <img
+              class="float-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="float-content">
+              <h3 class="float-title">Ethereal Dimensions</h3>
+              <p class="float-description">
+                Exploring the boundaries of perception
+              </p>
+            </div>
+          </div>
+
+          <div class="float-item text-block">
+            <div>
+              <p class="quote-large">
+                "Art is the lie that enables us to realize the truth."
+              </p>
+              <p class="quote-author">Pablo Picasso</p>
+            </div>
+          </div>
+
+          <div class="float-item">
+            <video class="float-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="float-content">
+              <h3 class="float-title">Motion & Time</h3>
+              <p class="float-description">Capturing fleeting moments</p>
+            </div>
+          </div>
+
+          <div class="float-item">
+            <img
+              class="float-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="float-content">
+              <h3 class="float-title">Urban Poetry</h3>
+              <p class="float-description">City rhythms in visual form</p>
+            </div>
+          </div>
+
+          <div class="float-item">
+            <video class="float-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="float-content">
+              <h3 class="float-title">Natural Flow</h3>
+              <p class="float-description">Organic movements captured</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Split Screen Story -->
+      <section class="story-section split-section" data-chapter="03">
+        <div class="split-left">
+          <div class="split-content">
+            <h2>The Art of Seeing</h2>
+            <p>
+              In every frame lies a universe waiting to be discovered. Our
+              collection represents not just images, but portals to new
+              dimensions of understanding.
+            </p>
+            <p>
+              Each piece tells a story that transcends the boundaries of
+              traditional narrative, inviting viewers to become co-creators in
+              the artistic experience.
+            </p>
+          </div>
+        </div>
+        <div class="split-right">
+          <img
+            class="split-media"
+            src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+            alt="Gallery Feature"
+          />
+        </div>
+      </section>
+
+      <!-- Masonry Gallery -->
+      <section class="story-section masonry-section" data-chapter="04">
+        <div class="masonry-grid">
+          <div class="masonry-item">
+            <img
+              class="masonry-media"
+              src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+              alt="Gallery Image"
+            />
+            <div class="masonry-overlay">
+              <span class="masonry-number">01</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <video class="masonry-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="masonry-overlay">
+              <span class="masonry-number">02</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <img
+              class="masonry-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="masonry-overlay">
+              <span class="masonry-number">03</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <video class="masonry-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="masonry-overlay">
+              <span class="masonry-number">04</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <img
+              class="masonry-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png"
+              alt="Gallery Image"
+            />
+            <div class="masonry-overlay">
+              <span class="masonry-number">05</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <video class="masonry-media" autoplay muted loop playsinline>
+              <source
+                src="https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4"
+                type="video/mp4"
+              />
+            </video>
+            <div class="masonry-overlay">
+              <span class="masonry-number">06</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <img
+              class="masonry-media"
+              src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png"
+              alt="Gallery Image"
+            />
+            <div class="masonry-overlay">
+              <span class="masonry-number">07</span>
+            </div>
+          </div>
+
+          <div class="masonry-item">
+            <img
+              class="masonry-media"
+              src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png"
+              alt="Gallery Image"
+            />
+            <div class="masonry-overlay">
+              <span class="masonry-number">08</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fullscreen Video Section -->
+      <section class="story-section video-section" data-chapter="05">
+        <video class="video-bg" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/47470e92-df6a-48b3-b7bd-921ee2a795b9/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="video-content">
+          <h2>Vision Beyond Boundaries</h2>
+          <p>
+            Where imagination meets reality, and every moment becomes a
+            masterpiece waiting to be discovered.
+          </p>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="story-section footer" data-chapter="06">
+        <div class="footer-title">NARRATIVE</div>
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Artists</a>
+            <a href="#">Exhibitions</a>
+            <a href="#">Contact</a>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 14px">
+            © 2024 Narrative Gallery. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Custom Cursor Movement
+      const cursorMain = document.querySelector(".cursor-main");
+      const cursorTrail = document.querySelector(".cursor-trail");
+      let mouseX = 0,
+        mouseY = 0;
+      let trailX = 0,
+        trailY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        cursorMain.style.left = mouseX + "px";
+        cursorMain.style.top = mouseY + "px";
+      });
+
+      function animateTrail() {
+        trailX += (mouseX - trailX) * 0.1;
+        trailY += (mouseY - trailY) * 0.1;
+
+        cursorTrail.style.left = trailX + "px";
+        cursorTrail.style.top = trailY + "px";
+
+        requestAnimationFrame(animateTrail);
+      }
+      animateTrail();
+
+      // Cursor hover effects
+      const hoverElements = document.querySelectorAll(
+        "a, .float-item, .masonry-item, .nav-orb",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () =>
+          cursorMain.classList.add("hover"),
+        );
+        el.addEventListener("mouseleave", () =>
+          cursorMain.classList.remove("hover"),
+        );
+      });
+
+      // Chapter Navigation
+      const sections = document.querySelectorAll(".story-section");
+      const navOrbs = document.querySelectorAll(".nav-orb");
+      const chapterNumber = document.getElementById("chapterNumber");
+
+      function updateChapter() {
+        const scrollPos = window.scrollY + window.innerHeight / 2;
+
+        sections.forEach((section, index) => {
+          const top = section.offsetTop;
+          const bottom = top + section.offsetHeight;
+
+          if (scrollPos >= top && scrollPos <= bottom) {
+            // Update chapter number
+            const chapter = section.dataset.chapter;
+            if (chapter) {
+              chapterNumber.textContent = chapter;
+            }
+
+            // Update navigation orbs
+            navOrbs.forEach((orb) => orb.classList.remove("active"));
+            if (navOrbs[index]) {
+              navOrbs[index].classList.add("active");
+            }
+          }
+        });
+      }
+
+      window.addEventListener("scroll", updateChapter);
+
+      // Smooth scroll to chapter
+      function scrollToChapter(index) {
+        if (sections[index]) {
+          sections[index].scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      // Parallax effect on scroll
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+
+        // Hero background text
+        const heroBgText = document.querySelector(".hero-bg-text");
+        if (heroBgText) {
+          heroBgText.style.transform = `translate(-50%, calc(-50% + ${scrolled * 0.5}px))`;
+        }
+
+        // Footer title
+        const footerTitle = document.querySelector(".footer-title");
+        if (footerTitle) {
+          const footerTop = footerTitle.closest(".footer").offsetTop;
+          const relativeScroll = scrolled - footerTop;
+          footerTitle.style.transform = `translate(calc(-50% + ${relativeScroll * 0.1}px), -50%)`;
+        }
+
+        ticking = false;
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener("scroll", requestTick);
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 2000);
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements for animation
+      document.querySelectorAll(".float-item, .masonry-item").forEach((el) => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(30px)";
+        el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liquid Dreams - Experimental Portfolio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #ffffff;
+        --secondary: #000000;
+        --accent: #ff00ff;
+        --fluid: #00ffff;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Liquid Cursor */
+      .liquid-cursor {
+        position: fixed;
+        width: 200px;
+        height: 200px;
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(40px);
+        opacity: 0.4;
+        mix-blend-mode: screen;
+      }
+
+      .liquid-cursor::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: morph 8s infinite;
+      }
+
+      @keyframes morph {
+        0%,
+        100% {
+          border-radius: 50% 50% 50% 50%;
+          transform: scale(1) rotate(0deg);
+        }
+        25% {
+          border-radius: 80% 20% 60% 40%;
+          transform: scale(1.2) rotate(90deg);
+        }
+        50% {
+          border-radius: 20% 80% 40% 60%;
+          transform: scale(0.8) rotate(180deg);
+        }
+        75% {
+          border-radius: 40% 60% 20% 80%;
+          transform: scale(1.1) rotate(270deg);
+        }
+      }
+
+      /* Floating Navigation Orbs */
+      .nav-container {
+        position: fixed;
+        top: 50%;
+        right: 40px;
+        transform: translateY(-50%);
+        z-index: 1000;
+      }
+
+      .nav-orb {
+        width: 60px;
+        height: 60px;
+        margin: 20px 0;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .nav-orb::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+      }
+
+      .nav-orb:hover::before {
+        transform: scale(1.2);
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+      }
+
+      .nav-orb span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .nav-orb:hover span {
+        opacity: 1;
+      }
+
+      .nav-orb.active::before {
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
+      }
+
+      .nav-orb.active span {
+        color: #000;
+        opacity: 1;
+      }
+
+      /* Dimensional Hero Section */
+      .hero-dimension {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .dimension-layer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Floating Gallery Grid */
+      .floating-gallery {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        perspective: 2000px;
+      }
+
+      .gallery-item {
+        position: absolute;
+        width: 300px;
+        height: 400px;
+        transform-style: preserve-3d;
+        transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
+
+      .gallery-item-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.8s;
+      }
+
+      .gallery-item:hover .gallery-item-inner {
+        transform: rotateY(180deg);
+      }
+
+      .gallery-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .gallery-face.front {
+        background-size: cover;
+        background-position: center;
+      }
+
+      .gallery-face.back {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: rotateY(180deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .gallery-info h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .gallery-info p {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      /* Liquid Background */
+      .liquid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .liquid-shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.6;
+        animation: float-random 20s infinite;
+      }
+
+      @keyframes float-random {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(100px, -100px) scale(1.2);
+        }
+        66% {
+          transform: translate(-100px, 100px) scale(0.8);
+        }
+      }
+
+      /* Text Reveal Animation */
+      .hero-text {
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        transform: translateY(-50%);
+        z-index: 100;
+      }
+
+      .hero-title {
+        font-size: clamp(4rem, 10vw, 8rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+        overflow: hidden;
+      }
+
+      .title-word {
+        display: inline-block;
+        overflow: hidden;
+      }
+
+      .title-char {
+        display: inline-block;
+        transform: translateY(100%);
+        animation: reveal-char 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation-delay: calc(var(--char-index) * 0.05s);
+      }
+
+      @keyframes reveal-char {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      /* Sections with Liquid Transitions */
+      .section {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .section::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle at center,
+          transparent 0%,
+          rgba(0, 255, 255, 0.1) 50%,
+          transparent 100%
+        );
+        animation: rotate-gradient 30s linear infinite;
+      }
+
+      @keyframes rotate-gradient {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Morphing Cards */
+      .morph-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .morph-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 30px;
+        padding: 50px;
+        overflow: hidden;
+        transition: all 0.5s;
+        cursor: pointer;
+      }
+
+      .morph-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--accent),
+          var(--fluid),
+          var(--accent)
+        );
+        border-radius: 30px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.5s;
+        animation: gradient-rotate 3s linear infinite;
+      }
+
+      @keyframes gradient-rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .morph-card:hover::before {
+        opacity: 1;
+      }
+
+      .morph-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Floating Elements */
+      .float-element {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
+      .sphere {
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(255, 255, 255, 0.8),
+          rgba(255, 255, 255, 0.1)
+        );
+        border-radius: 50%;
+        animation: float-sphere 15s infinite ease-in-out;
+      }
+
+      @keyframes float-sphere {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(200px, -100px) scale(1.2);
+        }
+      }
+
+      /* Interactive Form */
+      .liquid-form {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .form-field {
+        position: relative;
+        margin-bottom: 40px;
+      }
+
+      .liquid-input {
+        width: 100%;
+        padding: 20px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        font-size: 18px;
+        transition: all 0.3s;
+      }
+
+      .liquid-input:focus {
+        outline: none;
+        border-bottom-color: var(--accent);
+      }
+
+      .liquid-input:focus + .input-wave {
+        transform: scaleX(1);
+      }
+
+      .input-wave {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--fluid));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.5s;
+      }
+
+      .liquid-label {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 18px;
+        opacity: 0.6;
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      .liquid-input:focus + .input-wave + .liquid-label,
+      .liquid-input:not(:placeholder-shown) + .input-wave + .liquid-label {
+        top: -10px;
+        left: 0;
+        font-size: 14px;
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      /* Submit Button */
+      .liquid-button {
+        position: relative;
+        padding: 20px 60px;
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .liquid-button::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.6s;
+      }
+
+      .liquid-button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .liquid-button:hover {
+        border-color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+      }
+
+      /* Video Background */
+      .video-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: -1;
+      }
+
+      .bg-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        filter: blur(2px);
+      }
+
+      /* Mobile Menu */
+      .mobile-menu-trigger {
+        display: none;
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        z-index: 1001;
+        cursor: pointer;
+      }
+
+      .menu-blob {
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+      }
+
+      .menu-blob:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .nav-container {
+          display: none;
+        }
+
+        .mobile-menu-trigger {
+          display: block;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 15vw, 5rem);
+        }
+
+        .gallery-item {
+          width: 250px;
+          height: 350px;
+        }
+
+        .morph-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-blob {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(45deg, var(--accent), var(--fluid));
+        border-radius: 50%;
+        animation: loader-morph 2s infinite;
+      }
+
+      @keyframes loader-morph {
+        0%,
+        100% {
+          border-radius: 50% 50% 50% 50%;
+          transform: scale(1) rotate(0deg);
+        }
+        25% {
+          border-radius: 80% 20% 60% 40%;
+          transform: scale(1.2) rotate(90deg);
+        }
+        50% {
+          border-radius: 20% 80% 40% 60%;
+          transform: scale(0.8) rotate(180deg);
+        }
+        75% {
+          border-radius: 40% 60% 20% 80%;
+          transform: scale(1.1) rotate(270deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-blob"></div>
+    </div>
+
+    <!-- Liquid Cursor -->
+    <div class="liquid-cursor"></div>
+
+    <!-- Floating Navigation -->
+    <nav class="nav-container">
+      <div class="nav-orb active" data-section="0">
+        <span>Home</span>
+      </div>
+      <div class="nav-orb" data-section="1">
+        <span>Work</span>
+      </div>
+      <div class="nav-orb" data-section="2">
+        <span>About</span>
+      </div>
+      <div class="nav-orb" data-section="3">
+        <span>Lab</span>
+      </div>
+      <div class="nav-orb" data-section="4">
+        <span>Contact</span>
+      </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-trigger">
+      <div class="menu-blob">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-dimension" id="section-0">
+      <div class="liquid-bg">
+        <div
+          class="liquid-shape"
+          style="
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(
+              circle,
+              rgba(255, 0, 255, 0.3) 0%,
+              transparent 70%
+            );
+            top: -200px;
+            right: -200px;
+          "
+        ></div>
+        <div
+          class="liquid-shape"
+          style="
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(
+              circle,
+              rgba(0, 255, 255, 0.3) 0%,
+              transparent 70%
+            );
+            bottom: -100px;
+            left: -100px;
+            animation-delay: -5s;
+          "
+        ></div>
+        <div
+          class="liquid-shape"
+          style="
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(
+              circle,
+              rgba(255, 255, 0, 0.2) 0%,
+              transparent 70%
+            );
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+          "
+        ></div>
+      </div>
+
+      <div class="video-container">
+        <video class="bg-video" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+
+      <div class="hero-text">
+        <h1 class="hero-title">
+          <span class="title-word">LIQUID</span>
+          <br />
+          <span class="title-word">DREAMS</span>
+        </h1>
+      </div>
+
+      <div class="floating-gallery">
+        <div
+          class="gallery-item"
+          style="
+            top: 10%;
+            left: 60%;
+            transform: translateZ(-200px) rotateY(25deg);
+          "
+        >
+          <div class="gallery-item-inner">
+            <div
+              class="gallery-face front"
+              style="
+                background-image: url(&quot;https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png&quot;);
+              "
+            ></div>
+            <div class="gallery-face back">
+              <div class="gallery-info">
+                <h3>Neural Dreams</h3>
+                <p>Where consciousness meets digital reality</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="gallery-item"
+          style="
+            top: 50%;
+            right: 10%;
+            transform: translateZ(-100px) rotateY(-15deg);
+          "
+        >
+          <div class="gallery-item-inner">
+            <div
+              class="gallery-face front"
+              style="
+                background-image: url(&quot;https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png&quot;);
+              "
+            ></div>
+            <div class="gallery-face back">
+              <div class="gallery-info">
+                <h3>Quantum Flow</h3>
+                <p>Particles dancing in digital space</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="gallery-item"
+          style="
+            bottom: 15%;
+            left: 20%;
+            transform: translateZ(-150px) rotateY(30deg);
+          "
+        >
+          <div class="gallery-item-inner">
+            <div
+              class="gallery-face front"
+              style="
+                background-image: url(&quot;https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png&quot;);
+              "
+            ></div>
+            <div class="gallery-face back">
+              <div class="gallery-info">
+                <h3>Ethereal Visions</h3>
+                <p>Beyond the boundaries of perception</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="float-element" style="top: 20%; right: 30%">
+        <div class="sphere"></div>
+      </div>
+    </section>
+
+    <!-- Work Section -->
+    <section class="section" id="section-1">
+      <div class="section-content">
+        <h2 style="font-size: 3rem; margin-bottom: 50px; text-align: center">
+          Dimensional Works
+        </h2>
+        <div class="morph-grid">
+          <div class="morph-card">
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+              alt="Project 1"
+              style="
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                border-radius: 20px;
+                margin-bottom: 20px;
+              "
+            />
+            <h3>Synaptic Networks</h3>
+            <p>
+              Exploring the intersection of neural pathways and digital
+              architecture
+            </p>
+          </div>
+          <div class="morph-card">
+            <img
+              src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png"
+              alt="Project 2"
+              style="
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                border-radius: 20px;
+                margin-bottom: 20px;
+              "
+            />
+            <h3>Chromatic Waves</h3>
+            <p>Color as a living, breathing entity in digital space</p>
+          </div>
+          <div class="morph-card">
+            <img
+              src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png"
+              alt="Project 3"
+              style="
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                border-radius: 20px;
+                margin-bottom: 20px;
+              "
+            />
+            <h3>Fractal Dimensions</h3>
+            <p>Infinite patterns emerging from mathematical chaos</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="section-2">
+      <div class="section-content">
+        <h2 style="font-size: 3rem; margin-bottom: 30px; text-align: center">
+          Beyond Reality
+        </h2>
+        <p
+          style="
+            font-size: 1.3rem;
+            line-height: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            opacity: 0.9;
+          "
+        >
+          We exist at the intersection of imagination and technology, crafting
+          experiences that transcend traditional boundaries. Our work explores
+          the fluid nature of digital consciousness, where pixels become poetry
+          and code transforms into art.
+        </p>
+        <div
+          style="
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 800px;
+            margin: 60px auto 0;
+          "
+        >
+          <div style="text-align: center">
+            <div
+              style="
+                font-size: 3rem;
+                font-weight: 700;
+                background: linear-gradient(45deg, var(--accent), var(--fluid));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              "
+            >
+              ∞
+            </div>
+            <p style="margin-top: 10px; opacity: 0.8">Infinite Possibilities</p>
+          </div>
+          <div style="text-align: center">
+            <div
+              style="
+                font-size: 3rem;
+                font-weight: 700;
+                background: linear-gradient(45deg, var(--fluid), #ffff00);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              "
+            >
+              ◈
+            </div>
+            <p style="margin-top: 10px; opacity: 0.8">Dimensional Thinking</p>
+          </div>
+          <div style="text-align: center">
+            <div
+              style="
+                font-size: 3rem;
+                font-weight: 700;
+                background: linear-gradient(45deg, #ffff00, var(--accent));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              "
+            >
+              ◉
+            </div>
+            <p style="margin-top: 10px; opacity: 0.8">Quantum Creativity</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lab Section -->
+    <section class="section" id="section-3">
+      <div class="section-content">
+        <h2 style="font-size: 3rem; margin-bottom: 50px; text-align: center">
+          Experimental Lab
+        </h2>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+          "
+        >
+          <div
+            class="morph-card"
+            style="
+              height: 300px;
+              background-image: url(&quot;https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png&quot;);
+              background-size: cover;
+              background-position: center;
+            "
+          >
+            <div
+              style="position: absolute; bottom: 20px; left: 20px; right: 20px"
+            >
+              <h4 style="font-size: 1.2rem">Experiment 001</h4>
+              <p style="font-size: 0.9rem; opacity: 0.8">Liquid interfaces</p>
+            </div>
+          </div>
+          <div
+            class="morph-card"
+            style="
+              height: 300px;
+              background-image: url(&quot;https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png&quot;);
+              background-size: cover;
+              background-position: center;
+            "
+          >
+            <div
+              style="position: absolute; bottom: 20px; left: 20px; right: 20px"
+            >
+              <h4 style="font-size: 1.2rem">Experiment 002</h4>
+              <p style="font-size: 0.9rem; opacity: 0.8">Neural networks</p>
+            </div>
+          </div>
+          <div
+            class="morph-card"
+            style="
+              height: 300px;
+              background-image: url(&quot;https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png&quot;);
+              background-size: cover;
+              background-position: center;
+            "
+          >
+            <div
+              style="position: absolute; bottom: 20px; left: 20px; right: 20px"
+            >
+              <h4 style="font-size: 1.2rem">Experiment 003</h4>
+              <p style="font-size: 0.9rem; opacity: 0.8">Quantum particles</p>
+            </div>
+          </div>
+          <div
+            class="morph-card"
+            style="
+              height: 300px;
+              background-image: url(&quot;https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png&quot;);
+              background-size: cover;
+              background-position: center;
+            "
+          >
+            <div
+              style="position: absolute; bottom: 20px; left: 20px; right: 20px"
+            >
+              <h4 style="font-size: 1.2rem">Experiment 004</h4>
+              <p style="font-size: 0.9rem; opacity: 0.8">Dimensional shifts</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section" id="section-4">
+      <div class="section-content">
+        <h2 style="font-size: 3rem; margin-bottom: 50px; text-align: center">
+          Enter the Void
+        </h2>
+        <form class="liquid-form">
+          <div class="form-field">
+            <input type="text" class="liquid-input" placeholder=" " required />
+            <div class="input-wave"></div>
+            <label class="liquid-label">Your Name</label>
+          </div>
+          <div class="form-field">
+            <input type="email" class="liquid-input" placeholder=" " required />
+            <div class="input-wave"></div>
+            <label class="liquid-label">Your Email</label>
+          </div>
+          <div class="form-field">
+            <input type="text" class="liquid-input" placeholder=" " required />
+            <div class="input-wave"></div>
+            <label class="liquid-label">Your Message</label>
+          </div>
+          <div style="text-align: center; margin-top: 40px">
+            <button type="submit" class="liquid-button">
+              Transmit Message
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <script>
+      // Liquid Cursor Movement
+      const cursor = document.querySelector(".liquid-cursor");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+
+        cursor.style.left = cursorX - 100 + "px";
+        cursor.style.top = cursorY - 100 + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Gallery Items Animation
+      const galleryItems = document.querySelectorAll(".gallery-item");
+
+      document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 2;
+        const y = (e.clientY / window.innerHeight - 0.5) * 2;
+
+        galleryItems.forEach((item, index) => {
+          const depth = 50 + index * 30;
+          const moveX = x * depth;
+          const moveY = y * depth;
+
+          item.style.transform = `translateX(${moveX}px) translateY(${moveY}px) translateZ(${-depth}px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
+        });
+      });
+
+      // Navigation
+      const navOrbs = document.querySelectorAll(".nav-orb");
+      const sections = document.querySelectorAll(".section, .hero-dimension");
+
+      navOrbs.forEach((orb) => {
+        orb.addEventListener("click", () => {
+          const sectionIndex = parseInt(orb.dataset.section);
+          sections[sectionIndex].scrollIntoView({ behavior: "smooth" });
+
+          navOrbs.forEach((o) => o.classList.remove("active"));
+          orb.classList.add("active");
+        });
+      });
+
+      // Scroll Detection
+      function updateActiveSection() {
+        const scrollPosition = window.scrollY + window.innerHeight / 2;
+
+        sections.forEach((section, index) => {
+          const sectionTop = section.offsetTop;
+          const sectionBottom = sectionTop + section.offsetHeight;
+
+          if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+            navOrbs.forEach((o) => o.classList.remove("active"));
+            if (navOrbs[index]) {
+              navOrbs[index].classList.add("active");
+            }
+          }
+        });
+      }
+
+      window.addEventListener("scroll", updateActiveSection);
+
+      // Title Animation
+      const titleWords = document.querySelectorAll(".title-word");
+      titleWords.forEach((word) => {
+        const text = word.textContent;
+        word.innerHTML = "";
+
+        [...text].forEach((char, index) => {
+          const span = document.createElement("span");
+          span.className = "title-char";
+          span.style.setProperty("--char-index", index);
+          span.textContent = char;
+          word.appendChild(span);
+        });
+      });
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Form Submission
+      document.querySelector(".liquid-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Create ripple effect
+        const button = e.target.querySelector(".liquid-button");
+        const ripple = document.createElement("span");
+        ripple.style.position = "absolute";
+        ripple.style.width = "20px";
+        ripple.style.height = "20px";
+        ripple.style.background = "rgba(255, 255, 255, 0.5)";
+        ripple.style.borderRadius = "50%";
+        ripple.style.transform = "translate(-50%, -50%)";
+        ripple.style.pointerEvents = "none";
+        ripple.style.animation = "ripple-out 1s ease-out";
+
+        button.style.position = "relative";
+        button.style.overflow = "hidden";
+        button.appendChild(ripple);
+
+        setTimeout(() => {
+          ripple.remove();
+          alert("Message transmitted to the digital void ✨");
+          e.target.reset();
+        }, 1000);
+      });
+
+      // Parallax Effect for Liquid Shapes
+      const liquidShapes = document.querySelectorAll(".liquid-shape");
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+
+        liquidShapes.forEach((shape, index) => {
+          const speed = 0.5 + index * 0.1;
+          shape.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+      });
+
+      // Mobile Menu (simplified for this design)
+      document
+        .querySelector(".mobile-menu-trigger")
+        .addEventListener("click", () => {
+          alert("Mobile menu would open here with navigation options");
+        });
+
+      // Add ripple animation
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes ripple-out {
+                to {
+                    width: 400px;
+                    height: 400px;
+                    opacity: 0;
+                }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

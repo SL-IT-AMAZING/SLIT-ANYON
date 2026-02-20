@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS - Digital Experience Studio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #fff;
+        --bg-dark: #0a0a0a;
+        --bg-darker: #000;
+        --accent: #646cff;
+        --text-dim: rgba(255, 255, 255, 0.6);
+        --border-light: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-darker);
+        color: var(--primary-color);
+        overflow-x: hidden;
+        line-height: 1.6;
+      }
+
+      /* Smooth Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-light);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-darker);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-text {
+        font-size: 3rem;
+        font-weight: 300;
+        letter-spacing: 0.5rem;
+        opacity: 0;
+        animation: fadeInOut 2s infinite;
+      }
+
+      @keyframes fadeInOut {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Floating Navigation */
+      .floating-nav {
+        position: fixed;
+        top: 50%;
+        right: 30px;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border-light);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--bg-dark);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        border: 1px solid var(--border-light);
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      .nav-dot.active {
+        background: var(--primary-color);
+        transform: scale(1.5);
+      }
+
+      /* Hero Section with Split Screen */
+      .hero {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 80px;
+        z-index: 2;
+      }
+
+      .hero-title {
+        font-size: clamp(3rem, 8vw, 7rem);
+        font-weight: 100;
+        line-height: 0.9;
+        margin-bottom: 30px;
+        overflow: hidden;
+      }
+
+      .hero-title span {
+        display: block;
+        transform: translateY(100%);
+        animation: slideUp 1s forwards;
+        animation-delay: 0.5s;
+      }
+
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .hero-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-dim);
+        margin-bottom: 40px;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1s;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      .hero-media {
+        position: relative;
+        overflow: hidden;
+        background: var(--bg-dark);
+      }
+
+      .hero-video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+        opacity: 0.8;
+      }
+
+      /* Magnetic Button */
+      .magnetic-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 20px 40px;
+        background: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        border-radius: 50px;
+        text-decoration: none;
+        font-size: 16px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .magnetic-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--primary-color);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .magnetic-btn:hover {
+        color: var(--bg-darker);
+      }
+
+      .magnetic-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .magnetic-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Horizontal Scroll Gallery */
+      .gallery {
+        padding: 100px 0;
+        position: relative;
+      }
+
+      .gallery-header {
+        padding: 0 80px;
+        margin-bottom: 60px;
+      }
+
+      .gallery-title {
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 200;
+        margin-bottom: 20px;
+      }
+
+      .gallery-scroll {
+        display: flex;
+        gap: 30px;
+        padding: 0 80px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .gallery-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      .gallery-item {
+        flex: 0 0 auto;
+        width: 400px;
+        height: 500px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover {
+        transform: scale(0.95);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.9) 0%,
+          transparent 100%
+        );
+        transform: translateY(100%);
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      /* Bento Grid Layout */
+      .bento {
+        padding: 100px 80px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 300px;
+        gap: 20px;
+        margin-top: 60px;
+      }
+
+      .bento-item {
+        background: var(--bg-dark);
+        border-radius: 20px;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 1px solid var(--border-light);
+        transition: all 0.3s;
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .bento-item::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+
+      .bento-item:hover::before {
+        opacity: 0.1;
+      }
+
+      .bento-item:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .bento-item.large {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+
+      .bento-item.wide {
+        grid-column: span 2;
+      }
+
+      .bento-item.tall {
+        grid-row: span 2;
+      }
+
+      .bento-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+      }
+
+      .bento-title {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .bento-desc {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      /* Infinite Marquee */
+      .marquee {
+        padding: 100px 0;
+        overflow: hidden;
+        background: var(--bg-dark);
+        border-top: 1px solid var(--border-light);
+        border-bottom: 1px solid var(--border-light);
+      }
+
+      .marquee-content {
+        display: flex;
+        animation: marquee 30s linear infinite;
+      }
+
+      .marquee-item {
+        flex: 0 0 auto;
+        padding: 0 50px;
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 100;
+        white-space: nowrap;
+        opacity: 0.3;
+        transition: opacity 0.3s;
+      }
+
+      .marquee-item:hover {
+        opacity: 1;
+      }
+
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Interactive Cards */
+      .cards {
+        padding: 100px 80px;
+        background: linear-gradient(
+          180deg,
+          var(--bg-darker) 0%,
+          var(--bg-dark) 100%
+        );
+      }
+
+      .cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--accent),
+          transparent,
+          var(--accent)
+        );
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s;
+      }
+
+      .card:hover::after {
+        opacity: 1;
+        animation: gradient-rotate 3s linear infinite;
+      }
+
+      @keyframes gradient-rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .card-number {
+        font-size: 4rem;
+        font-weight: 100;
+        opacity: 0.1;
+        position: absolute;
+        top: 20px;
+        right: 30px;
+      }
+
+      .card-title {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .card-content {
+        color: var(--text-dim);
+        position: relative;
+      }
+
+      /* Contact Section */
+      .contact {
+        padding: 100px 80px;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .contact-content {
+        max-width: 800px;
+        width: 100%;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 100;
+        margin-bottom: 30px;
+        line-height: 1;
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        margin-top: 60px;
+      }
+
+      .contact-item {
+        background: var(--bg-dark);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid var(--border-light);
+        transition: all 0.3s;
+      }
+
+      .contact-item:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* Mobile Menu */
+      .mobile-menu {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background: var(--bg-dark);
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1001;
+        border: 1px solid var(--border-light);
+      }
+
+      .menu-icon {
+        width: 20px;
+        height: 14px;
+        position: relative;
+      }
+
+      .menu-icon span {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: var(--primary-color);
+        transition: all 0.3s;
+      }
+
+      .menu-icon span:nth-child(1) {
+        top: 0;
+      }
+
+      .menu-icon span:nth-child(2) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .menu-icon span:nth-child(3) {
+        bottom: 0;
+      }
+
+      .mobile-menu.active .menu-icon span:nth-child(1) {
+        transform: rotate(45deg) translateY(6px);
+      }
+
+      .mobile-menu.active .menu-icon span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .mobile-menu.active .menu-icon span:nth-child(3) {
+        transform: rotate(-45deg) translateY(-6px);
+      }
+
+      /* Mobile Navigation Overlay */
+      .mobile-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-darker);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+        z-index: 1000;
+      }
+
+      .mobile-nav.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .mobile-nav-content {
+        text-align: center;
+      }
+
+      .mobile-nav-item {
+        display: block;
+        font-size: 2rem;
+        margin: 20px 0;
+        color: var(--primary-color);
+        text-decoration: none;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s;
+      }
+
+      .mobile-nav.active .mobile-nav-item {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .mobile-nav-item:nth-child(1) {
+        transition-delay: 0.1s;
+      }
+      .mobile-nav-item:nth-child(2) {
+        transition-delay: 0.2s;
+      }
+      .mobile-nav-item:nth-child(3) {
+        transition-delay: 0.3s;
+      }
+      .mobile-nav-item:nth-child(4) {
+        transition-delay: 0.4s;
+      }
+      .mobile-nav-item:nth-child(5) {
+        transition-delay: 0.5s;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-content {
+          padding: 0 40px;
+          text-align: center;
+        }
+
+        .hero-media {
+          display: none;
+        }
+
+        .floating-nav {
+          display: none;
+        }
+
+        .mobile-menu {
+          display: flex;
+        }
+
+        .gallery-scroll {
+          padding: 0 40px;
+        }
+
+        .gallery-item {
+          width: 300px;
+          height: 400px;
+        }
+
+        .bento {
+          padding: 100px 40px;
+        }
+
+        .bento-grid {
+          grid-template-columns: repeat(2, 1fr);
+          grid-auto-rows: 250px;
+        }
+
+        .cards {
+          padding: 100px 40px;
+        }
+
+        .contact {
+          padding: 100px 40px;
+        }
+
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero-title {
+          font-size: clamp(2.5rem, 10vw, 4rem);
+        }
+
+        .gallery-header {
+          padding: 0 20px;
+        }
+
+        .gallery-scroll {
+          padding: 0 20px;
+        }
+
+        .gallery-item {
+          width: 250px;
+          height: 350px;
+        }
+
+        .bento {
+          padding: 80px 20px;
+        }
+
+        .bento-grid {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .bento-item.large,
+        .bento-item.wide,
+        .bento-item.tall {
+          grid-column: span 1;
+          grid-row: span 1;
+        }
+
+        .marquee-item {
+          font-size: 1.5rem;
+          padding: 0 30px;
+        }
+
+        .cards {
+          padding: 80px 20px;
+        }
+
+        .cards-container {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .contact {
+          padding: 80px 20px;
+        }
+
+        .contact-title {
+          font-size: clamp(2rem, 10vw, 3rem);
+        }
+      }
+
+      /* Cursor Effect for Desktop */
+      @media (hover: hover) {
+        .cursor-follower {
+          position: fixed;
+          width: 20px;
+          height: 20px;
+          background: var(--accent);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9998;
+          transition: transform 0.1s;
+          mix-blend-mode: screen;
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">NEXUS</div>
+      </div>
+    </div>
+
+    <!-- Cursor Follower -->
+    <div class="cursor-follower" id="cursor"></div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav" id="floatingNav">
+      <div class="nav-dot active" data-title="Home" data-section="hero"></div>
+      <div class="nav-dot" data-title="Gallery" data-section="gallery"></div>
+      <div class="nav-dot" data-title="Services" data-section="bento"></div>
+      <div class="nav-dot" data-title="Process" data-section="cards"></div>
+      <div class="nav-dot" data-title="Contact" data-section="contact"></div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <div class="menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+      <div class="mobile-nav-content">
+        <a href="#hero" class="mobile-nav-item">Home</a>
+        <a href="#gallery" class="mobile-nav-item">Gallery</a>
+        <a href="#bento" class="mobile-nav-item">Services</a>
+        <a href="#cards" class="mobile-nav-item">Process</a>
+        <a href="#contact" class="mobile-nav-item">Contact</a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span>NEXUS</span>
+        </h1>
+        <p class="hero-subtitle">Where creativity meets technology</p>
+        <a href="#gallery" class="magnetic-btn">
+          <span>Explore Our Work</span>
+          <span>→</span>
+        </a>
+      </div>
+      <div class="hero-media">
+        <video class="hero-video" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-header">
+        <h2 class="gallery-title">Featured Projects</h2>
+        <p class="gallery-subtitle">Scroll to explore our latest work</p>
+      </div>
+      <div class="gallery-scroll" id="galleryScroll">
+        <!-- Gallery items will be dynamically added -->
+      </div>
+    </section>
+
+    <!-- Marquee Section -->
+    <section class="marquee">
+      <div class="marquee-content">
+        <span class="marquee-item">DESIGN</span>
+        <span class="marquee-item">•</span>
+        <span class="marquee-item">DEVELOP</span>
+        <span class="marquee-item">•</span>
+        <span class="marquee-item">DEPLOY</span>
+        <span class="marquee-item">•</span>
+        <span class="marquee-item">DESIGN</span>
+        <span class="marquee-item">•</span>
+        <span class="marquee-item">DEVELOP</span>
+        <span class="marquee-item">•</span>
+        <span class="marquee-item">DEPLOY</span>
+        <span class="marquee-item">•</span>
+      </div>
+    </section>
+
+    <!-- Bento Grid Section -->
+    <section class="bento" id="bento">
+      <h2 class="gallery-title">What We Offer</h2>
+      <div class="bento-grid">
+        <div class="bento-item large">
+          <div>
+            <div class="bento-icon">🎨</div>
+            <h3 class="bento-title">Creative Design</h3>
+            <p class="bento-desc">
+              Stunning visuals that capture your brand's essence and engage your
+              audience
+            </p>
+          </div>
+        </div>
+        <div class="bento-item">
+          <div>
+            <div class="bento-icon">💻</div>
+            <h3 class="bento-title">Development</h3>
+            <p class="bento-desc">
+              Clean, efficient code that powers exceptional user experiences
+            </p>
+          </div>
+        </div>
+        <div class="bento-item tall">
+          <div>
+            <div class="bento-icon">📱</div>
+            <h3 class="bento-title">Mobile First</h3>
+            <p class="bento-desc">
+              Responsive designs that work beautifully on every device
+            </p>
+          </div>
+        </div>
+        <div class="bento-item wide">
+          <div>
+            <div class="bento-icon">🚀</div>
+            <h3 class="bento-title">Performance</h3>
+            <p class="bento-desc">
+              Lightning-fast load times and smooth interactions
+            </p>
+          </div>
+        </div>
+        <div class="bento-item">
+          <div>
+            <div class="bento-icon">🔒</div>
+            <h3 class="bento-title">Security</h3>
+            <p class="bento-desc">
+              Robust security measures to protect your digital assets
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process Cards -->
+    <section class="cards" id="cards">
+      <h2 class="gallery-title">Our Process</h2>
+      <div class="cards-container">
+        <div class="card">
+          <div class="card-number">01</div>
+          <h3 class="card-title">Discovery</h3>
+          <p class="card-content">
+            We dive deep into understanding your vision, goals, and target
+            audience to create a solid foundation for your project.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-number">02</div>
+          <h3 class="card-title">Strategy</h3>
+          <p class="card-content">
+            Developing a comprehensive roadmap that aligns with your business
+            objectives and user needs.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-number">03</div>
+          <h3 class="card-title">Design</h3>
+          <p class="card-content">
+            Creating beautiful, intuitive interfaces that delight users and
+            strengthen your brand identity.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-number">04</div>
+          <h3 class="card-title">Development</h3>
+          <p class="card-content">
+            Building robust, scalable solutions using the latest technologies
+            and best practices.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-number">05</div>
+          <h3 class="card-title">Testing</h3>
+          <p class="card-content">
+            Rigorous quality assurance to ensure flawless performance across all
+            platforms.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-number">06</div>
+          <h3 class="card-title">Launch</h3>
+          <p class="card-content">
+            Seamless deployment and ongoing support to ensure your project's
+            continued success.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+      <div class="contact-content">
+        <h2 class="contact-title">Let's Talk</h2>
+        <p>Ready to transform your digital presence?</p>
+        <div class="contact-grid">
+          <div class="contact-item">
+            <h3>Email</h3>
+            <p>hello@nexusstudio.com</p>
+          </div>
+          <div class="contact-item">
+            <h3>Phone</h3>
+            <p>+1 (555) 123-4567</p>
+          </div>
+        </div>
+        <a
+          href="mailto:hello@nexusstudio.com"
+          class="magnetic-btn"
+          style="margin-top: 40px"
+        >
+          <span>Start a Project</span>
+        </a>
+      </div>
+    </section>
+
+    <script>
+      // Gallery Images
+      const galleryImages = [
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Abstract Vision",
+          category: "Digital Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "Neon Dreams",
+          category: "UI Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "Future Interface",
+          category: "Web Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Digital Landscape",
+          category: "3D Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Cyber Space",
+          category: "Motion Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "Tech Evolution",
+          category: "Branding",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "Data Flow",
+          category: "Visualization",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "Neural Network",
+          category: "AI Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Quantum Realm",
+          category: "Concept Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "Digital Waves",
+          category: "Animation",
+        },
+      ];
+
+      // Initialize Gallery
+      function initGallery() {
+        const galleryScroll = document.getElementById("galleryScroll");
+
+        galleryImages.forEach((image, index) => {
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+          item.innerHTML = `
+                    <img src="${image.src}" alt="${image.title}" loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>${image.title}</h3>
+                        <p>${image.category}</p>
+                    </div>
+                `;
+          galleryScroll.appendChild(item);
+        });
+
+        // Duplicate for infinite scroll effect
+        galleryImages.forEach((image, index) => {
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+          item.innerHTML = `
+                    <img src="${image.src}" alt="${image.title}" loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>${image.title}</h3>
+                        <p>${image.category}</p>
+                    </div>
+                `;
+          galleryScroll.appendChild(item);
+        });
+      }
+
+      // Smooth Scroll
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Floating Navigation
+      const sections = document.querySelectorAll("section[id]");
+      const navDots = document.querySelectorAll(".nav-dot");
+
+      navDots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const sectionId = dot.getAttribute("data-section");
+          const section = document.getElementById(sectionId);
+          if (section) {
+            section.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      // Update active navigation on scroll
+      function updateActiveNav() {
+        const scrollY = window.pageYOffset;
+
+        sections.forEach((section, index) => {
+          const sectionTop = section.offsetTop - 200;
+          const sectionBottom = sectionTop + section.offsetHeight;
+
+          if (scrollY >= sectionTop && scrollY < sectionBottom) {
+            navDots.forEach((dot) => dot.classList.remove("active"));
+            if (navDots[index]) {
+              navDots[index].classList.add("active");
+            }
+          }
+        });
+      }
+
+      window.addEventListener("scroll", updateActiveNav);
+
+      // Mobile Menu
+      const mobileMenu = document.getElementById("mobileMenu");
+      const mobileNav = document.getElementById("mobileNav");
+      const mobileNavItems = document.querySelectorAll(".mobile-nav-item");
+
+      mobileMenu.addEventListener("click", () => {
+        mobileMenu.classList.toggle("active");
+        mobileNav.classList.toggle("active");
+        document.body.style.overflow = mobileNav.classList.contains("active")
+          ? "hidden"
+          : "";
+      });
+
+      mobileNavItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          mobileMenu.classList.remove("active");
+          mobileNav.classList.remove("active");
+          document.body.style.overflow = "";
+        });
+      });
+
+      // Cursor Effect
+      if (window.matchMedia("(hover: hover)").matches) {
+        const cursor = document.getElementById("cursor");
+        let mouseX = 0,
+          mouseY = 0;
+        let cursorX = 0,
+          cursorY = 0;
+
+        document.addEventListener("mousemove", (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+          const dx = mouseX - cursorX;
+          const dy = mouseY - cursorY;
+
+          cursorX += dx * 0.1;
+          cursorY += dy * 0.1;
+
+          cursor.style.transform = `translate(${cursorX - 10}px, ${cursorY - 10}px)`;
+
+          requestAnimationFrame(animateCursor);
+        }
+
+        animateCursor();
+      }
+
+      // Magnetic Button Effect
+      document.querySelectorAll(".magnetic-btn").forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "";
+        });
+      });
+
+      // Horizontal Scroll with Mouse Wheel
+      const galleryScroll = document.getElementById("galleryScroll");
+
+      galleryScroll.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        galleryScroll.scrollLeft += e.deltaY;
+      });
+
+      // Hide loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+
+        initGallery();
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document.querySelectorAll(".bento-item, .card").forEach((el) => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(30px)";
+        el.style.transition = "all 0.6s ease-out";
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

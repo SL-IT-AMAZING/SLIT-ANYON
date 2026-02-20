@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TYPOGRAPHIC ODYSSEY - An Artistic Journey</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,900;1,400&family=Space+Mono:wght@400;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-font: "Playfair Display", serif;
+        --secondary-font: "Bebas Neue", sans-serif;
+        --mono-font: "Space Mono", monospace;
+        --bg-dark: #0a0a0a;
+        --text-light: #f0f0f0;
+        --accent: #ff6b6b;
+      }
+
+      body {
+        font-family: var(--primary-font);
+        background: var(--bg-dark);
+        color: var(--text-light);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor with Typography */
+      .cursor-wrapper {
+        position: fixed;
+        width: 100px;
+        height: 100px;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: var(--mono-font);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        animation: rotate 10s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* Experimental Navigation */
+      .nav-sphere {
+        position: fixed;
+        top: 40px;
+        right: 40px;
+        width: 80px;
+        height: 80px;
+        z-index: 1000;
+        cursor: pointer;
+      }
+
+      .nav-trigger {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: 2px solid var(--text-light);
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .nav-trigger::before {
+        content: "MENU";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: var(--secondary-font);
+        font-size: 14px;
+        letter-spacing: 2px;
+      }
+
+      .nav-trigger.active {
+        transform: scale(20);
+        background: var(--text-light);
+      }
+
+      .nav-content {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s;
+        z-index: 999;
+      }
+
+      .nav-content.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .nav-links {
+        text-align: center;
+      }
+
+      .nav-link {
+        display: block;
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        color: var(--bg-dark);
+        text-decoration: none;
+        margin: 20px 0;
+        position: relative;
+        transition: all 0.3s;
+        overflow: hidden;
+      }
+
+      .nav-link::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        color: var(--accent);
+        overflow: hidden;
+        transition: width 0.5s;
+      }
+
+      .nav-link:hover::before {
+        width: 100%;
+      }
+
+      /* Hero Section with Typographic Chaos */
+      .hero {
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .hero-bg video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+      }
+
+      .floating-text {
+        position: absolute;
+        font-size: clamp(2rem, 10vw, 8rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        opacity: 0.1;
+        animation: float-text 20s infinite linear;
+        white-space: nowrap;
+      }
+
+      @keyframes float-text {
+        from {
+          transform: translateX(100vw);
+        }
+        to {
+          transform: translateX(-100%);
+        }
+      }
+
+      .hero-title {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        mix-blend-mode: difference;
+      }
+
+      .title-line {
+        display: block;
+        font-size: clamp(3rem, 15vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+        transform: translateY(100px);
+        opacity: 0;
+        animation: reveal-up 1s forwards;
+        animation-delay: calc(var(--index) * 0.2s);
+      }
+
+      @keyframes reveal-up {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .title-line:nth-child(2) {
+        font-family: var(--secondary-font);
+        color: transparent;
+        -webkit-text-stroke: 2px var(--text-light);
+      }
+
+      .title-line:nth-child(3) {
+        font-family: var(--mono-font);
+        font-size: clamp(1rem, 3vw, 2rem);
+        letter-spacing: 0.5em;
+        margin-top: 20px;
+      }
+
+      /* Horizontal Scroll Gallery */
+      .gallery-container {
+        position: relative;
+        height: 100vh;
+        background: var(--bg-dark);
+        overflow: hidden;
+      }
+
+      .gallery-track {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        gap: 2vw;
+        animation: scroll-horizontal 60s linear infinite;
+      }
+
+      @keyframes scroll-horizontal {
+        from {
+          transform: translateY(-50%) translateX(0);
+        }
+        to {
+          transform: translateY(-50%) translateX(-50%);
+        }
+      }
+
+      .gallery-item {
+        position: relative;
+        width: 40vw;
+        height: 60vh;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 20px;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      .gallery-number {
+        font-family: var(--secondary-font);
+        font-size: 4rem;
+        line-height: 1;
+        opacity: 0.5;
+      }
+
+      .gallery-title {
+        font-size: 1.5rem;
+        margin-top: 10px;
+      }
+
+      /* Text Maze Section */
+      .text-maze {
+        min-height: 100vh;
+        padding: 100px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .maze-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+      }
+
+      .maze-block {
+        position: relative;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.5s;
+        overflow: hidden;
+      }
+
+      .maze-block::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        transform: translateX(-100%);
+        transition: transform 0.5s;
+      }
+
+      .maze-block:hover::before {
+        transform: translateX(100%);
+      }
+
+      .maze-block:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .block-number {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-family: var(--mono-font);
+        font-size: 3rem;
+        opacity: 0.1;
+        font-weight: 700;
+      }
+
+      .block-title {
+        font-family: var(--secondary-font);
+        font-size: 2rem;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+      }
+
+      .block-content {
+        font-family: var(--mono-font);
+        font-size: 0.9rem;
+        line-height: 1.8;
+        opacity: 0.8;
+      }
+
+      /* Vertical Typography Section */
+      .vertical-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .vertical-text {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        font-size: clamp(2rem, 8vw, 6rem);
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        position: absolute;
+        opacity: 0.1;
+        animation: slide-vertical 15s infinite linear;
+      }
+
+      @keyframes slide-vertical {
+        from {
+          transform: translateY(-100vh);
+        }
+        to {
+          transform: translateY(100vh);
+        }
+      }
+
+      .center-content {
+        text-align: center;
+        z-index: 10;
+        max-width: 800px;
+        padding: 0 20px;
+      }
+
+      .glitch-text {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 900;
+        position: relative;
+        text-transform: uppercase;
+        animation: glitch 2s infinite;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow:
+            2px 2px 0 var(--accent),
+            -2px -2px 0 cyan;
+        }
+        25% {
+          text-shadow:
+            -2px 2px 0 var(--accent),
+            2px -2px 0 cyan;
+        }
+        50% {
+          text-shadow:
+            2px -2px 0 var(--accent),
+            -2px 2px 0 cyan;
+        }
+        75% {
+          text-shadow:
+            -2px -2px 0 var(--accent),
+            2px 2px 0 cyan;
+        }
+      }
+
+      /* Contact Section with ASCII Art */
+      .contact-section {
+        min-height: 100vh;
+        padding: 100px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-dark);
+      }
+
+      .ascii-container {
+        text-align: center;
+        font-family: var(--mono-font);
+      }
+
+      .ascii-art {
+        font-size: clamp(0.5rem, 1.5vw, 1rem);
+        line-height: 1.2;
+        white-space: pre;
+        opacity: 0.3;
+        margin-bottom: 40px;
+      }
+
+      .contact-form {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .form-field {
+        position: relative;
+        margin-bottom: 40px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 20px 0;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        color: var(--text-light);
+        font-family: var(--mono-font);
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-bottom-color: var(--accent);
+      }
+
+      .form-label {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        font-family: var(--secondary-font);
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      .form-input:focus + .form-label,
+      .form-input:not(:placeholder-shown) + .form-label {
+        top: -10px;
+        font-size: 0.8rem;
+        color: var(--accent);
+      }
+
+      .submit-btn {
+        background: transparent;
+        border: 2px solid var(--text-light);
+        color: var(--text-light);
+        padding: 20px 60px;
+        font-family: var(--secondary-font);
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--text-light);
+        transition: left 0.3s;
+        z-index: -1;
+      }
+
+      .submit-btn:hover {
+        color: var(--bg-dark);
+      }
+
+      .submit-btn:hover::before {
+        left: 0;
+      }
+
+      /* Footer with Rotating Text */
+      .footer {
+        position: relative;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .rotating-text {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        animation: rotate 20s linear infinite;
+      }
+
+      .rotating-text svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .rotating-text text {
+        fill: var(--text-light);
+        font-family: var(--mono-font);
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .nav-sphere {
+          top: 20px;
+          right: 20px;
+          width: 60px;
+          height: 60px;
+        }
+
+        .nav-trigger.active {
+          transform: scale(15);
+        }
+
+        .gallery-item {
+          width: 80vw;
+          height: 50vh;
+        }
+
+        .maze-container {
+          grid-template-columns: 1fr;
+        }
+
+        .vertical-text {
+          font-size: 3rem;
+        }
+
+        .cursor-wrapper {
+          display: none;
+        }
+
+        body {
+          cursor: auto;
+        }
+      }
+
+      /* Loading Screen */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--bg-dark);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 1s;
+      }
+
+      .loading-text {
+        font-family: var(--secondary-font);
+        font-size: clamp(2rem, 5vw, 4rem);
+        letter-spacing: 0.5em;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .loading-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loading-text">LOADING</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-wrapper" id="cursor">
+      <div class="cursor-text">EXPLORE</div>
+    </div>
+
+    <!-- Navigation Sphere -->
+    <div class="nav-sphere">
+      <div class="nav-trigger" id="navTrigger"></div>
+    </div>
+
+    <div class="nav-content" id="navContent">
+      <nav class="nav-links">
+        <a href="#hero" class="nav-link" data-text="HOME">HOME</a>
+        <a href="#gallery" class="nav-link" data-text="GALLERY">GALLERY</a>
+        <a href="#maze" class="nav-link" data-text="EXPLORE">EXPLORE</a>
+        <a href="#about" class="nav-link" data-text="ABOUT">ABOUT</a>
+        <a href="#contact" class="nav-link" data-text="CONTACT">CONTACT</a>
+      </nav>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="hero-bg">
+        <video autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+
+      <div class="floating-text" style="top: 10%; animation-delay: 0s">
+        CREATIVE
+      </div>
+      <div class="floating-text" style="top: 30%; animation-delay: 3s">
+        INNOVATIVE
+      </div>
+      <div class="floating-text" style="top: 50%; animation-delay: 6s">
+        ARTISTIC
+      </div>
+      <div class="floating-text" style="top: 70%; animation-delay: 9s">
+        EXPERIMENTAL
+      </div>
+      <div class="floating-text" style="top: 90%; animation-delay: 12s">
+        TYPOGRAPHY
+      </div>
+
+      <div class="hero-title">
+        <span class="title-line" style="--index: 0">BREAK</span>
+        <span class="title-line" style="--index: 1">THE RULES</span>
+        <span class="title-line" style="--index: 2">OF DESIGN</span>
+      </div>
+    </section>
+
+    <!-- Horizontal Scroll Gallery -->
+    <section class="gallery-container" id="gallery">
+      <div class="gallery-track">
+        <!-- First set of images -->
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Gallery 1"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">01</div>
+            <div class="gallery-title">Dimensional Shift</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+            alt="Gallery 2"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">02</div>
+            <div class="gallery-title">Abstract Reality</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Gallery 3"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">03</div>
+            <div class="gallery-title">Color Theory</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Gallery 4"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">04</div>
+            <div class="gallery-title">Digital Dreams</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+            alt="Gallery 5"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">05</div>
+            <div class="gallery-title">Future Vision</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+            alt="Gallery 6"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">06</div>
+            <div class="gallery-title">Metamorphosis</div>
+          </div>
+        </div>
+        <!-- Duplicate for infinite scroll -->
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="Gallery 1"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">01</div>
+            <div class="gallery-title">Dimensional Shift</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+            alt="Gallery 2"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">02</div>
+            <div class="gallery-title">Abstract Reality</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Gallery 3"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">03</div>
+            <div class="gallery-title">Color Theory</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Gallery 4"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">04</div>
+            <div class="gallery-title">Digital Dreams</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+            alt="Gallery 5"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">05</div>
+            <div class="gallery-title">Future Vision</div>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+            alt="Gallery 6"
+          />
+          <div class="gallery-overlay">
+            <div class="gallery-number">06</div>
+            <div class="gallery-title">Metamorphosis</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Text Maze Section -->
+    <section class="text-maze" id="maze">
+      <div class="maze-container">
+        <div class="maze-block">
+          <div class="block-number">01</div>
+          <h3 class="block-title">CONCEPT</h3>
+          <p class="block-content">
+            Breaking conventional design patterns through experimental
+            typography and unconventional navigation systems.
+          </p>
+        </div>
+        <div class="maze-block">
+          <div class="block-number">02</div>
+          <h3 class="block-title">VISION</h3>
+          <p class="block-content">
+            Creating immersive digital experiences that challenge perception and
+            redefine user interaction paradigms.
+          </p>
+        </div>
+        <div class="maze-block">
+          <div class="block-number">03</div>
+          <h3 class="block-title">METHOD</h3>
+          <p class="block-content">
+            Combining artistic expression with technical innovation to push the
+            boundaries of web design.
+          </p>
+        </div>
+        <div class="maze-block">
+          <div class="block-number">04</div>
+          <h3 class="block-title">PROCESS</h3>
+          <p class="block-content">
+            Iterative exploration of form and function, where each element
+            serves both aesthetic and narrative purpose.
+          </p>
+        </div>
+        <div class="maze-block">
+          <div class="block-number">05</div>
+          <h3 class="block-title">OUTCOME</h3>
+          <p class="block-content">
+            Memorable experiences that resonate with users on emotional and
+            intellectual levels.
+          </p>
+        </div>
+        <div class="maze-block">
+          <div class="block-number">06</div>
+          <h3 class="block-title">IMPACT</h3>
+          <p class="block-content">
+            Inspiring new perspectives on digital art and interactive design
+            possibilities.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vertical Typography Section -->
+    <section class="vertical-section" id="about">
+      <div class="vertical-text" style="left: 10%; animation-delay: 0s">
+        CREATIVE
+      </div>
+      <div class="vertical-text" style="left: 30%; animation-delay: 3s">
+        STUDIO
+      </div>
+      <div class="vertical-text" style="left: 50%; animation-delay: 6s">
+        DIGITAL
+      </div>
+      <div class="vertical-text" style="left: 70%; animation-delay: 9s">
+        ART
+      </div>
+      <div class="vertical-text" style="left: 90%; animation-delay: 12s">
+        DESIGN
+      </div>
+
+      <div class="center-content">
+        <h2 class="glitch-text">WE ARE</h2>
+        <p
+          style="
+            font-family: var(--mono-font);
+            font-size: 1.2rem;
+            margin-top: 30px;
+            line-height: 2;
+          "
+        >
+          A collective of artists, designers, and developers pushing the
+          boundaries of digital expression. We believe in the power of
+          typography, the beauty of chaos, and the importance of breaking rules
+          to create something truly unique.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+      <div class="ascii-container">
+        <pre class="ascii-art">
+     _____ _____ _   _ _   _ _____ _____ _____ 
+    /  __ \  _  | \ | | \ | |  ___/  __ \_   _|
+    | /  \/ | | |  \| |  \| | |__ | /  \/ | |  
+    | |   | | | | . ` | . ` |  __|| |     | |  
+    | \__/\ \_/ / |\  | |\  | |___| \__/\ | |  
+     \____/\___/\_| \_|_| \_|____/ \____/ \_/  
+            </pre
+        >
+
+        <form class="contact-form" id="contactForm">
+          <div class="form-field">
+            <input type="text" class="form-input" placeholder=" " required />
+            <label class="form-label">NAME</label>
+          </div>
+          <div class="form-field">
+            <input type="email" class="form-input" placeholder=" " required />
+            <label class="form-label">EMAIL</label>
+          </div>
+          <div class="form-field">
+            <input type="text" class="form-input" placeholder=" " required />
+            <label class="form-label">MESSAGE</label>
+          </div>
+          <button type="submit" class="submit-btn">SEND MESSAGE</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="rotating-text">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <path
+              id="circle"
+              d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0"
+            ></path>
+          </defs>
+          <text>
+            <textPath href="#circle">
+              CREATIVE STUDIO • DIGITAL ART • TYPOGRAPHY •
+            </textPath>
+          </text>
+        </svg>
+      </div>
+    </footer>
+
+    <script>
+      // Loading Screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loadingScreen").classList.add("fade-out");
+        }, 1500);
+      });
+
+      // Custom Cursor
+      const cursor = document.getElementById("cursor");
+      let mouseX = 0,
+        mouseY = 0;
+      let cursorX = 0,
+        cursorY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        const dx = mouseX - cursorX;
+        const dy = mouseY - cursorY;
+
+        cursorX += dx * 0.1;
+        cursorY += dy * 0.1;
+
+        cursor.style.left = cursorX - 50 + "px";
+        cursor.style.top = cursorY - 50 + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Navigation
+      const navTrigger = document.getElementById("navTrigger");
+      const navContent = document.getElementById("navContent");
+      const navLinks = document.querySelectorAll(".nav-link");
+
+      navTrigger.addEventListener("click", () => {
+        navTrigger.classList.toggle("active");
+        navContent.classList.toggle("active");
+      });
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(link.getAttribute("href"));
+
+          navTrigger.classList.remove("active");
+          navContent.classList.remove("active");
+
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: "smooth" });
+          }, 300);
+        });
+      });
+
+      // Parallax Effect on Scroll
+      let ticking = false;
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(
+          ".floating-text, .vertical-text",
+        );
+
+        parallaxElements.forEach((el) => {
+          const speed = el.dataset.speed || 0.5;
+          const yPos = -(scrolled * speed);
+          el.style.transform = `translateY(${yPos}px)`;
+        });
+
+        ticking = false;
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          window.requestAnimationFrame(updateParallax);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener("scroll", requestTick);
+
+      // Form Submission
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for your message. We will get back to you soon!");
+        e.target.reset();
+      });
+
+      // Gallery Hover Effect
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      galleryItems.forEach((item) => {
+        item.addEventListener("mouseenter", () => {
+          cursor.querySelector(".cursor-text").textContent = "VIEW";
+        });
+        item.addEventListener("mouseleave", () => {
+          cursor.querySelector(".cursor-text").textContent = "EXPLORE";
+        });
+      });
+
+      // Intersection Observer for Animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll(".maze-block").forEach((block) => {
+        block.style.opacity = "0";
+        block.style.transform = "translateY(50px)";
+        block.style.transition = "all 0.8s ease-out";
+        observer.observe(block);
+      });
+
+      // Dynamic Text Animation
+      const glitchText = document.querySelector(".glitch-text");
+      const texts = ["WE ARE", "WE CREATE", "WE DESIGN", "WE INNOVATE"];
+      let textIndex = 0;
+
+      setInterval(() => {
+        textIndex = (textIndex + 1) % texts.length;
+        glitchText.style.opacity = "0";
+        setTimeout(() => {
+          glitchText.textContent = texts[textIndex];
+          glitchText.style.opacity = "1";
+        }, 300);
+      }, 3000);
+
+      // Mobile Menu Close on Scroll
+      let lastScrollTop = 0;
+      window.addEventListener("scroll", () => {
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+        if (
+          scrollTop > lastScrollTop &&
+          navContent.classList.contains("active")
+        ) {
+          navTrigger.classList.remove("active");
+          navContent.classList.remove("active");
+        }
+        lastScrollTop = scrollTop;
+      });
+    </script>
+  </body>
+</html>

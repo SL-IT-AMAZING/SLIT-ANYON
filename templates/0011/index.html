@@ -1,0 +1,1595 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circular Gallery Experience - Extended</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Montserrat:wght@100;300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-color: #0a0a0a;
+        --text-light: #999;
+        --accent: #fff;
+        --transition: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background-color: var(--bg-color);
+        color: #fff;
+        overflow: hidden;
+        cursor: none;
+        height: 100vh;
+        position: relative;
+      }
+
+      /* Custom Cursor - Magnetic Effect */
+      .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background: #fff;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s ease;
+      }
+
+      .cursor-ring {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition: all 0.15s ease;
+      }
+
+      .cursor-ring.expanded {
+        width: 80px;
+        height: 80px;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Circular Navigation - Double Ring */
+      .circular-nav {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        height: 600px;
+        z-index: 100;
+        transition: all 0.8s var(--transition);
+      }
+
+      .circular-nav.hidden {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+        pointer-events: none;
+      }
+
+      .nav-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: rotate 90s linear infinite;
+      }
+
+      .nav-ring.inner {
+        width: 400px;
+        height: 400px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-direction: reverse;
+        animation-duration: 60s;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .nav-item {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: "Bebas Neue", cursive;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-align: center;
+        padding: 10px;
+      }
+
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: scale(1.1);
+      }
+
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--bg-color);
+        border-color: #fff;
+      }
+
+      /* Position nav items in circles - 10 items */
+      .nav-item:nth-child(1) {
+        top: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-item:nth-child(2) {
+        top: 5%;
+        right: 15%;
+      }
+      .nav-item:nth-child(3) {
+        top: 20%;
+        right: -35px;
+      }
+      .nav-item:nth-child(4) {
+        top: 45%;
+        right: -35px;
+      }
+      .nav-item:nth-child(5) {
+        bottom: 20%;
+        right: -35px;
+      }
+      .nav-item:nth-child(6) {
+        bottom: 5%;
+        right: 15%;
+      }
+      .nav-item:nth-child(7) {
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-item:nth-child(8) {
+        bottom: 5%;
+        left: 15%;
+      }
+      .nav-item:nth-child(9) {
+        bottom: 20%;
+        left: -35px;
+      }
+      .nav-item:nth-child(10) {
+        top: 45%;
+        left: -35px;
+      }
+
+      /* Central Display */
+      .central-display {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        transition: all 0.8s var(--transition);
+      }
+
+      .central-display.hidden {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+
+      .section-indicator {
+        font-family: "Bebas Neue", cursive;
+        font-size: 120px;
+        letter-spacing: 10px;
+        opacity: 0.1;
+        transition: all 0.5s ease;
+      }
+
+      .section-indicator.active {
+        opacity: 0.3;
+        transform: scale(1.1);
+      }
+
+      .section-title {
+        position: absolute;
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 3px;
+        opacity: 0;
+        transition: all 0.5s ease;
+        text-align: center;
+        width: 100%;
+      }
+
+      .section-title.active {
+        opacity: 0.6;
+      }
+
+      /* Content Carousel */
+      .content-carousel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .carousel-item {
+        position: absolute;
+        width: 280px;
+        height: 380px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8) rotateY(45deg);
+        transition: all 0.8s var(--transition);
+        pointer-events: auto;
+        cursor: pointer;
+        z-index: 10;
+      }
+
+      .carousel-item.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+      }
+
+      .carousel-item.centered {
+        top: 50% !important;
+        left: 50% !important;
+        width: 500px;
+        height: 650px;
+        z-index: 300;
+        transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      }
+
+      .carousel-item.prev {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(0.9) rotateY(-45deg);
+      }
+
+      .carousel-item.next {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(0.9) rotateY(45deg);
+      }
+
+      /* Orbital positions - More items */
+      .carousel-item:nth-child(1) {
+        top: 15%;
+        left: 15%;
+      }
+      .carousel-item:nth-child(2) {
+        top: 15%;
+        right: 15%;
+      }
+      .carousel-item:nth-child(3) {
+        bottom: 15%;
+        right: 15%;
+      }
+      .carousel-item:nth-child(4) {
+        bottom: 15%;
+        left: 15%;
+      }
+      .carousel-item:nth-child(5) {
+        top: 50%;
+        left: 8%;
+      }
+      .carousel-item:nth-child(6) {
+        top: 50%;
+        right: 8%;
+      }
+      .carousel-item:nth-child(7) {
+        top: 8%;
+        left: 50%;
+      }
+      .carousel-item:nth-child(8) {
+        bottom: 8%;
+        left: 50%;
+      }
+      .carousel-item:nth-child(9) {
+        top: 30%;
+        left: 25%;
+      }
+      .carousel-item:nth-child(10) {
+        top: 30%;
+        right: 25%;
+      }
+      .carousel-item:nth-child(11) {
+        bottom: 30%;
+        right: 25%;
+      }
+      .carousel-item:nth-child(12) {
+        bottom: 30%;
+        left: 25%;
+      }
+
+      .carousel-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.2);
+        transition: all 0.5s ease;
+      }
+
+      .carousel-item:hover .carousel-media,
+      .carousel-item.centered .carousel-media {
+        filter: grayscale(0%) contrast(1);
+        transform: scale(1.05);
+      }
+
+      .carousel-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 25px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+      }
+
+      .carousel-item:hover .carousel-overlay,
+      .carousel-item.centered .carousel-overlay {
+        transform: translateY(0);
+      }
+
+      .carousel-title {
+        font-family: "Playfair Display", serif;
+        font-size: 22px;
+        margin-bottom: 5px;
+      }
+
+      .carousel-item.centered .carousel-title {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+
+      .carousel-subtitle {
+        font-size: 13px;
+        color: var(--text-light);
+        font-weight: 300;
+      }
+
+      .carousel-item.centered .carousel-subtitle {
+        font-size: 16px;
+      }
+
+      /* Close button for centered item */
+      .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+      }
+
+      .carousel-item.centered .close-button {
+        display: flex;
+      }
+
+      .close-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: rotate(90deg);
+      }
+
+      .close-button::before,
+      .close-button::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 1px;
+        background: #fff;
+      }
+
+      .close-button::before {
+        transform: rotate(45deg);
+      }
+
+      .close-button::after {
+        transform: rotate(-45deg);
+      }
+
+      /* Backdrop for centered item */
+      .backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+        z-index: 200;
+      }
+
+      .backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Text Panels */
+      .text-panel {
+        position: fixed;
+        width: 350px;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.6s ease;
+        pointer-events: none;
+      }
+
+      .text-panel.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .text-panel.hidden-for-center {
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      .text-panel.top-left {
+        top: 80px;
+        left: 40px;
+      }
+
+      .text-panel.bottom-right {
+        bottom: 40px;
+        right: 40px;
+        text-align: right;
+      }
+
+      .text-panel.center-left {
+        top: 50%;
+        left: 40px;
+        transform: translateY(-50%);
+      }
+
+      .text-panel.center-right {
+        top: 50%;
+        right: 40px;
+        transform: translateY(-50%);
+        text-align: right;
+      }
+
+      .quote-text {
+        font-family: "Playfair Display", serif;
+        font-size: 26px;
+        line-height: 1.4;
+        font-style: italic;
+        margin-bottom: 20px;
+      }
+
+      .quote-author {
+        font-size: 13px;
+        letter-spacing: 2px;
+        color: var(--text-light);
+        text-transform: uppercase;
+      }
+
+      .info-text {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 20px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+      }
+
+      .info-detail {
+        font-size: 14px;
+        color: var(--text-light);
+        line-height: 1.8;
+      }
+
+      /* Side Navigation Dots */
+      .side-nav {
+        position: fixed;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 200;
+        transition: all 0.5s ease;
+      }
+
+      .side-nav.hidden {
+        opacity: 0;
+        transform: translateY(-50%) translateX(100px);
+      }
+
+      .nav-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 15px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-dot:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.5);
+      }
+
+      .nav-dot.active {
+        background: #fff;
+        transform: scale(1.5);
+      }
+
+      .nav-dot::before {
+        content: attr(data-title);
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 11px;
+        letter-spacing: 1px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+        color: var(--text-light);
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 30px 40px;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 24px;
+        letter-spacing: 3px;
+        opacity: 0.9;
+      }
+
+      .menu-toggle {
+        width: 30px;
+        height: 20px;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .menu-line {
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        background: #fff;
+        transition: all 0.3s ease;
+      }
+
+      .menu-line:nth-child(1) {
+        top: 0;
+      }
+      .menu-line:nth-child(2) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .menu-line:nth-child(3) {
+        bottom: 0;
+      }
+
+      /* Page Progress */
+      .progress-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        width: 100%;
+        z-index: 500;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #fff;
+        width: 10%;
+        transition: width 0.5s ease;
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-circle {
+        width: 100px;
+        height: 100px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .loader-circle::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        bottom: -1px;
+        border-radius: 50%;
+        border: 1px solid transparent;
+        border-top-color: #fff;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Floating Elements */
+      .floating-element {
+        position: fixed;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.02) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+      }
+
+      .floating-element:nth-child(1) {
+        top: 10%;
+        left: 5%;
+        animation-delay: 0s;
+      }
+
+      .floating-element:nth-child(2) {
+        bottom: 10%;
+        right: 5%;
+        animation-delay: 5s;
+      }
+
+      .floating-element:nth-child(3) {
+        top: 50%;
+        right: 10%;
+        animation-delay: 10s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(30px, -30px) scale(1.1);
+        }
+        66% {
+          transform: translate(-20px, 20px) scale(0.9);
+        }
+      }
+
+      /* Special Elements */
+      .special-element {
+        position: fixed;
+        opacity: 0;
+        transition: all 0.8s ease;
+        pointer-events: none;
+      }
+
+      .special-element.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .data-visualization {
+        top: 20%;
+        right: 10%;
+        width: 200px;
+        height: 200px;
+      }
+
+      .data-circle {
+        width: 100%;
+        height: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        position: relative;
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 1;
+        }
+      }
+
+      .data-number {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: "Bebas Neue", cursive;
+        font-size: 48px;
+        letter-spacing: 2px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        body {
+          cursor: auto;
+        }
+
+        .cursor-dot,
+        .cursor-ring {
+          display: none;
+        }
+
+        .circular-nav {
+          width: 350px;
+          height: 350px;
+        }
+
+        .nav-ring.inner {
+          width: 250px;
+          height: 250px;
+        }
+
+        .nav-item {
+          width: 50px;
+          height: 50px;
+          font-size: 10px;
+        }
+
+        .carousel-item {
+          width: 200px;
+          height: 280px;
+        }
+
+        .carousel-item.centered {
+          width: 90%;
+          height: 70vh;
+        }
+
+        .text-panel {
+          width: calc(100% - 40px);
+          margin: 0 20px;
+        }
+
+        .side-nav {
+          display: none;
+        }
+
+        .section-indicator {
+          font-size: 80px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-circle"></div>
+    </div>
+
+    <!-- Backdrop -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- Floating Elements -->
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">CIRCULAR GALLERY</div>
+      <div class="menu-toggle">
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Central Display -->
+    <div class="central-display" id="centralDisplay">
+      <div class="section-indicator" id="sectionIndicator">01</div>
+      <div class="section-title" id="sectionTitle">FEATURED</div>
+    </div>
+
+    <!-- Circular Navigation -->
+    <div class="circular-nav" id="circularNav">
+      <div class="nav-ring"></div>
+      <div class="nav-ring inner"></div>
+      <div class="nav-item active" data-section="0">FEATURED</div>
+      <div class="nav-item" data-section="1">COLLECTION</div>
+      <div class="nav-item" data-section="2">ARTISTS</div>
+      <div class="nav-item" data-section="3">EXHIBITION</div>
+      <div class="nav-item" data-section="4">ARCHIVE</div>
+      <div class="nav-item" data-section="5">PROCESS</div>
+      <div class="nav-item" data-section="6">STUDIO</div>
+      <div class="nav-item" data-section="7">PHILOSOPHY</div>
+      <div class="nav-item" data-section="8">COMMUNITY</div>
+      <div class="nav-item" data-section="9">FUTURE</div>
+    </div>
+
+    <!-- Side Navigation -->
+    <div class="side-nav" id="sideNav">
+      <div class="nav-dot active" data-title="FEATURED" data-section="0"></div>
+      <div class="nav-dot" data-title="COLLECTION" data-section="1"></div>
+      <div class="nav-dot" data-title="ARTISTS" data-section="2"></div>
+      <div class="nav-dot" data-title="EXHIBITION" data-section="3"></div>
+      <div class="nav-dot" data-title="ARCHIVE" data-section="4"></div>
+      <div class="nav-dot" data-title="PROCESS" data-section="5"></div>
+      <div class="nav-dot" data-title="STUDIO" data-section="6"></div>
+      <div class="nav-dot" data-title="PHILOSOPHY" data-section="7"></div>
+      <div class="nav-dot" data-title="COMMUNITY" data-section="8"></div>
+      <div class="nav-dot" data-title="FUTURE" data-section="9"></div>
+    </div>
+
+    <!-- Content Carousel -->
+    <div class="content-carousel" id="contentCarousel">
+      <!-- Section 0: Featured -->
+      <div
+        class="carousel-item active"
+        data-section="0"
+        data-original-position="15%;15%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Ethereal Landscapes</h3>
+          <p class="carousel-subtitle">Digital Art Collection</p>
+        </div>
+      </div>
+
+      <div
+        class="carousel-item active"
+        data-section="0"
+        data-original-position="15%;85%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/efbc89fc-08ba-4326-b0ae-f45b69ab5283/3.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Motion Studies</h3>
+          <p class="carousel-subtitle">Video Installation</p>
+        </div>
+      </div>
+
+      <!-- Section 1: Collection -->
+      <div
+        class="carousel-item"
+        data-section="1"
+        data-original-position="85%;85%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_1.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Urban Fragments</h3>
+          <p class="carousel-subtitle">Photography Series</p>
+        </div>
+      </div>
+
+      <div
+        class="carousel-item"
+        data-section="1"
+        data-original-position="85%;15%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Nature in Motion</h3>
+          <p class="carousel-subtitle">Video Art</p>
+        </div>
+      </div>
+
+      <!-- Section 2: Artists -->
+      <div
+        class="carousel-item"
+        data-section="2"
+        data-original-position="50%;8%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_2.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Chromatic Dreams</h3>
+          <p class="carousel-subtitle">Contemporary Art</p>
+        </div>
+      </div>
+
+      <!-- Section 3: Exhibition -->
+      <div
+        class="carousel-item"
+        data-section="3"
+        data-original-position="50%;92%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d88a0583-0025-40b1-9d51-0fda4a81db42/0_3.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Minimal Forms</h3>
+          <p class="carousel-subtitle">Sculptural Photography</p>
+        </div>
+      </div>
+
+      <!-- Section 4: Archive -->
+      <div
+        class="carousel-item"
+        data-section="4"
+        data-original-position="8%;50%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/4e36274c-4924-4079-9b97-ae83c02afff1/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Archive Material</h3>
+          <p class="carousel-subtitle">Historical Documentation</p>
+        </div>
+      </div>
+
+      <!-- Section 5: Process -->
+      <div
+        class="carousel-item"
+        data-section="5"
+        data-original-position="92%;50%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Behind the Scenes</h3>
+          <p class="carousel-subtitle">Creative Process</p>
+        </div>
+      </div>
+
+      <div
+        class="carousel-item"
+        data-section="5"
+        data-original-position="30%;25%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/7c00cd53-8172-47af-98bd-9c004e4b8e31/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Studio Documentation</h3>
+          <p class="carousel-subtitle">Work in Progress</p>
+        </div>
+      </div>
+
+      <!-- Section 6: Studio -->
+      <div
+        class="carousel-item"
+        data-section="6"
+        data-original-position="30%;75%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_1.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Studio Space</h3>
+          <p class="carousel-subtitle">Creative Environment</p>
+        </div>
+      </div>
+
+      <!-- Section 7: Philosophy -->
+      <div
+        class="carousel-item"
+        data-section="7"
+        data-original-position="70%;75%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/d42ae88a-c9ee-4cde-87f8-0c8b8a26bffb/0_2.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Artistic Vision</h3>
+          <p class="carousel-subtitle">Conceptual Framework</p>
+        </div>
+      </div>
+
+      <!-- Section 8: Community -->
+      <div
+        class="carousel-item"
+        data-section="8"
+        data-original-position="70%;25%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/c63a04db-5b8f-49e8-81ad-6aac06d97a97/2.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Community Events</h3>
+          <p class="carousel-subtitle">Collaborative Projects</p>
+        </div>
+      </div>
+
+      <!-- Section 9: Future -->
+      <div
+        class="carousel-item"
+        data-section="9"
+        data-original-position="15%;15%"
+      >
+        <div class="close-button"></div>
+        <img
+          class="carousel-media"
+          src="https://cdn.midjourney.com/28eb2ef4-d6b0-4f74-ac62-c94d15e8adf4/0_0.png"
+          alt="Gallery Image"
+        />
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Future Visions</h3>
+          <p class="carousel-subtitle">Upcoming Projects</p>
+        </div>
+      </div>
+
+      <div
+        class="carousel-item"
+        data-section="9"
+        data-original-position="85%;85%"
+      >
+        <div class="close-button"></div>
+        <video class="carousel-media" autoplay muted loop playsinline>
+          <source
+            src="https://cdn.midjourney.com/video/1181d9d4-6eb2-4984-8407-7d0e68465057/1.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="carousel-overlay">
+          <h3 class="carousel-title">Innovation Lab</h3>
+          <p class="carousel-subtitle">Experimental Works</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Panels -->
+    <div class="text-panel top-left" id="textPanel1">
+      <div class="quote-text">
+        "Art is not what you see, but what you make others see."
+      </div>
+      <div class="quote-author">— Edgar Degas</div>
+    </div>
+
+    <div class="text-panel bottom-right" id="textPanel2">
+      <div class="quote-text">
+        "Every artist dips his brush in his own soul."
+      </div>
+      <div class="quote-author">— Henry Ward Beecher</div>
+    </div>
+
+    <div class="text-panel center-left" id="textPanel3">
+      <div class="info-text">Process & Technique</div>
+      <div class="info-detail">
+        Exploring the intersection of traditional craftsmanship and digital
+        innovation.
+      </div>
+    </div>
+
+    <div class="text-panel center-right" id="textPanel4">
+      <div class="info-text">Community Vision</div>
+      <div class="info-detail">
+        Building bridges between artists, collectors, and art enthusiasts
+        worldwide.
+      </div>
+    </div>
+
+    <!-- Special Elements -->
+    <div class="special-element data-visualization" id="dataViz">
+      <div class="data-circle">
+        <div class="data-number">2024</div>
+      </div>
+    </div>
+
+    <script>
+      // Custom Cursor
+      const cursorDot = document.querySelector(".cursor-dot");
+      const cursorRing = document.querySelector(".cursor-ring");
+      let mouseX = 0,
+        mouseY = 0;
+      let dotX = 0,
+        dotY = 0;
+      let ringX = 0,
+        ringY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateCursor() {
+        // Dot follows immediately
+        dotX += (mouseX - dotX) * 0.9;
+        dotY += (mouseY - dotY) * 0.9;
+        cursorDot.style.left = dotX + "px";
+        cursorDot.style.top = dotY + "px";
+
+        // Ring follows with delay
+        ringX += (mouseX - ringX) * 0.15;
+        ringY += (mouseY - ringY) * 0.15;
+        cursorRing.style.left = ringX + "px";
+        cursorRing.style.top = ringY + "px";
+
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Hover effects
+      const hoverElements = document.querySelectorAll(
+        ".nav-item, .carousel-item, .nav-dot",
+      );
+      hoverElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          cursorRing.classList.add("expanded");
+        });
+        el.addEventListener("mouseleave", () => {
+          cursorRing.classList.remove("expanded");
+        });
+      });
+
+      // Section Management
+      let currentSection = 0;
+      let centeredItem = null;
+      const totalSections = 10;
+      const navItems = document.querySelectorAll(".nav-item");
+      const navDots = document.querySelectorAll(".nav-dot");
+      const carouselItems = document.querySelectorAll(".carousel-item");
+      const sectionIndicator = document.getElementById("sectionIndicator");
+      const sectionTitle = document.getElementById("sectionTitle");
+      const progressFill = document.getElementById("progressFill");
+      const backdrop = document.getElementById("backdrop");
+      const circularNav = document.getElementById("circularNav");
+      const centralDisplay = document.getElementById("centralDisplay");
+      const sideNav = document.getElementById("sideNav");
+
+      const sectionTitles = [
+        "FEATURED",
+        "COLLECTION",
+        "ARTISTS",
+        "EXHIBITION",
+        "ARCHIVE",
+        "PROCESS",
+        "STUDIO",
+        "PHILOSOPHY",
+        "COMMUNITY",
+        "FUTURE",
+      ];
+
+      const textPanels = [
+        document.getElementById("textPanel1"),
+        document.getElementById("textPanel2"),
+        document.getElementById("textPanel3"),
+        document.getElementById("textPanel4"),
+      ];
+
+      const dataViz = document.getElementById("dataViz");
+
+      // Text panel visibility by section
+      const textPanelVisibility = {
+        0: [true, true, false, false],
+        1: [false, true, false, false],
+        2: [true, false, false, false],
+        3: [false, false, true, false],
+        4: [true, true, false, false],
+        5: [false, false, true, false],
+        6: [false, false, false, true],
+        7: [true, false, true, false],
+        8: [false, false, false, true],
+        9: [false, true, false, true],
+      };
+
+      // Store original positions
+      carouselItems.forEach((item) => {
+        const position = item.dataset.originalPosition.split(";");
+        item.style.top = position[0];
+        item.style.left = position[1];
+      });
+
+      function updateSection(newSection) {
+        currentSection = newSection;
+
+        // Update navigation
+        navItems.forEach((item, index) => {
+          item.classList.toggle("active", index === currentSection);
+        });
+
+        navDots.forEach((dot, index) => {
+          dot.classList.toggle("active", index === currentSection);
+        });
+
+        // Update carousel items
+        carouselItems.forEach((item) => {
+          const itemSection = parseInt(item.dataset.section);
+          if (itemSection === currentSection) {
+            item.classList.add("active");
+            setTimeout(() => {
+              item.style.opacity = "1";
+              item.style.transform =
+                "translate(-50%, -50%) scale(1) rotateY(0deg)";
+            }, Math.random() * 300);
+          } else {
+            item.classList.remove("active");
+            item.style.opacity = "0";
+            item.style.transform =
+              "translate(-50%, -50%) scale(0.8) rotateY(45deg)";
+          }
+        });
+
+        // Update section indicator
+        sectionIndicator.textContent =
+          currentSection < 9
+            ? `0${currentSection + 1}`
+            : `${currentSection + 1}`;
+        sectionIndicator.classList.add("active");
+        setTimeout(() => {
+          sectionIndicator.classList.remove("active");
+        }, 500);
+
+        // Update section title
+        sectionTitle.textContent = sectionTitles[currentSection];
+        sectionTitle.classList.add("active");
+        setTimeout(() => {
+          sectionTitle.classList.remove("active");
+        }, 2000);
+
+        // Update progress bar
+        progressFill.style.width = `${((currentSection + 1) / totalSections) * 100}%`;
+
+        // Update text panels
+        const visibility = textPanelVisibility[currentSection];
+        textPanels.forEach((panel, index) => {
+          setTimeout(() => {
+            panel.classList.toggle("visible", visibility[index]);
+          }, index * 100);
+        });
+
+        // Special elements
+        dataViz.classList.toggle(
+          "visible",
+          currentSection === 4 || currentSection === 9,
+        );
+      }
+
+      // Center item functionality
+      function centerItem(item) {
+        if (centeredItem === item) return;
+
+        // Close any previously centered item
+        if (centeredItem) {
+          closecenteredItem();
+        }
+
+        centeredItem = item;
+        item.classList.add("centered");
+        backdrop.classList.add("active");
+
+        // Hide navigation and other UI elements
+        circularNav.classList.add("hidden");
+        centralDisplay.classList.add("hidden");
+        sideNav.classList.add("hidden");
+
+        // Hide text panels
+        textPanels.forEach((panel) => {
+          panel.classList.add("hidden-for-center");
+        });
+      }
+
+      function closecenteredItem() {
+        if (!centeredItem) return;
+
+        centeredItem.classList.remove("centered");
+        backdrop.classList.remove("active");
+
+        // Restore original position
+        const position = centeredItem.dataset.originalPosition.split(";");
+        centeredItem.style.top = position[0];
+        centeredItem.style.left = position[1];
+
+        // Show navigation and other UI elements
+        circularNav.classList.remove("hidden");
+        centralDisplay.classList.remove("hidden");
+        sideNav.classList.remove("hidden");
+
+        // Restore text panels
+        textPanels.forEach((panel) => {
+          panel.classList.remove("hidden-for-center");
+        });
+
+        centeredItem = null;
+      }
+
+      // Navigation clicks
+      navItems.forEach((item, index) => {
+        item.addEventListener("click", () => updateSection(index));
+      });
+
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => updateSection(index));
+      });
+
+      // Carousel item clicks
+      carouselItems.forEach((item) => {
+        item.addEventListener("click", function (e) {
+          // Don't center if clicking the close button
+          if (e.target.classList.contains("close-button")) {
+            closecenteredItem();
+            return;
+          }
+
+          if (
+            this.classList.contains("active") &&
+            !this.classList.contains("centered")
+          ) {
+            centerItem(this);
+          }
+        });
+
+        // Close button click
+        const closeBtn = item.querySelector(".close-button");
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closecenteredItem();
+        });
+      });
+
+      // Backdrop click to close
+      backdrop.addEventListener("click", closecenteredItem);
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (centeredItem && e.key === "Escape") {
+          closecenteredItem();
+          return;
+        }
+
+        if (!centeredItem) {
+          if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+            updateSection((currentSection + 1) % totalSections);
+          } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+            updateSection((currentSection - 1 + totalSections) % totalSections);
+          } else if (e.key >= "0" && e.key <= "9") {
+            const section = parseInt(e.key);
+            if (section < totalSections) {
+              updateSection(section);
+            }
+          }
+        }
+      });
+
+      // Mouse wheel navigation
+      let isScrolling = false;
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          if (!isScrolling && !centeredItem) {
+            isScrolling = true;
+
+            if (e.deltaY > 0) {
+              updateSection((currentSection + 1) % totalSections);
+            } else {
+              updateSection(
+                (currentSection - 1 + totalSections) % totalSections,
+              );
+            }
+
+            setTimeout(() => {
+              isScrolling = false;
+            }, 800);
+          }
+        },
+        { passive: true },
+      );
+
+      // Touch support
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        if (!centeredItem) {
+          handleSwipe();
+        }
+      });
+
+      function handleSwipe() {
+        if (touchEndY < touchStartY - 50) {
+          updateSection((currentSection + 1) % totalSections);
+        }
+        if (touchEndY > touchStartY + 50) {
+          updateSection((currentSection - 1 + totalSections) % totalSections);
+        }
+      }
+
+      // Remove loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+          updateSection(0);
+        }, 1000);
+      });
+
+      // Update quotes based on section
+      const quotes = [
+        {
+          text: "Art is not what you see, but what you make others see.",
+          author: "Edgar Degas",
+        },
+        {
+          text: "Every artist dips his brush in his own soul.",
+          author: "Henry Ward Beecher",
+        },
+        {
+          text: "The purpose of art is washing the dust of daily life off our souls.",
+          author: "Pablo Picasso",
+        },
+        {
+          text: "Art enables us to find ourselves and lose ourselves at the same time.",
+          author: "Thomas Merton",
+        },
+        {
+          text: "The artist is nothing without the gift, but the gift is nothing without work.",
+          author: "Émile Zola",
+        },
+        { text: "Creativity takes courage.", author: "Henri Matisse" },
+        {
+          text: "Art is the lie that enables us to realize the truth.",
+          author: "Pablo Picasso",
+        },
+        {
+          text: "The main thing is to be moved, to love, to hope, to tremble, to live.",
+          author: "Auguste Rodin",
+        },
+        {
+          text: "Art must be an expression of love or it is nothing.",
+          author: "Marc Chagall",
+        },
+        {
+          text: "The future belongs to those who believe in the beauty of their dreams.",
+          author: "Eleanor Roosevelt",
+        },
+      ];
+
+      function updateQuotes() {
+        if (textPanels[0].classList.contains("visible")) {
+          textPanels[0].querySelector(".quote-text").textContent =
+            `"${quotes[currentSection].text}"`;
+          textPanels[0].querySelector(".quote-author").textContent =
+            `— ${quotes[currentSection].author}`;
+        }
+      }
+    </script>
+  </body>
+</html>

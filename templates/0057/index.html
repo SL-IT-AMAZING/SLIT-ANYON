@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HYPER STUDIO - Digital Experience</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;700;900&display=swap");
+
+      :root {
+        --color-1: #ff006e;
+        --color-2: #8338ec;
+        --color-3: #3a86ff;
+        --bg-dark: #0a0a0a;
+        --text-light: #ffffff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-dark);
+        color: var(--text-light);
+        overflow: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        background: var(--color-1);
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        mix-blend-mode: screen;
+        transition:
+          transform 0.2s,
+          background 0.3s;
+      }
+
+      .cursor.grow {
+        transform: scale(3);
+        background: var(--color-2);
+      }
+
+      /* Navigation Container */
+      .nav-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        z-index: 100;
+      }
+
+      .nav-vertical {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 80px;
+        background: rgba(10, 10, 10, 0.9);
+        backdrop-filter: blur(20px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        z-index: 101;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-horizontal {
+        position: fixed;
+        top: 0;
+        left: 80px;
+        right: 0;
+        height: 80px;
+        background: rgba(10, 10, 10, 0.9);
+        backdrop-filter: blur(20px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 60px;
+        z-index: 101;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot.active {
+        background: var(--color-1);
+        box-shadow: 0 0 20px var(--color-1);
+      }
+
+      .nav-dot:hover {
+        transform: scale(1.5);
+        background: var(--color-2);
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 3rem;
+        letter-spacing: 3px;
+        background: linear-gradient(
+          45deg,
+          var(--color-1),
+          var(--color-2),
+          var(--color-3)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient 3s ease infinite;
+      }
+
+      @keyframes gradient {
+        0%,
+        100% {
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          filter: hue-rotate(30deg);
+        }
+      }
+
+      /* Main Container */
+      .main-container {
+        position: fixed;
+        top: 80px;
+        left: 80px;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+      }
+
+      /* Sections Container */
+      .sections-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 1s cubic-bezier(0.86, 0, 0.07, 1);
+      }
+
+      .section {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* Page 1 - Hero */
+      .hero-section {
+        background: var(--bg-dark);
+      }
+
+      .hero-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(8rem, 20vw, 25rem);
+        line-height: 0.8;
+        letter-spacing: -0.05em;
+        position: absolute;
+        z-index: 10;
+        mix-blend-mode: difference;
+      }
+
+      .hero-title span {
+        display: block;
+        transform: translateY(100%);
+        animation: slideUp 1s cubic-bezier(0.86, 0, 0.07, 1) forwards;
+        animation-delay: calc(var(--i) * 0.1s);
+      }
+
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .hero-image {
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        object-fit: cover;
+        filter: contrast(1.2) brightness(0.9);
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-20px) scale(1.02);
+        }
+      }
+
+      /* Page 2 - Gallery Grid */
+      .gallery-section {
+        background: var(--color-1);
+        padding: 40px;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        width: 100%;
+        height: 100%;
+        max-width: 1400px;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        border-radius: 20px;
+        transform: scale(0.9);
+        transition: all 0.5s cubic-bezier(0.86, 0, 0.07, 1);
+      }
+
+      .gallery-item:hover {
+        transform: scale(1);
+        z-index: 10;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+      }
+
+      /* Page 3 - About */
+      .about-section {
+        background: var(--color-2);
+        padding: 60px;
+      }
+
+      .about-content {
+        max-width: 1200px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-text h2 {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 8vw, 8rem);
+        line-height: 0.9;
+        margin-bottom: 30px;
+      }
+
+      .about-text p {
+        font-size: 1.5rem;
+        line-height: 1.6;
+        opacity: 0.9;
+      }
+
+      .about-visual {
+        position: relative;
+        height: 600px;
+      }
+
+      .about-image {
+        position: absolute;
+        width: 300px;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .about-image:nth-child(1) {
+        top: 0;
+        left: 0;
+        z-index: 3;
+      }
+
+      .about-image:nth-child(2) {
+        top: 50px;
+        left: 150px;
+        z-index: 2;
+      }
+
+      .about-image:nth-child(3) {
+        top: 100px;
+        left: 300px;
+        z-index: 1;
+      }
+
+      /* Page 4 - Services */
+      .services-section {
+        background: var(--color-3);
+        padding: 60px;
+      }
+
+      .services-container {
+        max-width: 1400px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .services-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .services-header h2 {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 10vw, 10rem);
+        letter-spacing: -0.02em;
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+      }
+
+      .service-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        padding: 50px 40px;
+        border-radius: 30px;
+        text-align: center;
+        transition: all 0.5s;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .service-card:hover {
+        transform: translateY(-20px) rotateX(5deg);
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .service-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+      }
+
+      .service-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      /* Page 5 - Process */
+      .process-section {
+        background: linear-gradient(135deg, var(--color-1), var(--color-2));
+        padding: 60px;
+      }
+
+      .process-container {
+        max-width: 1200px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .process-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 8vw, 8rem);
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .process-timeline {
+        position: relative;
+        padding: 40px 0;
+      }
+
+      .process-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-50%);
+      }
+
+      .process-step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 80px;
+        position: relative;
+      }
+
+      .process-step:nth-child(even) {
+        flex-direction: row-reverse;
+      }
+
+      .process-content {
+        flex: 1;
+        padding: 0 60px;
+      }
+
+      .process-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 8rem;
+        color: rgba(255, 255, 255, 0.2);
+        line-height: 1;
+      }
+
+      .process-text h3 {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+      }
+
+      .process-dot {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 30px;
+        background: var(--text-light);
+        border-radius: 50%;
+        border: 4px solid var(--bg-dark);
+        z-index: 10;
+      }
+
+      /* Page 6 - Team */
+      .team-section {
+        background: var(--bg-dark);
+        padding: 60px;
+      }
+
+      .team-container {
+        max-width: 1400px;
+        text-align: center;
+      }
+
+      .team-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 10vw, 12rem);
+        background: linear-gradient(
+          45deg,
+          var(--color-1),
+          var(--color-2),
+          var(--color-3)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 60px;
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px;
+      }
+
+      .team-member {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.5s;
+      }
+
+      .team-member:hover {
+        transform: scale(1.05) rotate(-2deg);
+      }
+
+      .team-member img {
+        width: 100%;
+        height: 350px;
+        object-fit: cover;
+        filter: grayscale(0);
+        transition: all 0.5s;
+      }
+
+      .team-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+      }
+
+      .team-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .team-role {
+        color: var(--color-1);
+        font-size: 1rem;
+      }
+
+      /* Page 7 - Contact */
+      .contact-section {
+        background: linear-gradient(135deg, var(--color-3), var(--color-2));
+        padding: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .contact-container {
+        max-width: 1000px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .contact-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(5rem, 12vw, 15rem);
+        line-height: 0.8;
+        margin-bottom: 40px;
+        letter-spacing: -0.05em;
+      }
+
+      .contact-subtitle {
+        font-size: 2rem;
+        margin-bottom: 60px;
+        opacity: 0.9;
+      }
+
+      .contact-links {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .contact-link {
+        font-size: 1.5rem;
+        color: var(--text-light);
+        text-decoration: none;
+        padding: 20px 50px;
+        border: 3px solid var(--text-light);
+        border-radius: 50px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contact-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--text-light);
+        transition: left 0.3s;
+        z-index: -1;
+      }
+
+      .contact-link:hover {
+        color: var(--color-2);
+      }
+
+      .contact-link:hover::before {
+        left: 0;
+      }
+
+      /* Video Background */
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        z-index: -1;
+      }
+
+      /* Navigation Arrows */
+      .nav-arrows {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        display: flex;
+        gap: 20px;
+        z-index: 1000;
+      }
+
+      .nav-arrow {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .nav-arrow:hover {
+        background: var(--color-1);
+        transform: scale(1.1);
+        border-color: var(--color-1);
+      }
+
+      .nav-arrow svg {
+        width: 24px;
+        height: 24px;
+        fill: var(--text-light);
+      }
+
+      /* Page Indicator */
+      .page-indicator {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--text-light);
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        z-index: 1000;
+        mix-blend-mode: difference;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .nav-vertical {
+          width: 60px;
+        }
+
+        .nav-horizontal {
+          left: 60px;
+          height: 60px;
+          padding: 0 30px;
+        }
+
+        .main-container {
+          top: 60px;
+          left: 60px;
+        }
+
+        .gallery-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .services-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .team-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero-title {
+          font-size: clamp(4rem, 15vw, 10rem);
+        }
+
+        .about-content {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .about-visual {
+          height: 400px;
+        }
+
+        .gallery-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .process-step {
+          flex-direction: column !important;
+          text-align: center;
+        }
+
+        .process-content {
+          padding: 0 20px;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-title {
+          font-size: clamp(3rem, 10vw, 8rem);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-vertical">
+      <div class="nav-dot active" data-page="0"></div>
+      <div class="nav-dot" data-page="1"></div>
+      <div class="nav-dot" data-page="2"></div>
+      <div class="nav-dot" data-page="3"></div>
+      <div class="nav-dot" data-page="4"></div>
+      <div class="nav-dot" data-page="5"></div>
+      <div class="nav-dot" data-page="6"></div>
+    </nav>
+
+    <nav class="nav-horizontal">
+      <div class="logo">HYPER</div>
+      <div class="menu-text">DIGITAL EXPERIENCE</div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <div class="sections-wrapper" id="sectionsWrapper">
+        <!-- Page 1 - Hero -->
+        <section class="section hero-section" data-page="0">
+          <div class="hero-content">
+            <h1 class="hero-title">
+              <span style="--i: 0">BREAK</span>
+              <span style="--i: 1">THE</span>
+              <span style="--i: 2">LIMITS</span>
+            </h1>
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png"
+              alt="Hero"
+              class="hero-image"
+            />
+          </div>
+          <video class="video-bg" autoplay muted loop>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </section>
+
+        <!-- Page 2 - Gallery -->
+        <section class="section gallery-section" data-page="1">
+          <div class="gallery-grid">
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png"
+                alt="Gallery 1"
+              />
+              <div class="gallery-overlay">
+                <h3>DIGITAL ART</h3>
+                <p>Pushing creative boundaries</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png"
+                alt="Gallery 2"
+              />
+              <div class="gallery-overlay">
+                <h3>INNOVATION</h3>
+                <p>Future-forward thinking</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+                alt="Gallery 3"
+              />
+              <div class="gallery-overlay">
+                <h3>EXPERIENCE</h3>
+                <p>Immersive digital worlds</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+                alt="Gallery 4"
+              />
+              <div class="gallery-overlay">
+                <h3>VISION</h3>
+                <p>See beyond the ordinary</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+                alt="Gallery 5"
+              />
+              <div class="gallery-overlay">
+                <h3>MOTION</h3>
+                <p>Dynamic storytelling</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png"
+                alt="Gallery 6"
+              />
+              <div class="gallery-overlay">
+                <h3>DESIGN</h3>
+                <p>Aesthetic excellence</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png"
+                alt="Gallery 7"
+              />
+              <div class="gallery-overlay">
+                <h3>TECHNOLOGY</h3>
+                <p>Cutting-edge solutions</p>
+              </div>
+            </div>
+            <div class="gallery-item">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+                alt="Gallery 8"
+              />
+              <div class="gallery-overlay">
+                <h3>CREATIVITY</h3>
+                <p>Limitless imagination</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 3 - About -->
+        <section class="section about-section" data-page="2">
+          <div class="about-content">
+            <div class="about-text">
+              <h2>WE CREATE<br />DIGITAL<br />MAGIC</h2>
+              <p>
+                Pioneering the future of digital experiences through bold
+                creativity and cutting-edge technology. We transform visions
+                into reality.
+              </p>
+            </div>
+            <div class="about-visual">
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png"
+                alt="About 1"
+                class="about-image"
+              />
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png"
+                alt="About 2"
+                class="about-image"
+              />
+              <img
+                src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png"
+                alt="About 3"
+                class="about-image"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 4 - Services -->
+        <section class="section services-section" data-page="3">
+          <div class="services-container">
+            <div class="services-header">
+              <h2>WHAT WE DO</h2>
+            </div>
+            <div class="services-grid">
+              <div class="service-card">
+                <div class="service-icon">🚀</div>
+                <h3 class="service-title">STRATEGY</h3>
+                <p>
+                  Future-focused digital strategies that drive innovation and
+                  growth
+                </p>
+              </div>
+              <div class="service-card">
+                <div class="service-icon">✨</div>
+                <h3 class="service-title">DESIGN</h3>
+                <p>
+                  Stunning visuals that capture attention and inspire action
+                </p>
+              </div>
+              <div class="service-card">
+                <div class="service-icon">⚡</div>
+                <h3 class="service-title">DEVELOPMENT</h3>
+                <p>Cutting-edge technology solutions built for performance</p>
+              </div>
+              <div class="service-card">
+                <div class="service-icon">🎯</div>
+                <h3 class="service-title">MARKETING</h3>
+                <p>Data-driven campaigns that connect and convert</p>
+              </div>
+              <div class="service-card">
+                <div class="service-icon">🎬</div>
+                <h3 class="service-title">MOTION</h3>
+                <p>Dynamic animations that bring stories to life</p>
+              </div>
+              <div class="service-card">
+                <div class="service-icon">🌟</div>
+                <h3 class="service-title">BRANDING</h3>
+                <p>Memorable identities that stand out in the digital age</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 5 - Process -->
+        <section class="section process-section" data-page="4">
+          <div class="process-container">
+            <h2 class="process-title">OUR PROCESS</h2>
+            <div class="process-timeline">
+              <div class="process-line"></div>
+              <div class="process-step">
+                <div class="process-content">
+                  <div class="process-number">01</div>
+                  <div class="process-text">
+                    <h3>DISCOVER</h3>
+                    <p>Deep dive into your vision and goals</p>
+                  </div>
+                </div>
+                <div class="process-dot"></div>
+                <div class="process-content"></div>
+              </div>
+              <div class="process-step">
+                <div class="process-content"></div>
+                <div class="process-dot"></div>
+                <div class="process-content">
+                  <div class="process-number">02</div>
+                  <div class="process-text">
+                    <h3>DESIGN</h3>
+                    <p>Create stunning visual concepts</p>
+                  </div>
+                </div>
+              </div>
+              <div class="process-step">
+                <div class="process-content">
+                  <div class="process-number">03</div>
+                  <div class="process-text">
+                    <h3>DEVELOP</h3>
+                    <p>Build with cutting-edge technology</p>
+                  </div>
+                </div>
+                <div class="process-dot"></div>
+                <div class="process-content"></div>
+              </div>
+              <div class="process-step">
+                <div class="process-content"></div>
+                <div class="process-dot"></div>
+                <div class="process-content">
+                  <div class="process-number">04</div>
+                  <div class="process-text">
+                    <h3>LAUNCH</h3>
+                    <p>Deploy and celebrate success</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 6 - Team -->
+        <section class="section team-section" data-page="5">
+          <div class="team-container">
+            <h2 class="team-title">DREAM TEAM</h2>
+            <div class="team-grid">
+              <div class="team-member">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png"
+                  alt="Team 1"
+                />
+                <div class="team-info">
+                  <h3 class="team-name">Alex Chen</h3>
+                  <p class="team-role">Creative Director</p>
+                </div>
+              </div>
+              <div class="team-member">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+                  alt="Team 2"
+                />
+                <div class="team-info">
+                  <h3 class="team-name">Sarah Kim</h3>
+                  <p class="team-role">Lead Developer</p>
+                </div>
+              </div>
+              <div class="team-member">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+                  alt="Team 3"
+                />
+                <div class="team-info">
+                  <h3 class="team-name">Marcus Johnson</h3>
+                  <p class="team-role">UX Designer</p>
+                </div>
+              </div>
+              <div class="team-member">
+                <img
+                  src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png"
+                  alt="Team 4"
+                />
+                <div class="team-info">
+                  <h3 class="team-name">Emma Davis</h3>
+                  <p class="team-role">Motion Designer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 7 - Contact -->
+        <section class="section contact-section" data-page="6">
+          <div class="contact-container">
+            <h2 class="contact-title">LET'S<br />TALK</h2>
+            <p class="contact-subtitle">
+              Ready to create something amazing together?
+            </p>
+            <div class="contact-links">
+              <a href="mailto:hello@hyperstudio.com" class="contact-link"
+                >EMAIL US</a
+              >
+              <a href="tel:+1234567890" class="contact-link">CALL US</a>
+              <a href="#" class="contact-link">FOLLOW US</a>
+            </div>
+          </div>
+          <video class="video-bg" autoplay muted loop>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </section>
+      </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <div class="nav-arrows">
+      <div class="nav-arrow" id="prevArrow">
+        <svg viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </div>
+      <div class="nav-arrow" id="nextArrow">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Page Indicator -->
+    <div class="page-indicator">
+      <span id="currentPage">01</span> / <span>07</span>
+    </div>
+
+    <script>
+      // Variables
+      let currentPage = 0;
+      const totalPages = 7;
+      const sectionsWrapper = document.getElementById("sectionsWrapper");
+      const navDots = document.querySelectorAll(".nav-dot");
+      const cursor = document.querySelector(".cursor");
+      const currentPageElement = document.getElementById("currentPage");
+      let isTransitioning = false;
+
+      // Custom Cursor
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+      });
+
+      // Cursor hover effects
+      const interactiveElements = document.querySelectorAll(
+        "a, button, .nav-dot, .nav-arrow, .gallery-item, .service-card, .team-member, .contact-link",
+      );
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => cursor.classList.add("grow"));
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("grow"),
+        );
+      });
+
+      // Page Navigation
+      function goToPage(pageIndex) {
+        if (isTransitioning || pageIndex === currentPage) return;
+        if (pageIndex < 0 || pageIndex >= totalPages) return;
+
+        isTransitioning = true;
+        currentPage = pageIndex;
+
+        // Update sections position
+        sectionsWrapper.style.transform = `translateY(-${currentPage * 100}%)`;
+
+        // Update nav dots
+        navDots.forEach((dot, index) => {
+          dot.classList.toggle("active", index === currentPage);
+        });
+
+        // Update page indicator
+        currentPageElement.textContent = String(currentPage + 1).padStart(
+          2,
+          "0",
+        );
+
+        // Reset transition flag
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 1000);
+      }
+
+      // Navigation dot clicks
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => goToPage(index));
+      });
+
+      // Arrow navigation
+      document.getElementById("prevArrow").addEventListener("click", () => {
+        goToPage(currentPage - 1);
+      });
+
+      document.getElementById("nextArrow").addEventListener("click", () => {
+        goToPage(currentPage + 1);
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          goToPage(currentPage - 1);
+        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+          goToPage(currentPage + 1);
+        }
+      });
+
+      // Mouse wheel navigation
+      let wheelTimeout;
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+
+          clearTimeout(wheelTimeout);
+          wheelTimeout = setTimeout(() => {
+            if (e.deltaY > 0) {
+              goToPage(currentPage + 1);
+            } else {
+              goToPage(currentPage - 1);
+            }
+          }, 50);
+        },
+        { passive: false },
+      );
+
+      // Touch navigation
+      let touchStartY = 0;
+      let touchEndY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartY - touchEndY;
+
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0) {
+            goToPage(currentPage + 1);
+          } else {
+            goToPage(currentPage - 1);
+          }
+        }
+      }
+
+      // Initialize sections
+      document.querySelectorAll(".section").forEach((section, index) => {
+        section.style.position = "absolute";
+        section.style.top = `${index * 100}%`;
+        section.style.left = "0";
+        section.style.width = "100%";
+        section.style.height = "100%";
+      });
+
+      // Prevent default scroll
+      window.addEventListener("scroll", (e) => {
+        e.preventDefault();
+        window.scrollTo(0, 0);
+      });
+
+      // Gallery item interactions
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      galleryItems.forEach((item, index) => {
+        item.style.animationDelay = `${index * 0.1}s`;
+        item.addEventListener("click", function () {
+          this.classList.toggle("expanded");
+        });
+      });
+
+      // Service card animations
+      const serviceCards = document.querySelectorAll(".service-card");
+      serviceCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+      });
+
+      // Team member hover effects
+      const teamMembers = document.querySelectorAll(".team-member");
+      teamMembers.forEach((member) => {
+        member.addEventListener("mouseenter", function () {
+          this.style.zIndex = "10";
+        });
+        member.addEventListener("mouseleave", function () {
+          this.style.zIndex = "1";
+        });
+      });
+
+      // Initialize
+      goToPage(0);
+
+      // Hide cursor on mobile
+      if ("ontouchstart" in window) {
+        cursor.style.display = "none";
+      }
+    </script>
+  </body>
+</html>

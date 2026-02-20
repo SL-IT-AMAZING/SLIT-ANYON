@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS - Digital Art Studio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #00ff88;
+        --secondary: #ff0088;
+        --accent: #8800ff;
+        --dark: #0a0a0a;
+        --light: #ffffff;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--dark);
+        color: var(--light);
+        overflow-x: hidden;
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--dark);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 1s,
+          visibility 1s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-weight: 900;
+        background: linear-gradient(
+          45deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.95);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 50px;
+        mix-blend-mode: difference;
+        transition: all 0.3s ease;
+      }
+
+      nav.scrolled {
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(20px);
+        mix-blend-mode: normal;
+      }
+
+      .nav-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-menu {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-menu a {
+        color: var(--light);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .nav-menu a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary);
+        transition: width 0.3s;
+      }
+
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* Hero Section - Explosive Particle Effect */
+      .hero {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        opacity: 0;
+        animation: heroFadeIn 2s 0.5s forwards;
+      }
+
+      @keyframes heroFadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero-title {
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .hero-title span {
+        display: inline-block;
+        animation: titleReveal 1s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+        opacity: 0;
+        transform: translateY(100px) rotateX(90deg);
+      }
+
+      @keyframes titleReveal {
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateX(0);
+        }
+      }
+
+      .glitch {
+        position: relative;
+        color: var(--light);
+        animation: glitch 2s infinite;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .glitch::before {
+        animation: glitch-1 0.5s infinite;
+        color: var(--primary);
+        z-index: -1;
+      }
+
+      .glitch::after {
+        animation: glitch-2 0.5s infinite;
+        color: var(--secondary);
+        z-index: -2;
+      }
+
+      @keyframes glitch {
+        0%,
+        100% {
+          text-shadow: 0 0 0 transparent;
+        }
+        50% {
+          text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      @keyframes glitch-1 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(-2px, 2px);
+        }
+        40% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(2px, -2px);
+        }
+        60% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(-2px, 2px);
+        }
+        80% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(2px, -2px);
+        }
+      }
+
+      @keyframes glitch-2 {
+        0%,
+        100% {
+          clip-path: inset(0 0 0 0);
+          transform: translate(0);
+        }
+        20% {
+          clip-path: inset(80% 0 10% 0);
+          transform: translate(2px, -2px);
+        }
+        40% {
+          clip-path: inset(10% 0 80% 0);
+          transform: translate(-2px, 2px);
+        }
+        60% {
+          clip-path: inset(20% 0 60% 0);
+          transform: translate(2px, -2px);
+        }
+        80% {
+          clip-path: inset(50% 0 20% 0);
+          transform: translate(-2px, 2px);
+        }
+      }
+
+      .hero-subtitle {
+        font-size: 1.5rem;
+        opacity: 0.8;
+        margin-bottom: 40px;
+        animation: fadeInUp 1s 1s forwards;
+        opacity: 0;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 0.8;
+          transform: translateY(0);
+        }
+      }
+
+      .hero-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 40px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: var(--dark);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-radius: 100px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 1s 1.2s forwards;
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      .hero-cta::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .hero-cta:hover::before {
+        width: 400px;
+        height: 400px;
+      }
+
+      .hero-cta:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(136, 0, 255, 0.4);
+      }
+
+      /* Dynamic Image Grid Gallery */
+      .gallery {
+        position: relative;
+        padding: 150px 0;
+        background: var(--dark);
+        overflow: hidden;
+      }
+
+      .gallery::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 300px;
+        background: linear-gradient(to bottom, var(--dark), transparent);
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .gallery-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 50px;
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 100px;
+      }
+
+      .gallery-title {
+        font-size: clamp(3rem, 6vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--light), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        position: relative;
+      }
+
+      .image-card {
+        position: relative;
+        height: 400px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transform: scale(0.9);
+        opacity: 0;
+        animation: cardReveal 0.8s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      @keyframes cardReveal {
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .image-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 136, 0.2),
+          rgba(255, 0, 136, 0.2),
+          rgba(136, 0, 255, 0.2)
+        );
+        opacity: 0;
+        transition: opacity 0.5s;
+        z-index: 1;
+      }
+
+      .image-card:hover::before {
+        opacity: 1;
+      }
+
+      .image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .image-card:hover img {
+        transform: scale(1.1) rotate(2deg);
+      }
+
+      .image-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.5s;
+      }
+
+      .image-card:hover .image-overlay {
+        transform: translateY(0);
+      }
+
+      .image-number {
+        font-size: 3rem;
+        font-weight: 900;
+        opacity: 0.2;
+        margin-bottom: 10px;
+      }
+
+      .image-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .image-category {
+        font-size: 1rem;
+        opacity: 0.7;
+        color: var(--primary);
+      }
+
+      /* Floating Elements */
+      .float-element {
+        position: fixed;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.1;
+        animation: float 20s infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0) rotate(0deg);
+        }
+        25% {
+          transform: translateY(-20px) translateX(20px) rotate(90deg);
+        }
+        50% {
+          transform: translateY(20px) translateX(-20px) rotate(180deg);
+        }
+        75% {
+          transform: translateY(-20px) translateX(-20px) rotate(270deg);
+        }
+      }
+
+      /* Interactive Sections */
+      .section {
+        padding: 150px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .section-dark {
+        background: #050505;
+      }
+
+      .section-gradient {
+        background: linear-gradient(135deg, #0a0a0a, #1a0a1a, #0a0a1a);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 50px;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .section-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        border-radius: 2px;
+      }
+
+      /* Services Grid */
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+      }
+
+      .service-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 50px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s;
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.5s;
+      }
+
+      .service-card:hover::before {
+        opacity: 1;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .service-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 30px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        animation: iconFloat 3s infinite ease-in-out;
+        animation-delay: calc(var(--index) * 0.2s);
+      }
+
+      @keyframes iconFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .service-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      .service-description {
+        opacity: 0.7;
+        line-height: 1.6;
+      }
+
+      /* About Section */
+      .about-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-text h3 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .about-text p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.8;
+        margin-bottom: 30px;
+      }
+
+      .about-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+        margin-top: 50px;
+      }
+
+      .stat-box {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .stat-label {
+        font-size: 1rem;
+        opacity: 0.7;
+        margin-top: 10px;
+      }
+
+      .about-visual {
+        position: relative;
+        height: 600px;
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .about-visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .about-visual::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 255, 136, 0.3),
+          rgba(255, 0, 136, 0.3)
+        );
+        mix-blend-mode: overlay;
+      }
+
+      /* Contact Section */
+      .contact {
+        background: linear-gradient(to bottom, #0a0a0a, #000);
+        text-align: center;
+        padding: 200px 0;
+      }
+
+      .contact-title {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        margin-bottom: 30px;
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .contact-subtitle {
+        font-size: 1.5rem;
+        opacity: 0.8;
+        margin-bottom: 50px;
+      }
+
+      .contact-links {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .contact-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 30px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 100px;
+        color: var(--light);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .contact-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+        transform: translateY(-3px);
+      }
+
+      /* Footer */
+      footer {
+        background: #000;
+        padding: 50px 0;
+        text-align: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        opacity: 0.6;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .about-content {
+          grid-template-columns: 1fr;
+          gap: 50px;
+        }
+
+        .image-grid {
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        nav {
+          padding: 15px 20px;
+        }
+
+        .nav-menu {
+          display: none;
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .container {
+          padding: 0 20px;
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .about-stats {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-text">NEXUS</div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <div class="logo">NEXUS</div>
+        <ul class="nav-menu">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Floating Elements -->
+    <div class="float-element" style="top: 20%; left: 10%; font-size: 100px">
+      ◆
+    </div>
+    <div
+      class="float-element"
+      style="top: 60%; right: 15%; font-size: 80px; animation-delay: -5s"
+    >
+      ◇
+    </div>
+    <div
+      class="float-element"
+      style="bottom: 20%; left: 20%; font-size: 120px; animation-delay: -10s"
+    >
+      ○
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <canvas class="hero-canvas" id="particleCanvas"></canvas>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span style="--index: 0">DIGITAL</span><br />
+          <span style="--index: 1" class="glitch" data-text="NEXUS">NEXUS</span
+          ><br />
+          <span style="--index: 2">STUDIO</span>
+        </h1>
+        <p class="hero-subtitle">Where Art Meets Technology</p>
+        <a href="#gallery" class="hero-cta">
+          Explore Our Universe
+          <span>→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-container">
+        <div class="gallery-header">
+          <h2 class="gallery-title">Visual Odyssey</h2>
+          <p>A curated collection of digital masterpieces</p>
+        </div>
+        <div class="image-grid" id="imageGrid">
+          <!-- Images will be dynamically inserted here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section section-gradient" id="services">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Our Expertise</h2>
+          <p>Pushing boundaries in digital creation</p>
+        </div>
+        <div class="services-grid">
+          <div class="service-card" style="--index: 0">
+            <div class="service-icon">🎨</div>
+            <h3 class="service-title">Digital Art</h3>
+            <p class="service-description">
+              Creating stunning visual experiences that blur the line between
+              reality and imagination.
+            </p>
+          </div>
+          <div class="service-card" style="--index: 1">
+            <div class="service-icon">🚀</div>
+            <h3 class="service-title">Web Design</h3>
+            <p class="service-description">
+              Crafting immersive digital experiences that captivate and engage
+              audiences.
+            </p>
+          </div>
+          <div class="service-card" style="--index: 2">
+            <div class="service-icon">✨</div>
+            <h3 class="service-title">Motion Graphics</h3>
+            <p class="service-description">
+              Bringing static designs to life with fluid animations and dynamic
+              interactions.
+            </p>
+          </div>
+          <div class="service-card" style="--index: 3">
+            <div class="service-icon">🎯</div>
+            <h3 class="service-title">Brand Identity</h3>
+            <p class="service-description">
+              Building memorable brands that resonate with your audience and
+              stand the test of time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section section-dark" id="about">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Who We Are</h2>
+        </div>
+        <div class="about-content">
+          <div class="about-text">
+            <h3>Pioneers in Digital Innovation</h3>
+            <p>
+              We are a collective of artists, designers, and technologists
+              united by our passion for creating extraordinary digital
+              experiences. Our work pushes the boundaries of what's possible,
+              blending cutting-edge technology with artistic vision.
+            </p>
+            <p>
+              Founded in 2020, NEXUS has quickly become a leading force in
+              digital art and web design, working with clients worldwide to
+              bring their boldest ideas to life.
+            </p>
+            <div class="about-stats">
+              <div class="stat-box">
+                <div class="stat-number">150+</div>
+                <div class="stat-label">Projects Completed</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Happy Clients</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">25+</div>
+                <div class="stat-label">Team Members</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">10+</div>
+                <div class="stat-label">Awards Won</div>
+              </div>
+            </div>
+          </div>
+          <div class="about-visual">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png"
+              alt="About NEXUS"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+      <div class="container">
+        <h2 class="contact-title">Let's Create Something Amazing</h2>
+        <p class="contact-subtitle">
+          Ready to transform your vision into reality?
+        </p>
+        <div class="contact-links">
+          <a href="mailto:hello@nexus.studio" class="contact-link">
+            <span>✉</span> hello@nexus.studio
+          </a>
+          <a href="tel:+1234567890" class="contact-link">
+            <span>📱</span> +1 (234) 567-890
+          </a>
+          <a href="#" class="contact-link">
+            <span>📍</span> San Francisco, CA
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <p>&copy; 2025 NEXUS Studio. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Image data
+      const images = [
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Ethereal Dreams",
+          category: "Digital Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "Neon Nights",
+          category: "Concept Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "Future Vision",
+          category: "UI/UX",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Abstract Reality",
+          category: "Digital Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Cosmic Journey",
+          category: "Motion Design",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "Urban Pulse",
+          category: "Photography",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "Digital Zen",
+          category: "Concept Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "Quantum Leap",
+          category: "Experimental",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Neural Networks",
+          category: "AI Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "Synthetic Dreams",
+          category: "Digital Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+          title: "Data Streams",
+          category: "Visualization",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+          title: "Virtual Spaces",
+          category: "VR Design",
+        },
+        {
+          video:
+            "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4",
+          title: "Motion Study 01",
+          category: "Animation",
+        },
+        {
+          video:
+            "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4",
+          title: "Motion Study 02",
+          category: "Animation",
+        },
+        {
+          video:
+            "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4",
+          title: "Motion Study 03",
+          category: "Animation",
+        },
+        {
+          video:
+            "https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4",
+          title: "Motion Study 04",
+          category: "Animation",
+        },
+      ];
+
+      // Hide loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Particle animation
+      const canvas = document.getElementById("particleCanvas");
+      const ctx = canvas.getContext("2d");
+      let particles = [];
+      let mouse = { x: null, y: null, radius: 150 };
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 5 + 1;
+          this.speedX = Math.random() * 3 - 1.5;
+          this.speedY = Math.random() * 3 - 1.5;
+          this.color = `hsl(${Math.random() * 60 + 300}, 100%, 50%)`;
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          if (this.size > 0.2) this.size -= 0.01;
+
+          // Mouse interaction
+          if (mouse.x != null && mouse.y != null) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < mouse.radius) {
+              const force = (mouse.radius - distance) / mouse.radius;
+              const directionX = dx / distance;
+              const directionY = dy / distance;
+              this.x -= directionX * force * 5;
+              this.y -= directionY * force * 5;
+            }
+          }
+
+          // Wrap around screen
+          if (this.x > canvas.width) this.x = 0;
+          else if (this.x < 0) this.x = canvas.width;
+          if (this.y > canvas.height) this.y = 0;
+          else if (this.y < 0) this.y = canvas.height;
+        }
+
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        particles = [];
+        for (let i = 0; i < 300; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+
+          // Connect particles
+          for (let j = i; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 100) {
+              ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - distance / 100)})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+
+          if (particles[i].size <= 0.2) {
+            particles.splice(i, 1);
+            i--;
+            particles.push(new Particle());
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      window.addEventListener("mousemove", (e) => {
+        mouse.x = e.x;
+        mouse.y = e.y;
+      });
+
+      window.addEventListener("mouseout", () => {
+        mouse.x = null;
+        mouse.y = null;
+      });
+
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        init();
+      });
+
+      init();
+      animate();
+
+      // Create image grid
+      const imageGrid = document.getElementById("imageGrid");
+      images.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "image-card";
+        card.style.setProperty("--index", index);
+
+        if (item.video) {
+          card.innerHTML = `
+                    <video autoplay muted loop playsinline>
+                        <source src="${item.video}" type="video/mp4">
+                    </video>
+                    <div class="image-overlay">
+                        <div class="image-number">${String(index + 1).padStart(2, "0")}</div>
+                        <h3 class="image-title">${item.title}</h3>
+                        <p class="image-category">${item.category}</p>
+                    </div>
+                `;
+        } else {
+          card.innerHTML = `
+                    <img src="${item.src}" alt="${item.title}">
+                    <div class="image-overlay">
+                        <div class="image-number">${String(index + 1).padStart(2, "0")}</div>
+                        <h3 class="image-title">${item.title}</h3>
+                        <p class="image-category">${item.category}</p>
+                    </div>
+                `;
+        }
+
+        imageGrid.appendChild(card);
+      });
+
+      // Scroll effects
+      window.addEventListener("scroll", () => {
+        const navbar = document.getElementById("navbar");
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Intersection Observer for animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = "running";
+          }
+        });
+      }, observerOptions);
+
+      // Observe elements
+      document.querySelectorAll(".image-card, .service-card").forEach((el) => {
+        el.style.animationPlayState = "paused";
+        observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

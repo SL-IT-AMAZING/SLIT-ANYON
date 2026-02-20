@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS - Digital Experience Studio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #0a0a0a;
+        --accent: #ff6b6b;
+        --text: #ffffff;
+        --text-dim: #999999;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--primary);
+        color: var(--text);
+        overflow: hidden;
+        position: relative;
+        height: 100vh;
+      }
+
+      /* Orbital Navigation System */
+      .nav-orbit {
+        position: fixed;
+        width: 300px;
+        height: 300px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .nav-orbit.expanded {
+        width: 600px;
+        height: 600px;
+      }
+
+      .orbit-center {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        letter-spacing: 2px;
+        transition: all 0.3s;
+        z-index: 10;
+      }
+
+      .orbit-center:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
+      }
+
+      .nav-planet {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-orbit.active .nav-planet {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .nav-planet:hover {
+        background: rgba(255, 107, 107, 0.2);
+        border-color: var(--accent);
+        transform: scale(1.2);
+      }
+
+      /* Planet positions */
+      .nav-planet:nth-child(2) {
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-planet:nth-child(3) {
+        top: 15%;
+        right: -30px;
+      }
+      .nav-planet:nth-child(4) {
+        bottom: 15%;
+        right: -30px;
+      }
+      .nav-planet:nth-child(5) {
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .nav-planet:nth-child(6) {
+        bottom: 15%;
+        left: -30px;
+      }
+      .nav-planet:nth-child(7) {
+        top: 15%;
+        left: -30px;
+      }
+
+      .nav-orbit.active .nav-planet:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .nav-orbit.active .nav-planet:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .nav-orbit.active .nav-planet:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+      .nav-orbit.active .nav-planet:nth-child(5) {
+        animation-delay: 0.4s;
+      }
+      .nav-orbit.active .nav-planet:nth-child(6) {
+        animation-delay: 0.5s;
+      }
+      .nav-orbit.active .nav-planet:nth-child(7) {
+        animation-delay: 0.6s;
+      }
+
+      /* Page Container */
+      .page-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .page {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: scale(0.8) rotateY(90deg);
+        transition: all 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+      }
+
+      .page.active {
+        opacity: 1;
+        transform: scale(1) rotateY(0);
+      }
+
+      /* Liquid Transition Effect */
+      .liquid-transition {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2000;
+      }
+
+      .liquid-blob {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        background: var(--accent);
+        border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+        transform: scale(0);
+        opacity: 0;
+        animation: liquidFlow 1.5s ease-out;
+      }
+
+      @keyframes liquidFlow {
+        0% {
+          transform: scale(0) rotate(0deg);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(3) rotate(180deg);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(0) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      /* Home Page - Floating Gallery */
+      .floating-gallery {
+        position: relative;
+        width: 90vw;
+        height: 80vh;
+        max-width: 1400px;
+      }
+
+      .float-item {
+        position: absolute;
+        width: 300px;
+        height: 400px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: grab;
+        transition: all 0.3s;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .float-item:active {
+        cursor: grabbing;
+      }
+
+      .float-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .float-item:hover {
+        transform: scale(1.05);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      /* About Page - Morphing Text */
+      .morph-container {
+        text-align: center;
+        max-width: 1000px;
+        padding: 0 40px;
+      }
+
+      .morph-text {
+        font-size: clamp(3rem, 8vw, 6rem);
+        font-weight: 900;
+        line-height: 1.2;
+        margin-bottom: 40px;
+        background: linear-gradient(45deg, #fff, #ff6b6b, #fff);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradientShift 3s ease infinite;
+      }
+
+      @keyframes gradientShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* Works Page - Carousel Sphere */
+      .sphere-carousel {
+        position: relative;
+        width: 600px;
+        height: 600px;
+        transform-style: preserve-3d;
+        animation: sphereRotate 20s infinite linear;
+      }
+
+      @keyframes sphereRotate {
+        from {
+          transform: rotateY(0deg) rotateX(10deg);
+        }
+        to {
+          transform: rotateY(360deg) rotateX(10deg);
+        }
+      }
+
+      .sphere-item {
+        position: absolute;
+        width: 250px;
+        height: 350px;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s;
+      }
+
+      .sphere-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .sphere-item:hover {
+        transform: translateZ(50px) scale(1.1);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Process Page - Timeline Snake */
+      .snake-timeline {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .snake-path {
+        stroke-dasharray: 3000;
+        stroke-dashoffset: 3000;
+        animation: drawPath 3s ease-out forwards;
+      }
+
+      @keyframes drawPath {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .process-node {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--accent);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        transform: scale(0);
+        animation: nodeAppear 0.5s forwards;
+      }
+
+      @keyframes nodeAppear {
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* Team Page - Interactive Grid */
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        max-width: 1000px;
+        width: 100%;
+        padding: 0 40px;
+      }
+
+      .team-member {
+        position: relative;
+        height: 300px;
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transform: translateY(50px);
+        opacity: 0;
+        animation: slideUp 0.6s forwards;
+      }
+
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .team-member img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.5s;
+      }
+
+      .team-member:hover img {
+        transform: scale(1.1);
+        filter: brightness(0.7);
+      }
+
+      .member-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        transform: translateY(100%);
+        transition: transform 0.3s;
+      }
+
+      .team-member:hover .member-info {
+        transform: translateY(0);
+      }
+
+      /* Lab Page - Experimental Showcase */
+      .lab-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .experiment-card {
+        position: absolute;
+        width: 400px;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid var(--border);
+        border-radius: 30px;
+        padding: 40px;
+        backdrop-filter: blur(20px);
+        transition: all 0.5s;
+        cursor: pointer;
+      }
+
+      .experiment-card:hover {
+        transform: translateY(-20px) rotateX(10deg);
+        border-color: var(--accent);
+        box-shadow: 0 40px 80px rgba(255, 107, 107, 0.2);
+      }
+
+      /* Contact Page - Magnetic Form */
+      .contact-container {
+        max-width: 600px;
+        width: 100%;
+        padding: 0 40px;
+      }
+
+      .magnetic-input {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid var(--border);
+        border-radius: 15px;
+        color: var(--text);
+        font-size: 16px;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .magnetic-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.2);
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 20px;
+        background: var(--accent);
+        border: none;
+        border-radius: 15px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+
+      .submit-btn:hover::before {
+        width: 600px;
+        height: 600px;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
+      }
+
+      /* Mobile Menu */
+      .mobile-menu-btn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: var(--accent);
+        border-radius: 50%;
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .mobile-menu {
+        display: none;
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 2999;
+      }
+
+      .mobile-menu-item {
+        padding: 15px 25px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        transition: all 0.3s;
+        transform: translateX(200px);
+        opacity: 0;
+      }
+
+      .mobile-menu.active .mobile-menu-item {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .nav-orbit {
+          display: none;
+        }
+
+        .mobile-menu-btn {
+          display: flex;
+        }
+
+        .mobile-menu {
+          display: flex;
+        }
+
+        .floating-gallery {
+          width: 100vw;
+          height: 70vh;
+        }
+
+        .float-item {
+          width: 200px;
+          height: 280px;
+        }
+
+        .sphere-carousel {
+          width: 350px;
+          height: 350px;
+        }
+
+        .sphere-item {
+          width: 150px;
+          height: 200px;
+        }
+
+        .morph-text {
+          font-size: clamp(2rem, 10vw, 4rem);
+        }
+
+        .team-grid {
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          padding: 0 20px;
+        }
+
+        .experiment-card {
+          width: 90%;
+          height: 400px;
+          padding: 30px;
+        }
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--primary);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-ring {
+        width: 100px;
+        height: 100px;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Video Background for Lab */
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        z-index: -1;
+      }
+
+      /* Cursor Trail Effect */
+      .cursor-trail {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.5s;
+        z-index: 9998;
+      }
+
+      .cursor-trail.active {
+        opacity: 0.5;
+        transform: scale(1);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-ring"></div>
+    </div>
+
+    <!-- Liquid Transition -->
+    <div class="liquid-transition" id="liquidTransition"></div>
+
+    <!-- Cursor Trail -->
+    <div class="cursor-trail" id="cursorTrail"></div>
+
+    <!-- Orbital Navigation -->
+    <nav class="nav-orbit" id="navOrbit">
+      <div class="orbit-center" id="orbitCenter">NEXUS</div>
+      <div class="nav-planet" data-page="0">HOME</div>
+      <div class="nav-planet" data-page="1">ABOUT</div>
+      <div class="nav-planet" data-page="2">WORKS</div>
+      <div class="nav-planet" data-page="3">PROCESS</div>
+      <div class="nav-planet" data-page="4">TEAM</div>
+      <div class="nav-planet" data-page="5">LAB</div>
+      <div class="nav-planet" data-page="6">CONTACT</div>
+    </nav>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-menu-btn" id="mobileMenuBtn">☰</div>
+    <div class="mobile-menu" id="mobileMenu">
+      <div class="mobile-menu-item" data-page="0">HOME</div>
+      <div class="mobile-menu-item" data-page="1">ABOUT</div>
+      <div class="mobile-menu-item" data-page="2">WORKS</div>
+      <div class="mobile-menu-item" data-page="3">PROCESS</div>
+      <div class="mobile-menu-item" data-page="4">TEAM</div>
+      <div class="mobile-menu-item" data-page="5">LAB</div>
+      <div class="mobile-menu-item" data-page="6">CONTACT</div>
+    </div>
+
+    <!-- Page Container -->
+    <div class="page-container">
+      <!-- Page 1: Home -->
+      <section class="page active" id="page-0">
+        <div class="floating-gallery" id="floatingGallery">
+          <!-- Floating items will be dynamically generated -->
+        </div>
+      </section>
+
+      <!-- Page 2: About -->
+      <section class="page" id="page-1">
+        <div class="morph-container">
+          <h1 class="morph-text">
+            We Create Digital Experiences That Transcend Reality
+          </h1>
+          <p style="font-size: 1.2rem; opacity: 0.8; line-height: 1.8">
+            At NEXUS, we blend cutting-edge technology with artistic vision to
+            craft immersive digital experiences. Our team pushes boundaries,
+            challenges conventions, and creates work that resonates on a deeper
+            level.
+          </p>
+        </div>
+      </section>
+
+      <!-- Page 3: Works -->
+      <section class="page" id="page-2">
+        <div class="sphere-carousel" id="sphereCarousel">
+          <!-- Sphere items will be dynamically generated -->
+        </div>
+      </section>
+
+      <!-- Page 4: Process -->
+      <section class="page" id="page-3">
+        <div class="snake-timeline">
+          <svg width="100%" height="100%" style="position: absolute">
+            <path
+              class="snake-path"
+              d="M 100,100 Q 300,200 500,100 T 900,100 Q 1100,200 1300,100"
+              stroke="#ff6b6b"
+              stroke-width="3"
+              fill="none"
+            />
+          </svg>
+          <div
+            class="process-node"
+            style="left: 100px; top: 80px; animation-delay: 0.5s"
+          >
+            <h3>DISCOVER</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7">Research & Insights</p>
+          </div>
+          <div
+            class="process-node"
+            style="left: 400px; top: 180px; animation-delay: 1s"
+          >
+            <h3>DESIGN</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7">Creative Concepts</p>
+          </div>
+          <div
+            class="process-node"
+            style="left: 700px; top: 80px; animation-delay: 1.5s"
+          >
+            <h3>DEVELOP</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7">Technical Magic</p>
+          </div>
+          <div
+            class="process-node"
+            style="left: 1000px; top: 180px; animation-delay: 2s"
+          >
+            <h3>DELIVER</h3>
+            <p style="font-size: 0.9rem; opacity: 0.7">Launch & Beyond</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 5: Team -->
+      <section class="page" id="page-4">
+        <div class="team-grid" id="teamGrid">
+          <!-- Team members will be dynamically generated -->
+        </div>
+      </section>
+
+      <!-- Page 6: Lab -->
+      <section class="page" id="page-5">
+        <video class="video-bg" autoplay muted loop>
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="lab-container">
+          <div
+            class="experiment-card"
+            style="transform: rotate(-10deg) translateX(-200px)"
+          >
+            <h2>AR Experiments</h2>
+            <p>Pushing the boundaries of augmented reality with WebXR</p>
+          </div>
+          <div class="experiment-card" style="transform: rotate(5deg)">
+            <h2>AI Integration</h2>
+            <p>Machine learning meets creative design</p>
+          </div>
+          <div
+            class="experiment-card"
+            style="transform: rotate(-5deg) translateX(200px)"
+          >
+            <h2>3D Web</h2>
+            <p>Building immersive 3D experiences for the browser</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 7: Contact -->
+      <section class="page" id="page-6">
+        <div class="contact-container">
+          <h2 style="font-size: 3rem; margin-bottom: 40px">Let's Connect</h2>
+          <form id="contactForm">
+            <input
+              type="text"
+              class="magnetic-input"
+              placeholder="Your Name"
+              required
+            />
+            <input
+              type="email"
+              class="magnetic-input"
+              placeholder="Your Email"
+              required
+            />
+            <input
+              type="text"
+              class="magnetic-input"
+              placeholder="Project Type"
+              required
+            />
+            <textarea
+              class="magnetic-input"
+              rows="5"
+              placeholder="Tell us about your vision"
+              required
+            ></textarea>
+            <button type="submit" class="submit-btn">Send Message</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Image URLs
+      const imageUrls = [
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+        "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+        "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+        "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+        "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+      ];
+
+      const additionalImages = [
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png",
+        "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png",
+        "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png",
+      ];
+
+      const teamImages = [
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png",
+        "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png",
+        "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png",
+      ];
+
+      let currentPage = 0;
+      const pages = document.querySelectorAll(".page");
+      const navOrbit = document.getElementById("navOrbit");
+      const orbitCenter = document.getElementById("orbitCenter");
+      const liquidTransition = document.getElementById("liquidTransition");
+
+      // Initialize floating gallery
+      function initFloatingGallery() {
+        const gallery = document.getElementById("floatingGallery");
+        const positions = [
+          { left: "10%", top: "10%" },
+          { left: "70%", top: "5%" },
+          { left: "5%", top: "60%" },
+          { left: "75%", top: "55%" },
+          { left: "40%", top: "30%" },
+          { left: "35%", top: "70%" },
+          { left: "60%", top: "35%" },
+          { left: "25%", top: "45%" },
+        ];
+
+        imageUrls.slice(0, 8).forEach((url, index) => {
+          const item = document.createElement("div");
+          item.className = "float-item";
+          item.style.left = positions[index].left;
+          item.style.top = positions[index].top;
+          item.style.animationDelay = `${index * 0.1}s`;
+          item.innerHTML = `<img src="${url}" alt="Gallery ${index + 1}">`;
+
+          // Make items draggable
+          let isDragging = false;
+          let currentX;
+          let currentY;
+          let initialX;
+          let initialY;
+          let xOffset = 0;
+          let yOffset = 0;
+
+          item.addEventListener("mousedown", dragStart);
+          item.addEventListener("mouseup", dragEnd);
+          item.addEventListener("mousemove", drag);
+          item.addEventListener("touchstart", dragStart);
+          item.addEventListener("touchend", dragEnd);
+          item.addEventListener("touchmove", drag);
+
+          function dragStart(e) {
+            if (e.type === "touchstart") {
+              initialX = e.touches[0].clientX - xOffset;
+              initialY = e.touches[0].clientY - yOffset;
+            } else {
+              initialX = e.clientX - xOffset;
+              initialY = e.clientY - yOffset;
+            }
+
+            if (e.target === item || e.target.parentElement === item) {
+              isDragging = true;
+            }
+          }
+
+          function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+          }
+
+          function drag(e) {
+            if (isDragging) {
+              e.preventDefault();
+
+              if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+              } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+              }
+
+              xOffset = currentX;
+              yOffset = currentY;
+
+              item.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+          }
+
+          gallery.appendChild(item);
+        });
+      }
+
+      // Initialize sphere carousel
+      function initSphereCarousel() {
+        const carousel = document.getElementById("sphereCarousel");
+        const radius = 250;
+        const itemCount = 8;
+
+        additionalImages.slice(0, itemCount).forEach((url, index) => {
+          const angle = (index / itemCount) * Math.PI * 2;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+
+          const item = document.createElement("div");
+          item.className = "sphere-item";
+          item.style.transform = `translateX(${x}px) translateZ(${z}px) rotateY(${-angle}rad)`;
+          item.innerHTML = `<img src="${url}" alt="Work ${index + 1}">`;
+          carousel.appendChild(item);
+        });
+      }
+
+      // Initialize team grid
+      function initTeamGrid() {
+        const grid = document.getElementById("teamGrid");
+        const teamData = [
+          { name: "Alex Chen", role: "Creative Director" },
+          { name: "Sarah Kim", role: "Lead Developer" },
+          { name: "Mike Johnson", role: "UX Designer" },
+          { name: "Lisa Wang", role: "3D Artist" },
+          { name: "Tom Davis", role: "Motion Designer" },
+          { name: "Emma Liu", role: "Project Manager" },
+        ];
+
+        teamImages.forEach((url, index) => {
+          const member = document.createElement("div");
+          member.className = "team-member";
+          member.style.animationDelay = `${index * 0.1}s`;
+          member.innerHTML = `
+                    <img src="${url}" alt="${teamData[index].name}">
+                    <div class="member-info">
+                        <h3>${teamData[index].name}</h3>
+                        <p>${teamData[index].role}</p>
+                    </div>
+                `;
+          grid.appendChild(member);
+        });
+      }
+
+      // Navigation functions
+      function showPage(pageIndex) {
+        if (pageIndex === currentPage) return;
+
+        // Trigger liquid transition
+        const blob = document.createElement("div");
+        blob.className = "liquid-blob";
+        liquidTransition.appendChild(blob);
+
+        setTimeout(() => {
+          pages[currentPage].classList.remove("active");
+          pages[pageIndex].classList.add("active");
+          currentPage = pageIndex;
+          blob.remove();
+        }, 750);
+      }
+
+      // Orbital navigation
+      orbitCenter.addEventListener("click", () => {
+        navOrbit.classList.toggle("active");
+        navOrbit.classList.toggle("expanded");
+      });
+
+      document.querySelectorAll(".nav-planet").forEach((planet) => {
+        planet.addEventListener("click", (e) => {
+          const pageIndex = parseInt(e.target.dataset.page);
+          showPage(pageIndex);
+          navOrbit.classList.remove("active", "expanded");
+        });
+      });
+
+      // Mobile navigation
+      const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      const mobileMenu = document.getElementById("mobileMenu");
+
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("active");
+      });
+
+      document.querySelectorAll(".mobile-menu-item").forEach((item, index) => {
+        item.style.animationDelay = `${index * 0.1}s`;
+        item.addEventListener("click", (e) => {
+          const pageIndex = parseInt(e.target.dataset.page);
+          showPage(pageIndex);
+          mobileMenu.classList.remove("active");
+        });
+      });
+
+      // Cursor trail effect
+      const cursorTrail = document.getElementById("cursorTrail");
+      let mouseX = 0;
+      let mouseY = 0;
+      let trailX = 0;
+      let trailY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        cursorTrail.classList.add("active");
+        setTimeout(() => {
+          cursorTrail.classList.remove("active");
+        }, 100);
+      });
+
+      function animateTrail() {
+        trailX += (mouseX - trailX) * 0.1;
+        trailY += (mouseY - trailY) * 0.1;
+
+        cursorTrail.style.left = trailX + "px";
+        cursorTrail.style.top = trailY + "px";
+
+        requestAnimationFrame(animateTrail);
+      }
+
+      // Form submission
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Thank you for your message! We'll get back to you soon.");
+        e.target.reset();
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") {
+          const nextPage = (currentPage + 1) % pages.length;
+          showPage(nextPage);
+        } else if (e.key === "ArrowLeft") {
+          const prevPage = (currentPage - 1 + pages.length) % pages.length;
+          showPage(prevPage);
+        } else if (e.key >= "1" && e.key <= "7") {
+          showPage(parseInt(e.key) - 1);
+        }
+      });
+
+      // Touch swipe navigation
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+          const nextPage = (currentPage + 1) % pages.length;
+          showPage(nextPage);
+        }
+        if (touchEndX > touchStartX + 50) {
+          const prevPage = (currentPage - 1 + pages.length) % pages.length;
+          showPage(prevPage);
+        }
+      }
+
+      // Initialize
+      window.addEventListener("load", () => {
+        initFloatingGallery();
+        initSphereCarousel();
+        initTeamGrid();
+        animateTrail();
+
+        // Hide loader
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // Parallax effect for floating gallery
+      document.addEventListener("mousemove", (e) => {
+        if (currentPage === 0) {
+          const items = document.querySelectorAll(".float-item");
+          const mouseX = e.clientX / window.innerWidth - 0.5;
+          const mouseY = e.clientY / window.innerHeight - 0.5;
+
+          items.forEach((item, index) => {
+            const depth = (index + 1) * 10;
+            const moveX = mouseX * depth;
+            const moveY = mouseY * depth;
+
+            if (!item.classList.contains("dragging")) {
+              item.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

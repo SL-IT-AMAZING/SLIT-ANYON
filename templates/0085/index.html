@@ -1,0 +1,1894 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AVANT-GARDE STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,900;1,400&family=Inter:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+      :root {
+        --primary-dark: #1a1a1a;
+        --primary-light: #f5f5f5;
+        --accent-color: #d4a574;
+        --transition-speed: 0.6s;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 20px 40px;
+        background: rgba(245, 245, 245, 0.95);
+        backdrop-filter: blur(10px);
+        transition: all var(--transition-speed) ease;
+      }
+
+      nav.scrolled {
+        padding: 15px 40px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 3px;
+        color: var(--primary-dark);
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .logo:hover {
+        letter-spacing: 5px;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 40px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: var(--primary-dark);
+        font-weight: 400;
+        letter-spacing: 1px;
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--accent-color);
+        transition: width 0.3s ease;
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        gap: 4px;
+      }
+
+      .hamburger span {
+        width: 25px;
+        height: 2px;
+        background: var(--primary-dark);
+        transition: all 0.3s ease;
+      }
+
+      /* Sections */
+      section {
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Hero Section */
+      #hero {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      #p5-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(4rem, 12vw, 10rem);
+        font-weight: 900;
+        line-height: 0.9;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .hero-subtitle {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        letter-spacing: 5px;
+        color: var(--accent-color);
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease 0.3s forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* About Section */
+      #about {
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        padding: 80px 40px;
+      }
+
+      .about-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+
+      .about-text {
+        position: relative;
+      }
+
+      .about-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        margin-bottom: 30px;
+        line-height: 1.1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .about-title span {
+        display: inline-block;
+        transform: translateY(100%);
+        animation: revealText 0.8s ease forwards;
+        animation-delay: 0.1s;
+      }
+
+      @keyframes revealText {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .about-description {
+        font-weight: 300;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fadeIn 1s ease 0.5s forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      .about-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+
+      .about-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transform: scale(1.1);
+        transition: transform 1s ease;
+      }
+
+      .about-image:hover img {
+        transform: scale(1);
+      }
+
+      /* Work Section */
+      #work {
+        padding: 100px 40px;
+        background: var(--primary-light);
+      }
+
+      .work-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .work-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(4rem, 8vw, 7rem);
+        letter-spacing: 10px;
+        color: var(--primary-dark);
+        position: relative;
+        display: inline-block;
+      }
+
+      .work-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: var(--accent-color);
+      }
+
+      .work-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .work-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transform: translateY(50px);
+        opacity: 0;
+        animation: slideUp 0.8s ease forwards;
+      }
+
+      .work-item:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .work-item:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .work-item:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .work-item:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .work-item img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .work-item:hover img {
+        transform: scale(1.05);
+      }
+
+      .work-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .work-item:hover .work-overlay {
+        opacity: 1;
+      }
+
+      .work-overlay h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        color: var(--primary-light);
+        margin-bottom: 10px;
+        transform: translateY(20px);
+        transition: transform 0.4s ease;
+      }
+
+      .work-item:hover .work-overlay h3 {
+        transform: translateY(0);
+      }
+
+      .work-overlay p {
+        color: var(--accent-color);
+        letter-spacing: 2px;
+        transform: translateY(20px);
+        transition: transform 0.4s ease 0.1s;
+      }
+
+      .work-item:hover .work-overlay p {
+        transform: translateY(0);
+      }
+
+      /* Services Section */
+      #services {
+        background: var(--accent-color);
+        padding: 100px 40px;
+        position: relative;
+      }
+
+      .services-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .services-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 7vw, 6rem);
+        text-align: center;
+        margin-bottom: 80px;
+        color: var(--primary-dark);
+        font-style: italic;
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 60px;
+      }
+
+      .service-card {
+        background: var(--primary-light);
+        padding: 50px 40px;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .service-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-dark);
+        transition: left 0.6s ease;
+        z-index: 0;
+      }
+
+      .service-card:hover::before {
+        left: 0;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        color: var(--primary-light);
+      }
+
+      .service-card * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .service-number {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        transition: color 0.4s ease;
+      }
+
+      .service-card:hover .service-number {
+        color: var(--accent-color);
+      }
+
+      .service-name {
+        font-family: "Playfair Display", serif;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        transition: color 0.4s ease;
+      }
+
+      .service-description {
+        line-height: 1.6;
+        font-weight: 300;
+        transition: color 0.4s ease;
+      }
+
+      /* Gallery Section */
+      #gallery {
+        padding: 100px 40px;
+        background: var(--primary-light);
+      }
+
+      .gallery-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .gallery-title {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(3rem, 6vw, 5rem);
+        letter-spacing: 8px;
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+        color: var(--primary-dark);
+      }
+
+      .gallery-subtitle {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        font-style: italic;
+      }
+
+      .gallery-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        columns: 3;
+        column-gap: 30px;
+      }
+
+      .gallery-item {
+        margin-bottom: 30px;
+        break-inside: avoid;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition:
+          transform 0.6s ease,
+          filter 0.6s ease;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.05);
+        filter: brightness(0.8);
+      }
+
+      .gallery-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        color: var(--primary-light);
+        padding: 30px 20px 20px;
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+      }
+
+      .gallery-item:hover .gallery-caption {
+        transform: translateY(0);
+      }
+
+      .gallery-caption h4 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.3rem;
+        margin-bottom: 5px;
+      }
+
+      .gallery-caption p {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        letter-spacing: 1px;
+      }
+
+      /* Team Section */
+      #team {
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        padding: 100px 40px;
+        position: relative;
+      }
+
+      .team-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .team-header {
+        text-align: center;
+        margin-bottom: 80px;
+      }
+
+      .team-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        margin-bottom: 20px;
+        position: relative;
+        display: inline-block;
+      }
+
+      .team-title::before,
+      .team-title::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 100px;
+        height: 1px;
+        background: var(--accent-color);
+      }
+
+      .team-title::before {
+        right: calc(100% + 30px);
+      }
+
+      .team-title::after {
+        left: calc(100% + 30px);
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 50px;
+      }
+
+      .team-member {
+        text-align: center;
+        position: relative;
+        group: team;
+      }
+
+      .team-member-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        margin-bottom: 30px;
+      }
+
+      .team-member-image img {
+        width: 100%;
+        height: 350px;
+        object-fit: cover;
+        filter: grayscale(100%);
+        transition:
+          filter 0.6s ease,
+          transform 0.6s ease;
+      }
+
+      .team-member:hover .team-member-image img {
+        filter: grayscale(0%);
+        transform: scale(1.05);
+      }
+
+      .team-member-info h3 {
+        font-family: "Bebas Neue", cursive;
+        font-size: 2rem;
+        letter-spacing: 3px;
+        margin-bottom: 10px;
+        transition: color 0.3s ease;
+      }
+
+      .team-member:hover .team-member-info h3 {
+        color: var(--accent-color);
+      }
+
+      .team-member-info p {
+        font-weight: 300;
+        letter-spacing: 2px;
+        opacity: 0.8;
+      }
+
+      /* Contact Section */
+      #contact {
+        padding: 100px 40px;
+        background: var(--primary-light);
+        position: relative;
+      }
+
+      .contact-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: start;
+      }
+
+      .contact-info {
+        position: relative;
+      }
+
+      .contact-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 5vw, 4rem);
+        margin-bottom: 30px;
+        color: var(--primary-dark);
+      }
+
+      .contact-text {
+        font-weight: 300;
+        line-height: 1.8;
+        margin-bottom: 40px;
+        color: var(--primary-dark);
+      }
+
+      .contact-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 1.1rem;
+        color: var(--primary-dark);
+      }
+
+      .contact-item span {
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+
+      .contact-form {
+        background: var(--accent-color);
+        padding: 50px;
+        border-radius: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 30px;
+      }
+
+      .form-group label {
+        display: block;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        color: var(--primary-dark);
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        background: var(--primary-light);
+        border-radius: 5px;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--primary-dark);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .submit-btn {
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        border: none;
+        padding: 15px 40px;
+        font-family: "Bebas Neue", cursive;
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .submit-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--primary-light);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s ease,
+          height 0.6s ease;
+      }
+
+      .submit-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .submit-btn:hover {
+        color: var(--primary-dark);
+      }
+
+      .submit-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Scroll Effects */
+      .scroll-reveal {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.8s ease;
+      }
+
+      .scroll-reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Text Animation Effects */
+      .text-split {
+        overflow: hidden;
+      }
+
+      .text-split span {
+        display: inline-block;
+        transform: translateY(100%);
+        transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1);
+      }
+
+      .text-split.active span {
+        transform: translateY(0);
+      }
+
+      /* Floating Elements */
+      .floating-element {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0.1;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(10deg);
+        }
+      }
+
+      /* Page Transitions */
+      .page-transition {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background: var(--accent-color);
+        z-index: 10000;
+        transition: left 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+      }
+
+      .page-transition.active {
+        left: 0;
+      }
+
+      /* Loading Animation */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: var(--primary-dark);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+        transition:
+          opacity 0.5s ease,
+          visibility 0.5s ease;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-text {
+        font-family: "Bebas Neue", cursive;
+        font-size: 4rem;
+        color: var(--primary-light);
+        letter-spacing: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .loader-text::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: var(--accent-color);
+        animation: loaderLine 2s ease-in-out infinite;
+      }
+
+      @keyframes loaderLine {
+        0% {
+          width: 0;
+          left: 0;
+        }
+        50% {
+          width: 100%;
+          left: 0;
+        }
+        100% {
+          width: 0;
+          left: 100%;
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .gallery-container {
+          columns: 2;
+        }
+
+        .about-container,
+        .contact-container {
+          grid-template-columns: 1fr;
+          gap: 50px;
+        }
+
+        .team-title::before,
+        .team-title::after {
+          width: 50px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .nav-links {
+          position: fixed;
+          top: 0;
+          right: -100%;
+          width: 100%;
+          height: 100vh;
+          background: var(--primary-light);
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 30px;
+          transition: right 0.3s ease;
+        }
+
+        .nav-links.active {
+          right: 0;
+        }
+
+        .hamburger {
+          display: flex;
+          z-index: 1001;
+        }
+
+        .hamburger.active span:nth-child(1) {
+          transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+          transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        .hero-title {
+          font-size: clamp(3rem, 10vw, 6rem);
+        }
+
+        .work-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .services-grid {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .gallery-container {
+          columns: 1;
+        }
+
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-form {
+          padding: 30px;
+        }
+
+        section {
+          padding: 60px 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: 3rem;
+        }
+
+        .hero-subtitle {
+          font-size: 1.2rem;
+        }
+
+        .about-title,
+        .work-title,
+        .services-title,
+        .gallery-title,
+        .team-title,
+        .contact-title {
+          font-size: 2.5rem;
+        }
+
+        .service-card {
+          padding: 30px 20px;
+        }
+
+        .loader-text {
+          font-size: 2.5rem;
+        }
+      }
+
+      /* Custom Cursor */
+      .cursor {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.1s ease;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor-follower {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-color);
+        opacity: 0.3;
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        z-index: 9998;
+        mix-blend-mode: difference;
+      }
+
+      .cursor.hover {
+        transform: scale(2);
+        background: var(--accent-color);
+        opacity: 0.5;
+      }
+
+      /* Smooth Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--primary-light);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-dark);
+      }
+
+      /* Additional Typography Effects */
+      .glitch {
+        position: relative;
+        color: var(--primary-dark);
+        font-size: 4rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-shadow:
+          0.05em 0 0 var(--accent-color),
+          -0.025em -0.05em 0 var(--primary-dark),
+          0.025em 0.05em 0 var(--primary-light);
+        animation: glitch 500ms infinite;
+      }
+
+      @keyframes glitch {
+        0% {
+          text-shadow:
+            0.05em 0 0 var(--accent-color),
+            -0.025em -0.05em 0 var(--primary-dark),
+            0.025em 0.05em 0 var(--primary-light);
+        }
+        14% {
+          text-shadow:
+            0.05em 0 0 var(--accent-color),
+            -0.025em -0.05em 0 var(--primary-dark),
+            0.025em 0.05em 0 var(--primary-light);
+        }
+        15% {
+          text-shadow:
+            -0.05em -0.025em 0 var(--accent-color),
+            0.025em 0.025em 0 var(--primary-dark),
+            -0.05em -0.05em 0 var(--primary-light);
+        }
+        49% {
+          text-shadow:
+            -0.05em -0.025em 0 var(--accent-color),
+            0.025em 0.025em 0 var(--primary-dark),
+            -0.05em -0.05em 0 var(--primary-light);
+        }
+        50% {
+          text-shadow:
+            0.025em 0.05em 0 var(--accent-color),
+            0.05em 0 0 var(--primary-dark),
+            0 -0.05em 0 var(--primary-light);
+        }
+        99% {
+          text-shadow:
+            0.025em 0.05em 0 var(--accent-color),
+            0.05em 0 0 var(--primary-dark),
+            0 -0.05em 0 var(--primary-light);
+        }
+        100% {
+          text-shadow:
+            -0.025em 0 0 var(--accent-color),
+            -0.025em -0.025em 0 var(--primary-dark),
+            -0.025em -0.05em 0 var(--primary-light);
+        }
+      }
+
+      /* Parallax Elements */
+      .parallax-element {
+        position: absolute;
+        transition: transform 0.1s ease-out;
+      }
+
+      /* Video Background */
+      .video-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.3;
+      }
+
+      /* Magnetic Buttons */
+      .magnetic-btn {
+        position: relative;
+        display: inline-block;
+        padding: 15px 40px;
+        background: var(--primary-dark);
+        color: var(--primary-light);
+        text-decoration: none;
+        font-family: "Bebas Neue", cursive;
+        letter-spacing: 2px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .magnetic-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--accent-color);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s ease,
+          height 0.6s ease;
+      }
+
+      .magnetic-btn:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      .magnetic-btn:hover {
+        color: var(--primary-dark);
+      }
+
+      .magnetic-btn span {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-text">LOADING</div>
+    </div>
+
+    <!-- Page Transition -->
+    <div class="page-transition"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+      <div class="nav-container">
+        <a href="#hero" class="logo">AVANT-GARDE</a>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="#hero">HOME</a></li>
+          <li><a href="#about">ABOUT</a></li>
+          <li><a href="#work">WORK</a></li>
+          <li><a href="#services">SERVICES</a></li>
+          <li><a href="#gallery">GALLERY</a></li>
+          <li><a href="#team">TEAM</a></li>
+          <li><a href="#contact">CONTACT</a></li>
+        </ul>
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+      <div id="p5-canvas"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">REDEFINING<br />CREATIVE<br />BOUNDARIES</h1>
+        <p class="hero-subtitle">WHERE ART MEETS INNOVATION</p>
+      </div>
+      <div
+        class="floating-element"
+        style="
+          top: 20%;
+          left: 10%;
+          font-size: 100px;
+          font-family: &quot;Playfair Display&quot;, serif;
+        "
+      >
+        ✦
+      </div>
+      <div
+        class="floating-element"
+        style="
+          bottom: 20%;
+          right: 10%;
+          font-size: 80px;
+          font-family: &quot;Bebas Neue&quot;, cursive;
+        "
+      >
+        ◈
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+      <div class="about-container scroll-reveal">
+        <div class="about-text">
+          <h2 class="about-title">
+            <span>PIONEERING THE FUTURE OF DESIGN</span>
+          </h2>
+          <p class="about-description">
+            We are a collective of visionaries, pushing the boundaries of
+            conventional design to create experiences that transcend the
+            ordinary. Our approach combines cutting-edge technology with
+            timeless aesthetics.
+          </p>
+          <p class="about-description">
+            Founded on the principles of innovation and excellence, we craft
+            digital experiences that resonate with audiences on a profound
+            level. Every project is an opportunity to challenge norms and set
+            new standards.
+          </p>
+          <a href="#work" class="magnetic-btn">
+            <span>EXPLORE OUR VISION</span>
+          </a>
+        </div>
+        <div class="about-image">
+          <img
+            src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+            alt="About Us"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Work Section -->
+    <section id="work">
+      <div class="work-header scroll-reveal">
+        <h2 class="work-title">PORTFOLIO</h2>
+      </div>
+      <div class="work-grid">
+        <div class="work-item">
+          <img
+            src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+            alt="Project 1"
+          />
+          <div class="work-overlay">
+            <h3>ETHEREAL VISIONS</h3>
+            <p>DIGITAL ART INSTALLATION</p>
+          </div>
+        </div>
+        <div class="work-item">
+          <img
+            src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+            alt="Project 2"
+          />
+          <div class="work-overlay">
+            <h3>URBAN SYMPHONY</h3>
+            <p>ARCHITECTURAL VISUALIZATION</p>
+          </div>
+        </div>
+        <div class="work-item">
+          <img
+            src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png"
+            alt="Project 3"
+          />
+          <div class="work-overlay">
+            <h3>CHROMATIC DREAMS</h3>
+            <p>BRAND IDENTITY DESIGN</p>
+          </div>
+        </div>
+        <div class="work-item">
+          <img
+            src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png"
+            alt="Project 4"
+          />
+          <div class="work-overlay">
+            <h3>DIGITAL RENAISSANCE</h3>
+            <p>INTERACTIVE EXPERIENCE</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services">
+      <div class="services-container">
+        <h2 class="services-title scroll-reveal">What We Create</h2>
+        <div class="services-grid">
+          <div class="service-card scroll-reveal">
+            <div class="service-number">01</div>
+            <h3 class="service-name">BRAND IDENTITY</h3>
+            <p class="service-description">
+              Crafting unique visual languages that capture the essence of your
+              brand and resonate with your audience on an emotional level.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">02</div>
+            <h3 class="service-name">DIGITAL EXPERIENCES</h3>
+            <p class="service-description">
+              Building immersive digital environments that blur the line between
+              reality and imagination, creating unforgettable user journeys.
+            </p>
+          </div>
+          <div class="service-card scroll-reveal">
+            <div class="service-number">03</div>
+            <h3 class="service-name">CREATIVE DIRECTION</h3>
+            <p class="service-description">
+              Guiding brands through transformative creative processes that
+              challenge conventions and establish new paradigms in design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+      <div class="gallery-header scroll-reveal">
+        <h2 class="gallery-title">VISUAL ANTHOLOGY</h2>
+        <p class="gallery-subtitle">
+          A curated collection of our creative explorations
+        </p>
+      </div>
+      <div class="gallery-container">
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png"
+            alt="Gallery 1"
+          />
+          <div class="gallery-caption">
+            <h4>ABSTRACT FORMATIONS</h4>
+            <p>Exploring geometric harmony</p>
+          </div>
+        </div>
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png"
+            alt="Gallery 2"
+          />
+          <div class="gallery-caption">
+            <h4>LUMINOUS PERSPECTIVES</h4>
+            <p>Light as a design element</p>
+          </div>
+        </div>
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png"
+            alt="Gallery 3"
+          />
+          <div class="gallery-caption">
+            <h4>ORGANIC STRUCTURES</h4>
+            <p>Nature-inspired aesthetics</p>
+          </div>
+        </div>
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png"
+            alt="Gallery 4"
+          />
+          <div class="gallery-caption">
+            <h4>MINIMALIST ESSENCE</h4>
+            <p>The power of simplicity</p>
+          </div>
+        </div>
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png"
+            alt="Gallery 5"
+          />
+          <div class="gallery-caption">
+            <h4>DYNAMIC MOTION</h4>
+            <p>Movement in stillness</p>
+          </div>
+        </div>
+        <div class="gallery-item scroll-reveal">
+          <img
+            src="https://cdn.midjourney.com/6a4b41d5-dc90-4dc8-99ae-1dea2a581e16/0_1.png"
+            alt="Gallery 6"
+          />
+          <div class="gallery-caption">
+            <h4>TEXTURAL DEPTHS</h4>
+            <p>Layered visual narratives</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team">
+      <div class="team-container">
+        <div class="team-header scroll-reveal">
+          <h2 class="team-title">CREATIVE MINDS</h2>
+        </div>
+        <div class="team-grid">
+          <div class="team-member scroll-reveal">
+            <div class="team-member-image">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_1.png"
+                alt="Team Member 1"
+              />
+            </div>
+            <div class="team-member-info">
+              <h3>ALEXANDRA NOIR</h3>
+              <p>CREATIVE DIRECTOR</p>
+            </div>
+          </div>
+          <div class="team-member scroll-reveal">
+            <div class="team-member-image">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_2.png"
+                alt="Team Member 2"
+              />
+            </div>
+            <div class="team-member-info">
+              <h3>MARCUS AURELIUS</h3>
+              <p>ART DIRECTOR</p>
+            </div>
+          </div>
+          <div class="team-member scroll-reveal">
+            <div class="team-member-image">
+              <img
+                src="https://cdn.midjourney.com/b87b2d18-81b6-48bb-9b54-2ac35718635b/0_3.png"
+                alt="Team Member 3"
+              />
+            </div>
+            <div class="team-member-info">
+              <h3>SOPHIA LAURENT</h3>
+              <p>LEAD DESIGNER</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+      <div class="contact-container">
+        <div class="contact-info scroll-reveal">
+          <h2 class="contact-title">Let's Create Something Extraordinary</h2>
+          <p class="contact-text">
+            Ready to push the boundaries of what's possible? We're always
+            looking for ambitious projects and creative collaborations that
+            challenge the status quo.
+          </p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <span>✉</span>
+              <p>hello@avantgarde.studio</p>
+            </div>
+            <div class="contact-item">
+              <span>☎</span>
+              <p>+1 (555) 123-4567</p>
+            </div>
+            <div class="contact-item">
+              <span>⌂</span>
+              <p>123 Creative Boulevard<br />New York, NY 10001</p>
+            </div>
+          </div>
+        </div>
+        <div class="contact-form scroll-reveal">
+          <form id="contactForm">
+            <div class="form-group">
+              <label for="name">NAME</label>
+              <input type="text" id="name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label for="email">EMAIL</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+            <div class="form-group">
+              <label for="message">MESSAGE</label>
+              <textarea id="message" name="message" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">
+              <span>SEND MESSAGE</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // P5.js Sketch
+      let sketch = function (p) {
+        let particles = [];
+        let noiseScale = 0.01;
+
+        p.setup = function () {
+          let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+          canvas.parent("p5-canvas");
+
+          for (let i = 0; i < 100; i++) {
+            particles.push({
+              x: p.random(p.width),
+              y: p.random(p.height),
+              size: p.random(2, 8),
+              speedX: p.random(-1, 1),
+              speedY: p.random(-1, 1),
+            });
+          }
+        };
+
+        p.draw = function () {
+          p.clear();
+
+          particles.forEach((particle, index) => {
+            let noiseVal = p.noise(
+              particle.x * noiseScale,
+              particle.y * noiseScale,
+              p.frameCount * 0.01,
+            );
+            let angle = noiseVal * p.TWO_PI * 2;
+
+            particle.x += p.cos(angle) * 2 + particle.speedX;
+            particle.y += p.sin(angle) * 2 + particle.speedY;
+
+            if (particle.x < 0 || particle.x > p.width) particle.speedX *= -1;
+            if (particle.y < 0 || particle.y > p.height) particle.speedY *= -1;
+
+            particle.x = p.constrain(particle.x, 0, p.width);
+            particle.y = p.constrain(particle.y, 0, p.height);
+
+            p.noStroke();
+            p.fill(212, 165, 116, 100);
+            p.ellipse(particle.x, particle.y, particle.size);
+
+            particles.forEach((other, otherIndex) => {
+              if (index !== otherIndex) {
+                let d = p.dist(particle.x, particle.y, other.x, other.y);
+                if (d < 100) {
+                  p.stroke(212, 165, 116, 50 * (1 - d / 100));
+                  p.line(particle.x, particle.y, other.x, other.y);
+                }
+              }
+            });
+          });
+        };
+
+        p.windowResized = function () {
+          p.resizeCanvas(p.windowWidth, p.windowHeight);
+        };
+      };
+
+      new p5(sketch);
+
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1500);
+      });
+
+      // Navigation
+      const navbar = document.getElementById("navbar");
+      const hamburger = document.getElementById("hamburger");
+      const navLinks = document.getElementById("navLinks");
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 50) {
+          navbar.classList.add("scrolled");
+        } else {
+          navbar.classList.remove("scrolled");
+        }
+      });
+
+      hamburger.addEventListener("click", () => {
+        hamburger.classList.toggle("active");
+        navLinks.classList.toggle("active");
+      });
+
+      // Smooth scroll for navigation links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+            // Close mobile menu if open
+            hamburger.classList.remove("active");
+            navLinks.classList.remove("active");
+          }
+        });
+      });
+
+      // Scroll Reveal
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll(".scroll-reveal").forEach((el) => {
+        observer.observe(el);
+      });
+
+      // Text Split Animation
+      document.querySelectorAll(".text-split").forEach((element) => {
+        const text = element.textContent;
+        element.textContent = "";
+        text.split("").forEach((char, index) => {
+          const span = document.createElement("span");
+          span.textContent = char === " " ? "\u00A0" : char;
+          span.style.transitionDelay = `${index * 0.05}s`;
+          element.appendChild(span);
+        });
+      });
+
+      // Custom Cursor
+      const cursor = document.querySelector(".cursor");
+      const cursorFollower = document.querySelector(".cursor-follower");
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+
+        setTimeout(() => {
+          cursorFollower.style.left = e.clientX - 10 + "px";
+          cursorFollower.style.top = e.clientY - 10 + "px";
+        }, 100);
+      });
+
+      document
+        .querySelectorAll("a, button, .work-item, .service-card, .gallery-item")
+        .forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursor.classList.add("hover"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursor.classList.remove("hover"),
+          );
+        });
+
+      // Parallax Effect
+      document.addEventListener("mousemove", (e) => {
+        const parallaxElements = document.querySelectorAll(".parallax-element");
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+
+        parallaxElements.forEach((el) => {
+          const speed = el.getAttribute("data-speed") || 5;
+          const xPos = (x - 0.5) * speed;
+          const yPos = (y - 0.5) * speed;
+          el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        });
+      });
+
+      // Form Submission
+      document.getElementById("contactForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        // Add your form submission logic here
+        alert("Thank you for your message! We will get back to you soon.");
+        e.target.reset();
+      });
+
+      // Dynamic Typography on Scroll
+      let lastScrollY = window.scrollY;
+      const heroTitle = document.querySelector(".hero-title");
+
+      window.addEventListener("scroll", () => {
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - lastScrollY;
+
+        if (heroTitle) {
+          const scale = Math.max(0.5, 1 - currentScrollY * 0.001);
+          const opacity = Math.max(0, 1 - currentScrollY * 0.002);
+          heroTitle.style.transform = `scale(${scale}) translateY(${currentScrollY * 0.3}px)`;
+          heroTitle.style.opacity = opacity;
+        }
+
+        lastScrollY = currentScrollY;
+      });
+
+      // Page Transition Effect
+      const pageTransition = document.querySelector(".page-transition");
+
+      function transitionPage(url) {
+        pageTransition.classList.add("active");
+        setTimeout(() => {
+          window.location.href = url;
+        }, 600);
+      }
+
+      // Magnetic Button Effect
+      document.querySelectorAll(".magnetic-btn").forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "translate(0, 0)";
+        });
+      });
+
+      // Random Page Transition Effects
+      const transitionEffects = [
+        "slideLeft",
+        "slideRight",
+        "slideUp",
+        "slideDown",
+        "fade",
+        "rotate",
+      ];
+
+      function getRandomTransition() {
+        return transitionEffects[
+          Math.floor(Math.random() * transitionEffects.length)
+        ];
+      }
+
+      // Apply random transition on navigation
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", function (e) {
+          const effect = getRandomTransition();
+          document.body.style.animation = `${effect} 0.6s ease-in-out`;
+        });
+      });
+
+      // Floating elements animation
+      document.querySelectorAll(".floating-element").forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.5}s`;
+      });
+
+      // Text accumulation effect
+      const workTitle = document.querySelector(".work-title");
+      if (workTitle) {
+        const originalText = workTitle.textContent;
+        workTitle.textContent = "";
+        let charIndex = 0;
+
+        const typeWriter = () => {
+          if (charIndex < originalText.length) {
+            workTitle.textContent += originalText.charAt(charIndex);
+            charIndex++;
+            setTimeout(typeWriter, 100);
+          }
+        };
+
+        // Start typing when element is in view
+        const workObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                typeWriter();
+                workObserver.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+
+        workObserver.observe(workTitle);
+      }
+
+      // Gallery hover effect
+      document.querySelectorAll(".gallery-item").forEach((item) => {
+        item.addEventListener("mouseenter", () => {
+          item.style.zIndex = "10";
+        });
+
+        item.addEventListener("mouseleave", () => {
+          item.style.zIndex = "1";
+        });
+      });
+
+      // Service card stagger animation
+      document.querySelectorAll(".service-card").forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.2}s`;
+      });
+
+      // Mobile touch events
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+          // Swipe left
+          console.log("Swipe left detected");
+        }
+        if (touchEndX > touchStartX + 50) {
+          // Swipe right
+          console.log("Swipe right detected");
+        }
+      }
+
+      // Performance optimization
+      let ticking = false;
+      function requestTick() {
+        if (!ticking) {
+          window.requestAnimationFrame(updateElements);
+          ticking = true;
+        }
+      }
+
+      function updateElements() {
+        ticking = false;
+        // Update elements based on scroll
+      }
+
+      window.addEventListener("scroll", requestTick);
+
+      // Prevent image distortion
+      document.querySelectorAll("img").forEach((img) => {
+        img.addEventListener("load", function () {
+          this.style.aspectRatio = `${this.naturalWidth} / ${this.naturalHeight}`;
+        });
+      });
+
+      // Ensure text doesn't flip
+      document
+        .querySelectorAll(
+          '[class*="title"], [class*="text"], p, h1, h2, h3, h4, h5, h6',
+        )
+        .forEach((el) => {
+          el.style.transformStyle = "preserve-3d";
+          el.style.backfaceVisibility = "hidden";
+        });
+    </script>
+  </body>
+</html>

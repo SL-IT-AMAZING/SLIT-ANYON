@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VOID - A Creative Odyssey</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* 커스텀 폰트 및 기본 스타일 */
+      body {
+        background-color: #0a0a0a;
+        color: #eaeaea;
+        font-family: "Inter", sans-serif;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      .font-syncopate {
+        font-family: "Syncopate", sans-serif;
+      }
+
+      /* 커스텀 커서 */
+      .cursor {
+        position: fixed;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #eaeaea;
+        border-radius: 50%;
+        left: 0;
+        top: 0;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.3s,
+          height 0.3s,
+          background-color 0.3s;
+        z-index: 9999;
+        mix-blend-mode: difference;
+      }
+
+      .cursor.link-hover {
+        width: 60px;
+        height: 60px;
+        background-color: #eaeaea;
+      }
+
+      /* Lenis 스크롤바 숨기기 */
+      html.lenis {
+        height: auto;
+      }
+      .lenis.lenis-smooth {
+        scroll-behavior: auto !important;
+      }
+      .lenis.lenis-stopped {
+        overflow: hidden;
+      }
+
+      /* Works 섹션 가로 스크롤 컨테이너 */
+      .horizontal-container {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .panels {
+        height: 100%;
+        width: 400vw; /* 패널 개수에 따라 조정 (4개 * 100vw) */
+        display: flex;
+      }
+
+      .panel {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* Process 섹션 라인 */
+      .timeline-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(-50%);
+      }
+      .timeline-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background-color: #ffffff;
+        transform-origin: top;
+      }
+
+      /* Testimonial Marquee */
+      .marquee-content {
+        animation: marquee 30s linear infinite;
+      }
+      @keyframes marquee {
+        from {
+          transform: translateX(0%);
+        }
+        to {
+          transform: translateX(-50%);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-[#0A0A0A] text-neutral-100">
+    <!-- 커스텀 커서 -->
+    <div class="cursor"></div>
+
+    <!-- 헤더 / 네비게이션 -->
+    <header class="fixed top-0 left-0 w-full p-6 md:p-8 z-50">
+      <div class="container mx-auto flex justify-between items-center">
+        <a
+          href="#hero"
+          class="font-syncopate text-2xl font-bold tracking-widest nav-link"
+          >VOID</a
+        >
+        <nav
+          class="hidden md:flex items-center gap-8 font-syncopate text-sm font-bold"
+        >
+          <a href="#manifesto" class="nav-link">MANIFESTO</a>
+          <a href="#works" class="nav-link">WORKS</a>
+          <a href="#services" class="nav-link">SERVICES</a>
+          <a href="#contact" class="nav-link">CONTACT</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- 1. Hero Section -->
+      <section
+        id="hero"
+        class="h-screen w-screen relative flex items-center justify-center overflow-hidden"
+      >
+        <video
+          autoplay
+          loop
+          muted
+          playsinline
+          class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-40"
+        >
+          <source
+            src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div class="z-10 text-center">
+          <h1
+            class="font-syncopate text-6xl md:text-9xl lg:text-[10rem] font-bold tracking-wider hero-title"
+          >
+            VOID
+          </h1>
+          <p class="text-neutral-300 mt-4 hero-subtitle">
+            Where Ideas Transcend Reality
+          </p>
+        </div>
+        <div
+          class="absolute bottom-10 left-1/2 -translate-x-1/2 text-xs font-syncopate tracking-widest"
+        >
+          SCROLL
+        </div>
+      </section>
+
+      <!-- 2. Manifesto Section -->
+      <section
+        id="manifesto"
+        class="min-h-screen w-full flex items-center justify-center py-20 md:py-40"
+      >
+        <div class="container mx-auto px-6 text-center">
+          <p
+            class="manifesto-text text-3xl md:text-5xl lg:text-7xl leading-tight font-light"
+          >
+            We are architects of the
+            <span class="font-semibold text-white">unseen</span>, engineers of
+            <span class="font-semibold text-white">emotion</span>. We don't just
+            build websites; we craft
+            <span class="font-semibold text-white">digital dimensions</span>
+            that resonate, provoke, and inspire.
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. Works Section (Horizontal Scroll) -->
+      <section id="works" class="horizontal-container">
+        <div class="panels">
+          <div class="panel flex items-center justify-center flex-col gap-4">
+            <h2 class="font-syncopate text-5xl md:text-7xl font-bold">
+              OUR WORKS
+            </h2>
+            <p>A Glimpse Into Our Universe</p>
+          </div>
+          <div class="panel relative p-8 md:p-16">
+            <img
+              src="https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png"
+              class="w-full h-full object-cover rounded-2xl"
+              alt="Work 1"
+            />
+            <div class="absolute bottom-16 left-16 text-white">
+              <h3 class="font-syncopate text-2xl">Project: Nebula</h3>
+              <p class="text-sm opacity-80">
+                AI-driven generative art platform.
+              </p>
+            </div>
+          </div>
+          <div class="panel relative p-8 md:p-16">
+            <img
+              src="https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png"
+              class="w-full h-full object-cover rounded-2xl"
+              alt="Work 2"
+            />
+            <div class="absolute bottom-16 left-16 text-white">
+              <h3 class="font-syncopate text-2xl">Project: Chronos</h3>
+              <p class="text-sm opacity-80">
+                Immersive time-based data visualization.
+              </p>
+            </div>
+          </div>
+          <div class="panel relative p-8 md:p-16">
+            <img
+              src="https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png"
+              class="w-full h-full object-cover rounded-2xl"
+              alt="Work 3"
+            />
+            <div class="absolute bottom-16 left-16 text-white">
+              <h3 class="font-syncopate text-2xl">Project: Echo</h3>
+              <p class="text-sm opacity-80">
+                Interactive storytelling experience.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Services Section -->
+      <section
+        id="services"
+        class="min-h-screen w-full flex items-center justify-center py-20 md:py-40"
+      >
+        <div class="container mx-auto px-6 text-center">
+          <h2 class="font-syncopate text-5xl md:text-7xl font-bold mb-16">
+            CAPABILITIES
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div
+              class="service-card border border-neutral-800 p-8 rounded-xl text-left"
+            >
+              <h3 class="font-syncopate text-2xl font-bold mb-4">
+                Dimension Design
+              </h3>
+              <p class="text-neutral-400">
+                Crafting immersive UI/UX that transcends the screen, creating
+                intuitive and unforgettable user journeys.
+              </p>
+            </div>
+            <div
+              class="service-card border border-neutral-800 p-8 rounded-xl text-left"
+            >
+              <h3 class="font-syncopate text-2xl font-bold mb-4">
+                Reality Weaving
+              </h3>
+              <p class="text-neutral-400">
+                Developing robust and scalable web applications with
+                bleeding-edge technologies and clean code.
+              </p>
+            </div>
+            <div
+              class="service-card border border-neutral-800 p-8 rounded-xl text-left"
+            >
+              <h3 class="font-syncopate text-2xl font-bold mb-4">
+                Identity Forging
+              </h3>
+              <p class="text-neutral-400">
+                Building powerful brand identities and visual systems that tell
+                your unique story across all mediums.
+              </p>
+            </div>
+            <div
+              class="service-card border border-neutral-800 p-8 rounded-xl text-left"
+            >
+              <h3 class="font-syncopate text-2xl font-bold mb-4">
+                Kinetic Artistry
+              </h3>
+              <p class="text-neutral-400">
+                Bringing static designs to life with meaningful motion design
+                and fluid interactions that captivate.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Process Section -->
+      <section id="process" class="w-full py-20 md:py-40 relative">
+        <div class="container mx-auto px-6">
+          <h2
+            class="font-syncopate text-5xl md:text-7xl font-bold text-center mb-24"
+          >
+            OUR PROCESS
+          </h2>
+          <div class="relative max-w-2xl mx-auto">
+            <div class="timeline-line">
+              <div class="timeline-progress"></div>
+            </div>
+            <div class="process-step mb-24 flex items-center gap-8">
+              <div class="w-1/2 text-right">
+                <h3 class="font-syncopate text-3xl font-bold">01. DIVE</h3>
+                <p class="text-neutral-400">
+                  We immerse ourselves in your world, understanding your vision,
+                  goals, and the universe you want to create.
+                </p>
+              </div>
+              <div class="w-1/2"></div>
+            </div>
+            <div class="process-step mb-24 flex items-center gap-8">
+              <div class="w-1/2"></div>
+              <div class="w-1/2 text-left">
+                <h3 class="font-syncopate text-3xl font-bold">02. DREAM</h3>
+                <p class="text-neutral-400">
+                  We conceptualize and design the experience, mapping out user
+                  flows and creating visual prototypes from another dimension.
+                </p>
+              </div>
+            </div>
+            <div class="process-step mb-24 flex items-center gap-8">
+              <div class="w-1/2 text-right">
+                <h3 class="font-syncopate text-3xl font-bold">03. BUILD</h3>
+                <p class="text-neutral-400">
+                  Our developers weave code into reality, building a performant,
+                  scalable, and pixel-perfect product.
+                </p>
+              </div>
+              <div class="w-1/2"></div>
+            </div>
+            <div class="process-step flex items-center gap-8">
+              <div class="w-1/2"></div>
+              <div class="w-1/2 text-left">
+                <h3 class="font-syncopate text-3xl font-bold">04. LAUNCH</h3>
+                <p class="text-neutral-400">
+                  We deploy the experience into the digital cosmos, ensuring a
+                  smooth liftoff and continued support.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Team Section -->
+      <section
+        id="team"
+        class="min-h-screen w-full flex flex-col items-center justify-center py-20 md:py-40"
+      >
+        <h2
+          class="font-syncopate text-5xl md:text-7xl font-bold text-center mb-24"
+        >
+          THE ARCHITECTS
+        </h2>
+        <div
+          class="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16"
+        >
+          <div class="team-member text-center">
+            <div
+              class="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full overflow-hidden mb-4"
+            >
+              <img
+                src="https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png"
+                class="w-full h-full object-cover"
+                alt="Team Member 1"
+              />
+            </div>
+            <h3 class="font-syncopate font-bold">AXIOM</h3>
+            <p class="text-sm text-neutral-400">Chief Visionary</p>
+          </div>
+          <div class="team-member text-center">
+            <div
+              class="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full overflow-hidden mb-4"
+            >
+              <img
+                src="https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png"
+                class="w-full h-full object-cover"
+                alt="Team Member 2"
+              />
+            </div>
+            <h3 class="font-syncopate font-bold">LYRA</h3>
+            <p class="text-sm text-neutral-400">Lead Reality Weaver</p>
+          </div>
+          <div class="team-member text-center">
+            <div
+              class="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full overflow-hidden mb-4"
+            >
+              <img
+                src="https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png"
+                class="w-full h-full object-cover"
+                alt="Team Member 3"
+              />
+            </div>
+            <h3 class="font-syncopate font-bold">ORION</h3>
+            <p class="text-sm text-neutral-400">Kinetic Artist</p>
+          </div>
+          <div class="team-member text-center">
+            <div
+              class="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full overflow-hidden mb-4"
+            >
+              <img
+                src="https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png"
+                class="w-full h-full object-cover"
+                alt="Team Member 4"
+              />
+            </div>
+            <h3 class="font-syncopate font-bold">NOVA</h3>
+            <p class="text-sm text-neutral-400">Dimension Designer</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Testimonials Section (Marquee) -->
+      <section id="testimonials" class="w-full py-20 md:py-32 overflow-hidden">
+        <div class="relative flex gap-16 items-center">
+          <div class="marquee-content flex-shrink-0 flex items-center gap-16">
+            <p class="font-syncopate text-4xl font-bold">STELLAR INC.</p>
+            <img
+              src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 1"
+            />
+            <p class="font-syncopate text-4xl font-bold">QUANTUM LEAP</p>
+            <img
+              src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 2"
+            />
+            <p class="font-syncopate text-4xl font-bold">CYBERDREAM</p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 3"
+            />
+          </div>
+          <!-- Duplicate for seamless loop -->
+          <div
+            aria-hidden="true"
+            class="marquee-content flex-shrink-0 flex items-center gap-16"
+          >
+            <p class="font-syncopate text-4xl font-bold">STELLAR INC.</p>
+            <img
+              src="https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 1"
+            />
+            <p class="font-syncopate text-4xl font-bold">QUANTUM LEAP</p>
+            <img
+              src="https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 2"
+            />
+            <p class="font-syncopate text-4xl font-bold">CYBERDREAM</p>
+            <img
+              src="https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png"
+              class="h-20 w-auto rounded-lg"
+              alt="Logo 3"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Contact Section -->
+      <footer
+        id="contact"
+        class="min-h-screen w-full flex flex-col items-center justify-center py-20 md:py-40 bg-black"
+      >
+        <div class="text-center">
+          <h2 class="font-syncopate text-5xl md:text-7xl lg:text-8xl font-bold">
+            ENTER THE VOID
+          </h2>
+          <p class="mt-4 mb-8 text-neutral-400">
+            Let's create something beyond reality.
+          </p>
+          <a
+            href="mailto:hello@void.com"
+            class="inline-block bg-white text-black font-syncopate font-bold py-4 px-12 rounded-full text-lg hover:scale-105 transition-transform duration-300"
+          >
+            hello@void.com
+          </a>
+        </div>
+        <div class="absolute bottom-8 text-center text-xs text-neutral-600">
+          <p>&copy; 2025 VOID Creative Studio. All Rights Reserved.</p>
+        </div>
+      </footer>
+    </main>
+
+    <!-- GSAP & Lenis Smooth Scroll CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // --- 1. Lenis Smooth Scroll Initialization ---
+        const lenis = new Lenis();
+
+        lenis.on("scroll", ScrollTrigger.update);
+
+        gsap.ticker.add((time) => {
+          lenis.raf(time * 1000);
+        });
+
+        gsap.ticker.lagSmoothing(0);
+
+        // --- 2. Custom Cursor ---
+        const cursor = document.querySelector(".cursor");
+        const interactiveElements = document.querySelectorAll("a, button");
+
+        window.addEventListener("mousemove", (e) => {
+          gsap.to(cursor, {
+            x: e.clientX,
+            y: e.clientY,
+            duration: 0.2,
+            ease: "power2.out",
+          });
+        });
+
+        interactiveElements.forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursor.classList.add("link-hover"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursor.classList.remove("link-hover"),
+          );
+        });
+
+        // --- 3. Navigation ---
+        document.querySelectorAll(".nav-link").forEach((anchor) => {
+          anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            lenis.scrollTo(this.getAttribute("href"));
+          });
+        });
+
+        // --- 4. GSAP Animations ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Animation
+        gsap.from(".hero-title", {
+          opacity: 0,
+          y: 50,
+          duration: 1,
+          delay: 0.5,
+        });
+        gsap.from(".hero-subtitle", {
+          opacity: 0,
+          y: 30,
+          duration: 1,
+          delay: 0.8,
+        });
+
+        // Manifesto Text Reveal
+        const manifestoText = document.querySelector(".manifesto-text");
+        gsap.from(manifestoText, {
+          opacity: 0.2,
+          y: 100,
+          duration: 1,
+          scrollTrigger: {
+            trigger: "#manifesto",
+            start: "top 70%",
+            end: "bottom 80%",
+            scrub: 1,
+          },
+        });
+
+        // Works Horizontal Scroll
+        const panelsContainer = document.querySelector(".panels");
+        const panels = gsap.utils.toArray(".panel");
+
+        gsap.to(panels, {
+          xPercent: -100 * (panels.length - 1),
+          ease: "none",
+          scrollTrigger: {
+            trigger: ".horizontal-container",
+            pin: true,
+            scrub: 1,
+            snap: 1 / (panels.length - 1),
+            end: () => "+=" + panelsContainer.offsetWidth,
+          },
+        });
+
+        // Services Card Animation
+        gsap.utils.toArray(".service-card").forEach((card) => {
+          gsap.from(card, {
+            opacity: 0,
+            y: 80,
+            scale: 0.95,
+            duration: 0.8,
+            scrollTrigger: {
+              trigger: card,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          });
+        });
+
+        // Process Timeline Animation
+        gsap.to(".timeline-progress", {
+          height: "100%",
+          ease: "none",
+          scrollTrigger: {
+            trigger: "#process",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+          },
+        });
+
+        gsap.utils.toArray(".process-step").forEach((step) => {
+          gsap.from(step, {
+            opacity: 0,
+            y: 50,
+            duration: 1,
+            scrollTrigger: {
+              trigger: step,
+              start: "top 80%",
+              toggleActions: "play none none none",
+            },
+          });
+        });
+
+        // Team Member Animation
+        gsap.utils.toArray(".team-member").forEach((member, i) => {
+          gsap.from(member, {
+            opacity: 0,
+            y: 100,
+            duration: 0.8,
+            delay: i * 0.1,
+            scrollTrigger: {
+              trigger: "#team",
+              start: "top 70%",
+              toggleActions: "play none none none",
+            },
+          });
+        });
+
+        // Contact/Footer Animation
+        gsap.from("#contact h2, #contact p, #contact a", {
+          opacity: 0,
+          y: 50,
+          stagger: 0.2,
+          duration: 1,
+          scrollTrigger: {
+            trigger: "#contact",
+            start: "top 70%",
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

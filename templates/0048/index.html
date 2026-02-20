@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS - Digital Art Gallery</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #fff;
+        --bg-dark: #0a0a0a;
+        --bg-darker: #000;
+        --accent: #ff0066;
+        --text-dim: rgba(255, 255, 255, 0.6);
+        --border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-darker);
+        color: var(--primary-color);
+        overflow-x: hidden;
+        cursor: none;
+        position: relative;
+      }
+
+      /* 커스텀 커서 - 더 미니멀하게 */
+      .cursor-ring {
+        width: 30px;
+        height: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transition: all 0.15s ease-out;
+        transform: translate(-50%, -50%);
+      }
+
+      .cursor-dot {
+        width: 4px;
+        height: 4px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+      }
+
+      .cursor-ring.expand {
+        width: 50px;
+        height: 50px;
+        border-color: var(--accent);
+        background: rgba(255, 0, 102, 0.1);
+      }
+
+      /* 로딩 화면 */
+      .loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-darker);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .loader-text {
+        font-size: 4rem;
+        font-weight: 100;
+        letter-spacing: 0.5rem;
+        opacity: 0;
+        animation: fadeInOut 2s infinite;
+      }
+
+      @keyframes fadeInOut {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* 사이드 네비게이션 */
+      .side-nav {
+        position: fixed;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        padding: 20px;
+      }
+
+      .nav-dots {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .nav-dot::before {
+        content: attr(data-section);
+        position: absolute;
+        left: 25px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .nav-dot:hover::before {
+        opacity: 1;
+      }
+
+      .nav-dot.active {
+        background: var(--primary-color);
+        transform: scale(1.5);
+      }
+
+      /* 헤더 - 플로팅 스타일 */
+      header {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        padding: 15px 40px;
+        border-radius: 50px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s;
+      }
+
+      header:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+
+      nav ul {
+        display: flex;
+        list-style: none;
+        gap: 30px;
+      }
+
+      nav a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      nav a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: var(--accent);
+        transition: width 0.3s;
+      }
+
+      nav a:hover::after {
+        width: 100%;
+      }
+
+      /* 섹션 기본 스타일 */
+      section {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+      }
+
+      /* 히어로 섹션 - 비디오 배경 */
+      .hero {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .video-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 2px;
+        opacity: 0.3;
+      }
+
+      .video-cell {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .video-cell video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%);
+        transition: filter 0.5s;
+      }
+
+      .video-cell:hover video {
+        filter: grayscale(0%);
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 1000px;
+      }
+
+      .hero h1 {
+        font-size: clamp(3rem, 10vw, 8rem);
+        font-weight: 100;
+        letter-spacing: -0.05em;
+        line-height: 0.9;
+        margin-bottom: 20px;
+        opacity: 0;
+        transform: translateY(50px);
+        animation: slideUp 1s forwards 0.5s;
+      }
+
+      .hero .subtitle {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        color: var(--text-dim);
+        opacity: 0;
+        transform: translateY(30px);
+        animation: slideUp 1s forwards 0.7s;
+      }
+
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 갤러리 섹션 - 매이슨리 그리드 */
+      .gallery {
+        background: var(--bg-dark);
+      }
+
+      .gallery-container {
+        max-width: 1400px;
+        width: 100%;
+      }
+
+      .masonry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        grid-auto-flow: dense;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.5s;
+      }
+
+      .gallery-item:nth-child(3n + 1) {
+        grid-row: span 2;
+      }
+
+      .gallery-item:nth-child(4n + 2) {
+        grid-column: span 2;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+      }
+
+      .gallery-item:hover img {
+        transform: scale(1.1);
+      }
+
+      .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.8) 0%,
+          transparent 50%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: flex-end;
+        padding: 20px;
+      }
+
+      .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+      }
+
+      .gallery-info h3 {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+      }
+
+      .gallery-info p {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+      }
+
+      /* 수평 스크롤 섹션 */
+      .horizontal-scroll {
+        background: var(--bg-darker);
+        overflow: hidden;
+      }
+
+      .scroll-container {
+        display: flex;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+      }
+
+      .scroll-track {
+        display: flex;
+        gap: 40px;
+        padding: 0 50px;
+        transition: transform 0.5s ease-out;
+      }
+
+      .scroll-card {
+        flex: 0 0 400px;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .scroll-card:hover {
+        transform: translateY(-20px);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .scroll-card img {
+        width: 100%;
+        height: 60%;
+        object-fit: cover;
+      }
+
+      .scroll-card-content {
+        padding: 30px;
+      }
+
+      .scroll-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .scroll-card p {
+        color: var(--text-dim);
+        line-height: 1.6;
+      }
+
+      /* 인터랙티브 그리드 섹션 */
+      .interactive-grid {
+        background: var(--bg-dark);
+      }
+
+      .grid-container {
+        max-width: 1200px;
+        width: 100%;
+      }
+
+      .hover-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+        background: var(--border-color);
+        padding: 2px;
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .grid-item {
+        aspect-ratio: 1;
+        background: var(--bg-dark);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .grid-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .grid-item:hover {
+        z-index: 10;
+        transform: scale(2);
+        border-radius: 10px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      }
+
+      .grid-item:hover img {
+        opacity: 1;
+      }
+
+      /* 컨택트 섹션 */
+      .contact {
+        background: linear-gradient(
+          135deg,
+          var(--bg-darker) 0%,
+          var(--bg-dark) 100%
+        );
+      }
+
+      .contact-container {
+        max-width: 800px;
+        text-align: center;
+      }
+
+      .contact h2 {
+        font-size: clamp(2rem, 5vw, 4rem);
+        margin-bottom: 30px;
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+      }
+
+      .contact-item {
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s;
+      }
+
+      .contact-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-5px);
+        border-color: var(--accent);
+      }
+
+      .contact-item h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+      }
+
+      .contact-item p {
+        color: var(--text-dim);
+      }
+
+      /* 플로팅 액션 버튼 */
+      .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: var(--accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(255, 0, 102, 0.3);
+      }
+
+      .fab:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 15px 40px rgba(255, 0, 102, 0.5);
+      }
+
+      .fab svg {
+        width: 24px;
+        height: 24px;
+        fill: white;
+      }
+
+      /* 모바일 메뉴 */
+      .mobile-menu-toggle {
+        display: none;
+        width: 30px;
+        height: 30px;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .mobile-menu-toggle span {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: var(--primary-color);
+        transition: all 0.3s;
+      }
+
+      .mobile-menu-toggle span:nth-child(1) {
+        top: 0;
+      }
+
+      .mobile-menu-toggle span:nth-child(2) {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .mobile-menu-toggle span:nth-child(3) {
+        bottom: 0;
+      }
+
+      .mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translateY(14px);
+      }
+
+      .mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translateY(-14px);
+      }
+
+      /* 반응형 디자인 */
+      @media (max-width: 1024px) {
+        .hover-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .scroll-card {
+          flex: 0 0 350px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        /* 커서 숨기기 */
+        .cursor-ring,
+        .cursor-dot {
+          display: none;
+        }
+
+        body {
+          cursor: auto;
+        }
+
+        /* 사이드 네비게이션 숨기기 */
+        .side-nav {
+          display: none;
+        }
+
+        /* 헤더 조정 */
+        header {
+          top: 10px;
+          padding: 10px 20px;
+          width: calc(100% - 20px);
+        }
+
+        .header-content {
+          justify-content: space-between;
+          width: 100%;
+        }
+
+        nav ul {
+          position: fixed;
+          top: 70px;
+          left: 0;
+          right: 0;
+          background: rgba(0, 0, 0, 0.95);
+          backdrop-filter: blur(20px);
+          flex-direction: column;
+          padding: 30px;
+          gap: 20px;
+          transform: translateY(-100%);
+          transition: transform 0.3s;
+        }
+
+        nav ul.active {
+          transform: translateY(0);
+        }
+
+        .mobile-menu-toggle {
+          display: block;
+        }
+
+        /* 히어로 조정 */
+        .video-grid {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr;
+        }
+
+        .video-cell:not(:first-child) {
+          display: none;
+        }
+
+        .hero h1 {
+          font-size: clamp(2.5rem, 15vw, 4rem);
+        }
+
+        /* 갤러리 조정 */
+        .masonry-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery-item:nth-child(3n + 1),
+        .gallery-item:nth-child(4n + 2) {
+          grid-row: span 1;
+          grid-column: span 1;
+        }
+
+        /* 수평 스크롤 조정 */
+        .scroll-card {
+          flex: 0 0 280px;
+          height: 400px;
+        }
+
+        /* 인터랙티브 그리드 조정 */
+        .hover-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-item:hover {
+          transform: scale(1.5);
+        }
+
+        /* 컨택트 조정 */
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        /* FAB 조정 */
+        .fab {
+          width: 50px;
+          height: 50px;
+          bottom: 20px;
+          right: 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        header {
+          padding: 10px 15px;
+        }
+
+        .logo {
+          font-size: 1.2rem;
+        }
+
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .scroll-track {
+          padding: 0 20px;
+        }
+
+        section {
+          padding: 60px 15px;
+        }
+      }
+
+      /* 프린트 스타일 */
+      @media print {
+        .side-nav,
+        header,
+        .fab,
+        .video-grid {
+          display: none;
+        }
+
+        section {
+          page-break-after: always;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 로딩 화면 -->
+    <div class="loader" id="loader">
+      <div class="loader-content">
+        <div class="loader-text">NEXUS</div>
+      </div>
+    </div>
+
+    <!-- 커스텀 커서 -->
+    <div class="cursor-ring"></div>
+    <div class="cursor-dot"></div>
+
+    <!-- 사이드 네비게이션 -->
+    <div class="side-nav">
+      <div class="nav-dots">
+        <div class="nav-dot active" data-section="home"></div>
+        <div class="nav-dot" data-section="gallery"></div>
+        <div class="nav-dot" data-section="showcase"></div>
+        <div class="nav-dot" data-section="grid"></div>
+        <div class="nav-dot" data-section="contact"></div>
+      </div>
+    </div>
+
+    <!-- 헤더 -->
+    <header>
+      <div class="header-content">
+        <div class="logo">NEXUS</div>
+        <nav>
+          <ul id="navMenu">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#showcase">Showcase</a></li>
+            <li><a href="#grid">Grid</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+        <div class="mobile-menu-toggle" id="mobileMenuToggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero" id="home">
+      <div class="video-grid">
+        <div class="video-cell">
+          <video autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/0.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+        <div class="video-cell">
+          <video autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/1.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+        <div class="video-cell">
+          <video autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/2.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+        <div class="video-cell">
+          <video autoplay muted loop playsinline>
+            <source
+              src="https://cdn.midjourney.com/video/8c31b1e5-f7c1-488d-8eb2-3afff61b32a8/3.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+      </div>
+      <div class="hero-content">
+        <h1>DIGITAL<br />NEXUS</h1>
+        <p class="subtitle">Where Art Meets Technology</p>
+      </div>
+    </section>
+
+    <!-- 갤러리 섹션 -->
+    <section class="gallery" id="gallery">
+      <div class="gallery-container">
+        <div class="masonry-grid" id="masonryGrid">
+          <!-- 갤러리 아이템들이 동적으로 생성됩니다 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 수평 스크롤 섹션 -->
+    <section class="horizontal-scroll" id="showcase">
+      <div class="scroll-container">
+        <div class="scroll-track" id="scrollTrack">
+          <!-- 스크롤 카드들이 동적으로 생성됩니다 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 인터랙티브 그리드 섹션 -->
+    <section class="interactive-grid" id="grid">
+      <div class="grid-container">
+        <div class="hover-grid" id="hoverGrid">
+          <!-- 그리드 아이템들이 동적으로 생성됩니다 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 컨택트 섹션 -->
+    <section class="contact" id="contact">
+      <div class="contact-container">
+        <h2>Let's Connect</h2>
+        <p>Transform your vision into digital reality</p>
+        <div class="contact-grid">
+          <div class="contact-item">
+            <h3>Collaborate</h3>
+            <p>Work with our creative team</p>
+          </div>
+          <div class="contact-item">
+            <h3>Innovate</h3>
+            <p>Push boundaries together</p>
+          </div>
+          <div class="contact-item">
+            <h3>Create</h3>
+            <p>Build something amazing</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 플로팅 액션 버튼 -->
+    <div class="fab" id="fab">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        />
+      </svg>
+    </div>
+
+    <script>
+      // 이미지 데이터
+      const images = [
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_3.png",
+          title: "Ethereal Dreams",
+          category: "Abstract",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_2.png",
+          title: "Digital Horizon",
+          category: "Landscape",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_1.png",
+          title: "Neon Nights",
+          category: "Urban",
+        },
+        {
+          src: "https://cdn.midjourney.com/e2961bd3-5f3e-4df5-97b0-372cde33881e/0_0.png",
+          title: "Cosmic Flow",
+          category: "Space",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_1.png",
+          title: "Neural Network",
+          category: "Tech",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_0.png",
+          title: "Data Stream",
+          category: "Digital",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_2.png",
+          title: "Quantum Leap",
+          category: "Science",
+        },
+        {
+          src: "https://cdn.midjourney.com/921d92cb-996f-4d3a-aa06-257595ab9574/0_3.png",
+          title: "Binary Dreams",
+          category: "Code",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_0.png",
+          title: "Aurora Borealis",
+          category: "Nature",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_1.png",
+          title: "Crystal Formation",
+          category: "Mineral",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_2.png",
+          title: "Liquid Metal",
+          category: "Material",
+        },
+        {
+          src: "https://cdn.midjourney.com/7e67b738-f518-4963-ab7f-0f6aee68631f/0_3.png",
+          title: "Plasma Field",
+          category: "Energy",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_0.png",
+          title: "Time Warp",
+          category: "Concept",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_1.png",
+          title: "Void Walker",
+          category: "Fantasy",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_2.png",
+          title: "Dimension Shift",
+          category: "Surreal",
+        },
+        {
+          src: "https://cdn.midjourney.com/a727665f-52bb-4f12-8ab5-a14de7d37fa0/0_3.png",
+          title: "Reality Bend",
+          category: "Abstract",
+        },
+        {
+          src: "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_0.png",
+          title: "Synth Wave",
+          category: "Retro",
+        },
+        {
+          src: "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_1.png",
+          title: "Cyber Punk",
+          category: "Future",
+        },
+        {
+          src: "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_2.png",
+          title: "Neon Grid",
+          category: "Digital",
+        },
+        {
+          src: "https://cdn.midjourney.com/6f1e16bb-1c36-4d96-a63a-07d287befbb5/0_3.png",
+          title: "Retro Future",
+          category: "Style",
+        },
+        {
+          src: "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_0.png",
+          title: "Light Prism",
+          category: "Optics",
+        },
+        {
+          src: "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_1.png",
+          title: "Color Spectrum",
+          category: "Art",
+        },
+        {
+          src: "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_2.png",
+          title: "Rainbow Matrix",
+          category: "Pattern",
+        },
+        {
+          src: "https://cdn.midjourney.com/435bc734-6093-48be-8671-a03dac8c0646/0_3.png",
+          title: "Chromatic Aberration",
+          category: "Effect",
+        },
+        {
+          src: "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_0.png",
+          title: "Fractal Universe",
+          category: "Math",
+        },
+        {
+          src: "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_1.png",
+          title: "Infinite Loop",
+          category: "Concept",
+        },
+        {
+          src: "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_2.png",
+          title: "Mandelbrot Set",
+          category: "Fractal",
+        },
+        {
+          src: "https://cdn.midjourney.com/24bf6d75-335f-4e3e-a0ac-51f1b596650d/0_3.png",
+          title: "Chaos Theory",
+          category: "Science",
+        },
+        {
+          src: "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_0.png",
+          title: "Ocean Deep",
+          category: "Nature",
+        },
+        {
+          src: "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_1.png",
+          title: "Coral Reef",
+          category: "Marine",
+        },
+        {
+          src: "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_2.png",
+          title: "Aqua Flow",
+          category: "Water",
+        },
+        {
+          src: "https://cdn.midjourney.com/b20cfa8a-047e-4cc9-9cb1-fd00cf5b6868/0_3.png",
+          title: "Tidal Wave",
+          category: "Motion",
+        },
+        {
+          src: "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_0.png",
+          title: "Star Field",
+          category: "Space",
+        },
+        {
+          src: "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_1.png",
+          title: "Galaxy Core",
+          category: "Cosmos",
+        },
+        {
+          src: "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_2.png",
+          title: "Nebula Cloud",
+          category: "Astronomy",
+        },
+        {
+          src: "https://cdn.midjourney.com/deb55a2f-c5dd-4f0e-91ae-a4a29a82ed7c/0_3.png",
+          title: "Black Hole",
+          category: "Physics",
+        },
+        {
+          src: "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_0.png",
+          title: "Mind Palace",
+          category: "Psychology",
+        },
+        {
+          src: "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_1.png",
+          title: "Neural Path",
+          category: "Brain",
+        },
+        {
+          src: "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_2.png",
+          title: "Synaptic Fire",
+          category: "Neuroscience",
+        },
+        {
+          src: "https://cdn.midjourney.com/d88cbb51-1d35-4110-8c22-a159348485cf/0_3.png",
+          title: "Consciousness",
+          category: "Philosophy",
+        },
+      ];
+
+      // 커스텀 커서
+      const cursorRing = document.querySelector(".cursor-ring");
+      const cursorDot = document.querySelector(".cursor-dot");
+
+      if (window.matchMedia("(pointer: fine)").matches) {
+        document.addEventListener("mousemove", (e) => {
+          cursorRing.style.left = e.clientX + "px";
+          cursorRing.style.top = e.clientY + "px";
+          cursorDot.style.left = e.clientX + "px";
+          cursorDot.style.top = e.clientY + "px";
+        });
+
+        document.addEventListener("mousedown", () =>
+          cursorRing.classList.add("expand"),
+        );
+        document.addEventListener("mouseup", () =>
+          cursorRing.classList.remove("expand"),
+        );
+
+        // 호버 가능한 요소들
+        const hoverables = document.querySelectorAll(
+          "a, button, .gallery-item, .scroll-card, .grid-item, .contact-item, .fab, .nav-dot",
+        );
+        hoverables.forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursorRing.classList.add("expand"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursorRing.classList.remove("expand"),
+          );
+        });
+      }
+
+      // 로더 숨기기
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+        }, 1000);
+      });
+
+      // 모바일 메뉴 토글
+      const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+      const navMenu = document.getElementById("navMenu");
+
+      mobileMenuToggle.addEventListener("click", () => {
+        mobileMenuToggle.classList.toggle("active");
+        navMenu.classList.toggle("active");
+      });
+
+      // 네비게이션 링크 클릭시 메뉴 닫기
+      navMenu.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          mobileMenuToggle.classList.remove("active");
+          navMenu.classList.remove("active");
+        });
+      });
+
+      // 갤러리 아이템 생성
+      function createGalleryItems() {
+        const masonryGrid = document.getElementById("masonryGrid");
+        const shuffled = [...images]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 12);
+
+        shuffled.forEach((image, index) => {
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+          item.innerHTML = `
+                    <img src="${image.src}" alt="${image.title}" loading="lazy">
+                    <div class="gallery-overlay">
+                        <div class="gallery-info">
+                            <h3>${image.title}</h3>
+                            <p>${image.category}</p>
+                        </div>
+                    </div>
+                `;
+          masonryGrid.appendChild(item);
+
+          // 스태거 애니메이션
+          item.style.opacity = "0";
+          item.style.transform = "translateY(30px)";
+          setTimeout(() => {
+            item.style.transition = "all 0.6s ease-out";
+            item.style.opacity = "1";
+            item.style.transform = "translateY(0)";
+          }, index * 100);
+        });
+      }
+
+      // 수평 스크롤 카드 생성
+      function createScrollCards() {
+        const scrollTrack = document.getElementById("scrollTrack");
+        const featured = [...images]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 8);
+
+        featured.forEach((image) => {
+          const card = document.createElement("div");
+          card.className = "scroll-card";
+          card.innerHTML = `
+                    <img src="${image.src}" alt="${image.title}" loading="lazy">
+                    <div class="scroll-card-content">
+                        <h3>${image.title}</h3>
+                        <p>Explore the depths of ${image.category.toLowerCase()} art through this stunning visual journey.</p>
+                    </div>
+                `;
+          scrollTrack.appendChild(card);
+        });
+      }
+
+      // 인터랙티브 그리드 생성
+      function createInteractiveGrid() {
+        const hoverGrid = document.getElementById("hoverGrid");
+        const gridImages = [...images]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 16);
+
+        gridImages.forEach((image) => {
+          const item = document.createElement("div");
+          item.className = "grid-item";
+          item.innerHTML = `<img src="${image.src}" alt="${image.title}" loading="lazy">`;
+          hoverGrid.appendChild(item);
+        });
+      }
+
+      // 수평 스크롤 기능
+      const scrollContainer = document.querySelector(".scroll-container");
+      const scrollTrack = document.getElementById("scrollTrack");
+      let isScrolling = false;
+      let startX;
+      let scrollLeft;
+
+      scrollContainer.addEventListener("mousedown", (e) => {
+        isScrolling = true;
+        startX = e.pageX - scrollContainer.offsetLeft;
+        scrollLeft = scrollTrack.scrollLeft;
+        scrollContainer.style.cursor = "grabbing";
+      });
+
+      scrollContainer.addEventListener("mouseleave", () => {
+        isScrolling = false;
+        scrollContainer.style.cursor = "grab";
+      });
+
+      scrollContainer.addEventListener("mouseup", () => {
+        isScrolling = false;
+        scrollContainer.style.cursor = "grab";
+      });
+
+      scrollContainer.addEventListener("mousemove", (e) => {
+        if (!isScrolling) return;
+        e.preventDefault();
+        const x = e.pageX - scrollContainer.offsetLeft;
+        const walk = (x - startX) * 2;
+        scrollTrack.scrollLeft = scrollLeft - walk;
+      });
+
+      // 터치 스크롤 지원
+      let touchStartX = 0;
+      scrollContainer.addEventListener("touchstart", (e) => {
+        touchStartX = e.touches[0].clientX;
+      });
+
+      scrollContainer.addEventListener("touchmove", (e) => {
+        const touchX = e.touches[0].clientX;
+        const diff = touchStartX - touchX;
+        scrollTrack.scrollLeft += diff;
+        touchStartX = touchX;
+      });
+
+      // 마우스 휠로 수평 스크롤
+      scrollContainer.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        scrollTrack.scrollLeft += e.deltaY;
+      });
+
+      // 섹션 관찰자
+      const sections = document.querySelectorAll("section");
+      const navDots = document.querySelectorAll(".nav-dot");
+
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const index = Array.from(sections).indexOf(entry.target);
+              navDots.forEach((dot, i) => {
+                dot.classList.toggle("active", i === index);
+              });
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+
+      sections.forEach((section) => sectionObserver.observe(section));
+
+      // 네비게이션 도트 클릭
+      navDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          sections[index].scrollIntoView({ behavior: "smooth" });
+        });
+      });
+
+      // FAB 클릭 이벤트
+      document.getElementById("fab").addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // 부드러운 스크롤
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      // 초기화
+      document.addEventListener("DOMContentLoaded", () => {
+        createGalleryItems();
+        createScrollCards();
+        createInteractiveGrid();
+      });
+
+      // 이미지 지연 로딩
+      if ("IntersectionObserver" in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              img.src = img.dataset.src || img.src;
+              imageObserver.unobserve(img);
+            }
+          });
+        });
+
+        document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+          imageObserver.observe(img);
+        });
+      }
+    </script>
+  </body>
+</html>
