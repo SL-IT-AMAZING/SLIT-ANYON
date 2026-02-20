@@ -180,8 +180,9 @@ async function processStreamChunks({
 
 export function registerChatStreamHandlers() {
   ipcMain.handle("chat:stream", async (event, req: ChatStreamParams) => {
-    const attachmentPaths: string[] = [];
-    try {
+    void (async () => {
+      const attachmentPaths: string[] = [];
+      try {
       const fileUploadsState = FileUploadsState.getInstance();
       // Clear any stale state from previous requests for this chat
       fileUploadsState.clear(req.chatId);
@@ -736,7 +737,10 @@ ${componentSnippet}
           }
         }
       }
-    }
+      }
+    })();
+
+    return req.chatId;
   });
 
   // Handler to cancel an ongoing stream

@@ -98,6 +98,7 @@ export function SessionTurn({
     ? steps
     : steps.filter((s) => s.type !== "reasoning");
   const hasUserMessage = userMessage.trim().length > 0;
+  const canExpandSteps = working || visibleSteps.length > 0;
 
   const hasSteps = working || visibleSteps.length > 0;
   const hasResponse = !working && (response || (diffs && diffs.length > 0));
@@ -147,15 +148,20 @@ export function SessionTurn({
               <span className="tabular-nums shrink-0">{duration}</span>
             )}
 
-            {visibleSteps.length > 0 && (
+            {canExpandSteps && (
               <ChevronsUpDown className="size-3.5 shrink-0 ml-auto" />
             )}
           </button>
         </div>
       )}
 
-      {stepsExpanded && visibleSteps.length > 0 && (
+      {stepsExpanded && canExpandSteps && (
         <div className="py-2 space-y-0.5">
+          {visibleSteps.length === 0 && working && (
+            <div className="text-xs text-muted-foreground italic pl-6 py-1">
+              Waiting for agent reasoning and tool events...
+            </div>
+          )}
           {visibleSteps.map((step) => {
             if (step.type === "reasoning") {
               return (

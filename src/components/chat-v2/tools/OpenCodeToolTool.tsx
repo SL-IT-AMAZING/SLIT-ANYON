@@ -88,14 +88,29 @@ export function OpenCodeToolTool({
     title && title !== name && title !== label ? title : undefined;
 
   const raw = typeof children === "string" ? children : String(children ?? "");
-  const prettyContent = useMemo(() => {
-    if (!raw.trim()) return "";
-    try {
-      return JSON.stringify(JSON.parse(raw), null, 2);
-    } catch {
-      return raw;
+  const renderedContent = useMemo(() => {
+    if (!raw.trim()) {
+      if (mappedStatus === "running") {
+        return {
+          text:
+            name.toLowerCase() === "task"
+              ? "Delegated agent is running. Intermediate progress may not be available yet."
+              : "Running...",
+          monospace: false,
+        };
+      }
+      if (mappedStatus === "error") {
+        return { text: "Tool failed without error details.", monospace: false };
+      }
+      return { text: "Completed (no output).", monospace: false };
     }
-  }, [raw]);
+
+    try {
+      return { text: JSON.stringify(JSON.parse(raw), null, 2), monospace: true };
+    } catch {
+      return { text: raw.trim(), monospace: false };
+    }
+  }, [raw, mappedStatus, name]);
 
   return (
     <ToolCallCard
@@ -105,10 +120,14 @@ export function OpenCodeToolTool({
       status={mappedStatus}
       className={className}
     >
-      {prettyContent && (
+      {renderedContent.monospace ? (
         <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
-          {prettyContent}
+          {renderedContent.text}
         </pre>
+      ) : (
+        <div className="text-xs text-muted-foreground whitespace-pre-wrap">
+          {renderedContent.text}
+        </div>
       )}
     </ToolCallCard>
   );
