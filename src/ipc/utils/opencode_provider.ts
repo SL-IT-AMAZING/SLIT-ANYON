@@ -57,8 +57,10 @@ interface OpenCodeEvent {
     sessionID?: string;
     info?: {
       id: string;
-      role: string;
-      sessionID: string;
+      role?: string;
+      sessionID?: string;
+      parentID?: string;
+      title?: string;
       tokens?: {
         input: number;
         output: number;
@@ -204,6 +206,14 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     return controller.signal;
   }
 
+  private isInvalidSessionLookupError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    return /OpenCode API error \[(404|410)\]/.test(error.message);
+  }
+
   private async getOrCreateSession(
     conversationId: string,
   ): Promise<OpenCodeSession> {
@@ -212,7 +222,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
       try {
         const response = await this.fetchOpenCode(`/session/${sessionId}`);
         return response.json();
-      } catch {
+      } catch (error) {
+        if (!this.isInvalidSessionLookupError(error)) {
+          throw error;
+        }
         logger.debug(`Cached session ${sessionId} invalid, creating new one`);
         conversationSessionMap.delete(conversationId);
       }
@@ -272,6 +285,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     try {
       const response = await fetch(`${serverInfo.url}/agent`, {
         headers: this.getAuthHeaders(serverInfo.password),
+        signal: this.createSignalWithTimeout(undefined, OPENCODE_API_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -393,7 +407,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
         ? this.settings.thinkingLevel
         : undefined;
 
-    const promptPayload = {
+  const promptPayload = {
       parts: [{ type: "text", text: userMessage }],
       ...(systemPrompt && { system: systemPrompt }),
       ...(this.providerID &&
@@ -415,9 +429,85 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     let outputTokens = 0;
 
     const emittedToolStates = new Map<string, string>();
+    const parentToolMeta = new Map<string, { toolName: string; title: string }>();
+    const knownChildSessionIds = new Set<string>();
+    const taskToChildSession = new Map<string, string>();
+    const runningTaskTitles = new Map<string, string>();
+    const childSessionMeta = new Map<string, { title?: string; agentType?: string }>();
+    const childToolsBySession = new Map<
+      string,
+      Map<
+        string,
+        {
+          id: string;
+          toolName: string;
+          title: string;
+          subtitle?: string;
+          status: "running" | "completed" | "error";
+        }
+      >
+    >();
     let inReasoningBlock = false;
     const partTypes = new Map<string, string>();
     const partBuffers = new Map<string, string>();
+
+    const parseChildAgentType = (title: string | undefined): string | undefined => {
+      if (!title) return undefined;
+      const match = title.match(/@([^\)]+)\s+subagent/i);
+      return match?.[1]?.trim();
+    };
+
+    const getChildToolSummaries = (
+      childSessionId: string | undefined,
+    ): Array<{
+      id: string;
+      toolName: string;
+      title: string;
+      subtitle?: string;
+      status: "running" | "completed" | "error";
+    }> => {
+      if (!childSessionId) return [];
+      const tools = childToolsBySession.get(childSessionId);
+      if (!tools) return [];
+      return [...tools.values()];
+    };
+
+    const makeTaskProgressPayload = (toolId: string, title: string): string => {
+      const childSessionId = taskToChildSession.get(toolId);
+      const childMeta = childSessionId
+        ? childSessionMeta.get(childSessionId)
+        : undefined;
+      return JSON.stringify({
+        kind: "task-progress",
+        agentType: childMeta?.agentType ?? "Subagent",
+        description: title,
+        childSessionId,
+        childTools: getChildToolSummaries(childSessionId),
+      });
+    };
+
+    const emitOpenCodeToolTag = (
+      ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
+      input: {
+        toolName: string;
+        status: "running" | "completed" | "error";
+        title: string;
+        toolId: string;
+        content?: string;
+      },
+    ) => {
+      const escapedToolName = escapeXml(input.toolName);
+      const escapedToolId = escapeXml(input.toolId);
+      const escapedTitle = escapeXml(input.title);
+      const base = `<opencode-tool name="${escapedToolName}" status="${input.status}" title="${escapedTitle}" toolid="${escapedToolId}">`;
+
+      if (input.content == null) {
+        emitDelta(ctrl, `\n${base}</opencode-tool>\n`);
+        return;
+      }
+
+      emitDelta(ctrl, `\n${base}\n${input.content}\n</opencode-tool>\n`);
+    };
 
     const ensureTextStarted = (
       ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
@@ -506,6 +596,9 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
               const { done, value } = await reader.read();
               if (done) {
                 logger.debug("SSE stream ended");
+                if (!finished) {
+                  throw new Error("OpenCode event stream ended before session completion");
+                }
                 break;
               }
 
@@ -577,8 +670,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   event.properties.part
                 ) {
                   const part = event.properties.part;
+                  const isParentSessionPart = part.sessionID === session.id;
+                  const isChildSessionPart = knownChildSessionIds.has(part.sessionID);
 
-                  if (part.sessionID !== session.id) continue;
+                  if (!isParentSessionPart && !isChildSessionPart) continue;
 
                   partTypes.set(part.id, part.type);
 
@@ -598,33 +693,105 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   }
 
                   if (part.type === "tool" && part.state && part.tool) {
-                    closeReasoningBlock(controller);
+                    if (isParentSessionPart) {
+                      closeReasoningBlock(controller);
+                    }
                     const status = part.state.status;
                     const lastStatus = emittedToolStates.get(part.id);
 
+                    if (isChildSessionPart) {
+                      const childSessionTools =
+                        childToolsBySession.get(part.sessionID) ?? new Map();
+                      childToolsBySession.set(part.sessionID, childSessionTools);
+
+                      if (
+                        status === "running" ||
+                        status === "completed" ||
+                        status === "error"
+                      ) {
+                        childSessionTools.set(part.id, {
+                          id: part.id,
+                          toolName: part.tool,
+                          title: part.state.title || part.tool,
+                          subtitle: undefined,
+                          status,
+                        });
+
+                        for (const [taskToolId, childSessionId] of taskToChildSession.entries()) {
+                          const taskTitle = runningTaskTitles.get(taskToolId);
+                          if (!taskTitle) continue;
+                          if (childSessionId !== part.sessionID) continue;
+                          emitOpenCodeToolTag(controller, {
+                            toolName: "task",
+                            status: "running",
+                            title: taskTitle,
+                            toolId: taskToolId,
+                            content: makeTaskProgressPayload(taskToolId, taskTitle),
+                          });
+                        }
+                      }
+
+                      continue;
+                    }
+
                     if (status !== lastStatus) {
                       emittedToolStates.set(part.id, status);
-                      const toolName = escapeXml(part.tool);
-                      const toolId = escapeXml(part.id);
-                      const title = escapeXml(part.state.title || part.tool);
+                      const toolName = part.tool;
+                      const toolId = part.id;
+                      const title = part.state.title || part.tool;
+                      parentToolMeta.set(toolId, { toolName, title });
+
+                      if (toolName === "task") {
+                        const maybeSessionId = part.state.metadata?.sessionId;
+                        if (typeof maybeSessionId === "string") {
+                          knownChildSessionIds.add(maybeSessionId);
+                          taskToChildSession.set(toolId, maybeSessionId);
+                          const childTitle = childSessionMeta.get(maybeSessionId)?.title;
+                          childSessionMeta.set(maybeSessionId, {
+                            title: childTitle,
+                            agentType: parseChildAgentType(childTitle),
+                          });
+                        }
+                      }
 
                       if (status === "running") {
-                        emitDelta(
-                          controller,
-                          `\n<opencode-tool name="${toolName}" status="running" title="${title}" toolid="${toolId}"></opencode-tool>\n`,
-                        );
+                        if (toolName === "task") {
+                          runningTaskTitles.set(toolId, title);
+                          emitOpenCodeToolTag(controller, {
+                            toolName,
+                            status,
+                            title,
+                            toolId,
+                            content: makeTaskProgressPayload(toolId, title),
+                          });
+                        } else {
+                          emitOpenCodeToolTag(controller, {
+                            toolName,
+                            status,
+                            title,
+                            toolId,
+                          });
+                        }
                       } else if (status === "completed") {
+                        runningTaskTitles.delete(toolId);
                         const output = part.state.output ?? "";
-                        emitDelta(
-                          controller,
-                          `\n<opencode-tool name="${toolName}" status="completed" title="${title}" toolid="${toolId}">\n${output}\n</opencode-tool>\n`,
-                        );
+                        emitOpenCodeToolTag(controller, {
+                          toolName,
+                          status,
+                          title,
+                          toolId,
+                          content: output,
+                        });
                       } else if (status === "error") {
+                        runningTaskTitles.delete(toolId);
                         const errMsg = part.state.error ?? "Unknown error";
-                        emitDelta(
-                          controller,
-                          `\n<opencode-tool name="${toolName}" status="error" title="${title}" toolid="${toolId}">\n${errMsg}\n</opencode-tool>\n`,
-                        );
+                        emitOpenCodeToolTag(controller, {
+                          toolName,
+                          status,
+                          title,
+                          toolId,
+                          content: errMsg,
+                        });
                       }
                     }
                   } else if (
@@ -634,12 +801,52 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                     closeReasoningBlock(controller);
                   }
                 } else if (
+                  event.type === "session.created" &&
+                  event.properties.info
+                ) {
+                  const info = event.properties.info;
+                  if (info.parentID !== session.id || !info.id) {
+                    continue;
+                  }
+                  knownChildSessionIds.add(info.id);
+                  childSessionMeta.set(info.id, {
+                    title: info.title,
+                    agentType: parseChildAgentType(info.title),
+                  });
+                } else if (
                   event.type === "session.status" &&
                   event.properties.sessionID === session.id &&
                   event.properties.status?.type === "idle"
                 ) {
                   finished = true;
                   closeReasoningBlock(controller);
+
+                  for (const [toolId, status] of emittedToolStates.entries()) {
+                    if (status !== "running") continue;
+                    const meta = parentToolMeta.get(toolId);
+                    if (!meta) continue;
+
+                    emittedToolStates.set(toolId, "completed");
+                    if (meta.toolName === "task") {
+                      const taskTitle = runningTaskTitles.get(toolId) ?? meta.title;
+                      runningTaskTitles.delete(toolId);
+                      emitOpenCodeToolTag(controller, {
+                        toolName: "task",
+                        status: "completed",
+                        title: taskTitle,
+                        toolId,
+                        content: makeTaskProgressPayload(toolId, taskTitle),
+                      });
+                    } else {
+                      emitOpenCodeToolTag(controller, {
+                        toolName: meta.toolName,
+                        status: "completed",
+                        title: meta.title,
+                        toolId,
+                        content: "",
+                      });
+                    }
+                  }
 
                   if (textStarted) {
                     controller.enqueue({ type: "text-end", id: textId });
