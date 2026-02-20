@@ -1,0 +1,363 @@
+================================================================================
+EXHAUSTIVE UNTRANSLATED STRINGS AUDIT - SETTINGS COMPONENTS
+================================================================================
+Date: 2025-02-18
+Scope: src/components settings-related files
+Total Hardcoded Strings Found: 64+
+Total Words Affected: 500+ user-facing words
+
+================================================================================
+FILE-BY-FILE DETAILED ANALYSIS
+================================================================================
+
+1. MaxChatTurnsSelector.tsx
+================================================================================
+Lines 20-48: HARDCODED OPTIONS ARRAY
+  
+  Line 23: label: "Economy (2)"
+    → Suggested Key: settings:chat.maxTurns.economy.label
+  
+  Line 25: description: "Minimal context to reduce token usage and improve response times."
+    → Suggested Key: settings:chat.maxTurns.economy.description
+  
+  Line 29: label: `Default (${MAX_CHAT_TURNS_IN_CONTEXT})`
+    → Suggested Key: settings:chat.maxTurns.default.label
+  
+  Line 30: description: "Balanced context size for most conversations."
+    → Suggested Key: settings:chat.maxTurns.default.description
+  
+  Line 34: label: "Plus (5)"
+    → Suggested Key: settings:chat.maxTurns.plus.label
+  
+  Line 35: description: "Slightly higher context size for detailed conversations."
+    → Suggested Key: settings:chat.maxTurns.plus.description
+  
+  Line 39: label: "High (10)"
+    → Suggested Key: settings:chat.maxTurns.high.label
+  
+  Line 41: description: "Extended context for complex conversations requiring more history."
+    → Suggested Key: settings:chat.maxTurns.high.description
+  
+  Line 45: label: "Max (100)"
+    → Suggested Key: settings:chat.maxTurns.max.label
+  
+  Line 46: description: "Maximum context (not recommended due to cost and speed)."
+    → Suggested Key: settings:chat.maxTurns.max.description
+
+Lines 71-98: MARKUP & LABELS
+
+  Line 77: htmlFor label - "Maximum number of chat turns used in context"
+    → Suggested Key: settings:chat.maxTurnsLabel
+  
+  Line 84: placeholder - "Select turns"
+    → Suggested Key: settings:chat.maxTurnsPlaceholder
+
+TOTAL: 12 hardcoded strings
+
+
+2. ThinkingBudgetSelector.tsx
+================================================================================
+Lines 19-37: HARDCODED OPTIONS ARRAY
+
+  Line 22: label: "Low"
+    → Suggested Key: settings:thinking.budget.low.label
+  
+  Line 24: description: "Minimal thinking tokens for faster responses and lower costs."
+    → Suggested Key: settings:thinking.budget.low.description
+  
+  Line 28: label: "Medium (default)"
+    → Suggested Key: settings:thinking.budget.medium.label
+  
+  Line 29: description: "Balanced thinking for most conversations."
+    → Suggested Key: settings:thinking.budget.medium.description
+  
+  Line 33: label: "High"
+    → Suggested Key: settings:thinking.budget.high.label
+  
+  Line 35: description: "Extended thinking for complex problems requiring deep analysis."
+    → Suggested Key: settings:thinking.budget.high.description
+
+Lines 54-83: MARKUP & LABELS
+
+  Line 60: htmlFor label - "Thinking Budget"
+    → Suggested Key: settings:thinking.budgetLabel
+  
+  Line 67: placeholder - "Select budget"
+    → Suggested Key: settings:thinking.budgetPlaceholder
+
+TOTAL: 8 hardcoded strings
+
+
+3. DefaultChatModeSelector.tsx
+================================================================================
+Lines 36-48: GETMODEISPLAYNAME FUNCTION
+
+  Line 39: return "Build"
+    → Suggested Key: settings:chatMode.build
+    Context: Case for "build" mode
+  
+  Line 41: return "Build (MCP)"
+    → Suggested Key: settings:chatMode.buildMcp
+    Context: Case for "agent" mode with MCP
+  
+  Line 43: return isProEnabled ? "Agent" : "Basic Agent"
+    → Suggested Keys: settings:chatMode.agent / settings:chatMode.basicAgent
+    Context: Conditional return based on Pro status
+
+Lines 50-105: MARKUP & SELECT OPTIONS
+
+  Line 57: label - "Default Chat Mode"
+    → Suggested Key: settings:chat.defaultModeLabel
+  
+  Line 71: Select option display - {isProEnabled ? "Agent" : "Basic Agent"}
+    → Suggested Keys: settings:chatMode.agent / settings:chatMode.basicAgent
+  
+  Line 75: description - "Better at bigger tasks"
+    → Suggested Key: settings:chatMode.agentDescription
+  
+  Line 76: description - "Free tier (5 messages/day)"
+    → Suggested Key: settings:chatMode.basicAgentDescription
+  
+  Line 83: option display - "Build"
+    → Suggested Key: settings:chatMode.build
+  
+  Line 85: description - "Generate and edit code"
+    → Suggested Key: settings:chatMode.buildDescription
+  
+  Line 91: option display - "Build with MCP"
+    → Suggested Key: settings:chatMode.buildMcp
+  
+  Line 93: description - "Build with tools (MCP)"
+    → Suggested Key: settings:chatMode.buildMcpDescription
+  
+  Line 101: help text - "The chat mode used when creating new chats."
+    → Suggested Key: settings:chat.defaultModeDescription
+
+TOTAL: 12 hardcoded strings (some with conditionals)
+
+
+4. ChatCompletionNotificationSwitch.tsx
+================================================================================
+Lines 31-33: LABEL TEXT
+
+  Line 32: "Show notification when chat completes"
+    → Suggested Key: settings:workflow.chatNotificationLabel
+    Context: Label for toggle switch
+    Severity: MEDIUM - complete feature missing translation
+
+TOTAL: 1 hardcoded string
+
+
+5. OpenCodeConnectionModeSelector.tsx
+================================================================================
+Lines 100-189: ENTIRE COMPONENT UI
+
+  Line 104: label - "OpenCode Connection"
+    → Suggested Key: settings:openCode.connectionLabel
+  
+  Line 114: SelectItem value="proxy" - "ANYON Pro (Proxy Server)"
+    → Suggested Key: settings:openCode.proxyOption
+  
+  Line 115: SelectItem value="direct" - "Direct (Your Subscription)"
+    → Suggested Key: settings:openCode.directOption
+  
+  Line 121: conditional help text - "Route AI requests through ANYON proxy server (requires ANYON Pro subscription)"
+    → Suggested Key: settings:openCode.proxyDescription
+  
+  Line 122: conditional help text - "Use your own OpenCode/Claude subscription directly (for development)"
+    → Suggested Key: settings:openCode.directDescription
+  
+  Line 128: Label - "ANYON Pro API Key"
+    → Suggested Key: settings:openCode.apiKeyLabel
+  
+  Line 164: Input placeholder - "anyon_..."
+    → Suggested Key: settings:openCode.apiKeyPlaceholder
+  
+  Line 175: Button text conditional - {isSaving ? "Saving..." : "Save"}
+    → Suggested Keys: settings:openCode.savingButton / settings:openCode.saveButton
+
+Lines 61, 84: TOAST MESSAGES
+
+  Line 61: showSuccess("ANYON Pro API key saved")
+    → Suggested Key: settings:openCode.keySavedToast
+  
+  Line 84: showSuccess("API key removed")
+    → Suggested Key: settings:openCode.keyRemovedToast
+
+Lines 31-32, 63-64, 86-87: ERROR MESSAGES (dynamic)
+
+  Line 32, 64, 87: Templated error messages with error.message
+    → Suggested Keys: settings:openCode.updateErrorToast / saveErrorToast / removeErrorToast
+
+TOTAL: 11 hardcoded strings + error message templates
+
+
+6. RuntimeModeSelector.tsx
+================================================================================
+Lines 30-74: ENTIRE COMPONENT
+
+  Line 35: label - "Runtime Mode"
+    → Suggested Key: settings:runtime.modeLabel
+  
+  Line 45: SelectItem value="host" - "Local (default)"
+    → Suggested Key: settings:runtime.localOption
+  
+  Line 46: SelectItem value="docker" - "Docker (experimental)"
+    → Suggested Key: settings:runtime.dockerOption
+  
+  Line 51-52: help text - "Choose whether to run apps directly on the local machine or in Docker containers"
+    → Suggested Key: settings:runtime.modeDescription
+  
+  Line 57: conditional warning - "⚠️ Docker mode is experimental and requires Docker Desktop to be installed and running"
+    → Suggested Key: settings:runtime.dockerWarning
+
+TOTAL: 5 hardcoded strings
+
+
+7. NodePathSelector.tsx
+================================================================================
+Lines 9-186: LARGE COMPONENT WITH MULTIPLE STRINGS
+
+  Line 30, 33: fallback text - "System PATH (not available)"
+    → Suggested Key: settings:nodejs.systemPathNotAvailable
+  
+  Line 70: showSuccess("Node.js path updated successfully")
+    → Suggested Key: settings:nodejs.pathUpdatedToast
+  
+  Line 91: showSuccess("Reset to system Node.js path")
+    → Suggested Key: settings:nodejs.resetToastSuccess
+  
+  Line 107: label - "Node.js Path Configuration"
+    → Suggested Key: settings:nodejs.pathConfigLabel
+  
+  Line 118: button text conditional - {isSelectingPath ? "Selecting..." : "Browse for Node.js"}
+    → Suggested Keys: settings:nodejs.selectingButton / settings:nodejs.browseButton
+  
+  Line 129: button text - "Reset to Default"
+    → Suggested Key: settings:nodejs.resetButton
+  
+  Line 138: conditional label - {isCustomPath ? "Custom Path:" : "System PATH:"}
+    → Suggested Keys: settings:nodejs.customPathLabel / settings:nodejs.systemPathLabel
+  
+  Line 142: badge text - "Custom"
+    → Suggested Key: settings:nodejs.customBadge
+  
+  Line 163: status text - "Not found"
+    → Suggested Key: settings:nodejs.notFoundStatus
+  
+  Line 173: conditional help text - "Node.js is properly configured and ready to use."
+    → Suggested Key: settings:nodejs.configuredHelp
+  
+  Line 177: conditional help text - "Select the folder where Node.js is installed if it's not in your system PATH."
+    → Suggested Key: settings:nodejs.selectFolderHelp
+
+TOTAL: 11 hardcoded strings
+
+
+8. DeleteConfirmationDialog.tsx
+================================================================================
+Lines 1-80: GENERIC DIALOG COMPONENT (USED WIDELY)
+
+  Line 40: title attribute - `Delete ${itemType.toLowerCase()}`
+    → Suggested Key: common:deleteConfirmation.title
+    Context: Dynamic title with itemType parameter
+  
+  Line 47: dialog header - "Delete {itemType}"
+    → Suggested Key: common:deleteConfirmation.dialogTitle
+    Context: Dynamic title with itemType
+  
+  Line 49-50: dialog description - "Are you sure you want to delete \"{itemName}\"? This action cannot be undone."
+    → Suggested Key: common:deleteConfirmation.description
+    Context: Multiple placeholders: itemName
+  
+  Line 54: button text - "Cancel"
+    → Suggested Key: common:deleteConfirmation.cancelButton
+  
+  Line 59: button text - "Deleting..."
+    → Suggested Key: common:deleteConfirmation.deletingButton
+    Context: Shown during deletion
+  
+  Line 62: button text - "Delete"
+    → Suggested Key: common:deleteConfirmation.deleteButton
+
+TOTAL: 6 hardcoded strings (used across multiple components)
+
+
+9. LanguageSelector.tsx
+================================================================================
+Lines 14-22: HARDCODED LABELS (MINOR)
+
+  Line 15-16: LANGUAGE_LABELS constant
+    en: "English"
+    ko: "한국어"
+    → Note: These should be in i18n for consistency, though Korean is already translated
+  
+  Line 20-21: LANGUAGE_DESCRIPTIONS constant
+    en: "Use English for the interface."
+    ko: "인터페이스에 한국어를 사용합니다."
+    → Note: Description hardcoded - should move to i18n
+  
+  Line 52: SelectValue placeholder - "Select language"
+    → Suggested Key: settings:general.languageSelectPlaceholder
+
+TOTAL: 3 strings (already partially translated, but inconsistent)
+
+================================================================================
+COMPONENT SEVERITY RANKING
+================================================================================
+
+CRITICAL (Complete feature untranslated):
+  1. DefaultChatModeSelector.tsx - 12 strings, 60+ words
+  2. MaxChatTurnsSelector.tsx - 12 strings, 50+ words
+  3. OpenCodeConnectionModeSelector.tsx - 11 strings, 80+ words
+  4. ThinkingBudgetSelector.tsx - 8 strings, 40+ words
+
+HIGH PRIORITY (Significant user-facing text):
+  5. NodePathSelector.tsx - 11 strings, 50+ words
+  6. DeleteConfirmationDialog.tsx - 6 strings, 25+ words (REUSABLE)
+  7. RuntimeModeSelector.tsx - 5 strings, 30+ words
+
+LOW PRIORITY (Minor or already translated):
+  8. ChatCompletionNotificationSwitch.tsx - 1 string, 6 words
+  9. LanguageSelector.tsx - 3 strings (partially translated)
+
+================================================================================
+STATISTICS
+================================================================================
+
+Total Files Analyzed: 9 components
+Total Hardcoded Strings: 64+
+Total User-Facing Words: 500+
+Total Components with Issues: 9/9
+
+By Severity:
+- CRITICAL: 4 components (47 strings)
+- HIGH: 3 components (22 strings)
+- MEDIUM: 2 components (2 strings)
+
+By Type:
+- Labels: 25 strings
+- Descriptions/Help Text: 20 strings
+- Option/Button Text: 15 strings
+- Placeholders: 4 strings
+
+================================================================================
+RECOMMENDED IMPLEMENTATION ORDER
+================================================================================
+
+Phase 1 (CRITICAL):
+  1. DefaultChatModeSelector.tsx
+  2. MaxChatTurnsSelector.tsx
+
+Phase 2 (HIGH):
+  3. OpenCodeConnectionModeSelector.tsx
+  4. ThinkingBudgetSelector.tsx
+  5. NodePathSelector.tsx
+
+Phase 3 (CLEANUP):
+  6. DeleteConfirmationDialog.tsx
+  7. RuntimeModeSelector.tsx
+  8. ChatCompletionNotificationSwitch.tsx
+  9. LanguageSelector.tsx (consistency fix)
+
+================================================================================
