@@ -17,12 +17,12 @@ export function BoosterToggle() {
       <TooltipTrigger
         render={
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className={cn(
-              "h-8 gap-1 px-2 text-xs",
+              "h-8 gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground",
               enabled &&
-                "border-yellow-500/50 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400",
+                "text-yellow-600 hover:text-yellow-500 dark:text-yellow-400 dark:hover:text-yellow-300",
             )}
             onClick={() => updateSettings({ enableBooster: !enabled })}
             data-testid="booster-toggle"

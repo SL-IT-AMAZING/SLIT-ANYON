@@ -77,7 +77,7 @@ export function ThinkingLevelPicker() {
           >
             <SelectTrigger
               size="sm"
-              className="h-8 w-auto min-w-0 gap-1.5 px-2 text-xs"
+              className="h-8 w-auto min-w-0 gap-1.5 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground"
               data-testid="thinking-level-picker"
             >
               {currentOption.icon}

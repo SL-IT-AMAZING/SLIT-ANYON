@@ -108,7 +108,7 @@ export function PricingPlansPanel() {
               {isCurrentPlan && (
                 <span
                   className={cn(
-                    "absolute -top-2.5 left-3 rounded-full px-2 py-0.5 text-xs font-medium",
+                    "mb-2 inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-medium",
                     accent.bg,
                     accent.text,
                   )}

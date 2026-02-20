@@ -85,9 +85,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const ActivePanel = TAB_PANELS[activeTab];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal="trap-focus">
       <DialogContent
-        className="sm:max-w-4xl w-[900px] h-[600px] p-0 gap-0 overflow-hidden !flex flex-col"
+        className="sm:max-w-4xl w-[900px] h-[600px] p-0 gap-0 overflow-hidden !flex flex-col data-open:!animate-none data-closed:!animate-none data-open:!duration-0 data-closed:!duration-0"
+        overlayClassName="data-open:!animate-none data-closed:!animate-none data-open:!duration-0 data-closed:!duration-0"
         showCloseButton
       >
         <DialogTitle className="sr-only">{t("settings.title")}</DialogTitle>

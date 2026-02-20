@@ -33,7 +33,7 @@ export function ForceCloseDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-xl">
         <AlertDialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
@@ -41,7 +41,7 @@ export function ForceCloseDialog({
           </div>
           <AlertDialogDescription render={<div />}>
             <div className="space-y-4 pt-2 text-muted-foreground">
-              <div className="text-base">
+              <div className="text-sm">
                 The app was not closed properly the last time it was running.
                 This could indicate a crash or unexpected termination.
               </div>

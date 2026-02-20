@@ -7,14 +7,18 @@ import { ArrowUpIcon, StopCircleIcon } from "lucide-react";
 
 import { homeChatInputValueAtom } from "@/atoms/chatAtoms";
 import { useAttachments } from "@/hooks/useAttachments";
+import { useDesignSystems } from "@/hooks/useDesignSystems";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 import type { HomeSubmitOptions } from "@/pages/home";
 import { useAtom } from "jotai";
+import { Blocks } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ChatInputControls } from "../ChatInputControls";
+import { Badge } from "../ui/badge";
 import { AttachmentsList } from "./AttachmentsList";
 import { AuxiliaryActionsMenu } from "./AuxiliaryActionsMenu";
 import { DragDropOverlay } from "./DragDropOverlay";
@@ -30,6 +34,7 @@ export function HomeChatInput({
   const [inputValue, setInputValue] = useAtom(homeChatInputValueAtom);
 
   const { settings } = useSettings();
+  const { designSystems } = useDesignSystems();
   const { isStreaming } = useStreamChat({
     hasChatId: false,
   }); // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -40,6 +45,16 @@ export function HomeChatInput({
     t("input.typingPhrase_landingPage"),
   ]);
   const placeholder = typingText || t("input.placeholder");
+
+  const selectedDesignSystemLabel = useMemo(() => {
+    const selectedDesignSystemId = settings?.selectedDesignSystemId;
+    if (!selectedDesignSystemId) return null;
+
+    return (
+      designSystems.find((ds) => ds.id === selectedDesignSystemId)?.displayName ??
+      null
+    );
+  }, [settings?.selectedDesignSystemId, designSystems]);
 
   // Use the attachments hook
   const {
@@ -75,11 +90,11 @@ export function HomeChatInput({
   return (
     <>
       <div
-        className="px-3 pb-4 md:pb-6"
+        className="px-3 pb-4 md:pb-6 scale-110 origin-top"
         data-testid="home-chat-input-container"
       >
         <div
-          className={`relative flex flex-col border border-input rounded-2xl bg-background shadow-sm ${
+          className={`relative flex flex-col border-2 border-border rounded-2xl bg-background shadow-md ${
             isDraggingOver ? "ring-2 ring-ring border-ring" : ""
           }`}
           onDragOver={handleDragOver}
@@ -144,9 +159,21 @@ export function HomeChatInput({
               </Tooltip>
             )}
           </div>
-          <div className="px-3 pb-2 flex items-center justify-between">
-            <div className="flex items-center">
+          <div className="px-3 pb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <ChatInputControls showContextFilesPicker={false} />
+              <div className="flex items-center gap-1.5 min-w-0">
+                {selectedDesignSystemLabel && (
+                  <Badge
+                    variant="secondary"
+                    className="max-w-[210px] pr-2 rounded-md"
+                    data-testid="selected-design-system-chip"
+                  >
+                    <Blocks className="size-3" />
+                    <span className="truncate">{selectedDesignSystemLabel}</span>
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

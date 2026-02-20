@@ -108,9 +108,9 @@ export function AgentPicker() {
       <PopoverTrigger
         render={
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-8 max-w-[140px] justify-between gap-1 px-2 text-xs"
+            className="h-8 max-w-[140px] justify-between gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
             data-testid="agent-picker"
           />
         }

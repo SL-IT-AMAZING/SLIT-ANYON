@@ -33,6 +33,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 // @ts-ignore
+import heroBgImage from "../../assets/bg-im.png";
+// @ts-ignore
 import anyonLogo from "../../img/logo3.svg";
 
 // Adding an export for attachments
@@ -133,6 +135,7 @@ export default function HomePage() {
       // Create the chat and navigate
       const result = await ipc.app.createApp({
         name: generateCuteAppName(),
+        designSystemId: settings?.selectedDesignSystemId || undefined,
       });
 
       // Apply selected theme to the new app (if one is set)
@@ -189,7 +192,12 @@ export default function HomePage() {
 
   // Main Home Page Content
   return (
-    <div className="flex flex-col items-center justify-center max-w-3xl w-full m-auto p-8 relative">
+    <div className="relative min-h-full">
+      <div
+        className="sticky top-0 h-screen bg-no-repeat bg-center bg-cover pointer-events-none opacity-25"
+        style={{ backgroundImage: `url(${heroBgImage})`, marginBottom: '-100vh' }}
+      />
+    <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[8vh] relative">
       <ForceCloseDialog
         isOpen={forceCloseDialogOpen}
         onClose={() => setForceCloseDialogOpen(false)}
@@ -197,9 +205,9 @@ export default function HomePage() {
       />
 
       <div className="w-full">
-        <div className="text-center mb-10">
+        <div className="text-center mb-[18vh]">
           <h1
-            className="text-6xl font-bold tracking-tight mb-4 flex items-center justify-center gap-3 flex-wrap"
+            className="text-7xl font-bold tracking-tight mb-5 flex items-center justify-center gap-4 flex-wrap"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             <span>{t("home.hero.build")}</span>
@@ -207,7 +215,7 @@ export default function HomePage() {
               {t("home.hero.anything")}
             </span>
             <span>{t("home.hero.with")}</span>
-            <img src={anyonLogo} alt="ANYON" className="h-14 inline-block" />
+            <img src={anyonLogo} alt="ANYON" className="h-16 inline-block" />
           </h1>
           <p className="text-muted-foreground text-xl font-medium">
             {t("home.hero.subtitle")}
@@ -308,6 +316,7 @@ export default function HomePage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }

@@ -232,34 +232,19 @@ export function CapacitorControls({ appId }: CapacitorControlsProps) {
 
       {/* Error Dialog */}
       <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-400">
-              {errorDetails?.title}
-            </DialogTitle>
+            <DialogTitle className="pr-8">{errorDetails?.title}</DialogTitle>
             <DialogDescription>
               {t("capacitor.errorDialogDescription")}
             </DialogDescription>
           </DialogHeader>
 
           {errorDetails && (
-            <div className="relative">
-              <div className="max-h-[50vh] w-full max-w-md rounded border p-4 bg-muted overflow-y-auto">
-                <pre className="text-xs whitespace-pre-wrap font-mono">
-                  {errorDetails.message}
-                </pre>
-              </div>
-              <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(errorDetails.message);
-                  showSuccess(t("capacitor.errorCopied"));
-                }}
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 right-2 h-8 w-8 p-0"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+            <div className="max-h-[40vh] w-full overflow-y-auto rounded-md border bg-muted/40 p-3">
+              <pre className="text-xs whitespace-pre-wrap break-words font-mono leading-relaxed">
+                {errorDetails.message}
+              </pre>
             </div>
           )}
 
