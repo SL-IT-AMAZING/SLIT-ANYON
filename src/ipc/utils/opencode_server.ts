@@ -192,7 +192,7 @@ class OpenCodeServerManager {
 
     if (useProxy && anyonApiKey) {
       const proxyBase =
-        process.env.ANYON_PROXY_URL || "https://engine.any-on.dev/v1";
+        process.env.ANYON_PROXY_URL || "https://engine.any-on.dev/api/v1";
       const anthropicBaseUrl = `${proxyBase}/anthropic`;
       const openaiBaseUrl = `${proxyBase}/openai`;
       const googleBaseUrl = `${proxyBase}/google`;
