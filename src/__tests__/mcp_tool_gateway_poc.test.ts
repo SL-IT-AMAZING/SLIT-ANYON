@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -25,9 +25,9 @@ vi.mock("@/paths/paths", () => ({
   getUserDataPath: vi.fn().mockReturnValue(os.tmpdir()),
 }));
 
-import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
 import { ALL_TOOLS } from "@/agent/tools";
 import { zodToJsonSchema } from "@/agent/tools/spec";
+import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
 
 let gatewayPort: number;
 let gatewayToken: string;
@@ -79,8 +79,7 @@ function makeJsonRpc(method: string, params?: unknown, id?: number) {
     method,
     ...(params != null ? { params } : {}),
   });
-  const buf = Buffer.from(msg, "utf-8");
-  return `Content-Length: ${buf.byteLength}\r\n\r\n${msg}`;
+  return msg + "\n";
 }
 
 function readMcpMessage(
@@ -88,12 +87,12 @@ function readMcpMessage(
   timeoutMs = 5000,
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    let rawBuf = Buffer.alloc(0);
+    let lineBuf = "";
     const timer = setTimeout(() => {
       cleanup();
       reject(
         new Error(
-          `MCP read timed out after ${timeoutMs}ms. Buffer so far: ${rawBuf.toString("utf-8").slice(0, 500)}`,
+          `MCP read timed out after ${timeoutMs}ms. Buffer so far: ${lineBuf.slice(0, 500)}`,
         ),
       );
     }, timeoutMs);
@@ -104,24 +103,20 @@ function readMcpMessage(
     }
 
     function onData(chunk: Buffer) {
-      rawBuf = Buffer.concat([rawBuf, chunk]);
-      const headerEnd = rawBuf.indexOf("\r\n\r\n");
-      if (headerEnd === -1) return;
-      const headerSection = rawBuf.subarray(0, headerEnd).toString("utf-8");
-      const match = headerSection.match(/Content-Length:\s*(\d+)/i);
-      if (!match) return;
-      const contentLength = parseInt(match[1], 10);
-      const bodyStart = headerEnd + 4;
-      if (rawBuf.byteLength < bodyStart + contentLength) return;
-      const body = rawBuf
-        .subarray(bodyStart, bodyStart + contentLength)
-        .toString("utf-8");
-      cleanup();
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(new Error(`MCP JSON parse error: ${body.slice(0, 200)}`));
+      lineBuf += chunk.toString("utf-8");
+      const lines = lineBuf.split("\n");
+      for (const line of lines.slice(0, -1)) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        cleanup();
+        try {
+          resolve(JSON.parse(trimmed));
+        } catch {
+          reject(new Error(`MCP JSON parse error: ${trimmed.slice(0, 200)}`));
+        }
+        return;
       }
+      lineBuf = lines[lines.length - 1];
     }
 
     proc.stdout?.on("data", onData);
@@ -356,7 +351,7 @@ describe("MCP Tool Gateway POC", () => {
     beforeAll(() => {
       const tmpDir = path.join(os.tmpdir(), "anyon-mcp-test");
       fs.mkdirSync(tmpDir, { recursive: true });
-      mcpScriptPath = path.join(tmpDir, "anyon_mcp_server_test.mjs");
+      mcpScriptPath = path.join(tmpDir, "anyon_mcp_server_test.cjs");
       fs.writeFileSync(mcpScriptPath, getMcpServerScript(), "utf-8");
     });
 
