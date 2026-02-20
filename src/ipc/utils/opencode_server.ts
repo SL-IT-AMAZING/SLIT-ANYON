@@ -142,19 +142,8 @@ class OpenCodeServerManager {
       password,
     );
     if (existingServer.exists) {
-      if (existingServer.passwordMatch) {
-        logger.info(`Reusing existing server at ${hostname}:${port}`);
-        this.url = `http://${hostname}:${port}`;
-        this.password = password;
-        this.port = port;
-        this.hostname = hostname;
-        this.process = null;
-        this._externalServer = true;
-        return this.getServerInfo()!;
-      }
-
-      logger.warn(
-        `Server on port ${port} has different password, killing and restarting...`,
+      logger.info(
+        `Found existing OpenCode server on port ${port}, killing to ensure fresh MCP config...`,
       );
       await this._killExistingServer(port);
       logger.info("Waiting for port to be released...");
@@ -182,6 +171,7 @@ class OpenCodeServerManager {
         "anyon-tools": {
           type: "local",
           command: ["node", mcpServerPath],
+          enabled: true,
           environment: {
             ANYON_GATEWAY_URL: `http://127.0.0.1:${gatewayPort}`,
             ANYON_GATEWAY_TOKEN: gatewayToken,
@@ -416,9 +406,9 @@ class OpenCodeServerManager {
     if (this._mcpScriptPath && fs.existsSync(this._mcpScriptPath)) {
       return this._mcpScriptPath;
     }
-    const tmpDir = path.join(os.tmpdir(), "anyon-mcp");
-    fs.mkdirSync(tmpDir, { recursive: true });
-    const scriptPath = path.join(tmpDir, "anyon_mcp_server.mjs");
+    const mcpDir = path.join(os.homedir(), ".anyon", "mcp");
+    fs.mkdirSync(mcpDir, { recursive: true });
+    const scriptPath = path.join(mcpDir, "anyon_mcp_server.mjs");
     fs.writeFileSync(scriptPath, getMcpServerScript(), "utf-8");
     this._mcpScriptPath = scriptPath;
     return scriptPath;
@@ -518,21 +508,11 @@ class OpenCodeServerManager {
       return this.getServerInfo()!;
     }
 
-    if (this._externalServer && this.url) {
-      try {
-        const response = await fetch(`${this.url}/global/health`, {
-          headers: this.getAuthHeaders(),
-          signal: AbortSignal.timeout(2000),
-        });
-        if (response.ok) {
-          return this.getServerInfo()!;
-        }
-      } catch {
-        logger.info("External server no longer available, starting new one");
-        this._externalServer = false;
-        this.url = null;
-        this.password = null;
-      }
+    if (this._externalServer) {
+      logger.info("Clearing stale external server reference, will start fresh");
+      this._externalServer = false;
+      this.url = null;
+      this.password = null;
     }
 
     return this.start(options);

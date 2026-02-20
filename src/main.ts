@@ -17,6 +17,7 @@ import {
 import { registerIpcHandlers } from "./ipc/ipc_host";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
 import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
+import { openCodeServer } from "./ipc/utils/opencode_server";
 import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
 import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
 import { getUserRolloutBucket } from "./lib/rollout";
@@ -617,14 +618,27 @@ app.on("window-all-closed", () => {
   }
 });
 
-// Only set isRunning to false when the app is properly quit by the user
-app.on("will-quit", () => {
-  logger.info("App is quitting, setting isRunning to false");
+// Clean up OpenCode server and persist settings when the app quits.
+// `openCodeServer.stop()` is async (sends SIGTERM, waits up to 5 s, then
+// SIGKILL), so we prevent the default quit, run cleanup, then re-trigger quit.
+let isCleaningUp = false;
+app.on("will-quit", (event) => {
+  if (isCleaningUp) return; // Allow quit on second pass
+  isCleaningUp = true;
+  event.preventDefault();
 
-  // Stop performance monitoring and capture final metrics
+  logger.info("App is quitting, cleaning up...");
   stopPerformanceMonitoring();
 
-  writeSettings({ isRunning: false });
+  openCodeServer
+    .stop()
+    .catch((err: unknown) =>
+      logger.warn("Failed to stop OpenCode server during quit:", err),
+    )
+    .finally(() => {
+      writeSettings({ isRunning: false });
+      app.quit(); // Re-triggers will-quit; isCleaningUp guard prevents loop
+    });
 });
 
 app.on("activate", () => {
