@@ -7,11 +7,13 @@ export function getMcpServerScript(): string {
   return `
 "use strict";
 
+process.stderr.write("[anyon-tools] MCP script starting, PID=" + process.pid + "\\n");
+
 const GATEWAY_URL = process.env.ANYON_GATEWAY_URL || "";
 const GATEWAY_TOKEN = process.env.ANYON_GATEWAY_TOKEN || "";
 
 if (!GATEWAY_URL || !GATEWAY_TOKEN) {
-  process.stderr.write("ANYON_GATEWAY_URL and ANYON_GATEWAY_TOKEN must be set.\\n");
+  process.stderr.write("[anyon-tools] FATAL: ANYON_GATEWAY_URL and ANYON_GATEWAY_TOKEN must be set.\\n");
   process.exit(1);
 }
 
@@ -46,9 +48,7 @@ async function callTool(name, args) {
 }
 
 function sendMsg(msg) {
-  const buf = Buffer.from(msg, "utf-8");
-  process.stdout.write("Content-Length: " + buf.byteLength + "\\r\\n\\r\\n");
-  process.stdout.write(buf);
+  process.stdout.write(msg + "\\n");
 }
 
 function makeResult(id, result) {
@@ -64,7 +64,7 @@ async function handleRequest(req) {
   switch (req.method) {
     case "initialize":
       sendMsg(makeResult(id, {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-11-25",
         serverInfo: { name: "anyon-tools", version: "0.1.0" },
         capabilities: { tools: {} },
       }));
@@ -106,45 +106,28 @@ async function handleRequest(req) {
   }
 }
 
-var buffer = Buffer.alloc(0);
-var contentLength = -1;
+var lineBuf = "";
 
+process.stdin.setEncoding("utf-8");
 process.stdin.on("data", function(chunk) {
-  buffer = Buffer.concat([buffer, chunk]);
-  processBuffer();
-});
-
-process.stdin.on("end", function() { process.exit(0); });
-
-function processBuffer() {
-  for (;;) {
-    if (contentLength === -1) {
-      var headerEnd = buffer.indexOf("\\r\\n\\r\\n");
-      if (headerEnd === -1) return;
-      var headerSection = buffer.subarray(0, headerEnd).toString("utf-8");
-      var match = headerSection.match(/Content-Length:\\s*(\\d+)/i);
-      if (!match) {
-        process.stderr.write("Invalid MCP header: " + headerSection + "\\n");
-        buffer = buffer.subarray(headerEnd + 4);
-        continue;
-      }
-      contentLength = parseInt(match[1], 10);
-      buffer = buffer.subarray(headerEnd + 4);
-    }
-    if (buffer.byteLength < contentLength) return;
-    var body = buffer.subarray(0, contentLength).toString("utf-8");
-    buffer = buffer.subarray(contentLength);
-    contentLength = -1;
+  lineBuf += chunk;
+  var lines = lineBuf.split("\\n");
+  lineBuf = lines.pop();
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
     try {
-      var msg = JSON.parse(body);
+      var msg = JSON.parse(line);
       handleRequest(msg).catch(function(err) {
         process.stderr.write("MCP handler error: " + (err instanceof Error ? err.message : String(err)) + "\\n");
         if (msg.id != null) sendMsg(makeError(msg.id, -32603, "Internal error"));
       });
     } catch(e) {
-      process.stderr.write("MCP parse error: " + body.slice(0, 200) + "\\n");
+      process.stderr.write("MCP parse error: " + line.slice(0, 200) + "\\n");
     }
   }
-}
+});
+
+process.stdin.on("end", function() { process.exit(0); });
 `.trim();
 }

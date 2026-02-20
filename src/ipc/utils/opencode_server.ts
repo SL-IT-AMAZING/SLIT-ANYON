@@ -408,7 +408,7 @@ class OpenCodeServerManager {
     }
     const mcpDir = path.join(os.homedir(), ".anyon", "mcp");
     fs.mkdirSync(mcpDir, { recursive: true });
-    const scriptPath = path.join(mcpDir, "anyon_mcp_server.mjs");
+    const scriptPath = path.join(mcpDir, "anyon_mcp_server.cjs");
     fs.writeFileSync(scriptPath, getMcpServerScript(), "utf-8");
     this._mcpScriptPath = scriptPath;
     return scriptPath;
