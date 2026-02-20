@@ -4,8 +4,14 @@ import os from "node:os";
 import path from "node:path";
 import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
 import { toolGateway } from "@/opencode/tool_gateway";
+import { app } from "electron";
 import log from "electron-log";
 import { readSettings } from "../../main/settings";
+import {
+  createOpenCodeStartupError,
+  isRetryableOpenCodeStartupError,
+  resolveOpenCodeBinaryPath,
+} from "./opencode_startup";
 import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
 
 const logger = log.scope("opencode-server");
@@ -40,6 +46,11 @@ class OpenCodeServerManager {
   private _startPromise: Promise<ServerInfo> | null = null;
   private _externalServer = false;
   private _lastStderr = "";
+  private _lastSpawnErrorCode: string | null = null;
+  private _lastExitCode: number | null = null;
+  private _lastExitSignal: NodeJS.Signals | null = null;
+  private _lastSpawnAt = 0;
+  private _resolvedOpenCodePath: string | null = null;
 
   private constructor() {}
 
@@ -81,10 +92,16 @@ class OpenCodeServerManager {
         return await this._doStart(options);
       } catch (err) {
         const isLastAttempt = attempt === maxRetries;
+        const retryable = isRetryableOpenCodeStartupError(err);
         if (isLastAttempt) {
           logger.error(
             `Server start failed after ${maxRetries} attempts: ${err}`,
           );
+          throw err;
+        }
+
+        if (!retryable) {
+          logger.error(`Server start failed without retry: ${err}`);
           throw err;
         }
 
@@ -127,11 +144,13 @@ class OpenCodeServerManager {
       process.env.OPENCODE_PASSWORD ||
       "anyon-opencode-default";
     const timeout = options.timeout || 30000;
-    const opencodePath =
-      options.opencodePath ||
-      process.env.OPENCODE_PATH ||
-      getOpenCodeBinaryPath() ||
-      "opencode";
+    const opencodeResolution = resolveOpenCodeBinaryPath({
+      optionsPath: options.opencodePath,
+      envPath: process.env.OPENCODE_PATH,
+      bundledPath: getOpenCodeBinaryPath(),
+      isPackaged: app.isPackaged,
+    });
+    const opencodePath = opencodeResolution.path;
 
     const { port: gatewayPort, token: gatewayToken } =
       await toolGateway.start();
@@ -152,6 +171,9 @@ class OpenCodeServerManager {
     }
 
     logger.info(`Starting OpenCode server on ${hostname}:${port}...`);
+    logger.info(
+      `Resolved OpenCode binary: source=${opencodeResolution.source}, path=${opencodePath}`,
+    );
 
     const args = ["serve", `--hostname=${hostname}`, `--port=${port}`];
 
@@ -238,7 +260,7 @@ class OpenCodeServerManager {
       `OpenCode connection mode: ${useProxy ? "proxy" : "direct (user subscription)"}`,
     );
 
-    this.process = spawn(opencodePath, args, {
+    const child = spawn(opencodePath, args, {
       env: {
         ...process.env,
         OPENCODE_SERVER_USERNAME: "opencode",
@@ -249,7 +271,21 @@ class OpenCodeServerManager {
       ...(options.cwd && { cwd: options.cwd }),
     });
 
-    this.process.on("error", (err: NodeJS.ErrnoException) => {
+    this.process = child;
+
+    this._lastStderr = "";
+    this._lastSpawnErrorCode = null;
+    this._lastExitCode = null;
+    this._lastExitSignal = null;
+    this._lastSpawnAt = Date.now();
+    this._resolvedOpenCodePath = opencodePath;
+
+    child.on("error", (err: NodeJS.ErrnoException) => {
+      if (this.process !== child) {
+        logger.debug(`Ignoring stale process error event: ${err.message}`);
+        return;
+      }
+      this._lastSpawnErrorCode = err.code ?? null;
       if (err.code === "ENOENT") {
         logger.error(`ERROR: opencode binary not found at: ${opencodePath}`);
         logger.error(
@@ -261,7 +297,10 @@ class OpenCodeServerManager {
       this.process = null;
     });
 
-    this.process.stdout?.on("data", (data: Buffer) => {
+    child.stdout?.on("data", (data: Buffer) => {
+      if (this.process !== child) {
+        return;
+      }
       const line = data.toString().trim();
       if (line) {
         logger.debug(`[stdout] ${line}`);
@@ -269,15 +308,28 @@ class OpenCodeServerManager {
     });
 
     this._lastStderr = "";
-    this.process.stderr?.on("data", (data: Buffer) => {
+    child.stderr?.on("data", (data: Buffer) => {
+      if (this.process !== child) {
+        return;
+      }
       const line = data.toString().trim();
       if (line) {
         logger.warn(`[stderr] ${line}`);
-        this._lastStderr = line;
+        this._lastStderr = this._lastStderr
+          ? `${this._lastStderr}\n${line}`
+          : line;
       }
     });
 
-    this.process.on("exit", (code, signal) => {
+    child.on("exit", (code, signal) => {
+      if (this.process !== child) {
+        logger.debug(
+          `Ignoring stale process exit event: code=${code}, signal=${signal}`,
+        );
+        return;
+      }
+      this._lastExitCode = code;
+      this._lastExitSignal = signal;
       logger.info(
         `OpenCode server exited: code=${code}, signal=${signal}, stderr=${this._lastStderr}`,
       );
@@ -315,10 +367,7 @@ class OpenCodeServerManager {
       }
 
       if (!this.isRunning() && !this._externalServer) {
-        const detail = this._lastStderr ? `: ${this._lastStderr}` : "";
-        throw new Error(
-          `OpenCode server process terminated unexpectedly${detail}`,
-        );
+        throw this._buildStartupFailureError();
       }
 
       await this.sleep(pollInterval);
@@ -326,6 +375,65 @@ class OpenCodeServerManager {
 
     await this.stop();
     throw new Error(`OpenCode server failed to start within ${timeout}ms`);
+  }
+
+  private _buildStartupFailureError(): Error {
+    const stderrDetail = this._lastStderr.trim();
+    const detailParts: string[] = [];
+
+    if (this._resolvedOpenCodePath) {
+      detailParts.push(`path=${this._resolvedOpenCodePath}`);
+    }
+    if (this._lastSpawnErrorCode) {
+      detailParts.push(`spawnCode=${this._lastSpawnErrorCode}`);
+    }
+    if (this._lastExitCode != null) {
+      detailParts.push(`exitCode=${this._lastExitCode}`);
+    }
+    if (this._lastExitSignal) {
+      detailParts.push(`signal=${this._lastExitSignal}`);
+    }
+    if (stderrDetail) {
+      detailParts.push(`stderr=${stderrDetail}`);
+    }
+    const detail = detailParts.join(", ");
+
+    if (this._lastSpawnErrorCode === "ENOENT") {
+      return createOpenCodeStartupError(
+        "OPENCODE_SPAWN_ENOENT",
+        "OpenCode binary not found when spawning process",
+        detail,
+      );
+    }
+
+    if (this._lastSpawnErrorCode === "EACCES") {
+      return createOpenCodeStartupError(
+        "OPENCODE_SPAWN_EACCES",
+        "OpenCode binary is not executable",
+        detail,
+      );
+    }
+
+    const elapsedMs = this._lastSpawnAt ? Date.now() - this._lastSpawnAt : null;
+    const likelyCodeSignInvalid =
+      process.platform === "darwin" &&
+      this._lastExitSignal === "SIGKILL" &&
+      elapsedMs != null &&
+      elapsedMs < 1500;
+
+    if (likelyCodeSignInvalid) {
+      return createOpenCodeStartupError(
+        "OPENCODE_CODE_SIGNATURE_INVALID",
+        "OpenCode process was killed by macOS shortly after launch",
+        `${detail}${detail ? ", " : ""}hint=check code signature of opencode binary`,
+      );
+    }
+
+    return createOpenCodeStartupError(
+      "OPENCODE_PROCESS_TERMINATED",
+      "OpenCode server process terminated unexpectedly",
+      detail,
+    );
   }
 
   async stop(): Promise<void> {
@@ -503,6 +611,11 @@ class OpenCodeServerManager {
         );
         await this.stop();
       }
+    }
+
+    if (this._starting && this._startPromise) {
+      logger.debug("Start already in progress, awaiting startup readiness...");
+      return this._startPromise;
     }
 
     if (this.isRunning()) {

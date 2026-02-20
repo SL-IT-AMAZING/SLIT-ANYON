@@ -11,6 +11,9 @@ import log from "electron-log";
 import { openCodeServer } from "./opencode_server";
 
 const logger = log.scope("opencode-provider");
+const OPENCODE_API_TIMEOUT_MS = 15000;
+const OPENCODE_SSE_CONNECT_TIMEOUT_MS = 15000;
+const OPENCODE_STREAM_TIMEOUT_MS = 60000;
 
 const conversationSessionMap = new Map<string, string>();
 
@@ -95,6 +98,31 @@ export type OpenCodeProvider = (
   providerID?: string,
 ) => LanguageModelV2;
 
+function getBaseAgentName(name: string): string {
+  const idx = name.indexOf(" (");
+  return idx === -1 ? name : name.slice(0, idx);
+}
+
+export function resolveSelectedAgentName(
+  selectedAgent: string | undefined,
+  availableAgents: Array<{ name: string }>,
+): string | undefined {
+  if (!selectedAgent) {
+    return undefined;
+  }
+
+  const exact = availableAgents.find((agent) => agent.name === selectedAgent);
+  if (exact) {
+    return exact.name;
+  }
+
+  const selectedBaseName = getBaseAgentName(selectedAgent);
+  const baseMatch = availableAgents.find(
+    (agent) => getBaseAgentName(agent.name) === selectedBaseName,
+  );
+  return baseMatch?.name;
+}
+
 class OpenCodeLanguageModel implements LanguageModelV2 {
   readonly specificationVersion = "v2" as const;
   readonly provider = "opencode";
@@ -130,8 +158,14 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const serverInfo = await this.getServerInfo();
     const url = `${serverInfo.url}${path}`;
 
+    const signal = this.createSignalWithTimeout(
+      options.signal ?? undefined,
+      OPENCODE_API_TIMEOUT_MS,
+    );
+
     const response = await fetch(url, {
       ...options,
+      signal,
       headers: {
         ...this.getAuthHeaders(serverInfo.password),
         ...options.headers,
@@ -148,6 +182,27 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     }
 
     return response;
+  }
+
+  private createSignalWithTimeout(
+    signal: AbortSignal | undefined,
+    timeoutMs: number,
+  ): AbortSignal {
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+
+    if (!signal) {
+      return timeoutSignal;
+    }
+
+    if (typeof AbortSignal.any === "function") {
+      return AbortSignal.any([signal, timeoutSignal]);
+    }
+
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal.addEventListener("abort", abort, { once: true });
+    timeoutSignal.addEventListener("abort", abort, { once: true });
+    return controller.signal;
   }
 
   private async getOrCreateSession(
@@ -208,6 +263,69 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     return userParts.join("\n\n");
   }
 
+  private async resolveAgentName(
+    serverInfo: Awaited<ReturnType<OpenCodeLanguageModel["getServerInfo"]>>,
+  ): Promise<string | undefined> {
+    if (!this.settings.agentName) {
+      return undefined;
+    }
+
+    try {
+      const response = await fetch(`${serverInfo.url}/agent`, {
+        headers: this.getAuthHeaders(serverInfo.password),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch agents: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const rawAgents: unknown = await response.json();
+      const availableAgents = Array.isArray(rawAgents)
+        ? rawAgents
+            .map((agent) => {
+              if (
+                typeof agent === "object" &&
+                agent !== null &&
+                "name" in agent &&
+                typeof (agent as { name: unknown }).name === "string"
+              ) {
+                return { name: (agent as { name: string }).name };
+              }
+              return null;
+            })
+            .filter((agent): agent is { name: string } => agent !== null)
+        : [];
+
+      const resolved = resolveSelectedAgentName(
+        this.settings.agentName,
+        availableAgents,
+      );
+
+      if (!resolved) {
+        logger.warn(
+          `Selected agent '${this.settings.agentName}' not found. Falling back to default agent.`,
+        );
+        return undefined;
+      }
+
+      if (resolved !== this.settings.agentName) {
+        logger.info(
+          `Resolved selected agent '${this.settings.agentName}' to '${resolved}'.`,
+        );
+      }
+
+      return resolved;
+    } catch (error) {
+      logger.warn(
+        `Failed to validate selected agent '${this.settings.agentName}'. Falling back to default agent.`,
+        error,
+      );
+      return undefined;
+    }
+  }
+
   async doGenerate(options: LanguageModelV2CallOptions): Promise<{
     content: Array<LanguageModelV2Content>;
     finishReason: LanguageModelV2FinishReason;
@@ -264,6 +382,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const userMessage = this.extractUserMessage(options);
     const systemPrompt = this.extractSystemPrompt(options);
     const serverInfo = await this.getServerInfo();
+    const resolvedAgentName = await this.resolveAgentName(serverInfo);
 
     // Map thinkingLevel to OpenCode variant name.
     // OpenCode's variant system handles provider-specific mapping internally:
@@ -285,7 +404,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
             modelID: this.modelId,
           },
         }),
-      ...(this.settings.agentName && { agent: this.settings.agentName }),
+      ...(resolvedAgentName && { agent: resolvedAgentName }),
       ...(variant && { variant }),
     };
 
@@ -341,7 +460,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           const eventUrl = `${serverInfo.url}/event`;
           const eventResponse = await fetch(eventUrl, {
             headers: this.getAuthHeaders(serverInfo.password),
-            signal: abortController.signal,
+            signal: this.createSignalWithTimeout(
+              abortController.signal,
+              OPENCODE_SSE_CONNECT_TIMEOUT_MS,
+            ),
           });
 
           if (!eventResponse.ok) {
@@ -570,16 +692,15 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
               throw err;
             });
 
-          const STREAM_TIMEOUT_MS = 5 * 60 * 1000;
           const timeoutPromise = new Promise<never>((_, reject) => {
             const timer = setTimeout(() => {
               abortController.abort();
               reject(
                 new Error(
-                  `OpenCode stream timed out after ${STREAM_TIMEOUT_MS / 1000}s`,
+                  `OpenCode stream timed out after ${OPENCODE_STREAM_TIMEOUT_MS / 1000}s`,
                 ),
               );
-            }, STREAM_TIMEOUT_MS);
+            }, OPENCODE_STREAM_TIMEOUT_MS);
             abortController.signal.addEventListener("abort", () =>
               clearTimeout(timer),
             );
@@ -595,6 +716,13 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
             (err.name === "AbortError" || err.message.includes("abort"))
           ) {
             logger.debug("Stream aborted");
+            if (options.abortSignal?.aborted) {
+              controller.close();
+            } else {
+              controller.error(
+                new Error("OpenCode stream aborted before completion"),
+              );
+            }
           } else {
             logger.error("Stream error:", err);
             controller.error(err);

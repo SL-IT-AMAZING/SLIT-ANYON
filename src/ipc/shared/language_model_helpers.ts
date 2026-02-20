@@ -1,22 +1,22 @@
-import type { LanguageModelProvider, LanguageModel } from "@/ipc/types";
-import {
-  getOpenCodeProviders,
-  type OpenCodeProviderListResponse,
-} from "../utils/opencode_api";
-import { IS_TEST_BUILD } from "../utils/test_utils";
 import { db } from "@/db";
 import {
   language_model_providers as languageModelProvidersSchema,
   language_models as languageModelsSchema,
 } from "@/db/schema";
+import type { LanguageModel, LanguageModelProvider } from "@/ipc/types";
 import { eq } from "drizzle-orm";
+import log from "electron-log";
 import {
-  LOCAL_PROVIDERS,
+  type OpenCodeProviderListResponse,
+  getOpenCodeProviders,
+} from "../utils/opencode_api";
+import { IS_TEST_BUILD } from "../utils/test_utils";
+import {
   CLOUD_PROVIDERS,
+  LOCAL_PROVIDERS,
   MODEL_OPTIONS,
   PROVIDER_TO_ENV_VAR,
 } from "./language_model_constants";
-import log from "electron-log";
 
 const logger = log.scope("language-model-helpers");
 
@@ -175,21 +175,35 @@ async function getLanguageModelsByProvidersUpstream(): Promise<
 let cachedProviders: OpenCodeProviderListResponse | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 30_000;
+let providerFetchPromise: Promise<OpenCodeProviderListResponse> | null = null;
 
 async function fetchProviders(): Promise<OpenCodeProviderListResponse> {
   const now = Date.now();
   if (cachedProviders && now - cacheTimestamp < CACHE_TTL) {
     return cachedProviders;
   }
-  try {
-    cachedProviders = await getOpenCodeProviders();
-    cacheTimestamp = now;
-    return cachedProviders;
-  } catch (error) {
-    logger.error("Failed to fetch providers from OpenCode:", error);
-    if (cachedProviders) return cachedProviders;
-    return { all: [], default: {}, connected: [] };
+
+  if (providerFetchPromise) {
+    return providerFetchPromise;
   }
+
+  providerFetchPromise = (async () => {
+    try {
+      cachedProviders = await getOpenCodeProviders();
+      cacheTimestamp = Date.now();
+      return cachedProviders;
+    } catch (error) {
+      logger.error("Failed to fetch providers from OpenCode:", error);
+      if (cachedProviders) {
+        return cachedProviders;
+      }
+      return { all: [], default: {}, connected: [] };
+    } finally {
+      providerFetchPromise = null;
+    }
+  })();
+
+  return providerFetchPromise;
 }
 
 async function getLanguageModelProvidersOpenCode(): Promise<
@@ -279,4 +293,5 @@ export async function getLanguageModelsByProviders(): Promise<
 export function invalidateProviderCache() {
   cachedProviders = null;
   cacheTimestamp = 0;
+  providerFetchPromise = null;
 }

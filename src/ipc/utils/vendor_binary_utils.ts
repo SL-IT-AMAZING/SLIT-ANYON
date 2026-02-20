@@ -1,7 +1,7 @@
-import { app } from "electron";
-import path from "node:path";
-import os from "node:os";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { app } from "electron";
 import log from "electron-log";
 
 const logger = log.scope("vendor-binary");
@@ -71,9 +71,15 @@ export function resolveVendorBinaries(): void {
       );
     }
   } else {
-    logger.info(
-      "No bundled OpenCode binary found. Falling back to system PATH.",
-    );
+    if (app.isPackaged) {
+      logger.error(
+        "No bundled OpenCode binary found in packaged app. OpenCode startup will fail until vendor binaries are restored.",
+      );
+    } else {
+      logger.warn(
+        "No bundled OpenCode binary found in development. Falling back to system PATH ('opencode'). Run `npm run fetch-vendor` to use bundled binaries.",
+      );
+    }
   }
 
   const omocPath = getOmocBinaryPath();

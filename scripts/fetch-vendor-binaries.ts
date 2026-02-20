@@ -20,6 +20,7 @@ import {
   rmSync,
   statSync,
 } from "node:fs";
+import { execFile } from "node:child_process";
 import { chmod, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -109,6 +110,32 @@ function cleanupOnError(...paths: string[]): void {
       /* best-effort */
     }
   }
+}
+
+async function adHocSignIfDarwin(binaryPath: string): Promise<void> {
+  if (process.platform !== "darwin") {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    execFile(
+      "codesign",
+      ["--force", "--sign", "-", binaryPath],
+      (error, _stdout, stderr) => {
+        if (error) {
+          reject(
+            new Error(
+              `codesign failed for ${binaryPath}: ${stderr || error.message}`,
+            ),
+          );
+          return;
+        }
+        resolve();
+      },
+    );
+  });
+
+  console.log(`  ↳ Ad-hoc signed for macOS: ${binaryPath}`);
 }
 
 /** Recursively find all files under `dir`, optionally filtering by name pattern. */
@@ -204,6 +231,8 @@ async function fetchOpenCode(): Promise<string> {
       await chmod(destBin, 0o755);
     }
 
+    await adHocSignIfDarwin(destBin);
+
     console.log(`  ✅ OpenCode → ${destBin}`);
     return version || "latest";
   } finally {
@@ -263,6 +292,8 @@ async function fetchOmoc(): Promise<string> {
     if (!isWindows) {
       await chmod(destBin, 0o755);
     }
+
+    await adHocSignIfDarwin(destBin);
 
     console.log(`  ✅ Oh-My-OpenCode → ${destBin}`);
     return version;
