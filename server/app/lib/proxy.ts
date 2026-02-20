@@ -189,6 +189,8 @@ export async function handleProxyRequest(
 
   const upstreamPath = pathSegments.join("/");
   const url = new URL(request.url);
+  url.searchParams.delete("provider");
+  url.searchParams.delete("path");
   const queryString = url.search;
   const upstreamUrl = `${config.baseUrl}/${upstreamPath}${queryString}`;
 
