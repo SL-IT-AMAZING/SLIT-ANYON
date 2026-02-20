@@ -1,0 +1,149 @@
+================================================================================
+TEST FILES & FIXTURES IMPACT ANALYSIS - SUMMARY
+================================================================================
+Field Added: selectedDesignSystemId (type: string, default: "")
+Analysis Date: February 20, 2026
+Total Files Scanned: 50+ test files, helpers, snapshots, fixtures
+
+================================================================================
+CRITICAL FINDINGS - IMMEDIATE ACTION REQUIRED
+================================================================================
+
+1. UNIT TEST SNAPSHOTS (VITEST INLINE SNAPSHOTS)
+   File: src/__tests__/readSettings.test.ts
+   Status: ❌ WILL FAIL - Missing field in inline snapshots
+   Action: ADD 1 LINE in 2 locations
+   
+   Location 1: After line 74 (inside toMatchInlineSnapshot)
+   Location 2: After line 330 (inside toMatchInlineSnapshot)
+   
+   Add: "selectedDesignSystemId": "",
+   
+   Impact: Tests will fail when run - CRITICAL
+
+2. E2E TEST ASSERTIONS
+   File: e2e-tests/theme_selection.spec.ts
+   Status: ✅ COMPLETE - Already has selectedDesignSystemId assertions
+   Evidence:
+   - Line 12: expect(initialSettings.selectedDesignSystemId ?? "").toBe("")
+   - Line 51: expect(po.recordSettings().selectedDesignSystemId).toBe("mui")
+   - Line 64: expect(po.recordSettings().selectedDesignSystemId).toBe("")
+
+================================================================================
+COMPLETE & VERIFIED (NO ACTION NEEDED)
+================================================================================
+
+✅ src/main/settings.ts
+   Line 39: selectedDesignSystemId: "", 
+   Status: Default value already set
+
+✅ src/lib/schemas.ts
+   Status: Schema definition already updated
+   Field: selectedDesignSystemId: z.string().optional()
+
+✅ src/components/chat/AuxiliaryActionsMenu.tsx
+   Status: Already uses optional chaining
+   Code: settings?.selectedDesignSystemId || null
+
+✅ src/pages/home.tsx
+   Status: Already uses optional chaining
+   Code: settings?.selectedDesignSystemId || undefined
+
+✅ e2e-tests/helpers/test_helper.ts
+   Methods: recordSettings(), snapshotSettingsDelta()
+   Status: No changes needed - automatically handle all fields
+
+✅ src/__tests__/schemas_pro_access.test.ts
+   Function: makeSettings()
+   Status: Uses type assertion - no changes needed
+
+================================================================================
+AUTO-UPDATED SNAPSHOTS (Monitor but no manual updates needed)
+================================================================================
+
+These E2E test snapshots will auto-regenerate when tests run:
+- e2e-tests/snapshots/ (GitDiff-style from snapshotSettingsDelta)
+
+Affected test files:
+- e2e-tests/telemetry.spec.ts (3 tests)
+- e2e-tests/thinking_budget.spec.ts (3+ tests)
+- e2e-tests/smart_context_options.spec.ts (3+ tests)
+- e2e-tests/release_channel.spec.ts (2+ tests)
+- e2e-tests/turbo_edits_options.spec.ts (3+ tests)
+- e2e-tests/template-community.spec.ts (2+ tests)
+- e2e-tests/auto_update.spec.ts (1+ tests)
+- e2e-tests/context_window.spec.ts (1+ tests)
+- e2e-tests/default_chat_mode.spec.ts (1+ tests)
+- e2e-tests/github.spec.ts (1+ tests)
+
+Action: Run tests and accept snapshot diffs
+
+================================================================================
+ACTIONABLE ITEMS
+================================================================================
+
+ITEM 1: Update src/__tests__/readSettings.test.ts
+  - Edit 2 inline snapshots
+  - Add "selectedDesignSystemId": "" (alphabetically between selectedThemeId and telemetryConsent)
+  - Estimated time: 2 minutes
+
+ITEM 2: Run Tests
+  - npm run test (to verify snapshots updated correctly)
+  - npm run build (required before E2E)
+  - npm run e2e (to regenerate E2E snapshots)
+  - Estimated time: 3-5 minutes
+
+ITEM 3: Review & Commit
+  - Check git diff for new field appearances
+  - Commit snapshot changes
+  - Estimated time: 2 minutes
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+Before completing this task, verify:
+
+□ Snapshot 1 (line 74): Contains "selectedDesignSystemId": ""
+□ Snapshot 2 (line 330): Contains "selectedDesignSystemId": ""
+□ Unit tests pass: npm run test
+□ Build succeeds: npm run build
+□ E2E tests regenerate: npm run e2e
+□ Git diff shows selectedDesignSystemId in snapshots
+□ No other files modified
+□ Field has empty string default value everywhere
+
+================================================================================
+REFERENCE FILES
+================================================================================
+
+Test Helper Methods (no changes needed):
+- e2e-tests/helpers/test_helper.ts:1274 recordSettings()
+- e2e-tests/helpers/test_helper.ts:1284 snapshotSettingsDelta()
+
+Settings Schema:
+- src/lib/schemas.ts: UserSettingsSchema with selectedDesignSystemId: z.string().optional()
+
+Default Settings:
+- src/main/settings.ts:39: selectedDesignSystemId: "",
+
+Component Usage:
+- src/components/chat/AuxiliaryActionsMenu.tsx: settings?.selectedDesignSystemId || null
+- src/pages/home.tsx: settings?.selectedDesignSystemId || undefined
+
+================================================================================
+SNAPSHOT FIELD ORDER (ALPHABETICAL)
+================================================================================
+
+Before:
+  "selectedTemplateId": "react",
+  "selectedThemeId": "default",
+  "telemetryConsent": "unset",
+
+After:
+  "selectedTemplateId": "react",
+  "selectedThemeId": "default",
+  "selectedDesignSystemId": "",      ← NEW FIELD HERE
+  "telemetryConsent": "unset",
+
+================================================================================

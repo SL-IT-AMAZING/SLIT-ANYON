@@ -1,0 +1,222 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║        HOME '+' MENU THEME VISIBILITY - QUICK REFERENCE                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+█ VISIBILITY LAYERS (Top to Bottom)
+────────────────────────────────────────────────────────────────────────────────
+
+  [HomePage] (src/pages/home.tsx:217)
+         ↓
+  [HomeChatInput] (src/components/chat/HomeChatInput.tsx)
+         │
+         ├─ GUARD: if (!settings) return null  ⚠️ LINE 71-73
+         │  └─ Hides entire menu until settings load
+         │
+         ├─ useSettings() → IPC fetch
+         │  └─ May fail silently with null/undefined
+         │
+         └─ [AuxiliaryActionsMenu] (src/components/chat/AuxiliaryActionsMenu.tsx:153)
+            │
+            ├─ NO GUARD on component itself ✅
+            │
+            └─ [Themes Submenu] (Lines 172-320)
+               │
+               ├─ NO GUARD on submenu ✅ (always renders)
+               │
+               ├─ "No Theme" option (Line 179)
+               │  └─ Always renders ✅
+               │
+               ├─ Built-in Themes (Line 194)
+               │  └─ GUARD: themes?.map()
+               │     └─ Requires themes data (fallback: themesData from shared)
+               │
+               ├─ Design Systems (Line 220)
+               │  └─ GUARD: appId == null && designSystems.length > 0
+               │     └─ Only on home page AND if systems exist
+               │
+               ├─ Custom Themes (Line 253)
+               │  └─ GUARD: visibleCustomThemes.length > 0
+               │     └─ Only if custom themes exist
+               │
+               ├─ "More Themes" (Line 284)
+               │  └─ GUARD: hasMoreCustomThemes (>4 custom themes)
+               │     └─ Only if 5+ custom themes
+               │
+               └─ "New Theme" (Line 304)
+                  └─ Always renders ✅
+
+
+█ DATA SOURCES (Left to Right)
+────────────────────────────────────────────────────────────────────────────────
+
+  SETTINGS ATOM
+  └─ src/hooks/useSettings.ts
+     ├─ ipc.settings.getUserSettings() [IPC]
+     │  └─ src/main/settings.ts::readSettings()
+     │     └─ DEFAULT_SETTINGS (Line 38: selectedThemeId: "default")
+     │
+     └─ userSettingsAtom (Jotai)
+        └─ selectedThemeId
+        └─ selectedDesignSystemId
+
+  THEMES DATA
+  └─ src/hooks/useThemes.ts
+     ├─ ipc.template.getThemes() [IPC]
+     │  └─ src/ipc/handlers/template_handlers.ts::registerTemplateHandlers()
+     │     └─ fetchTemplateRegistry()
+     │
+     └─ placeholderData: themesData (FALLBACK)
+        └─ src/shared/themes.ts::themesData
+           └─ Contains: Default Theme
+
+  CUSTOM THEMES
+  └─ src/hooks/useCustomThemes.ts
+     ├─ ipc.template.getCustomThemes() [IPC]
+     │  └─ Database query
+     │
+     └─ Default: [] (empty array if undefined)
+
+  DESIGN SYSTEMS
+  └─ src/hooks/useDesignSystems.ts
+     ├─ ipc.designSystem.getDesignSystems() [IPC]
+     │  └─ src/ipc/handlers/design_system_handlers.ts
+     │     └─ DESIGN_SYSTEMS (src/shared/designSystems.ts)
+     │
+     └─ Default: [] (empty array if undefined)
+
+
+█ GUARDS & CONDITIONS SUMMARY
+────────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┬──────────────────┬────────────────────┐
+│ Location                    │ Guard/Condition  │ Critical Line(s)   │
+├─────────────────────────────┼──────────────────┼────────────────────┤
+│ HomeChatInput               │ !settings        │ 71-73 ⚠️  BLOCKS   │
+│ AuxiliaryActionsMenu        │ NONE ✅          │ 142-145            │
+│ Themes Submenu wrapper      │ NONE ✅          │ 172-173            │
+│ "No Theme" option           │ NONE ✅          │ 179                │
+│ Built-in Themes (.map)      │ themes?          │ 194 (OPTIONAL)     │
+│ Design Systems section      │ appId==null &&   │ 220 (HOME ONLY)    │
+│                             │ length > 0       │                    │
+│ Custom Themes section       │ length > 0       │ 253                │
+│ "More Themes" option        │ hasMore          │ 284                │
+│ "New Theme" option          │ NONE ✅          │ 304                │
+└─────────────────────────────┴──────────────────┴────────────────────┘
+
+
+█ POTENTIAL FAILURE MODES
+────────────────────────────────────────────────────────────────────────────────
+
+SYMPTOM: Entire '+' menu missing
+├─ ROOT: HomeChatInput returns null (line 71-73)
+│  └─ CAUSE: useSettings() fails or returns undefined
+│     └─ FIX: Check IPC error in browser console
+│
+└─ ACTION: Verify ipc.settings.getUserSettings() succeeds
+
+
+SYMPTOM: "No Theme" visible, but built-in themes missing
+├─ ROOT: themes?.map() renders nothing
+│  └─ CAUSE: themes is undefined/null, AND placeholderData not applied
+│     └─ FIX: Check React Query DevTools for query state
+│
+└─ ACTION: Verify useThemes() hook has fallback themesData
+
+
+SYMPTOM: Themes submenu visible but empty
+├─ ROOT: themes?.map() returns empty array
+│  └─ CAUSE: IPC returns empty array
+│     └─ FIX: Check template handler in template_handlers.ts
+│
+└─ ACTION: Verify ipc.template.getThemes() returns actual themes
+
+
+SYMPTOM: Custom theme section missing, but "New Theme" visible
+├─ ROOT: customThemes empty (guard at line 253)
+│  └─ CAUSE: ipc.template.getCustomThemes() fails/empty
+│     └─ FIX: Check custom themes database
+│
+└─ ACTION: Expected behavior if no custom themes exist
+
+
+SYMPTOM: Design system options missing
+├─ ROOT: designSystems.length === 0 OR appId != null
+│  └─ CAUSE: (a) Handler returns empty array
+│           (b) Not on home page (appId set)
+│     └─ FIX: (a) Check design_system_handlers.ts
+│            (b) Verify context is home page
+│
+└─ ACTION: Expected on home page with systems; conditional elsewhere
+
+
+█ CRITICAL FILES TO CHECK
+────────────────────────────────────────────────────────────────────────────────
+
+If menu hidden:
+  1. src/hooks/useSettings.ts (settings load)
+  2. src/components/chat/HomeChatInput.tsx (Line 71-73)
+  3. src/main/settings.ts (IPC handler)
+
+If themes not visible:
+  4. src/hooks/useThemes.ts (Line 12: placeholderData)
+  5. src/shared/themes.ts (default themes)
+  6. src/ipc/handlers/template_handlers.ts (getThemes handler)
+  7. src/ipc/ipc_host.ts (handler registration)
+
+If design systems missing:
+  8. src/hooks/useDesignSystems.ts (Line 17: default [])
+  9. src/shared/designSystems.ts (DESIGN_SYSTEMS array)
+ 10. src/ipc/handlers/design_system_handlers.ts (getDesignSystems)
+
+If custom themes missing:
+ 11. src/hooks/useCustomThemes.ts (IPC call + default [])
+ 12. [Database handlers - check for custom themes table]
+
+
+█ KEY FINDINGS
+────────────────────────────────────────────────────────────────────────────────
+
+✅ NO render guards on Themes submenu itself
+✅ NO feature flags hiding themes
+✅ NO experiment toggles controlling visibility
+✅ "No Theme" option always renders
+✅ "New Theme" option always renders
+
+⚠️  Settings loading is CRITICAL
+   └─ If settings null/undefined → ENTIRE menu hidden
+
+⚠️  Theme data depends on IPC call
+   └─ Fallback exists (themesData) but must be working
+
+⚠️  Design systems conditional on home page
+   └─ Only renders if appId == null AND length > 0
+
+⚠️  Custom themes need explicit check
+   └─ Only show if visibleCustomThemes.length > 0
+
+
+█ NEXT DEBUGGING STEPS
+────────────────────────────────────────────────────────────────────────────────
+
+1. Open DevTools (F12) → Console tab
+   └─ Look for errors in useSettings() IPC call
+
+2. Check React Query DevTools
+   └─ Verify query state for themes, customThemes, designSystems
+
+3. Check Electron main process logs
+   └─ Settings file loading errors
+   └─ IPC channel errors
+
+4. Verify IPC handler registration
+   └─ grep "registerTemplateHandlers" src/ipc/ipc_host.ts
+   └─ grep "registerDesignSystemHandlers" src/ipc/ipc_host.ts
+
+5. Test manually in Console
+   └─ window.__ANYON__.ipc.template.getThemes()
+   └─ window.__ANYON__.ipc.designSystem.getDesignSystems()
+
+
+══════════════════════════════════════════════════════════════════════════════════
+For complete analysis with line references, see: HOME_MENU_THEME_VISIBILITY.md
+══════════════════════════════════════════════════════════════════════════════════
