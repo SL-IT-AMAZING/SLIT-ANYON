@@ -1,6 +1,7 @@
 import type { DesignSystemType } from "@/ipc/types/design_systems";
 import { Eye, Sparkles } from "lucide-react";
 import type React from "react";
+import { useState } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -16,40 +17,43 @@ export const DesignSystemCard: React.FC<DesignSystemCardProps> = ({
   onPreview,
   onUse,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <Card
       data-testid={`design-system-card-${designSystem.id}`}
       className="overflow-hidden group hover:shadow-md transition-shadow duration-200"
     >
       <div
-        className="h-[120px] w-full"
+        className="relative h-[180px] w-full overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${designSystem.colorScheme.primary} 0%, ${designSystem.colorScheme.secondary} 100%)`,
         }}
-      />
+      >
+        {!imageError && (
+          <img
+            src={`/${designSystem.thumbnailPath}`}
+            alt={`${designSystem.displayName} preview`}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            onError={() => setImageError(true)}
+          />
+        )}
+      </div>
       <CardContent className="p-4">
-        <Badge variant="outline" className="text-xs capitalize">
-          {designSystem.category}
-        </Badge>
-        <h3 className="text-lg font-semibold text-foreground mt-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <Badge variant="outline" className="text-xs capitalize">
+            {designSystem.category}
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            {designSystem.componentCount} components
+          </span>
+        </div>
+        <h3 className="text-lg font-semibold text-foreground leading-tight">
           {designSystem.displayName}
         </h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-          {designSystem.description}
+        <p className="text-xs text-muted-foreground mt-1">
+          {designSystem.libraryName}
         </p>
-
-        {designSystem.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {designSystem.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
 
         <div className="flex items-center gap-2 mt-4">
           <Button

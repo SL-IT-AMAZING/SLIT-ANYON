@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { net, protocol } from "electron";
+import { net, app, protocol } from "electron";
 import log from "electron-log";
 import { DESIGN_SYSTEM_IDS } from "../shared/designSystems";
 
@@ -22,7 +22,10 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 function getPreviewDistRoot(): string {
-  return path.join(process.resourcesPath, "preview-dists");
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "preview-dists");
+  }
+  return path.join(process.cwd(), "preview-apps");
 }
 
 // FIX #D: Must be called BEFORE app.whenReady()

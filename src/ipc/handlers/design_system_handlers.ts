@@ -13,8 +13,10 @@ export function registerDesignSystemHandlers() {
 
   createTypedHandler(
     designSystemContracts.getPreviewUrl,
-    async (_, { designSystemId }) => {
-      return getPreviewUrl(designSystemId);
+    async (event, { designSystemId }) => {
+      const senderUrl = event.sender.getURL();
+      const senderOrigin = senderUrl ? new URL(senderUrl).origin : undefined;
+      return getPreviewUrl(designSystemId, senderOrigin);
     },
   );
 

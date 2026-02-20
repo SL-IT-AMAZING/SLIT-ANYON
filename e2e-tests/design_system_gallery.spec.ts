@@ -1,4 +1,3 @@
-
 import { expect } from "@playwright/test";
 import { test } from "./helpers/test_helper";
 
@@ -37,9 +36,7 @@ test("design system gallery - browse, preview, and create app flow", async ({
   // Click "Minimal" category — should show only shadcn
   await gallery.getByRole("button", { name: "Minimal" }).click();
   await expect(po.page.getByTestId("design-system-card-shadcn")).toBeVisible();
-  await expect(
-    po.page.getByTestId("design-system-card-mui"),
-  ).not.toBeVisible();
+  await expect(po.page.getByTestId("design-system-card-mui")).not.toBeVisible();
 
   // Click "All" to reset
   await gallery.getByRole("button", { name: "All" }).click();
@@ -71,15 +68,11 @@ test("design system gallery - browse, preview, and create app flow", async ({
   ).toBeVisible();
 
   // Click "Use This Design System" — should close preview and open CreateAppDialog
-  await dialog
-    .getByRole("button", { name: "Use This Design System" })
-    .click();
+  await dialog.getByRole("button", { name: "Use This Design System" }).click();
 
   // Preview dialog should close, CreateAppDialog should open
   await expect(
-    po.page
-      .getByRole("dialog")
-      .getByRole("heading", { name: /create/i }),
+    po.page.getByRole("dialog").getByRole("heading", { name: /create/i }),
   ).toBeVisible();
 
   // Verify shadcn is pre-selected in the design system picker

@@ -37,7 +37,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Elegant, minimal design with sharp typography and subtle animations. Perfect for SaaS products and professional tools.",
     libraryName: "shadcn/ui",
-    thumbnailPath: "thumbnails/shadcn.png",
+    thumbnailPath: "thumbnails/shadcn.svg",
     category: "minimal",
     tier: 1,
     scaffoldDir: "scaffold",
@@ -61,7 +61,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Google's Material Design 3 with elevated surfaces, ripple effects, and a polished enterprise feel.",
     libraryName: "Material UI",
-    thumbnailPath: "thumbnails/mui.png",
+    thumbnailPath: "thumbnails/mui.svg",
     category: "material",
     tier: 1,
     scaffoldDir: "scaffold-mui",
@@ -85,7 +85,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Data-dense interfaces with robust table components and form handling. Ideal for admin panels and dashboards.",
     libraryName: "Ant Design",
-    thumbnailPath: "thumbnails/antd.png",
+    thumbnailPath: "thumbnails/antd.svg",
     category: "enterprise",
     tier: 1,
     scaffoldDir: "scaffold-antd",
@@ -109,7 +109,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Modern, accessible components with excellent defaults and rich hook ecosystem. Great for rapid prototyping.",
     libraryName: "Mantine",
-    thumbnailPath: "thumbnails/mantine.png",
+    thumbnailPath: "thumbnails/mantine.svg",
     category: "modern",
     tier: 1,
     scaffoldDir: "scaffold-mantine",
@@ -133,7 +133,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Simple, modular, and accessible components built with a composable API. Clean and straightforward.",
     libraryName: "Chakra UI",
-    thumbnailPath: "thumbnails/chakra.png",
+    thumbnailPath: "thumbnails/chakra.svg",
     category: "accessible",
     tier: 1,
     scaffoldDir: "scaffold-chakra",
@@ -157,7 +157,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     description:
       "Colorful, theme-rich components powered by Tailwind CSS. 30+ built-in themes with zero JavaScript overhead.",
     libraryName: "DaisyUI",
-    thumbnailPath: "thumbnails/daisyui.png",
+    thumbnailPath: "thumbnails/daisyui.svg",
     category: "playful",
     tier: 1,
     scaffoldDir: "scaffold-daisyui",

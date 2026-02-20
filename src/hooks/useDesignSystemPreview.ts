@@ -9,7 +9,12 @@ interface PreviewComponent {
 
 interface PreviewReadyMessage {
   type: "PREVIEW_READY";
-  components: PreviewComponent[];
+  components: {
+    id: string;
+    name?: string;
+    label?: string;
+    category?: string;
+  }[];
   nonce: string;
 }
 
@@ -46,7 +51,6 @@ export function useDesignSystemPreview(
     null,
   );
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const previewOriginRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!designSystemId) {
@@ -71,13 +75,6 @@ export function useDesignSystemPreview(
         if (cancelled) return;
         setPreviewUrl(result.url);
         setNonce(result.nonce);
-
-        try {
-          const urlObj = new URL(result.url);
-          previewOriginRef.current = urlObj.origin;
-        } catch {
-          previewOriginRef.current = null;
-        }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -95,22 +92,22 @@ export function useDesignSystemPreview(
   useEffect(() => {
     if (!nonce || !previewUrl) return;
 
-    const expectedOrigin = previewOriginRef.current;
-
     function handleMessage(event: MessageEvent) {
-      if (expectedOrigin && event.origin !== expectedOrigin) return;
       if (!isPreviewReadyMessage(event.data)) return;
       if (event.data.nonce !== nonce) return;
 
-      setComponents(event.data.components);
+      setComponents(
+        event.data.components.map((c) => ({
+          id: c.id,
+          label: c.label ?? c.name ?? c.id,
+          category: c.category,
+        })),
+      );
       setIsLoading(false);
 
       const iframe = iframeRef.current;
-      if (iframe?.contentWindow && expectedOrigin) {
-        iframe.contentWindow.postMessage(
-          { type: "HANDSHAKE_ACK", nonce },
-          expectedOrigin,
-        );
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage({ type: "HANDSHAKE_ACK", nonce }, "*");
       }
     }
 
@@ -121,12 +118,11 @@ export function useDesignSystemPreview(
   const navigateToComponent = useCallback(
     (componentId: string) => {
       const iframe = iframeRef.current;
-      const targetOrigin = previewOriginRef.current;
-      if (!iframe?.contentWindow || !nonce || !targetOrigin) return;
+      if (!iframe?.contentWindow || !nonce) return;
 
       iframe.contentWindow.postMessage(
         { type: "NAVIGATE_COMPONENT", componentId, nonce },
-        targetOrigin,
+        "*",
       );
       setActiveComponentId(componentId);
     },

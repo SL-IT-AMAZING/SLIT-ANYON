@@ -137,10 +137,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }, [refreshAppIframe, previewMode]);
 
   useEffect(() => {
+    if (selectedAppId === null) {
+      setChatInput("");
+      setSelectedComponentsPreview([]);
+      setConsoleEntries([]);
+      return;
+    }
+
     setChatInput("");
     setSelectedComponentsPreview([]);
     setConsoleEntries([]);
-  }, [selectedAppId]);
+  }, [
+    selectedAppId,
+    setChatInput,
+    setSelectedComponentsPreview,
+    setConsoleEntries,
+  ]);
 
   return (
     <>
@@ -151,7 +163,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AppSidebar />
             <div
               id="layout-main-content-container"
-              className="flex flex-col h-screenish w-full overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
+              className="flex flex-col h-screenish flex-1 min-w-0 overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
             >
               {location.pathname !== "/chat" && (
                 <div className="flex items-center h-10 px-2 shrink-0">
@@ -173,9 +185,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   )}
                 </div>
               )}
-              <div className="flex flex-1 min-h-0 overflow-auto">
-                {children}
-              </div>
+              <div className="flex-1 min-h-0 overflow-auto">{children}</div>
             </div>
             <Toaster richColors />
           </SidebarProvider>

@@ -73,7 +73,7 @@ export function DesignSystemPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] h-[90vh] p-0 gap-0 !flex flex-col overflow-hidden"
+        className="max-w-[95vw] sm:max-w-[95vw] w-[95vw] h-[90vh] p-0 gap-0 !flex flex-col overflow-hidden"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">
