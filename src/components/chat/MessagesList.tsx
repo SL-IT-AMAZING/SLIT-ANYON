@@ -1,6 +1,6 @@
 import type { Message } from "@/ipc/types";
 import type React from "react";
-import { forwardRef, useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import {
@@ -123,6 +123,7 @@ function formatDuration(from: Date, to: Date): string {
 function summarizeTurn(
   turn: MessageTurn,
   isTurnWorking: boolean,
+  nowMs: number,
 ): {
   steps: StepItem[];
   response: string;
@@ -216,18 +217,19 @@ function summarizeTurn(
   }
 
   let duration: string | undefined;
-  const assistantWithCreatedAt = turn.assistantMessages.filter(
-    (m) => m.createdAt,
-  );
-  if (assistantWithCreatedAt.length > 0) {
-    const start = new Date(
-      assistantWithCreatedAt[0].createdAt as string | Date,
-    );
-    const end = new Date(
-      assistantWithCreatedAt[assistantWithCreatedAt.length - 1].createdAt as
-        | string
-        | Date,
-    );
+  const assistantWithCreatedAt = turn.assistantMessages.filter((m) => m.createdAt);
+  const startCandidate =
+    assistantWithCreatedAt[0]?.createdAt ??
+    (isTurnWorking ? turn.userMessage?.createdAt : undefined);
+
+  if (startCandidate) {
+    const start = new Date(startCandidate as string | Date);
+    const endCandidate = isTurnWorking
+      ? new Date(nowMs)
+      : assistantWithCreatedAt[assistantWithCreatedAt.length - 1]?.createdAt ??
+        startCandidate;
+    const end = new Date(endCandidate as string | Date);
+
     if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
       duration = formatDuration(start, end);
     }
@@ -471,11 +473,21 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const setMessagesById = useSetAtom(chatMessagesByIdAtom);
     const [isUndoLoading, setIsUndoLoading] = useState(false);
     const [isRetryLoading, setIsRetryLoading] = useState(false);
+    const [nowMs, setNowMs] = useState(() => Date.now());
     const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(
       new Set(),
     );
     const selectedChatId = useAtomValue(selectedChatIdAtom);
     const { userBudget } = useUserBudgetInfo();
+
+    useEffect(() => {
+      if (!isStreaming) return;
+      setNowMs(Date.now());
+      const timer = window.setInterval(() => {
+        setNowMs(Date.now());
+      }, 1000);
+      return () => window.clearInterval(timer);
+    }, [isStreaming]);
 
     // Virtualization only renders visible DOM elements, which creates issues for E2E tests:
     // 1. Off-screen logs don't exist in the DOM and can't be queried by test selectors
@@ -499,7 +511,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
       (index: number, turn: MessageTurn) => {
         const isLastTurn = index === turns.length - 1;
         const isTurnWorking = isStreaming && isLastTurn;
-        const turnSummary = summarizeTurn(turn, isTurnWorking);
+        const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
         const userMessageText = turn.userMessage?.content ?? "";
         const hasAssistantContent = turn.assistantMessages.length > 0;
         const stepsExpanded = expandedTurnIds.has(turn.id);
@@ -530,7 +542,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           </div>
         );
       },
-      [turns, isStreaming, expandedTurnIds],
+      [turns, isStreaming, expandedTurnIds, nowMs],
     );
 
     // Create context object for Footer component with stable references
@@ -600,7 +612,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           {turns.map((turn, index) => {
             const isLastTurn = index === turns.length - 1;
             const isTurnWorking = isStreaming && isLastTurn;
-            const turnSummary = summarizeTurn(turn, isTurnWorking);
+            const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
             const hasAssistantContent = turn.assistantMessages.length > 0;
             const stepsExpanded = expandedTurnIds.has(turn.id);
             return (

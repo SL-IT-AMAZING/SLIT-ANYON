@@ -13,7 +13,6 @@ import { openCodeServer } from "./opencode_server";
 const logger = log.scope("opencode-provider");
 const OPENCODE_API_TIMEOUT_MS = 15000;
 const OPENCODE_SSE_CONNECT_TIMEOUT_MS = 15000;
-const OPENCODE_STREAM_TIMEOUT_MS = 60000;
 
 const conversationSessionMap = new Map<string, string>();
 
@@ -458,13 +457,31 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
         try {
           const eventUrl = `${serverInfo.url}/event`;
-          const eventResponse = await fetch(eventUrl, {
-            headers: this.getAuthHeaders(serverInfo.password),
-            signal: this.createSignalWithTimeout(
-              abortController.signal,
-              OPENCODE_SSE_CONNECT_TIMEOUT_MS,
-            ),
-          });
+          const eventResponse = await new Promise<Response>(
+            (resolve, reject) => {
+              const timer = setTimeout(() => {
+                abortController.abort();
+                reject(
+                  new Error(
+                    `SSE connection timed out after ${OPENCODE_SSE_CONNECT_TIMEOUT_MS / 1000}s`,
+                  ),
+                );
+              }, OPENCODE_SSE_CONNECT_TIMEOUT_MS);
+
+              fetch(eventUrl, {
+                headers: this.getAuthHeaders(serverInfo.password),
+                signal: abortController.signal,
+              })
+                .then((response) => {
+                  clearTimeout(timer);
+                  resolve(response);
+                })
+                .catch((error) => {
+                  clearTimeout(timer);
+                  reject(error);
+                });
+            },
+          );
 
           if (!eventResponse.ok) {
             throw new Error(
@@ -675,7 +692,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
           // Send message AFTER we start listening for events
           logger.debug("Sending message to OpenCode...");
-          const sendPromise = this.fetchOpenCode(
+          this.fetchOpenCode(
             `/session/${session.id}/message`,
             {
               method: "POST",
@@ -685,31 +702,12 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           )
             .then((resp) => {
               logger.debug(`Message send response status: ${resp.status}`);
-              return resp;
             })
             .catch((err) => {
               logger.error(`Message send error: ${err}`);
-              throw err;
             });
 
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            const timer = setTimeout(() => {
-              abortController.abort();
-              reject(
-                new Error(
-                  `OpenCode stream timed out after ${OPENCODE_STREAM_TIMEOUT_MS / 1000}s`,
-                ),
-              );
-            }, OPENCODE_STREAM_TIMEOUT_MS);
-            abortController.signal.addEventListener("abort", () =>
-              clearTimeout(timer),
-            );
-          });
-
-          await Promise.race([
-            Promise.all([sendPromise, processEventsPromise]),
-            timeoutPromise,
-          ]);
+          await processEventsPromise;
         } catch (err) {
           if (
             err instanceof Error &&
