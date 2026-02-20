@@ -102,6 +102,12 @@
       "resetSuccess": "시스템 Node.js 경로로 재설정되었습니다",
       "resetFailed": "Node.js 경로 재설정 실패: {{message}}"
     },
+    "scaffold": "기본 프레임워크",
+    "scaffoldDescription": "새 앱을 만들 때 사용할 기본 프레임워크를 선택합니다.",
+    "scaffoldOptions": {
+      "react": "React (Vite)",
+      "next": "Next.js"
+    },
     "appVersion": "앱 버전:"
   },
   "workflow": {

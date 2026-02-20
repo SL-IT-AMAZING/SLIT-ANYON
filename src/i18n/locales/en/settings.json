@@ -102,6 +102,12 @@
       "resetSuccess": "Reset to system Node.js path",
       "resetFailed": "Failed to reset Node.js path: {{message}}"
     },
+    "scaffold": "Default framework",
+    "scaffoldDescription": "Choose the default framework used when creating new apps.",
+    "scaffoldOptions": {
+      "react": "React (Vite)",
+      "next": "Next.js"
+    },
     "appVersion": "App Version:"
   },
   "workflow": {

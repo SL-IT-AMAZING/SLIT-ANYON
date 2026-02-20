@@ -12,13 +12,32 @@ export const TemplateSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
+  category: z.string(),
   imageUrl: z.string(),
-  githubUrl: z.string().optional(),
-  isOfficial: z.boolean(),
-  isExperimental: z.boolean().optional(),
+  path: z.string(),
+  techStack: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+  features: z.array(z.string()).optional(),
+  longDescription: z.string().optional(),
+  screenshots: z.array(z.string()).optional(),
 });
 
 export type Template = z.infer<typeof TemplateSchema>;
+
+export const TemplateCategorySchema = z.object({
+  id: z.string(),
+  label: z.string(),
+});
+
+export type TemplateCategory = z.infer<typeof TemplateCategorySchema>;
+
+export const TemplateRegistrySchema = z.object({
+  version: z.number(),
+  categories: z.array(TemplateCategorySchema),
+  templates: z.array(TemplateSchema),
+});
+
+export type TemplateRegistry = z.infer<typeof TemplateRegistrySchema>;
 
 // Theme schema (similar structure)
 export const ThemeSchema = z.object({
@@ -180,7 +199,7 @@ export const templateContracts = {
   getTemplates: defineContract({
     channel: "get-templates",
     input: z.void(),
-    output: z.array(TemplateSchema),
+    output: TemplateRegistrySchema,
   }),
 
   getThemes: defineContract({

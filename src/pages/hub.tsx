@@ -1,49 +1,27 @@
+import { HubList } from "@/components/HubList";
 import { TemplateCard } from "@/components/TemplateCard";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTemplates } from "@/hooks/useTemplates";
-import { cn } from "@/lib/utils";
-import type { TemplateCategory } from "@/shared/templates";
-import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, Globe, Search, Smartphone } from "lucide-react";
+import { Search, Store } from "lucide-react";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const CATEGORIES: {
-  key: TemplateCategory;
-  labelKey:
-    | "hub.categories.apps"
-    | "hub.categories.web"
-    | "hub.categories.saas";
-  icon: React.FC<{ className?: string }>;
-}[] = [
-  { key: "apps", labelKey: "hub.categories.apps", icon: Smartphone },
-  { key: "web", labelKey: "hub.categories.web", icon: Globe },
-  { key: "saas", labelKey: "hub.categories.saas", icon: Briefcase },
-];
-
 const HubPage: React.FC = () => {
-  const router = useRouter();
   const { t } = useTranslation(["app", "common"]);
-  const { templates, isLoading } = useTemplates();
+  const { templates, categories, isLoading } = useTemplates();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState<TemplateCategory>("apps");
+  const [selectedCategory, setSelectedCategory] = useState("apps");
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<TemplateCategory, number> = {
-      apps: 0,
-      web: 0,
-      saas: 0,
-    };
-    templates?.forEach((t) => {
-      if (t.category && t.category in counts) {
-        counts[t.category]++;
-      }
-    });
-    return counts;
-  }, [templates]);
+  useEffect(() => {
+    if (categories.length === 0) {
+      return;
+    }
+
+    if (!categories.some((category) => category.id === selectedCategory)) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories, selectedCategory]);
 
   const filteredTemplates = useMemo(() => {
     return templates?.filter((t) => {
@@ -59,60 +37,25 @@ const HubPage: React.FC = () => {
   }, [templates, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen px-8 py-4">
-      <div className="max-w-6xl mx-auto pb-12">
-        <Button
-          onClick={() => router.history.back()}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 mb-4 bg-(--background-lightest) py-5"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t("buttons.back", { ns: "common" })}
-        </Button>
+    <div className="flex h-full w-full">
+      <aside className="w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
+        <HubList
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+      </aside>
 
-        <header className="mb-8 text-left">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            {t("hub.title")}
-          </h1>
-          <p className="text-md text-muted-foreground">
-            {t("hub.description")}
-            {isLoading && ` ${t("hub.loadingMore")}`}
-          </p>
-        </header>
+      <div className="flex-1 min-w-0 px-8 py-6 overflow-y-auto">
+        <h1 className="text-3xl font-bold mb-5">
+          <Store className="inline-block h-8 w-8 mr-2" />
+          {t("hub.title")}
+        </h1>
 
-        {/* Category Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat.key;
-            const Icon = cat.icon;
-            return (
-              <div
-                key={cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
-                className={cn(
-                  "flex flex-col items-center justify-center p-6 rounded-xl border cursor-pointer transition-colors duration-200",
-                  isSelected
-                    ? "border-foreground/30 bg-accent"
-                    : "border-border bg-card hover:bg-accent/50",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-8 w-8 mb-2",
-                    isSelected ? "text-foreground" : "text-muted-foreground",
-                  )}
-                />
-                <span className="font-semibold text-foreground">
-                  {t(cat.labelKey)}
-                </span>
-                <span className="text-xs text-muted-foreground mt-1">
-                  {t("hub.templateCount", { count: categoryCounts[cat.key] })}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          {t("hub.description")}
+          {isLoading && ` ${t("hub.loadingMore")}`}
+        </p>
 
         {/* Search Bar */}
         <div className="relative mb-6">

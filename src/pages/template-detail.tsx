@@ -1,12 +1,10 @@
-import { CommunityCodeConsentDialog } from "@/components/CommunityCodeConsentDialog";
 import { CreateAppDialog } from "@/components/CreateAppDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { useTemplates } from "@/hooks/useTemplates";
-import { ipc } from "@/ipc/types";
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,9 +19,8 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   const { t } = useTranslation(["app", "common"]);
   const router = useRouter();
   const { templates } = useTemplates();
-  const { settings, updateSettings } = useSettings();
+  const { updateSettings } = useSettings();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [showConsentDialog, setShowConsentDialog] = useState(false);
 
   const template = templates?.find((t) => t.id === templateId);
 
@@ -49,24 +46,8 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
   }
 
   const handleChoose = () => {
-    if (!template.isOfficial && !settings?.acceptedCommunityCode) {
-      setShowConsentDialog(true);
-      return;
-    }
-
     updateSettings({ selectedTemplateId: template.id });
     setIsCreateDialogOpen(true);
-  };
-
-  const handleConsentAccept = () => {
-    updateSettings({ acceptedCommunityCode: true });
-    setShowConsentDialog(false);
-    updateSettings({ selectedTemplateId: template.id });
-    setIsCreateDialogOpen(true);
-  };
-
-  const handleConsentCancel = () => {
-    setShowConsentDialog(false);
   };
 
   return (
@@ -103,46 +84,12 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
             <h1 className="text-3xl font-bold text-foreground mt-2">
               {template.title}
             </h1>
-            {template.author && (
-              <p className="text-muted-foreground mt-1">
-                {t("templateDetail.byAuthor", {
-                  ns: "app",
-                  author: template.author.name,
-                })}
-              </p>
-            )}
 
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3 mt-6">
               <Button className="w-full text-lg py-6" onClick={handleChoose}>
                 {t("templateDetail.chooseTemplate", { ns: "app" })}
               </Button>
-              <div className="flex gap-2">
-                {template.githubUrl && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() =>
-                      ipc.system.openExternalUrl(template.githubUrl!)
-                    }
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    {t("templateDetail.viewOnGitHub", { ns: "app" })}
-                  </Button>
-                )}
-                {template.demoUrl && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() =>
-                      ipc.system.openExternalUrl(template.demoUrl!)
-                    }
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    {t("templateDetail.liveDemo", { ns: "app" })}
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -221,12 +168,6 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         template={template}
-      />
-
-      <CommunityCodeConsentDialog
-        isOpen={showConsentDialog}
-        onAccept={handleConsentAccept}
-        onCancel={handleConsentCancel}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { NodePathSelector } from "@/components/NodePathSelector";
 import { ReleaseChannelSelector } from "@/components/ReleaseChannelSelector";
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
+import { ScaffoldSelector } from "@/components/ScaffoldSelector";
 import { TelemetrySwitch } from "@/components/TelemetrySwitch";
 import { ZoomSelector } from "@/components/ZoomSelector";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -54,6 +55,7 @@ export function GeneralPanel() {
           </div>
         </div>
 
+        <ScaffoldSelector />
         <ReleaseChannelSelector />
         <RuntimeModeSelector />
         <NodePathSelector />

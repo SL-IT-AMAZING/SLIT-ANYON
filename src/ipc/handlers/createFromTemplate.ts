@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { DESIGN_SYSTEMS } from "@/shared/designSystems";
 import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
 import { app } from "electron";
@@ -6,7 +6,10 @@ import log from "electron-log";
 import fs from "fs-extra";
 import { copyDirectoryRecursive } from "../utils/file_utils";
 import { getCurrentCommitHash, gitClone } from "../utils/git_utils";
-import { getTemplateOrThrow } from "../utils/template_utils";
+import {
+  getMarketTemplateOrThrow,
+  getTemplateRepoUrl,
+} from "../utils/template_utils";
 
 const logger = log.scope("createFromTemplate");
 
@@ -55,12 +58,19 @@ export async function createFromTemplate({
     return;
   }
 
-  const template = await getTemplateOrThrow(templateId);
-  if (!template.githubUrl) {
-    throw new Error(`Template ${templateId} has no GitHub URL`);
+  const template = await getMarketTemplateOrThrow(templateId);
+  const repoCachePath = await cloneRepo(getTemplateRepoUrl());
+  const templateSourcePath = path.join(
+    repoCachePath,
+    "templates",
+    template.path,
+  );
+
+  if (!fs.existsSync(templateSourcePath)) {
+    throw new Error(`Template directory not found: templates/${template.path}`);
   }
-  const repoCachePath = await cloneRepo(template.githubUrl);
-  await copyRepoToApp(repoCachePath, fullAppPath);
+
+  await copyRepoToApp(templateSourcePath, fullAppPath);
 }
 
 async function cloneRepo(repoUrl: string): Promise<string> {
@@ -140,13 +150,12 @@ async function cloneRepo(repoUrl: string): Promise<string> {
           `Local cache for ${repoName} is up to date (SHA: ${localSha}). Skipping clone.`,
         );
         return cachePath;
-      } else {
-        logger.info(
-          `Local cache for ${repoName} (SHA: ${localSha}) is outdated (Remote SHA: ${remoteSha}). Removing and re-cloning.`,
-        );
-        fs.rmSync(cachePath, { recursive: true, force: true });
-        // Continue to clone…
       }
+
+      logger.info(
+        `Local cache for ${repoName} (SHA: ${localSha}) is outdated (Remote SHA: ${remoteSha}). Removing and re-cloning.`,
+      );
+      fs.rmSync(cachePath, { recursive: true, force: true });
     } catch (err) {
       logger.warn(
         `Error checking for updates for ${repoName} at ${cachePath}. Removing cache and re-cloning. Error: `,

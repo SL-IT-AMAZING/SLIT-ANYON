@@ -1,83 +1,69 @@
 import log from "electron-log";
-import {
-  type ApiTemplate,
-  type Template,
-  localTemplatesData,
-} from "../../shared/templates";
+import type { Template, TemplateRegistry } from "../../shared/templates";
 
 const logger = log.scope("template_utils");
 
-// In-memory cache for API templates
-let apiTemplatesCache: Template[] | null = null;
-let apiTemplatesFetchPromise: Promise<Template[]> | null = null;
+const TEMPLATE_REPO_OWNER = "SL-IT-AMAZING";
+const TEMPLATE_REPO_NAME = "SLIT-ANYON";
+const TEMPLATE_BRANCH = "main";
+const REGISTRY_PATH = "templates/registry.json";
 
-// Convert API template to our Template interface
-function convertApiTemplate(apiTemplate: ApiTemplate): Template {
-  return {
-    id: `${apiTemplate.githubOrg}/${apiTemplate.githubRepo}`,
-    title: apiTemplate.title,
-    description: apiTemplate.description,
-    imageUrl: apiTemplate.imageUrl,
-    githubUrl: `https://github.com/${apiTemplate.githubOrg}/${apiTemplate.githubRepo}`,
-    isOfficial: false,
-    category: "apps",
-  };
+let registryCache: TemplateRegistry | null = null;
+let registryFetchPromise: Promise<TemplateRegistry> | null = null;
+
+export function getRegistryRawUrl(): string {
+  return `https://raw.githubusercontent.com/${TEMPLATE_REPO_OWNER}/${TEMPLATE_REPO_NAME}/${TEMPLATE_BRANCH}/${REGISTRY_PATH}`;
 }
 
-// Fetch templates from API with caching
-export async function fetchApiTemplates(): Promise<Template[]> {
-  // Return cached data if available
-  if (apiTemplatesCache) {
-    return apiTemplatesCache;
+export function getTemplateRepoUrl(): string {
+  return `https://github.com/${TEMPLATE_REPO_OWNER}/${TEMPLATE_REPO_NAME}.git`;
+}
+
+export async function fetchTemplateRegistry(): Promise<TemplateRegistry> {
+  if (registryCache) {
+    return registryCache;
   }
 
-  // Return existing promise if fetch is already in progress
-  if (apiTemplatesFetchPromise) {
-    return apiTemplatesFetchPromise;
+  if (registryFetchPromise) {
+    return registryFetchPromise;
   }
 
-  // Start new fetch
-  apiTemplatesFetchPromise = (async (): Promise<Template[]> => {
+  registryFetchPromise = (async (): Promise<TemplateRegistry> => {
     try {
-      const response = await fetch("https://api.any-on.dev/v1/templates");
+      const url = getRegistryRawUrl();
+      logger.info(`Fetching template registry from ${url}`);
+      const response = await fetch(url);
+
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch templates: ${response.status} ${response.statusText}`,
+          `Failed to fetch registry: ${response.status} ${response.statusText}`,
         );
       }
 
-      const apiTemplates: ApiTemplate[] = await response.json();
-      const convertedTemplates = apiTemplates.map(convertApiTemplate);
-
-      // Cache the result
-      apiTemplatesCache = convertedTemplates;
-      return convertedTemplates;
+      const registry: TemplateRegistry = await response.json();
+      registryCache = registry;
+      return registry;
     } catch (error) {
-      logger.error("Failed to fetch API templates:", error);
-      // Reset the promise so we can retry later
-      apiTemplatesFetchPromise = null;
-      return []; // Return empty array on error
+      logger.error("Failed to fetch template registry:", error);
+      registryFetchPromise = null;
+      return { version: 1, categories: [], templates: [] };
     }
   })();
 
-  return apiTemplatesFetchPromise;
+  return registryFetchPromise;
 }
 
-// Get all templates (local + API)
-export async function getAllTemplates(): Promise<Template[]> {
-  const apiTemplates = await fetchApiTemplates();
-  return [...localTemplatesData, ...apiTemplates];
-}
-
-export async function getTemplateOrThrow(
+export async function getMarketTemplateOrThrow(
   templateId: string,
 ): Promise<Template> {
-  const allTemplates = await getAllTemplates();
-  const template = allTemplates.find((template) => template.id === templateId);
+  const registry = await fetchTemplateRegistry();
+  const template = registry.templates.find((t) => t.id === templateId);
+
   if (!template) {
     throw new Error(
       `Template ${templateId} not found. Please select a different template.`,
     );
   }
+
   return template;
 }

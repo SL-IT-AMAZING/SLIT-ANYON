@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "categories": [
+    { "id": "website", "label": "Website" },
+    { "id": "app", "label": "Application" }
+  ],
+  "templates": []
+}
