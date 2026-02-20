@@ -170,9 +170,10 @@ class OpenCodeServerManager {
       mcp: {
         "anyon-tools": {
           type: "local",
-          command: ["node", mcpServerPath],
+          command: [process.execPath, mcpServerPath],
           enabled: true,
           environment: {
+            ELECTRON_RUN_AS_NODE: "1",
             ANYON_GATEWAY_URL: `http://127.0.0.1:${gatewayPort}`,
             ANYON_GATEWAY_TOKEN: gatewayToken,
           },
