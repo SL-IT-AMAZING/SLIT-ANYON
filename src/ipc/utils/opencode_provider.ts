@@ -12,6 +12,12 @@ import { openCodeServer } from "./opencode_server";
 
 const logger = log.scope("opencode-provider");
 
+const conversationSessionMap = new Map<string, string>();
+
+export function resetOpenCodeSessionCache(): void {
+  conversationSessionMap.clear();
+}
+
 interface OpenCodeSession {
   id: string;
 }
@@ -94,8 +100,6 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
   readonly provider = "opencode";
   readonly supportedUrls: Record<string, RegExp[]> = {};
 
-  private sessionMap = new Map<string, string>();
-
   constructor(
     readonly modelId: string,
     private settings: OpenCodeProviderSettings,
@@ -149,14 +153,14 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
   private async getOrCreateSession(
     conversationId: string,
   ): Promise<OpenCodeSession> {
-    if (this.sessionMap.has(conversationId)) {
-      const sessionId = this.sessionMap.get(conversationId)!;
+    if (conversationSessionMap.has(conversationId)) {
+      const sessionId = conversationSessionMap.get(conversationId)!;
       try {
         const response = await this.fetchOpenCode(`/session/${sessionId}`);
         return response.json();
       } catch {
         logger.debug(`Cached session ${sessionId} invalid, creating new one`);
-        this.sessionMap.delete(conversationId);
+        conversationSessionMap.delete(conversationId);
       }
     }
 
@@ -167,7 +171,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     });
 
     const session: OpenCodeSession = await response.json();
-    this.sessionMap.set(conversationId, session.id);
+    conversationSessionMap.set(conversationId, session.id);
     logger.info(`Session created: ${session.id}`);
     return session;
   }

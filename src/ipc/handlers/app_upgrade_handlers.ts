@@ -86,7 +86,13 @@ function isComponentTaggerUpgradeNeeded(appPath: string): boolean {
   if (viteConfigPath) {
     try {
       const viteConfigContent = fs.readFileSync(viteConfigPath, "utf-8");
-      return !viteConfigContent.includes("anyon-component-tagger");
+      if (
+        viteConfigContent.includes("anyon-component-tagger") ||
+        viteConfigContent.includes("anyon-html-tagger")
+      ) {
+        return false;
+      }
+      return true;
     } catch (e) {
       logger.error("Error reading vite config", e);
       return false;
