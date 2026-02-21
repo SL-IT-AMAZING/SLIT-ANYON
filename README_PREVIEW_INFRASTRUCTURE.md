@@ -5,37 +5,40 @@
 Three comprehensive guides have been created to help you understand and extend the preview infrastructure:
 
 ### 1. **PREVIEW_INFRASTRUCTURE_GUIDE.md** ⭐ START HERE
-   - **What it covers:** Architecture decisions, implementation options, best practices
-   - **Best for:** Understanding the "why" and making design decisions
-   - **Length:** Comprehensive reference
-   - **Key sections:**
-     - Executive summary of two preview systems
-     - Three options for template previews with pros/cons
-     - Recommended architecture (extend anyon-preview://)
-     - Security model and path resolution
-     - Migration path from srcDoc to protocol
+
+- **What it covers:** Architecture decisions, implementation options, best practices
+- **Best for:** Understanding the "why" and making design decisions
+- **Length:** Comprehensive reference
+- **Key sections:**
+  - Executive summary of two preview systems
+  - Three options for template previews with pros/cons
+  - Recommended architecture (extend anyon-preview://)
+  - Security model and path resolution
+  - Migration path from srcDoc to protocol
 
 ### 2. **PREVIEW_CODE_REFERENCE.md** 📖 TECHNICAL DETAILS
-   - **What it covers:** Full code listings, implementation details, snippets
-   - **Best for:** Implementation and reference
-   - **Length:** Code-focused with detailed comments
-   - **Key sections:**
-     - Full `src/main/preview-protocol.ts` source
-     - All integration points (Renderer, Main, Protocol)
-     - Error scenarios and handling
-     - Design system URL examples
+
+- **What it covers:** Full code listings, implementation details, snippets
+- **Best for:** Implementation and reference
+- **Length:** Code-focused with detailed comments
+- **Key sections:**
+  - Full `src/main/preview-protocol.ts` source
+  - All integration points (Renderer, Main, Protocol)
+  - Error scenarios and handling
+  - Design system URL examples
 
 ### 3. **PREVIEW_VISUAL_MAP.md** 🎨 VISUAL GUIDES
-   - **What it covers:** ASCII diagrams, flow charts, decision trees
-   - **Best for:** Understanding flow and relationships
-   - **Length:** Visual heavy
-   - **Key sections:**
-     - System architecture diagram
-     - Request flow for both preview approaches
-     - File organization tree
-     - URL parsing decision flow
-     - Security checks diagram
-     - Memory comparison charts
+
+- **What it covers:** ASCII diagrams, flow charts, decision trees
+- **Best for:** Understanding flow and relationships
+- **Length:** Visual heavy
+- **Key sections:**
+  - System architecture diagram
+  - Request flow for both preview approaches
+  - File organization tree
+  - URL parsing decision flow
+  - Security checks diagram
+  - Memory comparison charts
 
 ---
 
@@ -63,31 +66,34 @@ A: 1. Extend anyon-preview:// (RECOMMENDED), 2. Keep srcDoc (legacy), 3. New any
 
 ## 🗂️ File Quick Reference
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `src/main/preview-protocol.ts` | 100 | Core protocol handler |
-| `src/main.ts` | ~10 | Protocol registration |
-| `src/ipc/utils/preview_server_manager.ts` | 29 | URL generation |
-| `src/components/preview_panel/PreviewIframe.tsx` | 1456+ | Dev app preview |
-| `src/pages/template-detail.tsx` | 234 | Template preview (srcDoc) |
-| `src/ipc/types/templates.ts` | 300 | IPC contracts |
-| `src/ipc/handlers/template_handlers.ts` | 28 | Handlers |
-| `src/shared/designSystems.ts` | 184 | Design system config |
+| File                                             | Lines | Purpose                   |
+| ------------------------------------------------ | ----- | ------------------------- |
+| `src/main/preview-protocol.ts`                   | 100   | Core protocol handler     |
+| `src/main.ts`                                    | ~10   | Protocol registration     |
+| `src/ipc/utils/preview_server_manager.ts`        | 29    | URL generation            |
+| `src/components/preview_panel/PreviewIframe.tsx` | 1456+ | Dev app preview           |
+| `src/pages/template-detail.tsx`                  | 234   | Template preview (srcDoc) |
+| `src/ipc/types/templates.ts`                     | 300   | IPC contracts             |
+| `src/ipc/handlers/template_handlers.ts`          | 28    | Handlers                  |
+| `src/shared/designSystems.ts`                    | 184   | Design system config      |
 
 ---
 
 ## 🚀 Getting Started (if implementing template preview)
 
 ### Step 1: Understand Current State
+
 - Read **PREVIEW_INFRASTRUCTURE_GUIDE.md** sections on "How srcDoc Template Preview Works"
 - Read **PREVIEW_VISUAL_MAP.md** section 3 to see flow diagram
 
 ### Step 2: Understand Target Architecture
+
 - Read **PREVIEW_INFRASTRUCTURE_GUIDE.md** sections on "Recommended Implementation for Templates"
 - Read **PREVIEW_CODE_REFERENCE.md** section 1 to see protocol implementation
 - Review **PREVIEW_VISUAL_MAP.md** section 5 for URL parsing details
 
 ### Step 3: Implementation Plan
+
 1. Design template ID schema and directory structure
 2. Modify `src/main/preview-protocol.ts` to handle template URLs
 3. Add template ID validation
@@ -95,6 +101,7 @@ A: 1. Extend anyon-preview:// (RECOMMENDED), 2. Keep srcDoc (legacy), 3. New any
 5. Add tests for security and functionality
 
 ### Step 4: Reference as Needed
+
 - For protocol specifics: **PREVIEW_CODE_REFERENCE.md**
 - For security checks: **PREVIEW_VISUAL_MAP.md** section 6
 - For error handling: **PREVIEW_CODE_REFERENCE.md** "Error Scenarios"
@@ -104,42 +111,50 @@ A: 1. Extend anyon-preview:// (RECOMMENDED), 2. Keep srcDoc (legacy), 3. New any
 ## 📋 Key Concepts
 
 ### anyon-preview:// Protocol
+
 - Custom Electron protocol for serving pre-built apps
 - Two-phase registration: `registerPreviewScheme()` before app.ready, `registerPreviewProtocol()` after
 - Security: Path traversal protection, ID whitelist, MIME type validation
 - Performance: Streams files from disk (no memory overhead)
 
 ### Design Systems (6 total)
+
 ```
 ["shadcn", "mui", "antd", "chakra", "mantine", "daisyui"]
 ```
+
 Each has: `preview-{id}/dist/` with built Vite app
 
 ### Template Preview Options
-| Approach | Memory | Scalable | Code |
-|----------|--------|----------|------|
-| **srcDoc (current)** | 40MB for 10MB file | ❌ No | Simple |
-| **Extend anyon-preview://** | 1MB for 10MB file | ✅ Yes | Moderate |
-| **New anyon-template://** | 1MB for 10MB file | ✅ Yes | More |
+
+| Approach                    | Memory             | Scalable | Code     |
+| --------------------------- | ------------------ | -------- | -------- |
+| **srcDoc (current)**        | 40MB for 10MB file | ❌ No    | Simple   |
+| **Extend anyon-preview://** | 1MB for 10MB file  | ✅ Yes   | Moderate |
+| **New anyon-template://**   | 1MB for 10MB file  | ✅ Yes   | More     |
 
 ---
 
 ## 🔒 Security Features
 
 ✅ **Path Traversal Protection**
+
 - Rejects `..` sequences
 - Rejects absolute paths
 - Validates resolved path stays in distRoot
 
 ✅ **ID Validation**
+
 - Whitelist check against DESIGN_SYSTEM_IDS or TEMPLATE_IDS
 - Returns 404 for unknown IDs
 
 ✅ **MIME Type Safety**
+
 - Explicit whitelist of allowed types
 - Defaults to `application/octet-stream` for unknown
 
 ✅ **Protocol Privileges**
+
 - CORS disabled (`corsEnabled: false`)
 - No dangerous permissions
 - Treated as secure protocol (`secure: true`)
@@ -150,14 +165,14 @@ Each has: `preview-{id}/dist/` with built Vite app
 
 **Choosing between 3 template preview options:**
 
-| Factor | Extend anyon-preview:// | New anyon-template:// | Keep srcDoc |
-|--------|----------------------|----------------------|-----------|
-| **Code reuse** | ✅ Maximum | ❌ None | ✅ Already done |
-| **Maintenance** | ✅ Single code path | ❌ Duplicate | ⚠️ Legacy |
-| **Performance** | ✅ Streaming | ✅ Streaming | ❌ Memory |
-| **Scalability** | ✅ Unlimited size | ✅ Unlimited size | ❌ ~100MB max |
-| **Separation** | ⚠️ Mixed concerns | ✅ Isolated | ✅ Isolated |
-| **Implementation effort** | ⭐⭐☆☆☆ | ⭐⭐⭐☆☆ | ⭐☆☆☆☆ |
+| Factor                    | Extend anyon-preview:// | New anyon-template:// | Keep srcDoc     |
+| ------------------------- | ----------------------- | --------------------- | --------------- |
+| **Code reuse**            | ✅ Maximum              | ❌ None               | ✅ Already done |
+| **Maintenance**           | ✅ Single code path     | ❌ Duplicate          | ⚠️ Legacy       |
+| **Performance**           | ✅ Streaming            | ✅ Streaming          | ❌ Memory       |
+| **Scalability**           | ✅ Unlimited size       | ✅ Unlimited size     | ❌ ~100MB max   |
+| **Separation**            | ⚠️ Mixed concerns       | ✅ Isolated           | ✅ Isolated     |
+| **Implementation effort** | ⭐⭐☆☆☆                 | ⭐⭐⭐☆☆              | ⭐☆☆☆☆          |
 
 **RECOMMENDATION: Extend anyon-preview://** ← Best balance of simplicity and capability
 
@@ -166,12 +181,14 @@ Each has: `preview-{id}/dist/` with built Vite app
 ## 🔄 Request Flow Comparison
 
 ### srcDoc (Current)
+
 ```
 Component → IPC Call → Main FS → Read Full File → IPC Response → State → srcDoc
 Time: [IPC overhead + memory serialization]
 ```
 
 ### Protocol (Recommended)
+
 ```
 Component → URL → Protocol Handler → FS Stream → Direct to iframe
 Time: [Minimal overhead + parallel streaming]
@@ -220,6 +237,7 @@ Time: [Minimal overhead + parallel streaming]
 ## 🔗 Related Files (Not Documented Here)
 
 These files exist but are not focused in this guide:
+
 - `src/ipc/ipc_host.ts` - Handler registration
 - `src/preload.ts` - Channel whitelist
 - `src/components/preview_panel/PreviewPanel.tsx` - Panel wrapper
@@ -253,6 +271,7 @@ A: Electron requires scheme registration before app.ready(). Handler registratio
 ## 📞 Questions or Issues?
 
 Refer to the three documentation files:
+
 1. **For design decisions:** PREVIEW_INFRASTRUCTURE_GUIDE.md
 2. **For code details:** PREVIEW_CODE_REFERENCE.md
 3. **For visual understanding:** PREVIEW_VISUAL_MAP.md
@@ -261,4 +280,3 @@ Refer to the three documentation files:
 
 **Last Updated:** February 2025
 **Status:** Complete documentation of existing infrastructure
-

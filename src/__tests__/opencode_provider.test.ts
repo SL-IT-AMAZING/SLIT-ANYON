@@ -235,7 +235,8 @@ describe("OpenCode provider session caching", () => {
       agentName: "Atlas",
     })("dummy-model") as unknown as SessionLookupModel;
 
-    const firstSession = await sisyphusModel.getOrCreateSession("anyon-chat-12");
+    const firstSession =
+      await sisyphusModel.getOrCreateSession("anyon-chat-12");
     const secondSession = await atlasModel.getOrCreateSession("anyon-chat-12");
 
     expect(firstSession.id).toBe("sess-shared");

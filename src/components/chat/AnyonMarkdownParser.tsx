@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { isStreamingByIdAtom, selectedChatIdAtom } from "@/atoms/chatAtoms";
 import type { SuggestedAction } from "@/lib/schemas";
 import { useAtomValue } from "jotai";
+import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
 import { unescapeXmlAttr, unescapeXmlContent } from "../../../shared/xmlEscape";
 import { markdownComponents } from "../chat-v2/MarkdownContent";
 import {
@@ -114,7 +115,8 @@ export const AnyonMarkdownParser: React.FC<AnyonMarkdownParserProps> = ({
   const isStreaming = useAtomValue(isStreamingByIdAtom).get(chatId!) ?? false;
   // Extract content pieces (markdown and custom tags)
   const contentPieces = useMemo(() => {
-    return parseCustomTagsWithDedup(content);
+    const sanitizedContent = sanitizeVisibleOutput(content);
+    return parseCustomTagsWithDedup(sanitizedContent);
   }, [content]);
 
   // Extract error messages and track positions
@@ -198,12 +200,16 @@ function preprocessUnclosedTags(content: string): {
 
     // Track the positions of opening tags
     const openingMatches: RegExpExecArray[] = [];
-    let match;
+    let match: RegExpExecArray | null;
 
     // Reset regex lastIndex to start from the beginning
     openTagPattern.lastIndex = 0;
 
-    while ((match = openTagPattern.exec(processedContent)) !== null) {
+    for (;;) {
+      match = openTagPattern.exec(processedContent);
+      if (match === null) {
+        break;
+      }
       openingMatches.push({ ...match });
     }
 
@@ -244,10 +250,14 @@ function parseCustomTags(content: string): ContentPiece[] {
 
   const contentPieces: ContentPiece[] = [];
   let lastIndex = 0;
-  let match;
+  let match: RegExpExecArray | null;
 
   // Find all custom tags
-  while ((match = tagPattern.exec(processedContent)) !== null) {
+  for (;;) {
+    match = tagPattern.exec(processedContent);
+    if (match === null) {
+      break;
+    }
     const [fullMatch, tag, attributesStr, tagContent] = match;
     const startIndex = match.index;
 
@@ -262,8 +272,12 @@ function parseCustomTags(content: string): ContentPiece[] {
     // Parse attributes and unescape values
     const attributes: Record<string, string> = {};
     const attrPattern = /([\w-]+)="([^"]*)"/g;
-    let attrMatch;
-    while ((attrMatch = attrPattern.exec(attributesStr)) !== null) {
+    let attrMatch: RegExpExecArray | null;
+    for (;;) {
+      attrMatch = attrPattern.exec(attributesStr);
+      if (attrMatch === null) {
+        break;
+      }
       attributes[attrMatch[1]] = unescapeXmlAttr(attrMatch[2]);
     }
 

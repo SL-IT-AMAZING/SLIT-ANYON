@@ -12,11 +12,11 @@ You have **3 comprehensive documents** detailing every rendering branch and guar
 
 ### 🎯 Choose Your Document
 
-| Document | Best For | Length |
-|----------|----------|--------|
-| **[THEME_DOCS_INDEX.md](THEME_DOCS_INDEX.md)** | Navigation & Q&A | 9.6 KB |
-| **[THEME_MENU_QUICK_REFERENCE.md](THEME_MENU_QUICK_REFERENCE.md)** | Fast lookups & debugging | 9.1 KB |
-| **[THEME_RENDERING_MAP.md](THEME_RENDERING_MAP.md)** | Complete technical details | 17 KB |
+| Document                                                           | Best For                   | Length |
+| ------------------------------------------------------------------ | -------------------------- | ------ |
+| **[THEME_DOCS_INDEX.md](THEME_DOCS_INDEX.md)**                     | Navigation & Q&A           | 9.6 KB |
+| **[THEME_MENU_QUICK_REFERENCE.md](THEME_MENU_QUICK_REFERENCE.md)** | Fast lookups & debugging   | 9.1 KB |
+| **[THEME_RENDERING_MAP.md](THEME_RENDERING_MAP.md)**               | Complete technical details | 17 KB  |
 
 ---
 
@@ -30,7 +30,8 @@ You have **3 comprehensive documents** detailing every rendering branch and guar
 )}
 ```
 
-**Impact**: 
+**Impact**:
+
 - ✅ Design Systems **visible on Home page**
 - ❌ Design Systems **hidden in Chat page**
 
@@ -38,14 +39,14 @@ You have **3 comprehensive documents** detailing every rendering branch and guar
 
 ## 🎛️ Option Visibility at a Glance
 
-| Option | Home | Chat | Guard |
-|--------|------|------|-------|
-| No Theme | ✅ | ✅ | None |
-| Builtin Themes | ✅ | ✅ | themes?.map() |
-| **Design System** | **✅*** | **❌** | **appId==null** |
-| Custom Themes | ✅* | ✅* | visibleCustomThemes.len>0 |
-| More Themes | ✅* | ✅* | customThemes.len>4 |
-| Create Theme | ✅ | ✅ | None |
+| Option            | Home     | Chat   | Guard                     |
+| ----------------- | -------- | ------ | ------------------------- |
+| No Theme          | ✅       | ✅     | None                      |
+| Builtin Themes    | ✅       | ✅     | themes?.map()             |
+| **Design System** | **✅\*** | **❌** | **appId==null**           |
+| Custom Themes     | ✅\*     | ✅\*   | visibleCustomThemes.len>0 |
+| More Themes       | ✅\*     | ✅\*   | customThemes.len>4        |
+| Create Theme      | ✅       | ✅     | None                      |
 
 `*` = Requires data loaded
 
@@ -65,12 +66,14 @@ T+chat:  App theme (if appId exists)
 ## 🎯 Key Findings
 
 ### Home Page Context
+
 - appId: `undefined` (not passed)
 - Theme: from settings (`selectedThemeId`)
 - Design System: from settings (`selectedDesignSystemId`)
 - Applied on: app creation
 
 ### Chat Page Context
+
 - appId: number (when app selected)
 - Theme: from app (`appThemeId` via hook)
 - Design System: from settings (read-only)
@@ -81,19 +84,23 @@ T+chat:  App theme (if appId exists)
 ## 📋 Files Analyzed
 
 ### Primary (AuxiliaryActionsMenu.tsx = 412 lines)
+
 All rendering logic lives here:
+
 - Line 220: Design System visibility guard
 - Line 77-98: Custom theme limiting algorithm
 - Line 103-112: Theme selection with appId branch
 - Line 126-129: Design system selection blocking
 
 ### Supporting Components
+
 - `src/pages/home.tsx` (app creation context)
 - `src/pages/chat.tsx` (chat page setup)
 - `src/components/chat/ChatInput.tsx` (appId source)
 - `src/components/chat/HomeChatInput.tsx` (home menu)
 
 ### Data Hooks
+
 - `useThemes()` → builtin themes (placeholder)
 - `useCustomThemes()` → custom themes (IPC)
 - `useDesignSystems()` → design systems (IPC)
@@ -122,21 +129,25 @@ All rendering logic lives here:
 ## 🚀 Common Tasks
 
 ### "Why isn't Design System visible in Chat?"
+
 → See [THEME_MENU_QUICK_REFERENCE.md](THEME_MENU_QUICK_REFERENCE.md) → "Design System Visibility Matrix"
 
 **Answer**: Line 220 guard: `appId == null &&` prevents rendering when appId is a number (chat context)
 
 ### "How does custom theme limiting work?"
+
 → See [THEME_RENDERING_MAP.md](THEME_RENDERING_MAP.md) → "SECTION E: Custom Themes Section"
 
 **Answer**: useMemo lines 77-98 shows selected + up to 3 others (max 4)
 
 ### "Where's the app creation with design system?"
+
 → See [THEME_MENU_QUICK_REFERENCE.md](THEME_MENU_QUICK_REFERENCE.md) → "Selection Persistence"
 
 **Answer**: home.tsx line 136: `designSystemId: settings?.selectedDesignSystemId`
 
 ### "How do I test this?"
+
 → See [THEME_RENDERING_MAP.md](THEME_RENDERING_MAP.md) → "TEST IDS (For QA/Testing)"
 
 **Answer**: Use test IDs like `design-system-option-${id}`, `theme-option-custom:${id}`
@@ -145,14 +156,14 @@ All rendering logic lives here:
 
 ## 📍 Critical Line Numbers
 
-| File | Line(s) | What |
-|------|---------|------|
+| File                 | Line(s) | What                           |
+| -------------------- | ------- | ------------------------------ |
 | AuxiliaryActionsMenu | **220** | Design System visibility guard |
-| AuxiliaryActionsMenu | 72-74 | currentThemeId logic |
-| AuxiliaryActionsMenu | 77-98 | Custom theme limiting |
-| ChatInput | 496 | appId prop pass |
-| home.tsx | 136 | designSystemId on create |
-| useSettings | 34-47 | Settings hydration |
+| AuxiliaryActionsMenu | 72-74   | currentThemeId logic           |
+| AuxiliaryActionsMenu | 77-98   | Custom theme limiting          |
+| ChatInput            | 496     | appId prop pass                |
+| home.tsx             | 136     | designSystemId on create       |
+| useSettings          | 34-47   | Settings hydration             |
 
 ---
 
@@ -185,6 +196,7 @@ All rendering logic lives here:
 ## 📝 Document Summary
 
 ### THEME_RENDERING_MAP.md (17 KB)
+
 - Complete section-by-section breakdown (A-G)
 - Every guard condition explained
 - Data loading flow with 5 hooks
@@ -194,6 +206,7 @@ All rendering logic lives here:
 - Data dependencies table
 
 ### THEME_MENU_QUICK_REFERENCE.md (9.1 KB)
+
 - Quick lookup tables
 - Decision tree for design systems
 - Common issues & debugging
@@ -203,6 +216,7 @@ All rendering logic lives here:
 - State variable explanations
 
 ### THEME_DOCS_INDEX.md (9.6 KB)
+
 - Master navigation guide
 - Q&A by topic
 - Core findings summary
@@ -221,4 +235,4 @@ All rendering logic lives here:
 
 ---
 
-*No edits made. Read-only analysis complete.*
+_No edits made. Read-only analysis complete._

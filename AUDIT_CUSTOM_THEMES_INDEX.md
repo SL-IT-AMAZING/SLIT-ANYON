@@ -1,9 +1,11 @@
 # Custom Themes Audit - Complete Documentation Index
 
 ## 📄 Main Audit Document
+
 **File:** `AUDIT_CUSTOM_THEMES.md` (940 lines, 31KB)
 
 ### Contents
+
 1. **Executive Summary** (570 lines)
    - Overview of the problem and root causes
    - 6 concrete failure scenarios with detailed analysis
@@ -48,31 +50,37 @@
 ## 📊 Failure Scenarios at a Glance
 
 ### 1️⃣ Initial Load Race Condition (PRIMARY)
+
 - **Files:** useCustomThemes.ts:28, AuxiliaryActionsMenu.tsx:62, 210
 - **When:** Component mounts, query fetching
 - **Effect:** customThemes = [] → gate check fails → not rendered
 
-### 2️⃣ Query State Not Exposed  
+### 2️⃣ Query State Not Exposed
+
 - **File:** AuxiliaryActionsMenu.tsx:62
 - **Issue:** Only destructures customThemes, ignores isLoading
 - **Effect:** No conditional rendering based on loading state
 
 ### 3️⃣ Filtering Empty Array
+
 - **Files:** AuxiliaryActionsMenu.tsx:73-94, 210
 - **Issue:** useMemo processes empty array during load
 - **Effect:** visibleCustomThemes = [] → not rendered
 
 ### 4️⃣ Query Invalidation Race Condition
+
 - **Files:** useCustomThemes.ts:44-48, AuxiliaryActionsMenu.tsx:121-129
 - **Issue:** Same query key invalidated twice in succession
 - **Effect:** Race conditions, multiple refetch cycles
 
 ### 5️⃣ currentThemeId Mismatch
+
 - **Files:** AuxiliaryActionsMenu.tsx:69-70, 77-79
 - **Issue:** currentThemeId = null during app theme loading
 - **Effect:** Selected custom theme not highlighted
 
 ### 6️⃣ No Placeholder Data
+
 - **File:** useCustomThemes.ts:28
 - **Compare:** useThemes.ts:12 has placeholderData ✓
 - **Issue:** Missing fallback data during load
@@ -82,14 +90,14 @@
 
 ## 🔴 Critical Code Lines
 
-| Issue | File | Line(s) | Problem |
-|-------|------|---------|---------|
-| **GATE CONDITION** | AuxiliaryActionsMenu.tsx | 210 | `{visibleCustomThemes.length > 0 && ...}` - blocks rendering |
-| **Missing isLoading** | AuxiliaryActionsMenu.tsx | 62 | Only destructures customThemes, ignores isLoading |
-| **Empty on Load** | useCustomThemes.ts | 28 | Returns `[]` during fetch instead of data |
-| **Filter on Empty** | AuxiliaryActionsMenu.tsx | 73-94 | useMemo processes empty array during load |
-| **Double Invalidate 1** | useCustomThemes.ts | 44-48 | Mutation onSuccess invalidates query |
-| **Double Invalidate 2** | AuxiliaryActionsMenu.tsx | 121-129 | Dialog onOpenChange also invalidates query |
+| Issue                   | File                     | Line(s) | Problem                                                      |
+| ----------------------- | ------------------------ | ------- | ------------------------------------------------------------ |
+| **GATE CONDITION**      | AuxiliaryActionsMenu.tsx | 210     | `{visibleCustomThemes.length > 0 && ...}` - blocks rendering |
+| **Missing isLoading**   | AuxiliaryActionsMenu.tsx | 62      | Only destructures customThemes, ignores isLoading            |
+| **Empty on Load**       | useCustomThemes.ts       | 28      | Returns `[]` during fetch instead of data                    |
+| **Filter on Empty**     | AuxiliaryActionsMenu.tsx | 73-94   | useMemo processes empty array during load                    |
+| **Double Invalidate 1** | useCustomThemes.ts       | 44-48   | Mutation onSuccess invalidates query                         |
+| **Double Invalidate 2** | AuxiliaryActionsMenu.tsx | 121-129 | Dialog onOpenChange also invalidates query                   |
 
 ---
 
@@ -135,18 +143,23 @@
 ## 🔍 How to Read This Audit
 
 ### For a Quick Overview
+
 Start with the **Quick Reference Guide** section at the end of AUDIT_CUSTOM_THEMES.md
 
 ### For Understanding the Failure Chain
+
 Read the **Failure Chain Analysis** section with ASCII diagrams
 
 ### For Implementation Understanding
+
 Read the **Executive Summary** section covering each scenario
 
 ### For Code Line Details
+
 Refer to the **Exact Code Lines Summary** table
 
 ### For Hook Behavior
+
 Review the **Hook Data Loading States** section
 
 ---
@@ -216,7 +229,8 @@ Review the **Hook Data Loading States** section
 ```
 
 This condition blocks rendering when:
-- ✗ Query is loading (visibleCustomThemes = [])  ← PRIMARY ISSUE
+
+- ✗ Query is loading (visibleCustomThemes = []) ← PRIMARY ISSUE
 - ✓ No custom themes exist (legitimate)
 - ✓ All filtered out (edge case)
 

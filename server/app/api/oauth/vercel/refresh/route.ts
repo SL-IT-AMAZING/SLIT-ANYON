@@ -6,7 +6,10 @@ export async function POST(request: NextRequest) {
 
   if (!refreshToken) {
     return NextResponse.json(
-      { error: "Missing refreshToken" },
+      {
+        error:
+          "Missing refreshToken. Integration tokens are long-lived and do not require refresh.",
+      },
       { status: 400 },
     );
   }

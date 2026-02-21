@@ -39,11 +39,13 @@
 ## 📚 Document Directory
 
 ### 1. README_PREVIEW_INFRASTRUCTURE.md
+
 **Purpose:** Entry point and navigation guide
 **Length:** 6 KB
 **Format:** Structured with emojis, tables, quick reference
 
 **Contains:**
+
 - What each document covers and why
 - Quick answer FAQ
 - File quick reference table
@@ -53,6 +55,7 @@
 - Architecture decision matrix
 
 **Best for:**
+
 - Beginners
 - Quick lookup
 - Navigation
@@ -60,11 +63,13 @@
 ---
 
 ### 2. PREVIEW_INFRASTRUCTURE_GUIDE.md
+
 **Purpose:** Complete architecture and design documentation
 **Length:** 12 KB  
 **Format:** Prose with code blocks and examples
 
 **Contains:**
+
 - Executive summary (2 preview systems)
 - Architecture decisions (3 options for template preview)
 - File locations reference
@@ -78,6 +83,7 @@
 - File summary table
 
 **Best for:**
+
 - Understanding "why"
 - Design decisions
 - Planning implementation
@@ -86,11 +92,13 @@
 ---
 
 ### 3. PREVIEW_CODE_REFERENCE.md
+
 **Purpose:** Complete code listings and implementation details
 **Length:** 14 KB
 **Format:** Code blocks with inline comments
 
 **Contains:**
+
 - Complete `src/main/preview-protocol.ts` source
 - Complete `src/ipc/utils/preview_server_manager.ts` source
 - Template detail page code excerpt
@@ -106,6 +114,7 @@
 - Integration points
 
 **Best for:**
+
 - Implementation reference
 - Code understanding
 - Copy-paste snippets
@@ -114,11 +123,13 @@
 ---
 
 ### 4. PREVIEW_VISUAL_MAP.md
+
 **Purpose:** Visual diagrams and flowcharts
 **Length:** 30 KB
 **Format:** ASCII art diagrams with annotations
 
 **Contains:**
+
 - System architecture diagram
 - Request flow: Design system preview (anyon-preview://)
 - Request flow: Template preview (srcDoc)
@@ -129,6 +140,7 @@
 - Memory comparison charts
 
 **Best for:**
+
 - Visual learners
 - Understanding flow
 - Decision trees
@@ -154,35 +166,40 @@ README_PREVIEW_INFRASTRUCTURE.md (Entry)
 ## 🎓 Reading Paths by Role
 
 ### Role: Product Manager / Architect
+
 1. README_PREVIEW_INFRASTRUCTURE.md (all sections)
 2. PREVIEW_INFRASTRUCTURE_GUIDE.md (sections 1-3, 7)
 3. PREVIEW_VISUAL_MAP.md (sections 1, 2, 3)
-**Time: 30 minutes**
+   **Time: 30 minutes**
 
 ### Role: Implementation Engineer
+
 1. README_PREVIEW_INFRASTRUCTURE.md (Quick Answer Guide)
 2. PREVIEW_INFRASTRUCTURE_GUIDE.md (sections 4-7)
 3. PREVIEW_CODE_REFERENCE.md (sections 1-5)
 4. PREVIEW_VISUAL_MAP.md (sections 5-7)
-**Time: 45 minutes**
+   **Time: 45 minutes**
 
 ### Role: Security Reviewer
+
 1. PREVIEW_INFRASTRUCTURE_GUIDE.md (Security Model)
 2. PREVIEW_CODE_REFERENCE.md (full)
 3. PREVIEW_VISUAL_MAP.md (sections 5-6)
-**Time: 30 minutes**
+   **Time: 30 minutes**
 
 ### Role: Debugger
+
 1. README_PREVIEW_INFRASTRUCTURE.md (FAQ)
 2. PREVIEW_VISUAL_MAP.md (sections 2, 3, 5, 6)
 3. PREVIEW_CODE_REFERENCE.md (Error Scenarios)
-**Time: 20 minutes**
+   **Time: 20 minutes**
 
 ---
 
 ## 📋 Content Map by Topic
 
 ### anyon-preview:// Protocol
+
 - **Overview:** README_PREVIEW_INFRASTRUCTURE.md → Key Concepts
 - **Architecture:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Section 1
 - **Code:** PREVIEW_CODE_REFERENCE.md → Section 1
@@ -190,34 +207,40 @@ README_PREVIEW_INFRASTRUCTURE.md (Entry)
 - **Security:** PREVIEW_VISUAL_MAP.md → Section 6
 
 ### Template Preview (Current - srcDoc)
+
 - **Overview:** README_PREVIEW_INFRASTRUCTURE.md → Quick Answer Guide
 - **Architecture:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Section 6
 - **Code:** PREVIEW_CODE_REFERENCE.md → Section 3
 - **Flow:** PREVIEW_VISUAL_MAP.md → Section 3, 7
 
 ### Template Preview (Recommended - Extended Protocol)
+
 - **Decision:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Section 4
 - **Implementation:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Section 7
 - **Code:** PREVIEW_CODE_REFERENCE.md → Section 1, 6
 - **Visual:** PREVIEW_VISUAL_MAP.md → Sections 4, 5
 
 ### Design Systems
+
 - **List:** README_PREVIEW_INFRASTRUCTURE.md → Key Concepts
 - **Config:** PREVIEW_CODE_REFERENCE.md → Section 6
 - **Directory:** PREVIEW_VISUAL_MAP.md → Section 4
 
 ### Security
+
 - **Overview:** README_PREVIEW_INFRASTRUCTURE.md → Security Features
 - **Detailed:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Security Model
 - **Code:** PREVIEW_CODE_REFERENCE.md → Full protocol code
 - **Decision Tree:** PREVIEW_VISUAL_MAP.md → Section 6
 
 ### File Serving
+
 - **How it works:** PREVIEW_INFRASTRUCTURE_GUIDE.md → Protocol section
 - **URL Parsing:** PREVIEW_VISUAL_MAP.md → Section 5
 - **Examples:** PREVIEW_CODE_REFERENCE.md → File Serving Examples
 
 ### IPC Integration
+
 - **Contracts:** PREVIEW_CODE_REFERENCE.md → Section 5
 - **Handlers:** PREVIEW_CODE_REFERENCE.md → Section 4
 - **Communication:** PREVIEW_VISUAL_MAP.md → Section 7
@@ -243,13 +266,13 @@ Looking for...
 
 ## 📊 Document Statistics
 
-| Document | Size | Pages | Code % | Diagrams |
-|----------|------|-------|--------|----------|
-| README_PREVIEW_INFRASTRUCTURE.md | 6 KB | 1 | 20% | 10 |
-| PREVIEW_INFRASTRUCTURE_GUIDE.md | 12 KB | 2 | 30% | 0 |
-| PREVIEW_CODE_REFERENCE.md | 14 KB | 3 | 80% | 0 |
-| PREVIEW_VISUAL_MAP.md | 30 KB | 4 | 10% | 8 |
-| **TOTAL** | **62 KB** | **10** | **40%** | **18** |
+| Document                         | Size      | Pages  | Code %  | Diagrams |
+| -------------------------------- | --------- | ------ | ------- | -------- |
+| README_PREVIEW_INFRASTRUCTURE.md | 6 KB      | 1      | 20%     | 10       |
+| PREVIEW_INFRASTRUCTURE_GUIDE.md  | 12 KB     | 2      | 30%     | 0        |
+| PREVIEW_CODE_REFERENCE.md        | 14 KB     | 3      | 80%     | 0        |
+| PREVIEW_VISUAL_MAP.md            | 30 KB     | 4      | 10%     | 8        |
+| **TOTAL**                        | **62 KB** | **10** | **40%** | **18**   |
 
 ---
 
@@ -285,20 +308,19 @@ Before committing code:
 
 ## 📞 When to Use Which Document
 
-| Question | Document | Section |
-|----------|----------|---------|
-| Where is the protocol? | README | Key Concepts |
+| Question                    | Document             | Section                |
+| --------------------------- | -------------------- | ---------------------- |
+| Where is the protocol?      | README               | Key Concepts           |
 | Why extend vs new protocol? | INFRASTRUCTURE_GUIDE | Architecture Decisions |
-| Show me the code | CODE_REFERENCE | 1-6 |
-| How does URL parsing work? | VISUAL_MAP | 5 |
-| What security checks exist? | VISUAL_MAP | 6 |
-| What are error scenarios? | CODE_REFERENCE | Error Scenarios |
-| How do I debug? | README + VISUAL_MAP | FAQ + Sections 2,3,5,6 |
-| What's the migration path? | INFRASTRUCTURE_GUIDE | Migration Path |
-| Quick facts? | README | Quick Answer Guide |
+| Show me the code            | CODE_REFERENCE       | 1-6                    |
+| How does URL parsing work?  | VISUAL_MAP           | 5                      |
+| What security checks exist? | VISUAL_MAP           | 6                      |
+| What are error scenarios?   | CODE_REFERENCE       | Error Scenarios        |
+| How do I debug?             | README + VISUAL_MAP  | FAQ + Sections 2,3,5,6 |
+| What's the migration path?  | INFRASTRUCTURE_GUIDE | Migration Path         |
+| Quick facts?                | README               | Quick Answer Guide     |
 
 ---
 
 **Last Updated:** February 2025
 **Status:** Complete
-

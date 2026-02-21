@@ -23,6 +23,8 @@ export async function exchangeCodeForToken(
   access_token: string;
   refresh_token: string;
   expires_in: number;
+  team_id?: string;
+  installation_id?: string;
 }> {
   const response = await fetch(tokenUrl, {
     method: "POST",

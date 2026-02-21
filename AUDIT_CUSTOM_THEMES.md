@@ -1,6 +1,7 @@
 # AuxiliaryActionsMenu Custom Themes Audit Report
 
 ## Executive Summary
+
 The "Home '+' themes submenu appears empty except defaults" issue stems from **multiple conditional rendering blocks** that prevent custom themes from displaying when the query is loading, partially loaded, or returns empty results. The problem manifests through timing/data synchronization issues between hook initialization, query fetching, and UI rendering.
 
 ---
@@ -8,8 +9,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ## Concrete Failure Scenarios
 
 ### SCENARIO 1: Initial Page Load / Race Condition
+
 **WHEN:** Component mounts and `useCustomThemes()` starts fetching
 **WHAT HAPPENS:**
+
 - `useCustomThemes()` initializes with `queryFn` that calls `ipc.template.getCustomThemes()`
 - During async fetch, `customThemes = query.data ?? []` (line 28 in useCustomThemes.ts)
 - **Until the query resolves, `customThemes` is an empty array** `[]`
@@ -20,6 +23,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
   - Evaluates to: `0 > 0` = `false` → **Custom themes section NOT rendered**
 
 **CODE LINES CAUSING ISSUE:**
+
 - `useCustomThemes.ts:28` - Returns empty array during loading
 - `AuxiliaryActionsMenu.tsx:210` - Conditional render depends on `visibleCustomThemes.length > 0`
 - `AuxiliaryActionsMenu.tsx:96` - `hasMoreCustomThemes` logic assumes data is loaded
@@ -29,8 +33,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ---
 
 ### SCENARIO 2: Query State Not Exposed
+
 **WHEN:** Checking if `useCustomThemes()` is loading
 **WHAT HAPPENS:**
+
 - `useCustomThemes()` hook (line 16-32 in useCustomThemes.ts) exposes:
   - `customThemes` (data or empty array)
   - `isLoading`
@@ -45,6 +51,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 - **Custom themes section renders nothing while loading** (empty array scenario above)
 
 **CODE LINES CAUSING ISSUE:**
+
 - `AuxiliaryActionsMenu.tsx:62` - Only extracts `customThemes`, ignores `isLoading` + `error`
 - `AuxiliaryActionsMenu.tsx:73-94` - `useMemo` for `visibleCustomThemes` depends on empty data
 - No conditional checks for loading state in dropdown menu rendering
@@ -54,8 +61,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ---
 
 ### SCENARIO 3: Filtering Logic With Empty Initial Data
+
 **WHEN:** `visibleCustomThemes` is computed during initial load
 **WHAT HAPPENS:**
+
 - Line 73-94 in AuxiliaryActionsMenu.tsx - `useMemo` computes visible themes:
   ```tsx
   const visibleCustomThemes = useMemo(() => {
@@ -91,6 +100,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 - **Since `visibleCustomThemes.length` is 0, the entire custom themes section is NOT rendered**
 
 **CODE LINES CAUSING ISSUE:**
+
 - `AuxiliaryActionsMenu.tsx:73-94` - Filters against empty array during load
 - `AuxiliaryActionsMenu.tsx:210` - Hides section when filtered result is empty
 - No distinction between "loading" and "no data" states
@@ -100,8 +110,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ---
 
 ### SCENARIO 4: Query Invalidation After Theme Creation - Timing Issue
+
 **WHEN:** User creates a custom theme in CustomThemeDialog, then the dialog closes
 **WHAT HAPPENS:**
+
 1. In CustomThemeDialog.tsx (line 82-88):
    ```tsx
    const createdTheme = await createThemeMutation.mutateAsync({
@@ -160,6 +172,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 6. **RACE CONDITION:** Two invalidations happening - potential for state sync issues
 
 **CODE LINES CAUSING ISSUE:**
+
 - `useCustomThemes.ts:44-48` - Mutation invalidates on success
 - `AuxiliaryActionsMenu.tsx:121-129` - Dialog also invalidates on close
 - `AuxiliaryActionsMenu.tsx:309-312` - Creates timing window between mutation and invalidation
@@ -170,8 +183,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ---
 
 ### SCENARIO 5: currentThemeId Mismatch Hiding All Custom Themes
+
 **WHEN:** Comparing currentThemeId with custom theme IDs
 **WHAT HAPPENS:**
+
 1. Line 69-70 in AuxiliaryActionsMenu.tsx:
    ```tsx
    const currentThemeId =
@@ -193,6 +208,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
    - If current app theme is a custom theme BUT was stored differently, the filter won't match
 
 **CODE LINES CAUSING ISSUE:**
+
 - `AuxiliaryActionsMenu.tsx:69-70` - Determines currentThemeId
 - `AuxiliaryActionsMenu.tsx:77-79` - Filter depends on exact string match `custom:${t.id}`
 - `useAppTheme.ts:23` - Returns null during loading
@@ -203,8 +219,10 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ---
 
 ### SCENARIO 6: Dropdown Menu Closed During Query Load
+
 **WHEN:** User opens dropdown menu while query is fetching
 **WHAT HAPPENS:**
+
 1. User clicks "+" button, dropdown opens (line 133 in AuxiliaryActionsMenu.tsx)
 2. At this exact moment, `useCustomThemes()` is still fetching
 3. `customThemes = []` (loading state)
@@ -217,6 +235,7 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 6. **If user closes menu before query completes, sees empty submenu**
 
 **CODE LINES CAUSING ISSUE:**
+
 - `AuxiliaryActionsMenu.tsx:62` - Destructures without checking `isLoading`
 - `AuxiliaryActionsMenu.tsx:210` - Gate-keeper condition that fails during load
 - `useCustomThemes.ts:17-25` - No `staleTime` or `cacheTime` optimization
@@ -229,12 +248,13 @@ The "Home '+' themes submenu appears empty except defaults" issue stems from **m
 ## Hook Data Loading States
 
 ### useCustomThemes Hook (useCustomThemes.ts:16-32)
+
 ```typescript
 export function useCustomThemes() {
   const query = useQuery({
     queryKey: queryKeys.customThemes.all,
     queryFn: async (): Promise<CustomTheme[]> => {
-      return ipc.template.getCustomThemes();  // <-- IPC call to main process
+      return ipc.template.getCustomThemes(); // <-- IPC call to main process
     },
     meta: {
       showErrorToast: true,
@@ -242,7 +262,7 @@ export function useCustomThemes() {
   });
 
   return {
-    customThemes: query.data ?? [],  // <-- EMPTY ARRAY DURING LOADING
+    customThemes: query.data ?? [], // <-- EMPTY ARRAY DURING LOADING
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
@@ -251,6 +271,7 @@ export function useCustomThemes() {
 ```
 
 **Key observations:**
+
 - ✗ No `enabled` condition to prevent fetch on init
 - ✗ No `staleTime` or `gcTime` optimization
 - ✗ No `placeholderData` (unlike useThemes which has `placeholderData: themesData`)
@@ -260,6 +281,7 @@ export function useCustomThemes() {
 ---
 
 ### useThemes Hook (useThemes.ts:6-23)
+
 ```typescript
 export function useThemes() {
   const query = useQuery({
@@ -267,14 +289,14 @@ export function useThemes() {
     queryFn: async (): Promise<Theme[]> => {
       return ipc.template.getThemes();
     },
-    placeholderData: themesData,  // <-- PLACEHOLDER DATA
+    placeholderData: themesData, // <-- PLACEHOLDER DATA
     meta: {
       showErrorToast: true,
     },
   });
 
   return {
-    themes: query.data,  // <-- NEVER EMPTY (has placeholderData)
+    themes: query.data, // <-- NEVER EMPTY (has placeholderData)
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
@@ -283,6 +305,7 @@ export function useThemes() {
 ```
 
 **Comparison:**
+
 - ✓ Uses `placeholderData: themesData` so themes are never empty
 - ✓ Built-in themes always visible because `query.data` always has value
 - ✗ Custom themes use same pattern BUT no placeholder = empty during load
@@ -290,6 +313,7 @@ export function useThemes() {
 ---
 
 ### useAppTheme Hook (useAppTheme.ts:5-27)
+
 ```typescript
 export function useAppTheme(appId: number | undefined) {
   const queryClient = useQueryClient();
@@ -299,11 +323,11 @@ export function useAppTheme(appId: number | undefined) {
     queryFn: async (): Promise<string | null> => {
       return ipc.template.getAppTheme({ appId: appId! });
     },
-    enabled: !!appId,  // <-- Only fetches if appId exists
+    enabled: !!appId, // <-- Only fetches if appId exists
   });
 
   return {
-    themeId: query.data ?? null,  // <-- NULL DURING LOADING
+    themeId: query.data ?? null, // <-- NULL DURING LOADING
     isLoading: query.isLoading,
     error: query.error,
     invalidate,
@@ -312,6 +336,7 @@ export function useAppTheme(appId: number | undefined) {
 ```
 
 **Key observations:**
+
 - ✓ Properly gated with `enabled: !!appId`
 - ✗ Returns `null` during loading (but this is intentional)
 - ✗ When loading, `currentThemeId` becomes `null`, so no custom theme appears selected
@@ -319,6 +344,7 @@ export function useAppTheme(appId: number | undefined) {
 ---
 
 ### useSettings Hook (useSettings.ts:22-93)
+
 ```typescript
 export function useSettings() {
   const [settings, setSettingsAtom] = useAtom(userSettingsAtom);
@@ -353,6 +379,7 @@ export function useSettings() {
 ```
 
 **Key observations:**
+
 - ✗ Settings loaded via Jotai atom, not React Query
 - ✗ `selectedThemeId` may be undefined during initial load
 - ✗ No sync with React Query cache
@@ -362,7 +389,9 @@ export function useSettings() {
 ## Query Invalidation Behavior
 
 ### Creation Flow Issues (CustomThemeDialog → AuxiliaryActionsMenu)
+
 **File: useCustomThemes.ts (line 44-48)**
+
 ```typescript
 onSuccess: () => {
   queryClient.invalidateQueries({
@@ -372,6 +401,7 @@ onSuccess: () => {
 ```
 
 **File: AuxiliaryActionsMenu.tsx (line 121-129)**
+
 ```typescript
 const handleCustomThemeDialogClose = (open: boolean) => {
   setCustomThemeDialogOpen(open);
@@ -385,10 +415,12 @@ const handleCustomThemeDialogClose = (open: boolean) => {
 ```
 
 **ISSUE:** Invalidation happens in TWO places:
+
 1. Mutation's `onSuccess` callback (immediate)
 2. Dialog's `onOpenChange` handler (when dialog closes)
 
 **Timeline:**
+
 ```
 T0: User clicks "New Theme" in dialog
 T1: Creates theme via mutation
@@ -406,38 +438,42 @@ T6: Potential race condition with setAppTheme IPC call
 **File: AuxiliaryActionsMenu.tsx (line 73-94)**
 
 ### Problem 1: Empty Array Evaluation
+
 ```typescript
 const visibleCustomThemes = useMemo(() => {
   const MAX_VISIBLE = 4;
-  
+
   // During loading: customThemes = []
   const selectedCustomTheme = customThemes.find(
     (t) => `custom:${t.id}` === currentThemeId,
   );
   // Result: undefined
-  
+
   const otherCustomThemes = customThemes.filter(
     (t) => `custom:${t.id}` !== currentThemeId,
   );
   // Result: []
-  
+
   const result = [];
-  if (selectedCustomTheme) {  // FALSE when loading
+  if (selectedCustomTheme) {
+    // FALSE when loading
     result.push(selectedCustomTheme);
   }
-  
+
   const remaining = MAX_VISIBLE - result.length;
   result.push(...otherCustomThemes.slice(0, remaining));
-  
-  return result;  // Returns [] during loading
+
+  return result; // Returns [] during loading
 }, [customThemes, currentThemeId]);
 ```
 
 **During loading:**
+
 - Input: `customThemes = []`
 - Output: `visibleCustomThemes = []`
 
 ### Problem 2: Rendering Gate
+
 ```typescript
 {visibleCustomThemes.length > 0 && (
   <>
@@ -448,23 +484,27 @@ const visibleCustomThemes = useMemo(() => {
 ```
 
 **When `visibleCustomThemes.length === 0`:**
+
 - Entire custom themes section is hidden
 - No loading indicator
 - No "No custom themes" message
 - **Just silently disappears**
 
 ### Problem 3: hasMoreCustomThemes Logic
+
 ```typescript
 const hasMoreCustomThemes = customThemes.length > visibleCustomThemes.length;
 ```
 
 **During loading:**
+
 - `customThemes.length = 0`
 - `visibleCustomThemes.length = 0`
 - `hasMoreCustomThemes = 0 > 0 = false`
 - "More themes" option never appears
 
 **If themes are cached:**
+
 - `customThemes.length = 5`
 - `visibleCustomThemes.length = 4`
 - `hasMoreCustomThemes = 5 > 4 = true`
@@ -475,6 +515,7 @@ const hasMoreCustomThemes = customThemes.length > visibleCustomThemes.length;
 ## Query Key Factory Analysis
 
 **File: queryKeys.ts (line 167-169)**
+
 ```typescript
 customThemes: {
   all: ["custom-themes"] as const,
@@ -482,6 +523,7 @@ customThemes: {
 ```
 
 **Issues:**
+
 - ✗ Single flat key, no hierarchical structure for partial invalidation
 - ✗ No per-app theme keys (unlike `appTheme.byApp({ appId })`)
 - ✗ All custom theme queries invalidated globally, not per-app
@@ -491,51 +533,62 @@ customThemes: {
 
 ## Summary Table: Empty Submenu Root Causes
 
-| Scenario | Root Cause | Code Line(s) | Exposed State | Condition Fails |
-|----------|-----------|--------------|---------------|-----------------|
-| **Initial Load Race** | `customThemes = []` during fetch | useCustomThemes.ts:28 | ✗ isLoading not used | AuxiliaryActionsMenu.tsx:210 |
-| **No Loading State Check** | Only destructure `customThemes` | AuxiliaryActionsMenu.tsx:62 | ✗ isLoading exists but ignored | visibleCustomThemes.length > 0 |
-| **Filtering Empty Array** | useMemo processes `[]` | AuxiliaryActionsMenu.tsx:73-94 | ✗ Cannot distinguish load vs empty | visibleCustomThemes = [] |
-| **Timing Issue on Creation** | Double invalidation | useCustomThemes.ts:44-48 + AuxiliaryActionsMenu.tsx:121-129 | ✓ Works but inefficient | Race condition potential |
-| **currentThemeId Mismatch** | Null during loading | AuxiliaryActionsMenu.tsx:69-70 | ✗ No loading state for themeId | Filter never matches during load |
-| **No Placeholder Data** | useCustomThemes lacks fallback | useCustomThemes.ts:28 | ✗ Compare to useThemes.ts:12 | visibleCustomThemes = [] |
+| Scenario                     | Root Cause                       | Code Line(s)                                                | Exposed State                      | Condition Fails                  |
+| ---------------------------- | -------------------------------- | ----------------------------------------------------------- | ---------------------------------- | -------------------------------- |
+| **Initial Load Race**        | `customThemes = []` during fetch | useCustomThemes.ts:28                                       | ✗ isLoading not used               | AuxiliaryActionsMenu.tsx:210     |
+| **No Loading State Check**   | Only destructure `customThemes`  | AuxiliaryActionsMenu.tsx:62                                 | ✗ isLoading exists but ignored     | visibleCustomThemes.length > 0   |
+| **Filtering Empty Array**    | useMemo processes `[]`           | AuxiliaryActionsMenu.tsx:73-94                              | ✗ Cannot distinguish load vs empty | visibleCustomThemes = []         |
+| **Timing Issue on Creation** | Double invalidation              | useCustomThemes.ts:44-48 + AuxiliaryActionsMenu.tsx:121-129 | ✓ Works but inefficient            | Race condition potential         |
+| **currentThemeId Mismatch**  | Null during loading              | AuxiliaryActionsMenu.tsx:69-70                              | ✗ No loading state for themeId     | Filter never matches during load |
+| **No Placeholder Data**      | useCustomThemes lacks fallback   | useCustomThemes.ts:28                                       | ✗ Compare to useThemes.ts:12       | visibleCustomThemes = []         |
 
 ---
 
 ## Exact Code Lines Summary
 
 ### CRITICAL GATE CONDITION (Line 210 in AuxiliaryActionsMenu.tsx)
+
 ```tsx
 210: {visibleCustomThemes.length > 0 && (
 ```
+
 This single condition hides all custom themes when:
+
 - Query is loading
 - Query returns empty array
 - Filtering produces empty result
 - **No distinction between these cases**
 
 ### MISSING ISLOADING CHECK (Line 62 in AuxiliaryActionsMenu.tsx)
+
 ```tsx
 62: const { customThemes } = useCustomThemes();
 ```
+
 Should also destructure `isLoading`:
+
 ```tsx
 const { customThemes, isLoading } = useCustomThemes();
 ```
 
 ### EMPTY ARRAY DURING LOADING (Line 28 in useCustomThemes.ts)
+
 ```tsx
 28: customThemes: query.data ?? [],
 ```
+
 Returns `[]` when `query.data` is undefined (loading state)
 
 ### FILTERING EMPTY ARRAY (Lines 73-94 in AuxiliaryActionsMenu.tsx)
+
 ```tsx
 73-94: useMemo(() => { ... }, [customThemes, currentThemeId])
 ```
+
 Processes empty `customThemes = []` during load, returns empty result
 
 ### DOUBLE INVALIDATION (Lines 44-48 + 121-129)
+
 ```tsx
 // useCustomThemes.ts:44-48
 onSuccess: () => {
@@ -564,221 +617,213 @@ if (!open) {
 4. **No loading state or placeholder to show while fetching**
 
 **Secondary Issues:**
+
 - `isLoading` state is exposed by the hook but never used
 - No distinction between "loading" and "no custom themes exist"
 - Double invalidation creates potential race conditions
 - `currentThemeId` becomes null during app theme loading, breaking selection logic
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  CUSTOM THEMES SUBMENU EMPTY - FAILURE CHAIN ANALYSIS                       │
-└─────────────────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ CUSTOM THEMES SUBMENU EMPTY - FAILURE CHAIN ANALYSIS │
+  └─────────────────────────────────────────────────────────────────────────────┘
 
 CHAIN 1: INITIAL LOAD RACE CONDITION (PRIMARY FAILURE)
 ═══════════════════════════════════════════════════════
 
 Component Mounts
-      ↓
+↓
 useCustomThemes() Hook Called
-      ↓
+↓
 Query Starts: ipc.template.getCustomThemes() [ASYNC]
-      ↓
+↓
 During Fetch: query.data = undefined
-      ↓
+↓
 Return: customThemes: query.data ?? [] = [] (EMPTY ARRAY)
-      ↓
+↓
 AuxiliaryActionsMenu Line 62: const { customThemes } = useCustomThemes()
-      ↓
+↓
 customThemes = []
-      ↓
-visibleCustomThemes useMemo (Line 73-94) Evaluates:
-      - selectedCustomTheme = [].find(...) = undefined
-      - otherCustomThemes = [].filter(...) = []
-      - result = [] (EMPTY)
-      ↓
-Line 210 Gate Condition: {visibleCustomThemes.length > 0 && (...)}
-      - Evaluates: 0 > 0 = FALSE
-      ↓
+↓
+visibleCustomThemes useMemo (Line 73-94) Evaluates: - selectedCustomTheme = [].find(...) = undefined - otherCustomThemes = [].filter(...) = [] - result = [] (EMPTY)
+↓
+Line 210 Gate Condition: {visibleCustomThemes.length > 0 && (...)} - Evaluates: 0 > 0 = FALSE
+↓
 🔴 CUSTOM THEMES SECTION NOT RENDERED
-      ↓
-Query Completes (Too Late)
-      - customThemes = [{ id: 1, name: "Theme1" }, ...]
-      - visibleCustomThemes updates = [{ id: 1, ... }]
-      - But dropdown might be closed, or user already saw empty list
-
+↓
+Query Completes (Too Late) - customThemes = [{ id: 1, name: "Theme1" }, ...] - visibleCustomThemes updates = [{ id: 1, ... }] - But dropdown might be closed, or user already saw empty list
 
 CHAIN 2: MISSING LOADING STATE CHECK
 ═════════════════════════════════════
 
 useCustomThemes() Returns:
 {
-  customThemes: [],
-  isLoading: true,      ← EXISTS BUT IGNORED
-  error: null,          ← EXISTS BUT IGNORED
-  refetch: () => {...}  ← EXISTS BUT IGNORED
+customThemes: [],
+isLoading: true, ← EXISTS BUT IGNORED
+error: null, ← EXISTS BUT IGNORED
+refetch: () => {...} ← EXISTS BUT IGNORED
 }
 
 AuxiliaryActionsMenu Line 62:
 const { customThemes } = useCustomThemes()
-                         ↑
-                    ONLY THIS DESTRUCTURED
-                    
+↑
+ONLY THIS DESTRUCTURED
+
 isLoading NOT USED ANYWHERE IN DROPDOWN RENDERING
-      ↓
+↓
 No Conditional Check Like:
 {isLoading ? <LoadingSpinner /> : <ThemeOptions />}
-      ↓
+↓
 🔴 EMPTY LIST SHOWN WITH NO INDICATION IT'S LOADING
-
 
 CHAIN 3: DOUBLE INVALIDATION RACE CONDITION
 ════════════════════════════════════════════
 
 User Creates Theme
-      ↓
+↓
 useCreateCustomTheme mutation.mutateAsync()
-      ↓
+↓
 Server Returns: { id: 5, name: "MyTheme", ... }
-      ↓
+↓
 Mutation onSuccess Fires (useCustomThemes.ts:44-48):
-  queryClient.invalidateQueries({ queryKey: queryKeys.customThemes.all })
-      ↓
+queryClient.invalidateQueries({ queryKey: queryKeys.customThemes.all })
+↓
 CustomThemeDialog.onThemeCreated callback (AuxiliaryActionsMenu:309-312):
-  handleThemeSelect(`custom:${themeId}`)
-      ↓
+handleThemeSelect(`custom:${themeId}`)
+↓
 handleThemeSelect calls:
-  - ipc.template.setAppTheme({ appId, themeId })
-  - queryClient.invalidateQueries({ queryKey: queryKeys.appTheme.byApp(...) })
-      ↓
-Dialog Closes
-      ↓
-handleCustomThemeDialogClose Fires (AuxiliaryActionsMenu:121-129):
-  queryClient.invalidateQueries({ queryKey: queryKeys.customThemes.all })
-      ↓
-🔴 SAME QUERY INVALIDATED TWICE IN QUICK SUCCESSION
-      - Potential race condition
-      - Multiple refetch cycles
-      - State sync issues
 
+- ipc.template.setAppTheme({ appId, themeId })
+- queryClient.invalidateQueries({ queryKey: queryKeys.appTheme.byApp(...) })
+  ↓
+  Dialog Closes
+  ↓
+  handleCustomThemeDialogClose Fires (AuxiliaryActionsMenu:121-129):
+  queryClient.invalidateQueries({ queryKey: queryKeys.customThemes.all })
+  ↓
+  🔴 SAME QUERY INVALIDATED TWICE IN QUICK SUCCESSION - Potential race condition - Multiple refetch cycles - State sync issues
 
 CHAIN 4: CURRENTTHEMEID MISMATCH HIDING SELECTED THEME
 ═══════════════════════════════════════════════════════
 
 AuxiliaryActionsMenu Line 63:
 const { themeId: appThemeId } = useAppTheme(appId)
-                                          ↓
-                            Returns: query.data ?? null
-                            
+↓
+Returns: query.data ?? null
+
 During Loading: themeId = null (because query not resolved)
 
 Line 69-70:
 const currentThemeId = appId != null ? appThemeId : settings?.selectedThemeId || null
-                                               ↓
-                           appThemeId = null (still loading)
-                           
+↓
+appThemeId = null (still loading)
+
 currentThemeId = null
 
 visibleCustomThemes Filter (Line 77-79):
 const selectedCustomTheme = customThemes.find(
-  (t) => `custom:${t.id}` === currentThemeId
+(t) => `custom:${t.id}` === currentThemeId
 )
-            ↓
-   Looking for: null
-   CustomThemes: [{ id: 1, ... }, { id: 2, ... }]
-   
-No Match Found
-      ↓
-🔴 SELECTED CUSTOM THEME NOT HIGHLIGHTED
+↓
+Looking for: null
+CustomThemes: [{ id: 1, ... }, { id: 2, ... }]
 
+No Match Found
+↓
+🔴 SELECTED CUSTOM THEME NOT HIGHLIGHTED
 
 HOOK STATE COMPARISON TABLE:
 ═════════════════════════════
 
 useThemes (WORKS):
-  - placeholderData: themesData ✓
-  - query.data always has value ✓
-  - themes never empty ✓
-  - Themes always visible ✓
+
+- placeholderData: themesData ✓
+- query.data always has value ✓
+- themes never empty ✓
+- Themes always visible ✓
 
 useCustomThemes (BROKEN):
-  - NO placeholderData ✗
-  - query.data = undefined during load ✗
-  - customThemes = [] ✗
-  - Custom themes invisible during load ✗
 
+- NO placeholderData ✗
+- query.data = undefined during load ✗
+- customThemes = [] ✗
+- Custom themes invisible during load ✗
 
 CRITICAL CODE GATES:
 ════════════════════
 
 Line 210 (AuxiliaryActionsMenu.tsx):
-  {visibleCustomThemes.length > 0 && (
-    <DropdownMenuSeparator />
-    {visibleCustomThemes.map(...)}
-  )}
+{visibleCustomThemes.length > 0 && (
+<DropdownMenuSeparator />
+{visibleCustomThemes.map(...)}
+)}
 
 This SINGLE condition controls visibility:
-  - visibleCustomThemes = []   → NOT RENDERED
-  - visibleCustomThemes = [x]  → RENDERED
+
+- visibleCustomThemes = [] → NOT RENDERED
+- visibleCustomThemes = [x] → RENDERED
 
 But visibleCustomThemes = [] when:
-  1. Query is loading ← PRIMARY ISSUE
-  2. No custom themes exist (intentional)
-  3. All themes filtered out (edge case)
+
+1. Query is loading ← PRIMARY ISSUE
+2. No custom themes exist (intentional)
+3. All themes filtered out (edge case)
 
 NO WAY TO DISTINGUISH BETWEEN CASES 1, 2, 3!
-
 
 EXACT LINE NUMBERS SUMMARY:
 ════════════════════════════
 
 PRIMARY CULPRITS:
-  ✗ useCustomThemes.ts:28
-    customThemes: query.data ?? []  (EMPTY DURING LOAD)
-    
-  ✗ AuxiliaryActionsMenu.tsx:62
-    const { customThemes } = useCustomThemes()  (MISSING isLoading)
-    
-  ✗ AuxiliaryActionsMenu.tsx:210
-    {visibleCustomThemes.length > 0 && ...}  (GATE CONDITION)
+✗ useCustomThemes.ts:28
+customThemes: query.data ?? [] (EMPTY DURING LOAD)
+
+✗ AuxiliaryActionsMenu.tsx:62
+const { customThemes } = useCustomThemes() (MISSING isLoading)
+
+✗ AuxiliaryActionsMenu.tsx:210
+{visibleCustomThemes.length > 0 && ...} (GATE CONDITION)
 
 SECONDARY ISSUES:
-  ✗ AuxiliaryActionsMenu.tsx:73-94
-    Filtering logic on empty array
-    
-  ✗ AuxiliaryActionsMenu.tsx:69-70
-    currentThemeId null during loading
-    
-  ✗ useCustomThemes.ts:44-48 + AuxiliaryActionsMenu.tsx:121-129
-    Double invalidation
+✗ AuxiliaryActionsMenu.tsx:73-94
+Filtering logic on empty array
+
+✗ AuxiliaryActionsMenu.tsx:69-70
+currentThemeId null during loading
+
+✗ useCustomThemes.ts:44-48 + AuxiliaryActionsMenu.tsx:121-129
+Double invalidation
 
 REFERENCE:
-  ✓ useThemes.ts:12
-    placeholderData: themesData  (CORRECT PATTERN)
-
+✓ useThemes.ts:12
+placeholderData: themesData (CORRECT PATTERN)
 
 RENDERING TIMELINE:
 ═══════════════════
 
-T=0ms:   User clicks "+" button
-T=5ms:   AuxiliaryActionsMenu mounts
-T=10ms:  useCustomThemes() hook created
-T=15ms:  Query fetch started (IPC to main process)
-T=20ms:  Dropdown menu renders (query still pending)
-T=25ms:  Line 62: customThemes = []
-T=30ms:  Line 73: visibleCustomThemes computed = []
-T=35ms:  Line 210: Check: 0 > 0? NO
-T=40ms:  🔴 Custom themes section NOT RENDERED
+T=0ms: User clicks "+" button
+T=5ms: AuxiliaryActionsMenu mounts
+T=10ms: useCustomThemes() hook created
+T=15ms: Query fetch started (IPC to main process)
+T=20ms: Dropdown menu renders (query still pending)
+T=25ms: Line 62: customThemes = []
+T=30ms: Line 73: visibleCustomThemes computed = []
+T=35ms: Line 210: Check: 0 > 0? NO
+T=40ms: 🔴 Custom themes section NOT RENDERED
 T=100ms: Query resolves from main process
 T=110ms: React state updates
 T=120ms: visibleCustomThemes recalculates (if menu still open)
 T=130ms: 🟢 Custom themes NOW visible (too late?)
 
 RESULT: User sees empty submenu for ~100ms minimum
-        If user clicks away before T=130ms, never sees themes
+If user clicks away before T=130ms, never sees themes
+
 # Quick Reference: Custom Themes Empty Submenu Issue
 
 ## The Problem
+
 Home '+' button themes submenu shows only default themes, custom themes are hidden.
 
 ## Root Cause (Chain of Failures)
+
 1. **useCustomThemes()** hook returns empty array `[]` while query is fetching
 2. **AuxiliaryActionsMenu** only destructures `customThemes`, ignores `isLoading`
 3. **visibleCustomThemes** useMemo computes empty result from empty array
@@ -788,36 +833,42 @@ Home '+' button themes submenu shows only default themes, custom themes are hidd
 ## The 6 Failure Scenarios
 
 ### 1️⃣ Initial Load Race Condition (PRIMARY)
+
 - **File:** useCustomThemes.ts, AuxiliaryActionsMenu.tsx
 - **Lines:** 28, 62, 210
 - **When:** Component mounts, query fetching
 - **Result:** Renders with empty customThemes array
 
 ### 2️⃣ Missing isLoading State
+
 - **File:** AuxiliaryActionsMenu.tsx
 - **Line:** 62
 - **Issue:** Destructures only `customThemes`, ignores `isLoading`
 - **Should:** Also destructure `isLoading` and check it
 
 ### 3️⃣ Filtering Empty Array
+
 - **File:** AuxiliaryActionsMenu.tsx
 - **Lines:** 73-94
 - **Issue:** useMemo processes `customThemes = []` during load
 - **Result:** visibleCustomThemes = [] → not rendered (line 210)
 
 ### 4️⃣ Query Invalidation Race Condition
+
 - **Files:** useCustomThemes.ts, AuxiliaryActionsMenu.tsx
 - **Lines:** 44-48, 121-129
 - **Issue:** queryKeys.customThemes.all invalidated twice
 - **Timeline:** Mutation onSuccess + Dialog onOpenChange
 
 ### 5️⃣ currentThemeId Mismatch
+
 - **File:** AuxiliaryActionsMenu.tsx
 - **Lines:** 69-70, 77-79
 - **Issue:** currentThemeId = null during loading
 - **Result:** Filter doesn't match any custom theme
 
 ### 6️⃣ No Placeholder Data
+
 - **File:** useCustomThemes.ts
 - **Line:** 28
 - **Compare:** useThemes.ts uses `placeholderData: themesData` ✓
@@ -825,14 +876,14 @@ Home '+' button themes submenu shows only default themes, custom themes are hidd
 
 ## Exact Code Lines Causing Issue
 
-| Issue | File | Line(s) | Code |
-|-------|------|---------|------|
-| **Gate Condition** | AuxiliaryActionsMenu.tsx | 210 | `{visibleCustomThemes.length > 0 && (...)}`  |
-| **Missing isLoading** | AuxiliaryActionsMenu.tsx | 62 | `const { customThemes } = useCustomThemes()` |
-| **Empty on Load** | useCustomThemes.ts | 28 | `customThemes: query.data ?? []` |
-| **Filter on Empty** | AuxiliaryActionsMenu.tsx | 73-94 | `useMemo(() => {...}, [customThemes, ...])` |
-| **Double Invalidate** | useCustomThemes.ts | 44-48 | `onSuccess() { invalidateQueries(...) }` |
-| **Double Invalidate 2** | AuxiliaryActionsMenu.tsx | 121-129 | `if (!open) { invalidateQueries(...) }` |
+| Issue                   | File                     | Line(s) | Code                                         |
+| ----------------------- | ------------------------ | ------- | -------------------------------------------- |
+| **Gate Condition**      | AuxiliaryActionsMenu.tsx | 210     | `{visibleCustomThemes.length > 0 && (...)}`  |
+| **Missing isLoading**   | AuxiliaryActionsMenu.tsx | 62      | `const { customThemes } = useCustomThemes()` |
+| **Empty on Load**       | useCustomThemes.ts       | 28      | `customThemes: query.data ?? []`             |
+| **Filter on Empty**     | AuxiliaryActionsMenu.tsx | 73-94   | `useMemo(() => {...}, [customThemes, ...])`  |
+| **Double Invalidate**   | useCustomThemes.ts       | 44-48   | `onSuccess() { invalidateQueries(...) }`     |
+| **Double Invalidate 2** | AuxiliaryActionsMenu.tsx | 121-129 | `if (!open) { invalidateQueries(...) }`      |
 
 ## The Critical Gate (Line 210)
 
@@ -846,6 +897,7 @@ Home '+' button themes submenu shows only default themes, custom themes are hidd
 ```
 
 **This ONE condition hides custom themes when:**
+
 - ✗ Query is loading (visibleCustomThemes = [])
 - ✗ No custom themes exist (legitimate)
 - ✗ All filtered out (edge case)
@@ -854,6 +906,7 @@ Home '+' button themes submenu shows only default themes, custom themes are hidd
 ## Hook Comparison
 
 ### useThemes (✓ WORKS)
+
 ```tsx
 const query = useQuery({
   queryKey: queryKeys.themes.all,
@@ -866,6 +919,7 @@ return { themes: query.data, ... };
 ```
 
 ### useCustomThemes (✗ BROKEN)
+
 ```tsx
 const query = useQuery({
   queryKey: queryKeys.customThemes.all,
@@ -937,4 +991,3 @@ IF menu closed: user never saw themes
 ✗ **No Loading Indicator:** No UI showing "Loading..."
 ✗ **Double Invalidation:** Same query invalidated twice
 ✗ **Timing Issue:** Query not cached/optimized
-

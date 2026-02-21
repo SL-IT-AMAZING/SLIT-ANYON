@@ -166,7 +166,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               className="relative flex flex-col h-screenish flex-1 min-w-0 overflow-x-hidden mt-12 mb-4 mx-4 border border-border rounded-xl bg-background shadow-sm"
             >
               {location.pathname !== "/chat" && (
-                <div className={`flex items-center h-10 px-2 ${location.pathname === "/" ? "absolute top-0 left-0 right-0 z-10" : "shrink-0"}`}>
+                <div
+                  className={`flex items-center h-10 px-2 ${location.pathname === "/" ? "absolute top-0 left-0 right-0 z-10" : "shrink-0"}`}
+                >
                   <SidebarToggle />
                   {appDetailAppId !== null && (
                     <Button

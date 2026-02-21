@@ -71,8 +71,12 @@ function escapeInlineScriptForHtml(scriptContent: string): string {
   return scriptContent.replace(/<\/script/gi, "<\\/script");
 }
 
-async function inlineFontUrlsInCss(cssContent: string, outDir: string): Promise<string> {
-  const fontUrlRegex = /url\((['"]?)(\/_next\/static\/media\/[^)'"?#]+\.woff2(?:\?[^)'"#]*)?(?:#[^)'"#]*)?)\1\)/g;
+async function inlineFontUrlsInCss(
+  cssContent: string,
+  outDir: string,
+): Promise<string> {
+  const fontUrlRegex =
+    /url\((['"]?)(\/_next\/static\/media\/[^)'"?#]+\.woff2(?:\?[^)'"#]*)?(?:#[^)'"#]*)?)\1\)/g;
 
   const matchedUrls = new Set<string>();
   for (const match of cssContent.matchAll(fontUrlRegex)) {
@@ -155,7 +159,9 @@ async function inlineTemplateAssets(templateDir: string): Promise<void> {
   await writeFile(previewHtmlPath, $.html(), "utf8");
 }
 
-async function cleanupTemplateBuildArtifacts(templateDir: string): Promise<void> {
+async function cleanupTemplateBuildArtifacts(
+  templateDir: string,
+): Promise<void> {
   const outDir = path.join(templateDir, "out");
   const nextDir = path.join(templateDir, ".next");
   const nodeModulesDir = path.join(templateDir, "node_modules");

@@ -44,7 +44,7 @@ VERCEL_CLIENT_SECRET=
 | Provider | Status          | Auth Method                              |
 | -------- | --------------- | ---------------------------------------- |
 | Supabase | ✅ Working      | OAuth 2.0                                |
-| Vercel   | ✅ Working      | OAuth 2.0 (Sign in with Vercel)          |
+| Vercel   | ✅ Working      | OAuth 2.0 (Vercel Integration)           |
 | Neon     | ⚠️ API Key Only | API Key (OAuth requires Partner Program) |
 
 ## OAuth App 등록 가이드
@@ -88,15 +88,16 @@ VERCEL_CLIENT_SECRET=
 
 ### Vercel
 
-> ⚠️ **중요**: "Vercel Integration"이 아닌 **"Sign in with Vercel" App**을 생성해야 합니다!
+> ⚠️ **중요**: **Vercel Integration**을 생성해야 합니다 ("Sign in with Vercel" App이 아닙니다!). Integration만이 프로젝트 생성 및 배포에 필요한 API 쓰기 권한을 제공합니다.
 
-1. Vercel Dashboard → **Settings** → **Apps** 접속
-2. "Sign in with Vercel" 섹션에서 **Create App** 클릭
+1. Vercel Dashboard → **Integrations Console** 접속
+2. **Create** 클릭하여 새 Integration 생성
 3. 다음 정보 입력:
-   - **Authorization Callback URL**: `{OAUTH_SERVER_URL}/api/oauth/vercel/callback`
+   - **Redirect URL**: `{OAUTH_SERVER_URL}/api/oauth/vercel/callback`
+   - **API Scopes**: `project` (Read-Write), `deployment` (Read-Write), `user` (Read)
 4. 생성 후 받은 Client ID와 Client Secret을 환경 변수에 설정
 
-**참고**: Vercel OAuth는 PKCE(Proof Key for Code Exchange)를 사용하여 추가적인 보안을 제공합니다. `code_challenge`와 `code_verifier`가 자동으로 처리됩니다.
+**참고**: Vercel OAuth는 PKCE(Proof Key for Code Exchange)를 사용하여 추가적인 보안을 제공합니다. `code_challenge`와 `code_verifier`가 자동으로 처리됩니다. Integration 토큰은 장기 유효(long-lived)하며 refresh token이 필요하지 않습니다.
 
 ## 로컬 개발
 
