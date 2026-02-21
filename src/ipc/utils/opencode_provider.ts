@@ -13,6 +13,7 @@ import { openCodeServer } from "./opencode_server";
 const logger = log.scope("opencode-provider");
 const OPENCODE_API_TIMEOUT_MS = 15000;
 const OPENCODE_SSE_CONNECT_TIMEOUT_MS = 15000;
+const OPENCODE_STREAM_IDLE_TIMEOUT_MS = 300000;
 
 const conversationSessionMap = new Map<string, string>();
 
@@ -432,6 +433,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const parentToolMeta = new Map<string, { toolName: string; title: string }>();
     const knownChildSessionIds = new Set<string>();
     const taskToChildSession = new Map<string, string>();
+    const childSessionToTask = new Map<string, string>();
     const runningTaskTitles = new Map<string, string>();
     const childSessionMeta = new Map<string, { title?: string; agentType?: string }>();
     const childToolsBySession = new Map<
@@ -455,6 +457,44 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
       if (!title) return undefined;
       const match = title.match(/@([^\)]+)\s+subagent/i);
       return match?.[1]?.trim();
+    };
+
+    const bindTaskToChildSession = (taskToolId: string, childSessionId: string) => {
+      const prevChildSessionId = taskToChildSession.get(taskToolId);
+      if (
+        prevChildSessionId &&
+        prevChildSessionId !== childSessionId &&
+        childSessionToTask.get(prevChildSessionId) === taskToolId
+      ) {
+        childSessionToTask.delete(prevChildSessionId);
+      }
+
+      const prevTaskToolId = childSessionToTask.get(childSessionId);
+      if (prevTaskToolId && prevTaskToolId !== taskToolId) {
+        taskToChildSession.delete(prevTaskToolId);
+      }
+
+      taskToChildSession.set(taskToolId, childSessionId);
+      childSessionToTask.set(childSessionId, taskToolId);
+    };
+
+    const assignChildToUnmappedRunningTask = (
+      childSessionId: string,
+    ): string | undefined => {
+      const alreadyMappedTask = childSessionToTask.get(childSessionId);
+      if (alreadyMappedTask) {
+        return alreadyMappedTask;
+      }
+
+      for (const taskToolId of runningTaskTitles.keys()) {
+        if (taskToChildSession.has(taskToolId)) {
+          continue;
+        }
+        bindTaskToChildSession(taskToolId, childSessionId);
+        return taskToolId;
+      }
+
+      return undefined;
     };
 
     const getChildToolSummaries = (
@@ -593,7 +633,28 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
           const processEventsPromise = (async () => {
             logger.debug("Starting to process SSE events...");
             while (!finished) {
-              const { done, value } = await reader.read();
+              const { done, value } = await new Promise<
+                ReadableStreamReadResult<string>
+              >((resolve, reject) => {
+                const idleTimer = setTimeout(() => {
+                  reject(
+                    new Error(
+                      `OpenCode stream idle timeout after ${OPENCODE_STREAM_IDLE_TIMEOUT_MS / 1000}s`,
+                    ),
+                  );
+                }, OPENCODE_STREAM_IDLE_TIMEOUT_MS);
+
+                reader
+                  .read()
+                  .then((result) => {
+                    clearTimeout(idleTimer);
+                    resolve(result);
+                  })
+                  .catch((error) => {
+                    clearTimeout(idleTimer);
+                    reject(error);
+                  });
+              });
               if (done) {
                 logger.debug("SSE stream ended");
                 if (!finished) {
@@ -704,6 +765,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                         childToolsBySession.get(part.sessionID) ?? new Map();
                       childToolsBySession.set(part.sessionID, childSessionTools);
 
+                      const taskToolId =
+                        childSessionToTask.get(part.sessionID) ??
+                        assignChildToUnmappedRunningTask(part.sessionID);
+
                       if (
                         status === "running" ||
                         status === "completed" ||
@@ -717,17 +782,17 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                           status,
                         });
 
-                        for (const [taskToolId, childSessionId] of taskToChildSession.entries()) {
+                        if (taskToolId) {
                           const taskTitle = runningTaskTitles.get(taskToolId);
-                          if (!taskTitle) continue;
-                          if (childSessionId !== part.sessionID) continue;
-                          emitOpenCodeToolTag(controller, {
-                            toolName: "task",
-                            status: "running",
-                            title: taskTitle,
-                            toolId: taskToolId,
-                            content: makeTaskProgressPayload(taskToolId, taskTitle),
-                          });
+                          if (taskTitle) {
+                            emitOpenCodeToolTag(controller, {
+                              toolName: "task",
+                              status: "running",
+                              title: taskTitle,
+                              toolId: taskToolId,
+                              content: makeTaskProgressPayload(taskToolId, taskTitle),
+                            });
+                          }
                         }
                       }
 
@@ -745,7 +810,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                         const maybeSessionId = part.state.metadata?.sessionId;
                         if (typeof maybeSessionId === "string") {
                           knownChildSessionIds.add(maybeSessionId);
-                          taskToChildSession.set(toolId, maybeSessionId);
+                          bindTaskToChildSession(toolId, maybeSessionId);
                           const childTitle = childSessionMeta.get(maybeSessionId)?.title;
                           childSessionMeta.set(maybeSessionId, {
                             title: childTitle,
@@ -809,6 +874,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                     continue;
                   }
                   knownChildSessionIds.add(info.id);
+                  assignChildToUnmappedRunningTask(info.id);
                   childSessionMeta.set(info.id, {
                     title: info.title,
                     agentType: parseChildAgentType(info.title),
