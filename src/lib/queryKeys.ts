@@ -263,6 +263,14 @@ export const queryKeys = {
     previewUrl: ({ designSystemId }: { designSystemId: string }) =>
       ["design-systems", "preview-url", designSystemId] as const,
   },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // System
+  // ─────────────────────────────────────────────────────────────────────────────
+  system: {
+    all: ["system"] as const,
+    nodeStatus: () => ["system", "nodeStatus"] as const,
+  },
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -320,4 +328,5 @@ export type AppQueryKey =
       (typeof queryKeys.appUpgrades)[keyof typeof queryKeys.appUpgrades]
     >
   | QueryKeyOf<(typeof queryKeys.mcp)[keyof typeof queryKeys.mcp]>
-  | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>;
+  | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>
+  | QueryKeyOf<(typeof queryKeys.system)[keyof typeof queryKeys.system]>;

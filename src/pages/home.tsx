@@ -3,16 +3,18 @@ import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { LogoSpinner } from "@/components/chat-v2/LogoSpinner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
+import { NodeInstallDialog } from "@/components/NodeInstallDialog";
 import { useAppVersion } from "@/hooks/useAppVersion";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSettings } from "@/hooks/useSettings";
+import { useNodeStatus } from "@/hooks/useNodeStatus";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { ipc } from "@/ipc/types";
 import { generateCuteAppName, getAppDisplayName } from "@/lib/utils";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useSetAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { homeChatInputValueAtom } from "../atoms/chatAtoms";
 
 import { ForceCloseDialog } from "@/components/ForceCloseDialog";
@@ -62,6 +64,24 @@ export default function HomePage() {
   const [releaseUrl, setReleaseUrl] = useState("");
   const { theme } = useTheme();
   const queryClient = useQueryClient();
+  const { data: nodeStatus, refetch: refetchNodeStatus } = useNodeStatus();
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const isNodeMissing = !nodeStatus?.nodeVersion;
+  const isNodeOutdated =
+    !!nodeStatus?.nodeVersion && !nodeStatus?.isVersionSufficient;
+  const autoInstallTriggeredRef = useRef(false);
+
+  // Auto-open install dialog when Node.js is missing or outdated
+  useEffect(() => {
+    if (
+      nodeStatus &&
+      (isNodeMissing || isNodeOutdated) &&
+      !autoInstallTriggeredRef.current
+    ) {
+      autoInstallTriggeredRef.current = true;
+      setInstallDialogOpen(true);
+    }
+  }, [nodeStatus, isNodeMissing, isNodeOutdated]);
 
   // Listen for force-close events
   useEffect(() => {
@@ -129,6 +149,11 @@ export default function HomePage() {
     const attachments = options?.attachments || [];
 
     if (!inputValue.trim() && attachments.length === 0) return;
+
+    if (isNodeMissing || isNodeOutdated) {
+      setInstallDialogOpen(true);
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -248,6 +273,11 @@ export default function HomePage() {
           <ImportAppDialog
             isOpen={isImportDialogOpen}
             onClose={() => setIsImportDialogOpen(false)}
+          />
+          <NodeInstallDialog
+            open={installDialogOpen}
+            onOpenChange={setInstallDialogOpen}
+            onInstallComplete={() => void refetchNodeStatus()}
           />
 
           {apps.length > 0 && (

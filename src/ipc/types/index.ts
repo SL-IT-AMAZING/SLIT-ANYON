@@ -36,7 +36,11 @@ export { githubContracts, gitContracts, githubEvents } from "./github";
 export { mcpContracts, mcpEvents } from "./mcp";
 export { vercelContracts, vercelDeployStreamContract } from "./vercel";
 export { supabaseContracts } from "./supabase";
-export { systemContracts, systemEvents } from "./system";
+export {
+  systemContracts,
+  systemEvents,
+  nodeInstallStreamContract,
+} from "./system";
 export { versionContracts } from "./version";
 export { languageModelContracts } from "./language-model";
 export { promptContracts } from "./prompts";
@@ -67,7 +71,11 @@ export { githubClient, gitClient, githubEventClient } from "./github";
 export { mcpClient, mcpEventClient } from "./mcp";
 export { vercelClient, vercelDeployStreamClient } from "./vercel";
 export { supabaseClient } from "./supabase";
-export { systemClient, systemEventClient } from "./system";
+export {
+  systemClient,
+  systemEventClient,
+  nodeInstallStreamClient,
+} from "./system";
 export { versionClient } from "./version";
 export { languageModelClient } from "./language-model";
 export { promptClient } from "./prompts";
@@ -239,6 +247,10 @@ export type {
   DoesReleaseNoteExistParams,
   UserBudgetInfo,
   TelemetryEventPayload,
+  NodeInstallParams,
+  NodeInstallProgress,
+  NodeInstallEnd,
+  NodeInstallError,
 } from "./system";
 
 // Version types
@@ -352,7 +364,13 @@ export {
   CreditCheckResultSchema,
 } from "./entitlement";
 
-export { UserBudgetInfoSchema } from "./system";
+export {
+  UserBudgetInfoSchema,
+  NodeInstallParamsSchema,
+  NodeInstallProgressSchema,
+  NodeInstallEndSchema,
+  NodeInstallErrorSchema,
+} from "./system";
 
 // =============================================================================
 // Aggregated IPC Client
@@ -378,7 +396,11 @@ import { proposalClient } from "./proposals";
 import { securityClient } from "./security";
 import { settingsClient } from "./settings";
 import { supabaseClient } from "./supabase";
-import { systemClient, systemEventClient } from "./system";
+import {
+  systemClient,
+  systemEventClient,
+  nodeInstallStreamClient,
+} from "./system";
 import { templateClient } from "./templates";
 import { upgradeClient } from "./upgrade";
 import { vercelClient, vercelDeployStreamClient } from "./vercel";
@@ -416,6 +438,7 @@ export const ipc = {
   chatStream: chatStreamClient,
   helpStream: helpStreamClient,
   vercelDeployStream: vercelDeployStreamClient,
+  nodeInstallStream: nodeInstallStreamClient,
 
   // Integrations
   github: githubClient,

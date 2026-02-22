@@ -1,9 +1,11 @@
 import { z } from "zod";
 import {
-  defineContract,
-  defineEvent,
   createClient,
   createEventClient,
+  createStreamClient,
+  defineContract,
+  defineEvent,
+  defineStream,
 } from "../contracts/core";
 
 // =============================================================================
@@ -14,6 +16,7 @@ export const NodeSystemInfoSchema = z.object({
   nodeVersion: z.string().nullable(),
   pnpmVersion: z.string().nullable(),
   nodeDownloadUrl: z.string(),
+  isVersionSufficient: z.boolean(),
 });
 
 export type NodeSystemInfo = z.infer<typeof NodeSystemInfoSchema>;
@@ -98,6 +101,44 @@ export const ForceCloseDetectedPayloadSchema = z.object({
     })
     .optional(),
 });
+
+// =============================================================================
+// Node Install Stream Schemas
+// =============================================================================
+
+export const NodeInstallParamsSchema = z.object({
+  requestId: z.string(),
+});
+
+export type NodeInstallParams = z.infer<typeof NodeInstallParamsSchema>;
+
+export const NodeInstallProgressSchema = z.object({
+  requestId: z.string(),
+  stage: z.enum(["downloading", "extracting", "verifying", "installing-pnpm"]),
+  percent: z.number().nullable(),
+  bytesDownloaded: z.number().nullable(),
+  bytesTotal: z.number().nullable(),
+  message: z.string().optional(),
+});
+
+export type NodeInstallProgress = z.infer<typeof NodeInstallProgressSchema>;
+
+export const NodeInstallEndSchema = z.object({
+  requestId: z.string(),
+  nodeVersion: z.string(),
+  pnpmVersion: z.string(),
+  installedPath: z.string(),
+});
+
+export type NodeInstallEnd = z.infer<typeof NodeInstallEndSchema>;
+
+export const NodeInstallErrorSchema = z.object({
+  requestId: z.string(),
+  error: z.string(),
+  stage: z.string().optional(),
+});
+
+export type NodeInstallError = z.infer<typeof NodeInstallErrorSchema>;
 
 // =============================================================================
 // System Contracts
@@ -262,3 +303,31 @@ export const systemEvents = {
 
 export const systemClient = createClient(systemContracts);
 export const systemEventClient = createEventClient(systemEvents);
+
+// =============================================================================
+// Node Install Stream
+// =============================================================================
+
+export const nodeInstallStreamContract = defineStream({
+  channel: "node:install",
+  input: NodeInstallParamsSchema,
+  keyField: "requestId" as const,
+  events: {
+    chunk: {
+      channel: "node:install:progress",
+      payload: NodeInstallProgressSchema,
+    },
+    end: {
+      channel: "node:install:end",
+      payload: NodeInstallEndSchema,
+    },
+    error: {
+      channel: "node:install:error",
+      payload: NodeInstallErrorSchema,
+    },
+  },
+});
+
+export const nodeInstallStreamClient = createStreamClient(
+  nodeInstallStreamContract,
+);

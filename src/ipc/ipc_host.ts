@@ -21,6 +21,7 @@ import { registerLanguageModelHandlers } from "./handlers/language_model_handler
 import { registerLocalModelHandlers } from "./handlers/local_model_handlers";
 import { registerMcpHandlers } from "./handlers/mcp_handlers";
 import { registerNodeHandlers } from "./handlers/node_handlers";
+import { registerNodeInstallHandlers } from "./handlers/node_install_handlers";
 import { registerPlanHandlers } from "./handlers/plan_handlers";
 import { registerPortalHandlers } from "./handlers/portal_handlers";
 import { registerProHandlers } from "./handlers/pro_handlers";
@@ -52,6 +53,7 @@ export function registerIpcHandlers() {
   registerGithubBranchHandlers();
   registerVercelHandlers();
   registerNodeHandlers();
+  registerNodeInstallHandlers();
   registerProblemsHandlers();
   registerProposalHandlers();
   registerDebugHandlers();
