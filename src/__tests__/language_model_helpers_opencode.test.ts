@@ -50,9 +50,7 @@ describe("language_model_helpers OpenCode provider cache", () => {
   });
 
   it("deduplicates concurrent provider fetches", async () => {
-    let resolveFetch:
-      | ((value: typeof sampleProviders) => void)
-      | undefined;
+    let resolveFetch: ((value: typeof sampleProviders) => void) | undefined;
     const inFlight = new Promise<typeof sampleProviders>((resolve) => {
       resolveFetch = resolve;
     });

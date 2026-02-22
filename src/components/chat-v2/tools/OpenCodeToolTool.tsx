@@ -14,6 +14,7 @@ import {
   Terminal,
   Wrench,
 } from "lucide-react";
+import { sanitizeVisibleOutput } from "../../../../shared/sanitizeVisibleOutput";
 import { TaskDelegationTool } from "../TaskDelegationTool";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallStatus } from "./types";
@@ -111,7 +112,9 @@ export function OpenCodeToolTool({
   const subtitle =
     title && title !== name && title !== label ? title : undefined;
 
-  const raw = typeof children === "string" ? children : String(children ?? "");
+  const raw = sanitizeVisibleOutput(
+    typeof children === "string" ? children : String(children ?? ""),
+  );
   const taskProgress =
     name.toLowerCase() === "task" ? parseTaskProgressPayload(raw.trim()) : null;
   const renderedContent = useMemo(() => {
@@ -132,7 +135,10 @@ export function OpenCodeToolTool({
     }
 
     try {
-      return { text: JSON.stringify(JSON.parse(raw), null, 2), monospace: true };
+      return {
+        text: JSON.stringify(JSON.parse(raw), null, 2),
+        monospace: true,
+      };
     } catch {
       return { text: raw.trim(), monospace: false };
     }

@@ -251,7 +251,9 @@ export function AuxiliaryActionsMenu({
                             size={16}
                             className="mr-2 text-muted-foreground"
                           />
-                          <span className="flex-1">{designSystem.displayName}</span>
+                          <span className="flex-1">
+                            {designSystem.displayName}
+                          </span>
                           {isSelected && (
                             <Check size={16} className="text-primary ml-2" />
                           )}

@@ -101,7 +101,11 @@ export const PublishPanel = () => {
               Publish your app by deploying it to Vercel.
             </p>
 
-            <VercelConnector appId={selectedAppId} folderName={app.name} />
+            <VercelConnector
+              appId={selectedAppId}
+              folderName={app.name}
+              onProjectCreated={deploy.startDeploy}
+            />
 
             {canDeploy && (
               <Button onClick={deploy.startDeploy} className="w-full" size="lg">

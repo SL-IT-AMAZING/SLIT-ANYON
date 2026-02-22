@@ -286,7 +286,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     try {
       const response = await fetch(`${serverInfo.url}/agent`, {
         headers: this.getAuthHeaders(serverInfo.password),
-        signal: this.createSignalWithTimeout(undefined, OPENCODE_API_TIMEOUT_MS),
+        signal: this.createSignalWithTimeout(
+          undefined,
+          OPENCODE_API_TIMEOUT_MS,
+        ),
       });
 
       if (!response.ok) {
@@ -408,7 +411,7 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
         ? this.settings.thinkingLevel
         : undefined;
 
-  const promptPayload = {
+    const promptPayload = {
       parts: [{ type: "text", text: userMessage }],
       ...(systemPrompt && { system: systemPrompt }),
       ...(this.providerID &&
@@ -430,12 +433,18 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     let outputTokens = 0;
 
     const emittedToolStates = new Map<string, string>();
-    const parentToolMeta = new Map<string, { toolName: string; title: string }>();
+    const parentToolMeta = new Map<
+      string,
+      { toolName: string; title: string }
+    >();
     const knownChildSessionIds = new Set<string>();
     const taskToChildSession = new Map<string, string>();
     const childSessionToTask = new Map<string, string>();
     const runningTaskTitles = new Map<string, string>();
-    const childSessionMeta = new Map<string, { title?: string; agentType?: string }>();
+    const childSessionMeta = new Map<
+      string,
+      { title?: string; agentType?: string }
+    >();
     const childToolsBySession = new Map<
       string,
       Map<
@@ -453,13 +462,18 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
     const partTypes = new Map<string, string>();
     const partBuffers = new Map<string, string>();
 
-    const parseChildAgentType = (title: string | undefined): string | undefined => {
+    const parseChildAgentType = (
+      title: string | undefined,
+    ): string | undefined => {
       if (!title) return undefined;
-      const match = title.match(/@([^\)]+)\s+subagent/i);
+      const match = title.match(/@([^)]+)\s+subagent/i);
       return match?.[1]?.trim();
     };
 
-    const bindTaskToChildSession = (taskToolId: string, childSessionId: string) => {
+    const bindTaskToChildSession = (
+      taskToolId: string,
+      childSessionId: string,
+    ) => {
       const prevChildSessionId = taskToChildSession.get(taskToolId);
       if (
         prevChildSessionId &&
@@ -658,7 +672,9 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
               if (done) {
                 logger.debug("SSE stream ended");
                 if (!finished) {
-                  throw new Error("OpenCode event stream ended before session completion");
+                  throw new Error(
+                    "OpenCode event stream ended before session completion",
+                  );
                 }
                 break;
               }
@@ -732,7 +748,9 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                 ) {
                   const part = event.properties.part;
                   const isParentSessionPart = part.sessionID === session.id;
-                  const isChildSessionPart = knownChildSessionIds.has(part.sessionID);
+                  const isChildSessionPart = knownChildSessionIds.has(
+                    part.sessionID,
+                  );
 
                   if (!isParentSessionPart && !isChildSessionPart) continue;
 
@@ -763,7 +781,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                     if (isChildSessionPart) {
                       const childSessionTools =
                         childToolsBySession.get(part.sessionID) ?? new Map();
-                      childToolsBySession.set(part.sessionID, childSessionTools);
+                      childToolsBySession.set(
+                        part.sessionID,
+                        childSessionTools,
+                      );
 
                       const taskToolId =
                         childSessionToTask.get(part.sessionID) ??
@@ -790,7 +811,10 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                               status: "running",
                               title: taskTitle,
                               toolId: taskToolId,
-                              content: makeTaskProgressPayload(taskToolId, taskTitle),
+                              content: makeTaskProgressPayload(
+                                taskToolId,
+                                taskTitle,
+                              ),
                             });
                           }
                         }
@@ -811,7 +835,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                         if (typeof maybeSessionId === "string") {
                           knownChildSessionIds.add(maybeSessionId);
                           bindTaskToChildSession(toolId, maybeSessionId);
-                          const childTitle = childSessionMeta.get(maybeSessionId)?.title;
+                          const childTitle =
+                            childSessionMeta.get(maybeSessionId)?.title;
                           childSessionMeta.set(maybeSessionId, {
                             title: childTitle,
                             agentType: parseChildAgentType(childTitle),
@@ -894,7 +919,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
                     emittedToolStates.set(toolId, "completed");
                     if (meta.toolName === "task") {
-                      const taskTitle = runningTaskTitles.get(toolId) ?? meta.title;
+                      const taskTitle =
+                        runningTaskTitles.get(toolId) ?? meta.title;
                       runningTaskTitles.delete(toolId);
                       emitOpenCodeToolTag(controller, {
                         toolName: "task",
@@ -965,14 +991,11 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
           // Send message AFTER we start listening for events
           logger.debug("Sending message to OpenCode...");
-          this.fetchOpenCode(
-            `/session/${session.id}/message`,
-            {
-              method: "POST",
-              body: JSON.stringify(promptPayload),
-              signal: abortController.signal,
-            },
-          )
+          this.fetchOpenCode(`/session/${session.id}/message`, {
+            method: "POST",
+            body: JSON.stringify(promptPayload),
+            signal: abortController.signal,
+          })
             .then((resp) => {
               logger.debug(`Message send response status: ${resp.status}`);
             })

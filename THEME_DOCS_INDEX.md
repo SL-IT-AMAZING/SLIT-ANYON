@@ -9,14 +9,17 @@
 ## 📋 Document Guide
 
 ### 1. **THEME_RENDERING_MAP.md** (COMPREHENSIVE)
+
 **Purpose**: Exhaustive technical reference with every line number, condition, and guard  
-**Use When**: 
+**Use When**:
+
 - Debugging rendering issues
 - Code review
 - Understanding data flow
 - Adding new theme features
 
 **Key Sections**:
+
 - Complete rendering guard checklist (A-G)
 - Data loading flow & hydration timing
 - appId branch behavior
@@ -29,14 +32,17 @@
 ---
 
 ### 2. **THEME_MENU_QUICK_REFERENCE.md** (PRACTICAL)
+
 **Purpose**: Fast lookup for common questions and debugging  
 **Use When**:
+
 - Quick validation during testing
 - Debugging why something isn't visible
 - Looking up specific test IDs
 - Checking edge cases
 
 **Key Sections**:
+
 - Guard quick lookup table
 - Data hydration timeline
 - Design system visibility matrix
@@ -52,24 +58,30 @@
 ## 🎯 Quick Navigation by Question
 
 ### "Where does X render?"
+
 → See **THEME_MENU_QUICK_REFERENCE.md** → "Guard Quick Lookup" table
 
 ### "Why isn't Design System visible in Chat?"
+
 → See **THEME_MENU_QUICK_REFERENCE.md** → "Design System Visibility Matrix"  
 → Line 220: `appId == null &&` guards prevent chat visibility
 
 ### "How does custom theme visibility work?"
+
 → See **THEME_RENDERING_MAP.md** → "SECTION E: Custom Themes Section"  
 → Or **THEME_MENU_QUICK_REFERENCE.md** → "Custom Themes Visibility Logic"
 
 ### "What's the data loading order?"
+
 → See **THEME_MENU_QUICK_REFERENCE.md** → "Data Hydration Timeline"
 
 ### "Where's the appId branch logic?"
+
 → See **THEME_RENDERING_MAP.md** → "RENDERING CONTEXT: appId Branch"  
 → Or **THEME_MENU_QUICK_REFERENCE.md** → "Design System Visibility Matrix"
 
 ### "How do I test if Design Systems work?"
+
 → See **THEME_MENU_QUICK_REFERENCE.md** → "Common Issues & Debugging"  
 → Or **THEME_RENDERING_MAP.md** → "TEST IDS (For QA/Testing)"
 
@@ -105,15 +117,15 @@ PAGE TYPE
 
 ### Option Visibility Summary
 
-| Component | Home | Chat | Guard |
-|-----------|------|------|-------|
-| No Theme | ✅ | ✅ | None |
-| Builtin Themes | ✅ | ✅ | themes?.map() |
-| **Design System Section** | **✅*** | **❌** | **appId==null && len>0** |
-| **Design System Options** | **✅*** | **❌** | **appId==null && len>0** |
-| Custom Themes | ✅* | ✅* | visibleCustomThemes.len>0 |
-| More Themes | ✅* | ✅* | customThemes.len>4 |
-| Create Custom Theme | ✅ | ✅ | None |
+| Component                 | Home     | Chat   | Guard                     |
+| ------------------------- | -------- | ------ | ------------------------- |
+| No Theme                  | ✅       | ✅     | None                      |
+| Builtin Themes            | ✅       | ✅     | themes?.map()             |
+| **Design System Section** | **✅\*** | **❌** | **appId==null && len>0**  |
+| **Design System Options** | **✅\*** | **❌** | **appId==null && len>0**  |
+| Custom Themes             | ✅\*     | ✅\*   | visibleCustomThemes.len>0 |
+| More Themes               | ✅\*     | ✅\*   | customThemes.len>4        |
+| Create Custom Theme       | ✅       | ✅     | None                      |
 
 **Legend**: `*` = requires data loaded and non-empty
 
@@ -136,13 +148,13 @@ T+chat:    └─ App theme fetched (only if appId exists, enabled: !!appId)
 
 ### Hook Defaults & Risks
 
-| Hook | Default | Placeholder | Risk | Impact |
-|------|---------|-------------|------|--------|
-| useThemes | — | ✅ themesData | Low | Renders immediately |
-| useCustomThemes | [] | ❌ None | Medium | Hidden until loaded |
-| useDesignSystems | [] | ❌ None | Medium | Hidden until loaded |
-| useAppTheme | null | ❌ None | Low | Only in chat |
-| useSettings | null | ❌ None | High | Affects all selections |
+| Hook             | Default | Placeholder   | Risk   | Impact                 |
+| ---------------- | ------- | ------------- | ------ | ---------------------- |
+| useThemes        | —       | ✅ themesData | Low    | Renders immediately    |
+| useCustomThemes  | []      | ❌ None       | Medium | Hidden until loaded    |
+| useDesignSystems | []      | ❌ None       | Medium | Hidden until loaded    |
+| useAppTheme      | null    | ❌ None       | Low    | Only in chat           |
+| useSettings      | null    | ❌ None       | High   | Affects all selections |
 
 ---
 
@@ -150,26 +162,31 @@ T+chat:    └─ App theme fetched (only if appId exists, enabled: !!appId)
 
 ### Where Selections Are Stored
 
-| Setting | Storage | Type | Key | Update Method |
-|---------|---------|------|-----|---|
-| Default Theme (Home) | Settings DB | string | selectedThemeId | updateSettings() |
-| Default Design System | Settings DB | string | selectedDesignSystemId | updateSettings() |
-| App Theme (Chat) | App record | string\|null | — | ipc.template.setAppTheme() |
-| Current Selection (UI) | Memory | computed | currentThemeId | User interaction |
+| Setting                | Storage     | Type         | Key                    | Update Method              |
+| ---------------------- | ----------- | ------------ | ---------------------- | -------------------------- |
+| Default Theme (Home)   | Settings DB | string       | selectedThemeId        | updateSettings()           |
+| Default Design System  | Settings DB | string       | selectedDesignSystemId | updateSettings()           |
+| App Theme (Chat)       | App record  | string\|null | —                      | ipc.template.setAppTheme() |
+| Current Selection (UI) | Memory      | computed     | currentThemeId         | User interaction           |
 
 ### Key Variables
 
 **currentThemeId** (Line 72-73 in AuxiliaryActionsMenu)
+
 ```typescript
-const currentThemeId = appId != null ? appThemeId : settings?.selectedThemeId || null;
+const currentThemeId =
+  appId != null ? appThemeId : settings?.selectedThemeId || null;
 ```
+
 - Home: Uses settings theme
 - Chat: Uses app-specific theme
 
 **currentDesignSystemId** (Line 74)
+
 ```typescript
 const currentDesignSystemId = settings?.selectedDesignSystemId || null;
 ```
+
 - Always from settings (never app-specific)
 
 ---
@@ -211,16 +228,16 @@ theme-option-none                       # No Theme option
 
 ### Must-Watch Lines
 
-| File | Line(s) | What | Why |
-|------|---------|------|-----|
-| AuxiliaryActionsMenu | 220 | `appId == null &&` guard | Controls Design System visibility |
-| AuxiliaryActionsMenu | 72-74 | currentThemeId logic | Determines what's selected |
-| AuxiliaryActionsMenu | 77-98 | visibleCustomThemes useMemo | Custom theme limiting logic |
-| AuxiliaryActionsMenu | 103-112 | Theme selection handler | Branches on appId |
-| ChatInput | 496 | appId prop pass | Enables app-specific behavior |
-| home.tsx | 136 | designSystemId on create | Applies design system to new app |
-| useSettings | 34-47 | Settings hydration | Loads selectedThemeId/selectedDesignSystemId |
-| useAppTheme | 13 | enabled: !!appId | Query guard |
+| File                 | Line(s) | What                        | Why                                          |
+| -------------------- | ------- | --------------------------- | -------------------------------------------- |
+| AuxiliaryActionsMenu | 220     | `appId == null &&` guard    | Controls Design System visibility            |
+| AuxiliaryActionsMenu | 72-74   | currentThemeId logic        | Determines what's selected                   |
+| AuxiliaryActionsMenu | 77-98   | visibleCustomThemes useMemo | Custom theme limiting logic                  |
+| AuxiliaryActionsMenu | 103-112 | Theme selection handler     | Branches on appId                            |
+| ChatInput            | 496     | appId prop pass             | Enables app-specific behavior                |
+| home.tsx             | 136     | designSystemId on create    | Applies design system to new app             |
+| useSettings          | 34-47   | Settings hydration          | Loads selectedThemeId/selectedDesignSystemId |
+| useAppTheme          | 13      | enabled: !!appId            | Query guard                                  |
 
 ---
 
@@ -242,22 +259,26 @@ theme-option-none                       # No Theme option
 ## 🎓 How to Use These Docs
 
 ### For Understanding
+
 1. Start with **THEME_MENU_QUICK_REFERENCE.md**
 2. Drill into **THEME_RENDERING_MAP.md** sections as needed
 3. Cross-reference specific line numbers in source
 
 ### For Debugging
+
 1. Go to **THEME_MENU_QUICK_REFERENCE.md** → "Common Issues & Debugging"
 2. Find your symptom
 3. Follow the troubleshooting steps
 4. Reference source lines from main map if needed
 
 ### For Testing
+
 1. Use test ID table in **THEME_RENDERING_MAP.md**
 2. Reference visibility matrix in **THEME_MENU_QUICK_REFERENCE.md**
 3. Run edge cases listed in "Edge Cases" section
 
 ### For Code Review
+
 1. Check **THEME_MENU_QUICK_REFERENCE.md** → "Code Review Checklist"
 2. Verify all lines in "Lines to Watch" table
 3. Ensure guards are correct and data flows properly
@@ -295,6 +316,7 @@ theme-option-none                       # No Theme option
 ## 📞 Questions?
 
 Refer to the appropriate document:
+
 - **Quick answer needed?** → THEME_MENU_QUICK_REFERENCE.md
 - **Need all details?** → THEME_RENDERING_MAP.md
 - **Debugging issue?** → THEME_MENU_QUICK_REFERENCE.md → "Common Issues"

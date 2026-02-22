@@ -4,21 +4,30 @@ export function handleVercelOAuthReturn({
   token,
   refreshToken,
   expiresIn,
+  teamId,
+  installationId,
 }: {
   token: string;
-  refreshToken: string;
-  expiresIn: number;
+  refreshToken?: string;
+  expiresIn?: number;
+  teamId?: string;
+  installationId?: string;
 }) {
   writeSettings({
     vercel: {
       accessToken: {
         value: token,
       },
-      refreshToken: {
-        value: refreshToken,
-      },
-      expiresIn,
+      ...(refreshToken && {
+        refreshToken: {
+          value: refreshToken,
+        },
+      }),
+      ...(expiresIn !== undefined && { expiresIn }),
       tokenTimestamp: Math.floor(Date.now() / 1000),
+      ...(teamId && { teamId }),
+      ...(installationId && { installationId }),
+      authMethod: "oauth" as const,
     },
   });
 }

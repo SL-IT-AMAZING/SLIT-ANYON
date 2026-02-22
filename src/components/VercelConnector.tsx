@@ -14,7 +14,6 @@ import { useLoadApp } from "@/hooks/useLoadApp";
 import { useSettings } from "@/hooks/useSettings";
 import { useVercelDeployments } from "@/hooks/useVercelDeployments";
 import { type App, ipc } from "@/ipc/types";
-import { oauthEndpoints } from "@/lib/oauthConfig";
 import { Globe } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +22,7 @@ import { toast } from "sonner";
 interface VercelConnectorProps {
   appId: number | null;
   folderName: string;
+  onProjectCreated?: () => void;
 }
 
 interface VercelProject {
@@ -43,6 +43,29 @@ interface UnconnectedVercelConnectorProps {
   settings: any;
   refreshSettings: () => void;
   refreshApp: () => void;
+  onProjectCreated?: () => void;
+}
+
+/** Sanitize a string into a Vercel-compatible project name */
+function sanitizeVercelProjectName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/-{3,}/g, "--")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100);
+}
+
+/** Validate a project name against Vercel's rules. Returns error string or null. */
+function validateVercelProjectName(name: string): string | null {
+  if (!name) return "Project name is required.";
+  if (name.length > 100) return "Project name must be 100 characters or less.";
+  if (name !== name.toLowerCase()) return "Project name must be lowercase.";
+  if (/[^a-z0-9._-]/.test(name))
+    return "Project name can only contain lowercase letters, digits, '.', '_', and '-'.";
+  if (name.includes("---")) return "Project name cannot contain '---'.";
+  return null;
 }
 
 function ConnectedVercelConnector({
@@ -222,6 +245,7 @@ function UnconnectedVercelConnector({
   settings,
   refreshSettings,
   refreshApp,
+  onProjectCreated,
 }: UnconnectedVercelConnectorProps) {
   const { t } = useTranslation("app");
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
@@ -232,6 +256,14 @@ function UnconnectedVercelConnector({
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenSuccess, setTokenSuccess] = useState(false);
   const [showManualToken, setShowManualToken] = useState(false);
+  const [deviceAuthState, setDeviceAuthState] = useState<{
+    userCode: string;
+    verificationUriComplete: string;
+    interval: number;
+    expiresAt: number;
+  } | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   // --- Project Setup State ---
   const [projectSetupMode, setProjectSetupMode] = useState<
@@ -244,7 +276,9 @@ function UnconnectedVercelConnector({
   const [selectedProject, setSelectedProject] = useState<string>("");
 
   // Create new project state
-  const [projectName, setProjectName] = useState(folderName);
+  const [projectName, setProjectName] = useState(
+    sanitizeVercelProjectName(folderName),
+  );
   const [projectAvailable, setProjectAvailable] = useState<boolean | null>(
     null,
   );
@@ -274,13 +308,81 @@ function UnconnectedVercelConnector({
       }
     };
     handleDeepLink();
-  }, [
-    lastDeepLink?.timestamp,
-    clearLastDeepLink,
-    refreshApp,
-    refreshSettings,
-    t,
-  ]);
+  }, [lastDeepLink?.type, clearLastDeepLink, refreshApp, refreshSettings, t]);
+
+  useEffect(() => {
+    if (!deviceAuthState) {
+      return;
+    }
+
+    let isMounted = true;
+    let isPolling = false;
+    const poll = async () => {
+      if (isPolling || !isMounted) {
+        return;
+      }
+
+      isPolling = true;
+      try {
+        const result = await ipc.vercel.pollDeviceAuth();
+        if (!isMounted) {
+          return;
+        }
+
+        if (result.status === "success") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError(null);
+          await refreshSettings();
+          refreshApp();
+          toast.success("Successfully connected to Vercel!");
+          return;
+        }
+
+        if (result.status === "expired") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError("Device authorization expired. Please try again.");
+          return;
+        }
+
+        if (result.status === "denied") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError("Authorization was denied. Please try again.");
+          return;
+        }
+
+        if (result.status === "error") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError(
+            result.error || "Failed to complete Vercel device authorization.",
+          );
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setDeviceAuthState(null);
+        setIsConnecting(false);
+        setConnectError(
+          error instanceof Error
+            ? error.message
+            : "Failed to poll Vercel authorization status.",
+        );
+      } finally {
+        isPolling = false;
+      }
+    };
+
+    const intervalId = setInterval(poll, deviceAuthState.interval * 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [deviceAuthState, refreshApp, refreshSettings]);
 
   // Load available projects when Vercel is connected
   useEffect(() => {
@@ -332,10 +434,44 @@ function UnconnectedVercelConnector({
     }
   };
 
+  const handleStartDeviceAuth = async () => {
+    setConnectError(null);
+    setTokenError(null);
+    setTokenSuccess(false);
+    setIsConnecting(true);
+
+    try {
+      const start = await ipc.vercel.startDeviceAuth();
+      setDeviceAuthState({
+        userCode: start.userCode,
+        verificationUriComplete: start.verificationUriComplete,
+        interval: start.interval,
+        expiresAt: Date.now() + start.expiresIn * 1000,
+      });
+      await ipc.system.openExternalUrl(start.verificationUriComplete);
+    } catch (error) {
+      setIsConnecting(false);
+      setDeviceAuthState(null);
+      setConnectError(
+        error instanceof Error
+          ? error.message
+          : "Failed to start Vercel device authorization.",
+      );
+    }
+  };
+
   const checkProjectAvailability = useCallback(async (name: string) => {
     setProjectCheckError(null);
     setProjectAvailable(null);
     if (!name) return;
+
+    const validationError = validateVercelProjectName(name);
+    if (validationError) {
+      setProjectAvailable(false);
+      setProjectCheckError(validationError);
+      return;
+    }
+
     setIsCheckingProject(true);
     try {
       const result = await ipc.vercel.isProjectAvailable({
@@ -389,6 +525,7 @@ function UnconnectedVercelConnector({
       setCreateProjectSuccess(true);
       setProjectCheckError(null);
       refreshApp();
+      onProjectCreated?.();
     } catch (err: any) {
       setCreateProjectError(
         err.message ||
@@ -409,15 +546,60 @@ function UnconnectedVercelConnector({
 
           <div className="space-y-4">
             <Button
-              onClick={async () => {
-                await ipc.system.openExternalUrl(oauthEndpoints.vercel.login);
-              }}
+              onClick={handleStartDeviceAuth}
               variant="outline"
               className="w-full h-10"
+              disabled={isConnecting}
               data-testid="connect-vercel-button"
             >
-              Connect to Vercel with OAuth
+              {deviceAuthState
+                ? `Opening browser... Enter code: ${deviceAuthState.userCode}`
+                : isConnecting
+                  ? "Opening browser..."
+                  : "Connect to Vercel"}
             </Button>
+
+            {deviceAuthState && (
+              <div className="rounded-md border border-border bg-muted/40 p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Waiting for authorization...
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Enter this code in your browser:
+                </p>
+                <p className="mt-1 font-mono text-lg font-semibold tracking-wider">
+                  {deviceAuthState.userCode}
+                </p>
+              </div>
+            )}
+
+            {connectError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                <p className="text-sm text-red-800 dark:text-red-200">
+                  {connectError}
+                </p>
+              </div>
+            )}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -501,9 +683,7 @@ function UnconnectedVercelConnector({
       <div className="font-medium mb-2">Set up your Vercel project</div>
 
       {/* Collapsible Content */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out`}
-      >
+      <div className="overflow-hidden transition-all duration-300 ease-in-out">
         <div className="pt-0 space-y-4">
           {/* Mode Selection */}
           <div>
@@ -651,7 +831,11 @@ function UnconnectedVercelConnector({
   );
 }
 
-export function VercelConnector({ appId, folderName }: VercelConnectorProps) {
+export function VercelConnector({
+  appId,
+  folderName,
+  onProjectCreated,
+}: VercelConnectorProps) {
   const { app, refreshApp } = useLoadApp(appId);
   const { settings, refreshSettings } = useSettings();
 
@@ -663,15 +847,16 @@ export function VercelConnector({ appId, folderName }: VercelConnectorProps) {
         refreshApp={refreshApp}
       />
     );
-  } else {
-    return (
-      <UnconnectedVercelConnector
-        appId={appId}
-        folderName={folderName}
-        settings={settings}
-        refreshSettings={refreshSettings}
-        refreshApp={refreshApp}
-      />
-    );
   }
+
+  return (
+    <UnconnectedVercelConnector
+      appId={appId}
+      folderName={folderName}
+      settings={settings}
+      refreshSettings={refreshSettings}
+      refreshApp={refreshApp}
+      onProjectCreated={onProjectCreated}
+    />
+  );
 }

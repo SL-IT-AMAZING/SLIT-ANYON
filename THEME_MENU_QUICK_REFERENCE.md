@@ -4,15 +4,15 @@
 
 ### Where Do Things Render?
 
-| Item | File:Line | Guard | Home | Chat |
-|------|-----------|-------|------|------|
-| No Theme | AAM:179 | None | ✅ | ✅ |
-| Builtin Themes | AAM:193 | themes?.map() | ✅ | ✅ |
-| **Design Sys - None** | **AAM:223** | **appId==null && len>0** | ✅ | ❌ |
-| **Design Sys - Items** | **AAM:236** | **appId==null && len>0** | ✅ | ❌ |
-| Custom Themes | AAM:269 | visibleCustomThemes.len>0 | ✅* | ✅* |
-| More Themes | AAM:298 | customThemes.len>4 | ✅* | ✅* |
-| Create Theme | AAM:319 | None | ✅ | ✅ |
+| Item                   | File:Line   | Guard                     | Home | Chat |
+| ---------------------- | ----------- | ------------------------- | ---- | ---- |
+| No Theme               | AAM:179     | None                      | ✅   | ✅   |
+| Builtin Themes         | AAM:193     | themes?.map()             | ✅   | ✅   |
+| **Design Sys - None**  | **AAM:223** | **appId==null && len>0**  | ✅   | ❌   |
+| **Design Sys - Items** | **AAM:236** | **appId==null && len>0**  | ✅   | ❌   |
+| Custom Themes          | AAM:269     | visibleCustomThemes.len>0 | ✅\* | ✅\* |
+| More Themes            | AAM:298     | customThemes.len>4        | ✅\* | ✅\* |
+| Create Theme           | AAM:319     | None                      | ✅   | ✅   |
 
 **Key**: `*` = requires data loaded
 
@@ -32,12 +32,12 @@ T+chat:  App theme loaded IF appId exists (enabled: !!appId)
 
 ### Hook Defaults
 
-| Hook | Returns | Default | Timing |
-|------|---------|---------|--------|
-| useThemes | themes | ✅ themesData | Immediate |
-| useCustomThemes | [] | ❌ Empty array | After IPC |
-| useDesignSystems | [] | ❌ Empty array | After IPC |
-| useAppTheme (enabled) | null | ❌ null | Per appId |
+| Hook                  | Returns | Default        | Timing    |
+| --------------------- | ------- | -------------- | --------- |
+| useThemes             | themes  | ✅ themesData  | Immediate |
+| useCustomThemes       | []      | ❌ Empty array | After IPC |
+| useDesignSystems      | []      | ❌ Empty array | After IPC |
+| useAppTheme (enabled) | null    | ❌ null        | Per appId |
 
 ---
 
@@ -77,14 +77,15 @@ Is appId truthy?
 ### currentThemeId (Line 72-73)
 
 ```typescript
-const currentThemeId = appId != null ? appThemeId : settings?.selectedThemeId || null;
+const currentThemeId =
+  appId != null ? appThemeId : settings?.selectedThemeId || null;
 ```
 
-| Context | appId | Source | Value |
-|---------|-------|--------|-------|
-| Home | undefined | settings | "builtin-light" or "custom:5" or null |
-| Chat (no app) | null | settings | "builtin-light" or "custom:5" or null |
-| Chat (with app) | number | hook | IPC response (app-specific) |
+| Context         | appId     | Source   | Value                                 |
+| --------------- | --------- | -------- | ------------------------------------- |
+| Home            | undefined | settings | "builtin-light" or "custom:5" or null |
+| Chat (no app)   | null      | settings | "builtin-light" or "custom:5" or null |
+| Chat (with app) | number    | hook     | IPC response (app-specific)           |
 
 ### currentDesignSystemId (Line 74)
 
@@ -92,8 +93,8 @@ const currentThemeId = appId != null ? appThemeId : settings?.selectedThemeId ||
 const currentDesignSystemId = settings?.selectedDesignSystemId || null;
 ```
 
-| Always | Source | Notes |
-|--------|--------|-------|
+| Always             | Source        | Notes              |
+| ------------------ | ------------- | ------------------ |
 | ✅ Same everywhere | settings only | Never app-specific |
 
 ---
@@ -122,11 +123,13 @@ Example: `[{id:1,name:"Dark"}, {id:2,name:"Light"}, {id:3,name:"Blue"}, {id:4,na
 ### Output: visibleCustomThemes
 
 Example with 5 total, "Dark" selected:
+
 ```
 [{id:1,name:"Dark"}, {id:2,name:"Light"}, {id:3,name:"Blue"}, {id:4,name:"Green"}]
 ```
 
 Example with 5 total, none selected:
+
 ```
 [{id:1,name:"Dark"}, {id:2,name:"Light"}, {id:3,name:"Blue"}, {id:4,name:"Green"}]
 ```
@@ -183,16 +186,16 @@ User selects Custom Theme Y
 
 ```javascript
 // Design System section exists check
-cy.get('[data-testid="design-system-option-none"]').should('exist');
+cy.get('[data-testid="design-system-option-none"]').should("exist");
 
 // Design System option selection
 cy.get('[data-testid="design-system-option-${id}"]').click();
 
 // Hidden in chat (should not exist)
-cy.get('[data-testid="design-system-option-"]').should('not.exist');
+cy.get('[data-testid="design-system-option-"]').should("not.exist");
 
 // Custom theme rendering
-cy.get('[data-testid="theme-option-custom:5"]').should('exist');
+cy.get('[data-testid="theme-option-custom:5"]').should("exist");
 ```
 
 ---
@@ -204,18 +207,18 @@ cy.get('[data-testid="theme-option-custom:5"]').should('exist');
 **Symptom**: Design system section doesn't appear in home page menu
 
 **Check**:
+
 1. Are you on HOME page? (not chat)
    - Test: `appId` should be `undefined`
    - Debug: Open DevTools → Check `selectedAppIdAtom` value
-   
 2. Is `designSystems.length > 0`?
    - Test: Pull up network tab → find `getDesignSystems` response
    - Debug: Check if IPC returned empty array `[]`
-   
 3. Is condition true? `appId == null && designSystems.length > 0`
    - Both must be true
 
-**Solution**: 
+**Solution**:
+
 - Verify design systems exist in backend
 - Verify on home page (no appId)
 - Clear browser cache + reload
@@ -225,6 +228,7 @@ cy.get('[data-testid="theme-option-custom:5"]').should('exist');
 **Symptom**: Only 4 custom themes visible, but more exist
 
 **Check**:
+
 - This is **by design**: limited to 4 visible
 - Click "More Themes" to see full list
 - If "More Themes" missing: probably ≤4 total custom themes
@@ -234,10 +238,10 @@ cy.get('[data-testid="theme-option-custom:5"]').should('exist');
 **Symptom**: Selected theme resets on reload
 
 **Check**:
+
 1. **Home Page**: Did settings save?
    - Look for `selectedThemeId` in settings DB
    - Check `updateSettings()` call succeeded
-   
 2. **Chat Page**: Did app theme save?
    - Look for app record with themeId field
    - Check `setAppTheme()` call succeeded
@@ -278,13 +282,13 @@ cy.get('[data-testid="theme-option-custom:5"]').should('exist');
 
 ### Rendering Efficiency
 
-| Component | Re-renders When | Frequency |
-|-----------|-----------------|-----------|
-| Menu trigger | isOpen changes | User click |
-| All options | currentThemeId changes | Theme selection |
-| Design systems | designSystems array changes | New system created |
-| Custom themes | visibleCustomThemes changes | Custom theme CRUD |
-| "More Themes" | hasMoreCustomThemes changes | When 5th custom theme added |
+| Component      | Re-renders When             | Frequency                   |
+| -------------- | --------------------------- | --------------------------- |
+| Menu trigger   | isOpen changes              | User click                  |
+| All options    | currentThemeId changes      | Theme selection             |
+| Design systems | designSystems array changes | New system created          |
+| Custom themes  | visibleCustomThemes changes | Custom theme CRUD           |
+| "More Themes"  | hasMoreCustomThemes changes | When 5th custom theme added |
 
 ### Memoization
 
@@ -303,13 +307,13 @@ const visibleCustomThemes = useMemo(() => {
 
 ### Lines to Watch
 
-| Line(s) | What | Why Critical |
-|---------|------|--------------|
-| 72-74 | currentThemeId logic | Determines what's selected |
-| 103-112 | appId != null check | Updates app theme only in chat |
-| 220 | `appId == null &&` | Controls design system visibility |
-| 266 | `visibleCustomThemes.length > 0` | Controls custom themes visibility |
-| 297 | `hasMoreCustomThemes` | Controls "More Themes" visibility |
+| Line(s) | What                             | Why Critical                      |
+| ------- | -------------------------------- | --------------------------------- |
+| 72-74   | currentThemeId logic             | Determines what's selected        |
+| 103-112 | appId != null check              | Updates app theme only in chat    |
+| 220     | `appId == null &&`               | Controls design system visibility |
+| 266     | `visibleCustomThemes.length > 0` | Controls custom themes visibility |
+| 297     | `hasMoreCustomThemes`            | Controls "More Themes" visibility |
 
 ### Design System Additions: Confidence Checklist
 
@@ -322,4 +326,3 @@ const visibleCustomThemes = useMemo(() => {
 - [x] Separator renders before section (line 222)
 - [x] Icons render correctly (line 250: `<Blocks>`)
 - [x] Test IDs present for QA (line 246: `design-system-option-`)
-
