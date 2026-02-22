@@ -3,16 +3,18 @@ import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { LogoSpinner } from "@/components/chat-v2/LogoSpinner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
+import { NodeInstallDialog } from "@/components/NodeInstallDialog";
 import { useAppVersion } from "@/hooks/useAppVersion";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSettings } from "@/hooks/useSettings";
+import { useNodeStatus } from "@/hooks/useNodeStatus";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { ipc } from "@/ipc/types";
 import { generateCuteAppName, getAppDisplayName } from "@/lib/utils";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useSetAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { homeChatInputValueAtom } from "../atoms/chatAtoms";
 
 import { ForceCloseDialog } from "@/components/ForceCloseDialog";
@@ -62,6 +64,24 @@ export default function HomePage() {
   const [releaseUrl, setReleaseUrl] = useState("");
   const { theme } = useTheme();
   const queryClient = useQueryClient();
+  const { data: nodeStatus, refetch: refetchNodeStatus } = useNodeStatus();
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const isNodeMissing = !nodeStatus?.nodeVersion;
+  const isNodeOutdated =
+    !!nodeStatus?.nodeVersion && !nodeStatus?.isVersionSufficient;
+  const autoInstallTriggeredRef = useRef(false);
+
+  // Auto-open install dialog when Node.js is missing or outdated
+  useEffect(() => {
+    if (
+      nodeStatus &&
+      (isNodeMissing || isNodeOutdated) &&
+      !autoInstallTriggeredRef.current
+    ) {
+      autoInstallTriggeredRef.current = true;
+      setInstallDialogOpen(true);
+    }
+  }, [nodeStatus, isNodeMissing, isNodeOutdated]);
 
   // Listen for force-close events
   useEffect(() => {
@@ -130,6 +150,11 @@ export default function HomePage() {
 
     if (!inputValue.trim() && attachments.length === 0) return;
 
+    if (isNodeMissing || isNodeOutdated) {
+      setInstallDialogOpen(true);
+      return;
+    }
+
     try {
       setIsLoading(true);
       // Create the chat and navigate
@@ -195,128 +220,136 @@ export default function HomePage() {
     <div className="relative min-h-full">
       <div
         className="sticky top-0 h-screen bg-no-repeat bg-center bg-cover pointer-events-none opacity-25"
-        style={{ backgroundImage: `url(${heroBgImage})`, marginBottom: '-100vh' }}
+        style={{
+          backgroundImage: `url(${heroBgImage})`,
+          marginBottom: "-100vh",
+        }}
       />
-    <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[8vh] relative">
-      <ForceCloseDialog
-        isOpen={forceCloseDialogOpen}
-        onClose={() => setForceCloseDialogOpen(false)}
-        performanceData={performanceData}
-      />
+      <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[8vh] relative">
+        <ForceCloseDialog
+          isOpen={forceCloseDialogOpen}
+          onClose={() => setForceCloseDialogOpen(false)}
+          performanceData={performanceData}
+        />
 
-      <div className="w-full">
-        <div className="text-center mb-[18vh]">
-          <h1
-            className="text-7xl font-bold tracking-tight mb-5 flex items-center justify-center gap-4 flex-wrap"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            <span>{t("home.hero.build")}</span>
-            <span className="italic text-primary">
-              {t("home.hero.anything")}
-            </span>
-            <span>{t("home.hero.with")}</span>
-            <img src={anyonLogo} alt="ANYON" className="h-16 inline-block" />
-          </h1>
-          <p className="text-muted-foreground text-xl font-medium">
-            {t("home.hero.subtitle")}
-          </p>
-        </div>
-        <HomeChatInput onSubmit={handleSubmit} />
+        <div className="w-full">
+          <div className="text-center mb-[18vh]">
+            <h1
+              className="text-7xl font-bold tracking-tight mb-5 flex items-center justify-center gap-4 flex-wrap"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              <span>{t("home.hero.build")}</span>
+              <span className="italic text-primary">
+                {t("home.hero.anything")}
+              </span>
+              <span>{t("home.hero.with")}</span>
+              <img src={anyonLogo} alt="ANYON" className="h-16 inline-block" />
+            </h1>
+            <p className="text-muted-foreground text-xl font-medium">
+              {t("home.hero.subtitle")}
+            </p>
+          </div>
+          <HomeChatInput onSubmit={handleSubmit} />
 
-        <div className="flex flex-col items-center gap-3 mt-4">
-          <p className="text-sm text-muted-foreground">
-            {t("home.importHint")}
-          </p>
-          <button
-            type="button"
-            onClick={() => setIsImportDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border
+          <div className="flex flex-col items-center gap-3 mt-4">
+            <p className="text-sm text-muted-foreground">
+              {t("home.importHint")}
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsImportDialogOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border
                        bg-card/50 backdrop-blur-sm
                        transition-all duration-200
                        hover:bg-card hover:shadow-md hover:border-border
                        active:scale-[0.98]"
-          >
-            <Upload className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">
-              {t("home.import")}
-            </span>
-          </button>
-        </div>
-        <ImportAppDialog
-          isOpen={isImportDialogOpen}
-          onClose={() => setIsImportDialogOpen(false)}
-        />
+            >
+              <Upload className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">
+                {t("home.import")}
+              </span>
+            </button>
+          </div>
+          <ImportAppDialog
+            isOpen={isImportDialogOpen}
+            onClose={() => setIsImportDialogOpen(false)}
+          />
+          <NodeInstallDialog
+            open={installDialogOpen}
+            onOpenChange={setInstallDialogOpen}
+            onInstallComplete={() => void refetchNodeStatus()}
+          />
 
-        {apps.length > 0 && (
-          <div className="mt-8 w-full">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">
-              {t("home.recentProjects.title")}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {apps.slice(0, 6).map((app) => (
-                <button
-                  type="button"
-                  key={app.id}
-                  onClick={() => handleAppClick(app.id)}
-                  className="flex flex-col items-start p-4 rounded-xl border border-border
+          {apps.length > 0 && (
+            <div className="mt-8 w-full">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                {t("home.recentProjects.title")}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {apps.slice(0, 6).map((app) => (
+                  <button
+                    type="button"
+                    key={app.id}
+                    onClick={() => handleAppClick(app.id)}
+                    className="flex flex-col items-start p-4 rounded-xl border border-border
                              bg-card/50 backdrop-blur-sm text-left
                              transition-all duration-200
                              hover:bg-card hover:shadow-md hover:border-border
                              active:scale-[0.98]"
-                >
-                  <span className="font-medium text-foreground truncate w-full">
-                    {getAppDisplayName(app)}
-                  </span>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(app.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      <PrivacyBanner />
-
-      {/* Release Notes Dialog */}
-      <Dialog open={releaseNotesOpen} onOpenChange={setReleaseNotesOpen}>
-        <DialogContent className="max-w-4xl bg-(--docs-bg) pr-0 pt-4 pl-4 gap-1">
-          <DialogHeader>
-            <DialogTitle>
-              {t("home.releaseNotes.title", { version: appVersion })}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-10 top-2 focus-visible:ring-0 focus-visible:ring-offset-0"
-              onClick={() =>
-                window.open(
-                  releaseUrl.replace(`?hideHeader=true&theme=${theme}`, ""),
-                  "_blank",
-                )
-              }
-            >
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          </DialogHeader>
-          <div className="overflow-auto h-[70vh] flex flex-col ">
-            {releaseUrl && (
-              <div className="flex-1">
-                <iframe
-                  src={releaseUrl}
-                  className="w-full h-full border-0 rounded-lg"
-                  title={t("home.releaseNotes.iframeTitle", {
-                    version: appVersion,
-                  })}
-                />
+                  >
+                    <span className="font-medium text-foreground truncate w-full">
+                      {getAppDisplayName(app)}
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(app.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </div>
+          )}
+        </div>
+        <PrivacyBanner />
+
+        {/* Release Notes Dialog */}
+        <Dialog open={releaseNotesOpen} onOpenChange={setReleaseNotesOpen}>
+          <DialogContent className="max-w-4xl bg-(--docs-bg) pr-0 pt-4 pl-4 gap-1">
+            <DialogHeader>
+              <DialogTitle>
+                {t("home.releaseNotes.title", { version: appVersion })}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-10 top-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+                onClick={() =>
+                  window.open(
+                    releaseUrl.replace(`?hideHeader=true&theme=${theme}`, ""),
+                    "_blank",
+                  )
+                }
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </DialogHeader>
+            <div className="overflow-auto h-[70vh] flex flex-col ">
+              {releaseUrl && (
+                <div className="flex-1">
+                  <iframe
+                    src={releaseUrl}
+                    className="w-full h-full border-0 rounded-lg"
+                    title={t("home.releaseNotes.iframeTitle", {
+                      version: appVersion,
+                    })}
+                  />
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

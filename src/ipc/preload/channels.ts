@@ -35,7 +35,11 @@ import { securityContracts } from "../types/security";
 // Import all contracts
 import { settingsContracts } from "../types/settings";
 import { supabaseContracts } from "../types/supabase";
-import { systemContracts, systemEvents } from "../types/system";
+import {
+  nodeInstallStreamContract,
+  systemContracts,
+  systemEvents,
+} from "../types/system";
 import { templateContracts } from "../types/templates";
 import { upgradeContracts } from "../types/upgrade";
 import { vercelContracts, vercelDeployStreamContract } from "../types/vercel";
@@ -50,6 +54,11 @@ const CHAT_STREAM_CHANNELS = getStreamChannels(chatStreamContract);
 const HELP_STREAM_CHANNELS = getStreamChannels(helpStreamContract);
 const VERCEL_DEPLOY_STREAM_CHANNELS = getStreamChannels(
   vercelDeployStreamContract,
+);
+
+// Node Install Stream channels
+const NODE_INSTALL_STREAM_CHANNELS = getStreamChannels(
+  nodeInstallStreamContract,
 );
 
 // Test-only channels (handler only registered in E2E test builds, but channel always allowed)
@@ -72,6 +81,7 @@ export const VALID_INVOKE_CHANNELS = [
   CHAT_STREAM_CHANNELS.invoke,
   HELP_STREAM_CHANNELS.invoke,
   VERCEL_DEPLOY_STREAM_CHANNELS.invoke,
+  NODE_INSTALL_STREAM_CHANNELS.invoke,
 
   // Integrations
   ...getInvokeChannels(githubContracts),
@@ -126,6 +136,7 @@ export const VALID_RECEIVE_CHANNELS = [
   ...getReceiveChannels(systemEvents),
   ...getReceiveChannels(miscEvents),
   ...getReceiveChannels(planEvents),
+  ...NODE_INSTALL_STREAM_CHANNELS.receive,
 ] as const;
 
 // =============================================================================

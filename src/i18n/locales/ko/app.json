@@ -63,7 +63,29 @@
       "createAppFailed": "앱 생성에 실패했습니다. {{message}}"
     },
     "import": "가져오기",
-    "importHint": "기존 프로젝트 가져오기"
+    "importHint": "기존 프로젝트 가져오기",
+    "nodeSetup": {
+      "bannerTitle": "Node.js 설치 필요",
+      "bannerDescription": "ANYON에서 앱을 만들려면 Node.js가 필요합니다. 원클릭으로 설치하세요.",
+      "bannerOutdated": "현재 Node.js 버전({{version}})이 너무 낡습니다. v18 이상이 필요합니다.",
+      "installButton": "Node.js 설치",
+      "updateButton": "Node.js 업데이트",
+      "dialogTitle": "Node.js 설치 중",
+      "downloading": "Node.js 다운로드 중...",
+      "downloadingPercent": "Node.js 다운로드 중... {{percent}}%",
+      "extracting": "파일 압축 해제 중...",
+      "verifying": "설치 확인 중...",
+      "installingPnpm": "패키지 관리자 설정 중...",
+      "installComplete": "Node.js 설치 완료!",
+      "installCompleteDescription": "Node.js {{version}}와 pnpm이 준비되었습니다. 이제 앱을 만들 수 있습니다.",
+      "installFailed": "설치 실패",
+      "installFailedDescription": "{{message}}",
+      "retryButton": "다시 시도",
+      "manualInstall": "직접 설치하기",
+      "browseButton": "기존 설치 위치 찾기",
+      "closeButton": "닫기",
+      "continueButton": "계속"
+    }
   },
   "hub": {
     "title": "마켓플레이스",

@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from "electron";
+import { dialog, ipcMain, app } from "electron";
 import { execSync } from "child_process";
 import { platform, arch } from "os";
 import fixPath from "fix-path";
@@ -16,21 +16,37 @@ const logger = log.scope("node_handlers");
 // null = use real check, true = mock as installed, false = mock as not installed
 let mockNodeInstalled: boolean | null = null;
 
-function getNodeDownloadUrl(): string {
-  // Default to mac download url.
-  let nodeDownloadUrl = "https://nodejs.org/dist/v22.14.0/node-v22.14.0.pkg";
-  if (platform() == "win32") {
-    if (arch() === "arm64" || arch() === "arm") {
-      nodeDownloadUrl =
-        "https://nodejs.org/dist/v22.14.0/node-v22.14.0-arm64.msi";
-    } else {
-      // x64 is the most common architecture for Windows so it's the
-      // default download url.
-      nodeDownloadUrl =
-        "https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi";
-    }
+const NODE_VERSION = "v22.14.0";
+const NODE_MIN_MAJOR = 18;
+
+export function getNodeDownloadUrl(): string {
+  const base = `https://nodejs.org/dist/${NODE_VERSION}`;
+  const p = platform();
+  const a = arch();
+
+  if (p === "win32") {
+    const winArch = a === "arm64" || a === "arm" ? "arm64" : "x64";
+    return `${base}/node-${NODE_VERSION}-win-${winArch}.zip`;
   }
-  return nodeDownloadUrl;
+  if (p === "darwin") {
+    const macArch = a === "arm64" ? "arm64" : "x64";
+    return `${base}/node-${NODE_VERSION}-darwin-${macArch}.tar.gz`;
+  }
+  // Linux
+  const linuxArch = a === "arm64" ? "arm64" : "x64";
+  return `${base}/node-${NODE_VERSION}-linux-${linuxArch}.tar.gz`;
+}
+
+export function getNodeInstallDir(): string {
+  return join(app.getPath("userData"), "nodejs");
+}
+
+export function isNodeVersionSufficient(version: string | null): boolean {
+  if (!version) return false;
+  // version looks like "v22.14.0" or "22.14.0"
+  const match = version.match(/(\d+)\./);
+  if (!match) return false;
+  return parseInt(match[1], 10) >= NODE_MIN_MAJOR;
 }
 
 export function registerNodeHandlers() {
@@ -64,9 +80,15 @@ export function registerNodeHandlers() {
           nodeVersion: "v22.14.0",
           pnpmVersion: "9.0.0",
           nodeDownloadUrl,
+          isVersionSufficient: true,
         };
       }
-      return { nodeVersion: null, pnpmVersion: null, nodeDownloadUrl };
+      return {
+        nodeVersion: null,
+        pnpmVersion: null,
+        nodeDownloadUrl,
+        isVersionSufficient: false,
+      };
     }
 
     // Run checks in parallel
@@ -79,7 +101,12 @@ export function registerNodeHandlers() {
         "pnpm --version || (corepack enable pnpm && pnpm --version) || (npm install -g pnpm@latest-10 && pnpm --version)",
       ),
     ]);
-    return { nodeVersion, pnpmVersion, nodeDownloadUrl };
+    return {
+      nodeVersion,
+      pnpmVersion,
+      nodeDownloadUrl,
+      isVersionSufficient: isNodeVersionSufficient(nodeVersion),
+    };
   });
 
   createTypedHandler(systemContracts.reloadEnvPath, async () => {

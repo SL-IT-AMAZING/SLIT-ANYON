@@ -63,7 +63,29 @@
       "createAppFailed": "Failed to create app. {{message}}"
     },
     "import": "Import",
-    "importHint": "Import an existing project"
+    "importHint": "Import an existing project",
+    "nodeSetup": {
+      "bannerTitle": "Node.js Required",
+      "bannerDescription": "ANYON needs Node.js to create and run apps. Install it with one click to get started.",
+      "bannerOutdated": "Your Node.js version ({{version}}) is outdated. ANYON requires v18 or newer.",
+      "installButton": "Install Node.js",
+      "updateButton": "Update Node.js",
+      "dialogTitle": "Installing Node.js",
+      "downloading": "Downloading Node.js...",
+      "downloadingPercent": "Downloading Node.js... {{percent}}%",
+      "extracting": "Extracting files...",
+      "verifying": "Verifying installation...",
+      "installingPnpm": "Setting up package manager...",
+      "installComplete": "Node.js installed successfully!",
+      "installCompleteDescription": "Node.js {{version}} and pnpm are ready. You can now create apps.",
+      "installFailed": "Installation failed",
+      "installFailedDescription": "{{message}}",
+      "retryButton": "Retry",
+      "manualInstall": "Install manually instead",
+      "browseButton": "Browse for existing installation",
+      "closeButton": "Close",
+      "continueButton": "Continue"
+    }
   },
   "hub": {
     "title": "Marketplace",
