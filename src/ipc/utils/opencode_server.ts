@@ -1,5 +1,6 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
+import { createConnection } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { getMcpServerScript } from "@/opencode/mcp/mcp_server_script";
@@ -31,6 +32,11 @@ interface StartOptions {
   timeout?: number;
   opencodePath?: string;
   cwd?: string;
+}
+
+interface StopOptions {
+  force?: boolean;
+  gracePeriodMs?: number;
 }
 
 class OpenCodeServerManager {
@@ -125,7 +131,7 @@ class OpenCodeServerManager {
           options.port ||
           Number.parseInt(process.env.OPENCODE_PORT || "51962", 10);
         await this._killExistingServer(port);
-        await this.sleep(2000);
+        await this._waitForPortRelease(port);
 
         logger.info(`Retrying server start (attempt ${attempt + 1})...`);
       }
@@ -165,9 +171,7 @@ class OpenCodeServerManager {
         `Found existing OpenCode server on port ${port}, killing to ensure fresh MCP config...`,
       );
       await this._killExistingServer(port);
-      logger.info("Waiting for port to be released...");
-      await this.sleep(2000);
-      logger.info("Done waiting, proceeding to start server...");
+      await this._waitForPortRelease(port);
     }
 
     logger.info(`Starting OpenCode server on ${hostname}:${port}...`);
@@ -436,7 +440,7 @@ class OpenCodeServerManager {
     );
   }
 
-  async stop(): Promise<void> {
+  async stop(options: StopOptions = {}): Promise<void> {
     try {
       await toolGateway.stop();
     } catch (error) {
@@ -446,11 +450,32 @@ class OpenCodeServerManager {
     if (!this.process) return;
 
     const pid = this.process.pid;
+    const force = options.force ?? false;
+    const gracePeriod = options.gracePeriodMs ?? 5000;
+
     logger.info(`Stopping server (PID: ${pid})...`);
 
-    this.process.kill("SIGTERM");
+    if (force) {
+      this.process.kill("SIGKILL");
 
-    const gracePeriod = 5000;
+      const start = Date.now();
+      while (this.isRunning() && Date.now() - start < 1200) {
+        await this.sleep(50);
+      }
+
+      if (this.port != null) {
+        await this._waitForPortRelease(this.port, 1200, 50);
+      }
+
+      this.process = null;
+      this.url = null;
+      this.password = null;
+
+      logger.info("Server force-stopped");
+      return;
+    }
+
+    this.process.kill("SIGTERM");
     const start = Date.now();
 
     while (this.isRunning() && Date.now() - start < gracePeriod) {
@@ -507,6 +532,49 @@ class OpenCodeServerManager {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async _waitForPortRelease(
+    port: number,
+    timeoutMs = 5000,
+    intervalMs = 100,
+  ): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    logger.info(`Waiting for port ${port} to be released...`);
+
+    while (Date.now() < deadline) {
+      const free = await this._isPortFree(port);
+      if (free) {
+        logger.info(`Port ${port} is now free.`);
+        return;
+      }
+      await this.sleep(intervalMs);
+    }
+
+    logger.warn(
+      `Port ${port} was not released within ${timeoutMs} ms — proceeding anyway`,
+    );
+  }
+
+  private _isPortFree(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const socket = createConnection({ port, host: "127.0.0.1" });
+      socket.setTimeout(500);
+      socket.on("connect", () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.on("error", (err: NodeJS.ErrnoException) => {
+        socket.destroy();
+        // ECONNREFUSED means nothing is bound; any other error leaves the
+        // port status ambiguous, so treat it as still occupied.
+        resolve(err.code === "ECONNREFUSED");
+      });
+      socket.on("timeout", () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
   }
 
   private _mcpScriptPath: string | null = null;
@@ -571,7 +639,7 @@ class OpenCodeServerManager {
     try {
       const response = await fetch(`${url}/global/health`, {
         headers: { Authorization: `Basic ${credentials}` },
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(800),
       });
 
       if (response.ok) {
@@ -604,12 +672,12 @@ class OpenCodeServerManager {
         this.url = null;
         this.password = null;
         this._cwd = null;
-        await this.sleep(1000);
+        await this._waitForPortRelease(port);
       } else if (this.isRunning()) {
         logger.info(
           `CWD change needed: ${this._cwd ?? "(none)"} → ${options.cwd}, restarting server...`,
         );
-        await this.stop();
+        await this.stop({ force: true });
       }
     }
 

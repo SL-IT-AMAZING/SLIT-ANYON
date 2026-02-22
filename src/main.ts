@@ -132,11 +132,11 @@ export async function onReady() {
   startPerformanceMonitoring();
 
   await onFirstRunMaybe(settings);
-  await setupOpenCodeConfig().catch((err) => {
-    logger.error("OpenCode config setup failed:", err);
-  });
   registerPreviewProtocol();
   createWindow();
+  void setupOpenCodeConfig().catch((err) => {
+    logger.error("OpenCode config setup failed:", err);
+  });
   createApplicationMenu();
 
   logger.info("Auto-update enabled=", settings.enableAutoUpdate);
