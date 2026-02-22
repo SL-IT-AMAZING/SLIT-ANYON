@@ -3,6 +3,7 @@ import { isChatPanelHiddenAtom, isPreviewOpenAtom } from "@/atoms/viewAtoms";
 import { useChats } from "@/hooks/useChats";
 import { usePlanImplementation } from "@/hooks/usePlanImplementation";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
@@ -34,6 +35,13 @@ export default function ChatPage() {
   // Handle plan implementation when a plan is accepted
   usePlanImplementation();
 
+
+  // Auto-collapse sidebar when entering chat (run once on mount)
+  const { setOpen: setSidebarOpen } = useSidebar();
+  useEffect(() => {
+    setSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (!chatId && chats.length && !loading) {
       // Not a real navigation, just a redirect, when the user navigates to /chat
