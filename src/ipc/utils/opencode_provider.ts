@@ -69,6 +69,9 @@ interface OpenCodeEvent {
     };
     status?: {
       type: string;
+      message?: string;
+      attempt?: number;
+      next?: number;
     };
     error?: {
       name: string;
@@ -429,6 +432,8 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
     const textId = `opencode-text-${Date.now()}`;
     let textStarted = false;
+    let emittedAnyOutput = false;
+    let lastRetryStatusMessage: string | undefined;
     let inputTokens = 0;
     let outputTokens = 0;
 
@@ -576,6 +581,9 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
       ctrl: ReadableStreamDefaultController<LanguageModelV2StreamPart>,
       text: string,
     ) => {
+      if (text.length > 0) {
+        emittedAnyOutput = true;
+      }
       ensureTextStarted(ctrl);
       ctrl.enqueue({ type: "text-delta", id: textId, delta: text });
     };
@@ -906,9 +914,34 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   });
                 } else if (
                   event.type === "session.status" &&
-                  event.properties.sessionID === session.id &&
-                  event.properties.status?.type === "idle"
+                  event.properties.sessionID === session.id
                 ) {
+                  const statusType = event.properties.status?.type;
+
+                  if (statusType === "retry") {
+                    const retryMessage = event.properties.status?.message;
+                    if (retryMessage) {
+                      lastRetryStatusMessage = retryMessage;
+                      logger.warn(
+                        `OpenCode reported retry status: ${retryMessage}`,
+                      );
+                    }
+                    continue;
+                  }
+
+                  if (statusType !== "idle") {
+                    continue;
+                  }
+
+                  if (!emittedAnyOutput) {
+                    const retrySuffix = lastRetryStatusMessage
+                      ? `: ${lastRetryStatusMessage}`
+                      : "";
+                    throw new Error(
+                      `OpenCode session ended without producing a response${retrySuffix}`,
+                    );
+                  }
+
                   finished = true;
                   closeReasoningBlock(controller);
 
