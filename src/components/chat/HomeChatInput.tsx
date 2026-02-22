@@ -51,8 +51,8 @@ export function HomeChatInput({
     if (!selectedDesignSystemId) return null;
 
     return (
-      designSystems.find((ds) => ds.id === selectedDesignSystemId)?.displayName ??
-      null
+      designSystems.find((ds) => ds.id === selectedDesignSystemId)
+        ?.displayName ?? null
     );
   }, [settings?.selectedDesignSystemId, designSystems]);
 
@@ -170,7 +170,9 @@ export function HomeChatInput({
                     data-testid="selected-design-system-chip"
                   >
                     <Blocks className="size-3" />
-                    <span className="truncate">{selectedDesignSystemLabel}</span>
+                    <span className="truncate">
+                      {selectedDesignSystemLabel}
+                    </span>
                   </Badge>
                 )}
               </div>

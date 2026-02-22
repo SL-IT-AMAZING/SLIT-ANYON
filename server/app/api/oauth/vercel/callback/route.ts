@@ -22,12 +22,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokenData = await exchangeCodeForToken(
-      "https://api.vercel.com/login/oauth/token",
+      "https://api.vercel.com/v2/oauth/access_token",
       {
-        grant_type: "authorization_code",
-        code,
         client_id: process.env.VERCEL_CLIENT_ID!,
         client_secret: process.env.VERCEL_CLIENT_SECRET!,
+        code,
         redirect_uri: `${process.env.OAUTH_SERVER_URL}/api/oauth/vercel/callback`,
         code_verifier: codeVerifier,
       },
@@ -35,8 +34,18 @@ export async function GET(request: NextRequest) {
 
     const deepLinkUrl = new URL("anyon://vercel-oauth-return");
     deepLinkUrl.searchParams.set("token", tokenData.access_token);
-    deepLinkUrl.searchParams.set("refreshToken", tokenData.refresh_token);
-    deepLinkUrl.searchParams.set("expiresIn", String(tokenData.expires_in));
+    if (tokenData.refresh_token) {
+      deepLinkUrl.searchParams.set("refreshToken", tokenData.refresh_token);
+    }
+    if (tokenData.expires_in) {
+      deepLinkUrl.searchParams.set("expiresIn", String(tokenData.expires_in));
+    }
+    if (tokenData.team_id) {
+      deepLinkUrl.searchParams.set("teamId", tokenData.team_id);
+    }
+    if (tokenData.installation_id) {
+      deepLinkUrl.searchParams.set("installationId", tokenData.installation_id);
+    }
 
     const response = NextResponse.redirect(deepLinkUrl.toString());
     response.cookies.delete("vercel_oauth_state");

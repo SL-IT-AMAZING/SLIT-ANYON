@@ -1,7 +1,8 @@
-import { withLock } from "../ipc/utils/lock_utils";
-import { readSettings, writeSettings } from "../main/settings";
-import { oauthEndpoints } from "../lib/oauthConfig";
 import log from "electron-log";
+import { withLock } from "../ipc/utils/lock_utils";
+import { oauthEndpoints } from "../lib/oauthConfig";
+import { readSettings, writeSettings } from "../main/settings";
+import { refreshDeviceToken } from "./vercel_device_auth";
 
 const logger = log.scope("vercel_management_client");
 
@@ -17,9 +18,11 @@ function isTokenExpired(expiresIn?: number): boolean {
 
 export async function refreshVercelToken(): Promise<void> {
   const settings = readSettings();
+  const vercelSettings = settings.vercel;
+  const accessToken = vercelSettings?.accessToken?.value;
   const refreshToken = settings.vercel?.refreshToken?.value;
 
-  if (!isTokenExpired(settings.vercel?.expiresIn)) {
+  if (!accessToken || !isTokenExpired(vercelSettings?.expiresIn)) {
     return;
   }
 
@@ -30,34 +33,59 @@ export async function refreshVercelToken(): Promise<void> {
   }
 
   try {
-    const response = await fetch(oauthEndpoints.vercel.refresh, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
+    const isLegacyIntegration = !!vercelSettings?.installationId;
 
-    if (!response.ok) {
-      throw new Error(`Vercel token refresh failed: ${response.statusText}`);
+    let nextAccessToken: string;
+    let nextRefreshToken: string;
+    let nextExpiresIn: number;
+
+    if (isLegacyIntegration) {
+      const response = await fetch(oauthEndpoints.vercel.refresh, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Vercel token refresh failed: ${response.statusText}`);
+      }
+
+      const {
+        accessToken: refreshedAccessToken,
+        refreshToken: refreshedRefreshToken,
+        expiresIn,
+      } = await response.json();
+
+      nextAccessToken = refreshedAccessToken;
+      nextRefreshToken = refreshedRefreshToken;
+      nextExpiresIn = expiresIn;
+    } else {
+      const refreshed = await refreshDeviceToken(refreshToken);
+      if (!refreshed.refresh_token) {
+        throw new Error("Vercel refresh did not return a refresh token.");
+      }
+
+      nextAccessToken = refreshed.access_token;
+      nextRefreshToken = refreshed.refresh_token;
+      nextExpiresIn = refreshed.expires_in;
     }
-
-    const {
-      accessToken,
-      refreshToken: newRefreshToken,
-      expiresIn,
-    } = await response.json();
 
     writeSettings({
       vercel: {
+        ...vercelSettings,
         accessToken: {
-          value: accessToken,
+          value: nextAccessToken,
         },
         refreshToken: {
-          value: newRefreshToken,
+          value: nextRefreshToken,
         },
-        expiresIn,
+        expiresIn: nextExpiresIn,
         tokenTimestamp: Math.floor(Date.now() / 1000),
+        authMethod:
+          vercelSettings?.authMethod ??
+          (isLegacyIntegration ? "oauth" : "device"),
       },
     });
   } catch (error) {
@@ -68,14 +96,16 @@ export async function refreshVercelToken(): Promise<void> {
 
 export async function getVercelAccessToken(): Promise<string> {
   const settings = readSettings();
+  const vercelSettings = settings.vercel;
 
-  // Prefer new OAuth tokens over legacy manual token
-  const oauthToken = settings.vercel?.accessToken?.value;
+  const oauthToken = vercelSettings?.accessToken?.value;
   const legacyToken = settings.vercelAccessToken?.value;
 
   if (oauthToken) {
-    const expiresIn = settings.vercel?.expiresIn;
-    if (isTokenExpired(expiresIn)) {
+    const expiresIn = vercelSettings?.expiresIn;
+    const hasRefreshToken = !!vercelSettings?.refreshToken?.value;
+
+    if (expiresIn && hasRefreshToken && isTokenExpired(expiresIn)) {
       await withLock("refresh-vercel-token", refreshVercelToken);
       const updatedSettings = readSettings();
       const newToken = updatedSettings.vercel?.accessToken?.value;
@@ -92,4 +122,9 @@ export async function getVercelAccessToken(): Promise<string> {
   }
 
   throw new Error("Vercel access token not found. Please authenticate first.");
+}
+
+export function getVercelTeamId(): string | null {
+  const settings = readSettings();
+  return settings.vercel?.teamId ?? null;
 }

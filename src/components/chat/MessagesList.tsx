@@ -28,6 +28,7 @@ import { showError, showWarning } from "@/lib/toast";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Loader2, RefreshCw, Undo } from "lucide-react";
 import { PromoMessage } from "./PromoMessage";
+import { resolveTurnDuration } from "./durationUtils";
 import {
   findLastIndexByRole,
   findLastMessageByRole,
@@ -217,7 +218,9 @@ function summarizeTurn(
   }
 
   let duration: string | undefined;
-  const assistantWithCreatedAt = turn.assistantMessages.filter((m) => m.createdAt);
+  const assistantWithCreatedAt = turn.assistantMessages.filter(
+    (m) => m.createdAt,
+  );
   const startCandidate =
     assistantWithCreatedAt[0]?.createdAt ??
     (isTurnWorking ? turn.userMessage?.createdAt : undefined);
@@ -226,8 +229,8 @@ function summarizeTurn(
     const start = new Date(startCandidate as string | Date);
     const endCandidate = isTurnWorking
       ? new Date(nowMs)
-      : assistantWithCreatedAt[assistantWithCreatedAt.length - 1]?.createdAt ??
-        startCandidate;
+      : (assistantWithCreatedAt[assistantWithCreatedAt.length - 1]?.createdAt ??
+        startCandidate);
     const end = new Date(endCandidate as string | Date);
 
     if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
@@ -474,6 +477,9 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     const [isUndoLoading, setIsUndoLoading] = useState(false);
     const [isRetryLoading, setIsRetryLoading] = useState(false);
     const [nowMs, setNowMs] = useState(() => Date.now());
+    const [cachedTurnDurations, setCachedTurnDurations] = useState<
+      Map<string, string>
+    >(new Map());
     const [expandedTurnIds, setExpandedTurnIds] = useState<Set<string>>(
       new Set(),
     );
@@ -506,12 +512,41 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
 
     const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages]);
 
+    useEffect(() => {
+      if (!isStreaming || turns.length === 0) {
+        return;
+      }
+
+      const lastTurn = turns[turns.length - 1];
+      const lastTurnSummary = summarizeTurn(lastTurn, true, nowMs);
+      const streamingDuration = lastTurnSummary.duration;
+      if (!streamingDuration) {
+        return;
+      }
+
+      setCachedTurnDurations((prev) => {
+        const current = prev.get(lastTurn.id);
+        if (current === streamingDuration) {
+          return prev;
+        }
+        const next = new Map(prev);
+        next.set(lastTurn.id, streamingDuration);
+        return next;
+      });
+    }, [isStreaming, turns, nowMs]);
+
     // Memoized item renderer for virtualized list
     const itemContent = useCallback(
       (index: number, turn: MessageTurn) => {
         const isLastTurn = index === turns.length - 1;
         const isTurnWorking = isStreaming && isLastTurn;
         const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
+        const fallbackDuration = cachedTurnDurations.get(turn.id);
+        const displayDuration = resolveTurnDuration({
+          isTurnWorking,
+          currentDuration: turnSummary.duration,
+          fallbackDuration,
+        });
         const userMessageText = turn.userMessage?.content ?? "";
         const hasAssistantContent = turn.assistantMessages.length > 0;
         const stepsExpanded = expandedTurnIds.has(turn.id);
@@ -524,7 +559,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
               response={turnSummary.response}
               working={isTurnWorking}
               statusText={turnSummary.statusText}
-              duration={turnSummary.duration}
+              duration={displayDuration}
               stepsExpanded={stepsExpanded}
               onToggleSteps={() => {
                 setExpandedTurnIds((prev) => {
@@ -542,7 +577,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           </div>
         );
       },
-      [turns, isStreaming, expandedTurnIds, nowMs],
+      [turns, isStreaming, expandedTurnIds, nowMs, cachedTurnDurations],
     );
 
     // Create context object for Footer component with stable references
@@ -613,6 +648,12 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
             const isLastTurn = index === turns.length - 1;
             const isTurnWorking = isStreaming && isLastTurn;
             const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
+            const fallbackDuration = cachedTurnDurations.get(turn.id);
+            const displayDuration = resolveTurnDuration({
+              isTurnWorking,
+              currentDuration: turnSummary.duration,
+              fallbackDuration,
+            });
             const hasAssistantContent = turn.assistantMessages.length > 0;
             const stepsExpanded = expandedTurnIds.has(turn.id);
             return (
@@ -623,7 +664,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
                   response={turnSummary.response}
                   working={isTurnWorking}
                   statusText={turnSummary.statusText}
-                  duration={turnSummary.duration}
+                  duration={displayDuration}
                   stepsExpanded={stepsExpanded}
                   onToggleSteps={() => {
                     setExpandedTurnIds((prev) => {

@@ -5,6 +5,7 @@
 This guide documents the **complete preview serving infrastructure** in the Electron app, helping you understand how to build a pre-built HTML preview system for Next.js/Vite templates.
 
 ### Documents
+
 1. **PREVIEW_INFRASTRUCTURE_GUIDE.md** (this file) - Architecture overview & decisions
 2. **PREVIEW_CODE_REFERENCE.md** - Code snippets & implementation details
 
@@ -15,6 +16,7 @@ This guide documents the **complete preview serving infrastructure** in the Elec
 The Anyon app has **two separate preview systems**:
 
 ### 1. Design System Previews (anyon-preview:// protocol)
+
 - **Location:** `src/main/preview-protocol.ts`
 - **Serving:** Pre-built Vite apps from `preview-apps/preview-{id}/dist/`
 - **URL:** `anyon-preview://shadcn/index.html`
@@ -22,6 +24,7 @@ The Anyon app has **two separate preview systems**:
 - **Best for:** Static single-page app distribution
 
 ### 2. Template Previews (srcDoc approach)
+
 - **Location:** `src/pages/template-detail.tsx`
 - **Serving:** Raw HTML strings via IPC
 - **Method:** `<iframe srcDoc={htmlString} />`
@@ -36,15 +39,16 @@ The Anyon app has **two separate preview systems**:
 
 You have **three options**:
 
-| Option | Approach | Pros | Cons | Recommendation |
-|--------|----------|------|------|-----------------|
-| **1. Extend anyon-preview://** | Reuse design system protocol | Secure, tested, performant | Slight design system coupling | ✅ BEST |
-| **2. Keep srcDoc** | Current template approach | Simple, working | Memory overhead | ❌ Legacy |
-| **3. New anyon-template://** | Create isolated protocol | Clean separation | Code duplication | ⚠️ If isolated control needed |
+| Option                         | Approach                     | Pros                       | Cons                          | Recommendation                |
+| ------------------------------ | ---------------------------- | -------------------------- | ----------------------------- | ----------------------------- |
+| **1. Extend anyon-preview://** | Reuse design system protocol | Secure, tested, performant | Slight design system coupling | ✅ BEST                       |
+| **2. Keep srcDoc**             | Current template approach    | Simple, working            | Memory overhead               | ❌ Legacy                     |
+| **3. New anyon-template://**   | Create isolated protocol     | Clean separation           | Code duplication              | ⚠️ If isolated control needed |
 
 ### Recommendation: Extend anyon-preview://
 
 **Why:**
+
 - Protocol handler already optimized for file serving
 - Security validations proven in production
 - No memory overhead (streams from disk)
@@ -52,6 +56,7 @@ You have **three options**:
 - Single code path for both preview types
 
 **Changes needed:**
+
 1. Modify `src/main/preview-protocol.ts` to accept template IDs
 2. Add validation for template paths
 3. Update URL pattern: `anyon-preview://template-{id}/index.html`
@@ -62,6 +67,7 @@ You have **three options**:
 ## File Locations Reference
 
 ### Core Protocol Implementation
+
 ```
 src/main/
 ├── preview-protocol.ts              # Electron protocol handler (100 lines)
@@ -74,6 +80,7 @@ src/main/
 ```
 
 ### IPC Integration
+
 ```
 src/ipc/
 ├── utils/
@@ -87,6 +94,7 @@ src/ipc/
 ```
 
 ### React Components
+
 ```
 src/components/preview_panel/
 ├── PreviewIframe.tsx                # Dev app preview (1456+ lines)
@@ -100,6 +108,7 @@ src/pages/
 ```
 
 ### Configuration
+
 ```
 src/shared/
 └── designSystems.ts                 # Design system registry (184 lines)
@@ -108,6 +117,7 @@ src/shared/
 ```
 
 ### Entry Points
+
 ```
 src/
 └── main.ts
@@ -120,6 +130,7 @@ src/
 ## How anyon-preview:// Protocol Works
 
 ### Request Flow
+
 ```
 Browser (iframe src)
   ↓
@@ -131,23 +142,23 @@ protocol.handle("anyon-preview", (request) => {
   const url = new URL(request.url);
   const designSystemId = url.hostname;           // "shadcn"
   const requestedPath = url.pathname.slice(1);  // "assets/style.css"
-  
+
   // Validate ID
   if (!DESIGN_SYSTEM_IDS.includes(designSystemId)) return 404;
-  
+
   // Resolve path safely
   const distRoot = "preview-apps/preview-shadcn/dist";
   const filePath = path.join(distRoot, requestedPath);
   const resolvedPath = path.resolve(filePath);
-  
+
   // Security: ensure resolved path stays in distRoot
   if (!resolvedPath.startsWith(path.resolve(distRoot))) return 403;
-  
+
   // Serve file
   if (fs.existsSync(resolvedPath)) {
     return net.fetch(`file://${resolvedPath}`, headers);
   }
-  
+
   // Fallback to index.html (SPA routing)
   return net.fetch(`file://${distRoot}/index.html`, headers);
 })
@@ -156,6 +167,7 @@ File served to iframe
 ```
 
 ### Key Security Features
+
 - ✅ Path traversal protection (`..` rejection)
 - ✅ Design system ID whitelist
 - ✅ Resolved path boundary check
@@ -167,6 +179,7 @@ File served to iframe
 ## How srcDoc Template Preview Works
 
 ### Request Flow
+
 ```
 Template Detail Page (React)
   ↓
@@ -190,6 +203,7 @@ Browser renders HTML inline
 ```
 
 ### Constraints
+
 - Entire HTML must fit in memory
 - No streaming or chunking
 - Browser security: can't access external resources
@@ -201,6 +215,7 @@ Browser renders HTML inline
 ## Directory Structure
 
 ### Preview Apps (for design systems)
+
 ```
 preview-apps/
 ├── preview-shadcn/
@@ -220,6 +235,7 @@ preview-apps/
 ```
 
 ### Production Path
+
 In packaged Electron app: `{resourcesPath}/preview-dists/`
 
 ---
@@ -229,6 +245,7 @@ In packaged Electron app: `{resourcesPath}/preview-dists/`
 ### Option A: Extend anyon-preview:// (RECOMMENDED)
 
 **1. Directory structure:**
+
 ```
 preview-apps/
 ├── templates-nextjs/
@@ -243,11 +260,12 @@ preview-apps/
 ```
 
 **2. Protocol modification:**
+
 ```typescript
 // src/main/preview-protocol.ts
-const hostnames = url.hostname.split('-');
-const type = hostnames[0];  // "template" or "preview"
-const id = hostnames.slice(1).join('-');  // "nextjs", "vite-react"
+const hostnames = url.hostname.split("-");
+const type = hostnames[0]; // "template" or "preview"
+const id = hostnames.slice(1).join("-"); // "nextjs", "vite-react"
 
 if (type === "template") {
   const distRoot = path.join(getPreviewDistRoot(), `templates-${id}`, "dist");
@@ -264,6 +282,7 @@ if (type === "template") {
 ```
 
 **3. Validation:**
+
 ```typescript
 const TEMPLATE_IDS = ["nextjs", "vite-react", "svelte", ...];
 const validIds = [...DESIGN_SYSTEM_IDS, ...TEMPLATE_IDS];
@@ -274,6 +293,7 @@ if (!validIds.includes(id)) {
 ```
 
 **4. React component:**
+
 ```typescript
 <iframe src={`anyon-preview://template-${templateId}/index.html`} />
 // No IPC needed, no srcDoc, just direct protocol
@@ -282,16 +302,23 @@ if (!validIds.includes(id)) {
 ### Option B: New anyon-template:// Protocol
 
 Similar implementation but completely isolated:
+
 ```typescript
-protocol.registerSchemesAsPrivileged([{
-  scheme: "anyon-template",
-  // ... same privileges as anyon-preview
-}]);
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "anyon-template",
+    // ... same privileges as anyon-preview
+  },
+]);
 
 protocol.handle("anyon-template", (request) => {
   // Similar logic but only for templates
   const templateId = url.hostname;
-  const distRoot = path.join(getPreviewDistRoot(), `templates-${templateId}`, "dist");
+  const distRoot = path.join(
+    getPreviewDistRoot(),
+    `templates-${templateId}`,
+    "dist",
+  );
   // ... serve files
 });
 ```
@@ -301,8 +328,9 @@ protocol.handle("anyon-template", (request) => {
 ## Security Model
 
 ### Path Traversal Protection
+
 ```typescript
-const requestedPath = url.pathname.slice(1);  // Remove leading /
+const requestedPath = url.pathname.slice(1); // Remove leading /
 const normalized = path.normalize(requestedPath);
 
 // Reject traversal attempts
@@ -318,6 +346,7 @@ if (!resolved.startsWith(path.resolve(distRoot))) {
 ```
 
 ### ID Validation
+
 ```typescript
 const whitelist = [...DESIGN_SYSTEM_IDS, ...TEMPLATE_IDS];
 if (!whitelist.includes(id)) {
@@ -326,6 +355,7 @@ if (!whitelist.includes(id)) {
 ```
 
 ### Privileges Configuration
+
 ```javascript
 {
   scheme: "anyon-preview",
@@ -359,6 +389,7 @@ if (!whitelist.includes(id)) {
 ## Migration Path (if changing from srcDoc)
 
 ### Current State
+
 ```
 template-detail.tsx
   ↓ ipc.template.getTemplateContent()
@@ -367,6 +398,7 @@ template-detail.tsx
 ```
 
 ### Target State
+
 ```
 template-detail.tsx
   ↓ Direct URL: anyon-preview://template-{id}/index.html
@@ -375,6 +407,7 @@ template-detail.tsx
 ```
 
 ### Steps
+
 1. Build templates into `preview-apps/templates-{id}/dist/`
 2. Modify `src/main/preview-protocol.ts` to handle template URLs
 3. Update `src/pages/template-detail.tsx` to use protocol URL
@@ -386,15 +419,15 @@ template-detail.tsx
 
 ## File Summary Table
 
-| File | Lines | Purpose | Status |
-|------|-------|---------|--------|
-| `src/main/preview-protocol.ts` | 100 | Electron protocol handler | ✅ Production |
-| `src/ipc/utils/preview_server_manager.ts` | 29 | URL generation with nonce | ✅ Production |
-| `src/components/preview_panel/PreviewIframe.tsx` | 1456+ | Dev app preview | ✅ Production |
-| `src/pages/template-detail.tsx` | 234 | Template marketplace | ✅ Production |
-| `src/ipc/types/templates.ts` | 300 | Template IPC contracts | ✅ Production |
-| `src/ipc/handlers/template_handlers.ts` | 28 | Template handlers | ✅ Production |
-| `src/shared/designSystems.ts` | 184 | Design system config | ✅ Production |
+| File                                             | Lines | Purpose                   | Status        |
+| ------------------------------------------------ | ----- | ------------------------- | ------------- |
+| `src/main/preview-protocol.ts`                   | 100   | Electron protocol handler | ✅ Production |
+| `src/ipc/utils/preview_server_manager.ts`        | 29    | URL generation with nonce | ✅ Production |
+| `src/components/preview_panel/PreviewIframe.tsx` | 1456+ | Dev app preview           | ✅ Production |
+| `src/pages/template-detail.tsx`                  | 234   | Template marketplace      | ✅ Production |
+| `src/ipc/types/templates.ts`                     | 300   | Template IPC contracts    | ✅ Production |
+| `src/ipc/handlers/template_handlers.ts`          | 28    | Template handlers         | ✅ Production |
+| `src/shared/designSystems.ts`                    | 184   | Design system config      | ✅ Production |
 
 ---
 
@@ -415,4 +448,3 @@ template-detail.tsx
 - URL API: https://nodejs.org/api/url.html
 - Path Module: https://nodejs.org/api/path.html
 - iframe Security: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe
-

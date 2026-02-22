@@ -184,6 +184,11 @@ export const VercelSchema = z.object({
   refreshToken: SecretSchema.optional(),
   expiresIn: z.number().optional(),
   tokenTimestamp: z.number().optional(),
+  authMethod: z.enum(["device", "oauth", "pat"]).optional(),
+  /** Team ID from Vercel Integration token exchange (if installed on a team) */
+  teamId: z.string().optional(),
+  /** Installation/configuration ID from Vercel Integration token exchange */
+  installationId: z.string().optional(),
 });
 export type Vercel = z.infer<typeof VercelSchema>;
 

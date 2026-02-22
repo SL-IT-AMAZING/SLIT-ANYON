@@ -490,16 +490,24 @@ async function handleDeepLinkReturn(url: string) {
   }
   if (parsed.hostname === "vercel-oauth-return") {
     const token = parsed.searchParams.get("token");
-    const refreshToken = parsed.searchParams.get("refreshToken");
-    const expiresIn = Number(parsed.searchParams.get("expiresIn"));
-    if (!token || !refreshToken || !expiresIn) {
-      dialog.showErrorBox(
-        "Invalid URL",
-        "Expected token, refreshToken, and expiresIn",
-      );
+    if (!token) {
+      dialog.showErrorBox("Invalid URL", "Expected token parameter");
       return;
     }
-    handleVercelOAuthReturn({ token, refreshToken, expiresIn });
+    const refreshToken = parsed.searchParams.get("refreshToken") || undefined;
+    const expiresIn = parsed.searchParams.get("expiresIn")
+      ? Number(parsed.searchParams.get("expiresIn"))
+      : undefined;
+    const teamId = parsed.searchParams.get("teamId") || undefined;
+    const installationId =
+      parsed.searchParams.get("installationId") || undefined;
+    handleVercelOAuthReturn({
+      token,
+      refreshToken,
+      expiresIn,
+      teamId,
+      installationId,
+    });
     mainWindow?.webContents.send("deep-link-received", {
       type: parsed.hostname,
     });

@@ -1,23 +1,28 @@
 # Test Impact Analysis - Documentation Index
 
 ## Overview
+
 Complete analysis of test files and fixtures that depend on the `UserSettings` shape, specifically for the new `selectedDesignSystemId` field addition.
 
 ## Documents Created
 
 ### 1. **Quick Reference** (5-minute read)
+
 📄 **File**: `SNAPSHOT_UPDATES_QUICK_REFERENCE.md`  
 **Use this when**: You need the fastest path to action  
-**Contains**: 
+**Contains**:
+
 - TL;DR of what to do
 - Exact line numbers for edits
 - Copy-paste ready field definition
 - Test command cheat sheet
 
 ### 2. **Comprehensive Impact Report** (15-minute read)
+
 📄 **File**: `TEST_IMPACT_ANALYSIS_selectedDesignSystemId.md`  
 **Use this when**: You need detailed context and evidence  
 **Contains**:
+
 - Full analysis of 2 critical issues
 - Evidence of what's already complete
 - Table of all affected test files
@@ -25,9 +30,11 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 - Verification checklist
 
 ### 3. **Text Summary** (10-minute read)
+
 📄 **File**: `TEST_IMPACT_SUMMARY.txt`  
 **Use this when**: You want a clean structured overview  
 **Contains**:
+
 - Critical findings section
 - Alphabetical list of what's complete
 - Auto-updated snapshots list
@@ -40,12 +47,15 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 ## Quick Navigation
 
 ### "I just need to know what to fix"
+
 → Read: `SNAPSHOT_UPDATES_QUICK_REFERENCE.md`
 
 ### "I need to understand the impact fully"
+
 → Read: `TEST_IMPACT_ANALYSIS_selectedDesignSystemId.md`
 
 ### "I want a structured summary"
+
 → Read: `TEST_IMPACT_SUMMARY.txt`
 
 ---
@@ -53,6 +63,7 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 ## Key Findings Summary
 
 ### 🔴 Critical Issues (Requires Action)
+
 1. **Unit test snapshots** in `src/__tests__/readSettings.test.ts`
    - 2 inline snapshots missing `selectedDesignSystemId` field
    - Tests WILL FAIL if not updated
@@ -63,6 +74,7 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
    - Already has proper assertions
 
 ### ✅ Already Complete (No Action Needed)
+
 - Default settings object (`src/main/settings.ts`)
 - Zod schema definition (`src/lib/schemas.ts`)
 - Component usages (with optional chaining)
@@ -70,6 +82,7 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 - Unit test mock fixtures
 
 ### ⏳ Auto-Updated (Monitor Only)
+
 - E2E snapshots in `e2e-tests/snapshots/`
 - Will regenerate automatically on test run
 
@@ -77,13 +90,13 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 
 ## Critical Files to Know
 
-| File | Type | Status | Note |
-|------|------|--------|------|
+| File                                 | Type      | Status          | Note               |
+| ------------------------------------ | --------- | --------------- | ------------------ |
 | `src/__tests__/readSettings.test.ts` | Unit Test | ❌ Needs Update | 2 inline snapshots |
-| `e2e-tests/theme_selection.spec.ts` | E2E Test | ✅ Complete | Already updated |
-| `src/main/settings.ts` | Config | ✅ Complete | Default value set |
-| `src/lib/schemas.ts` | Schema | ✅ Complete | Field defined |
-| `e2e-tests/helpers/test_helper.ts` | Helper | ✅ Complete | No changes needed |
+| `e2e-tests/theme_selection.spec.ts`  | E2E Test  | ✅ Complete     | Already updated    |
+| `src/main/settings.ts`               | Config    | ✅ Complete     | Default value set  |
+| `src/lib/schemas.ts`                 | Schema    | ✅ Complete     | Field defined      |
+| `e2e-tests/helpers/test_helper.ts`   | Helper    | ✅ Complete     | No changes needed  |
 
 ---
 
@@ -95,12 +108,14 @@ Complete analysis of test files and fixtures that depend on the `UserSettings` s
 **Location 2**: Line 330-331
 
 **Change in both locations**:
+
 ```typescript
 // Add this line:
           "selectedDesignSystemId": "",
 ```
 
 **Must go between**:
+
 - `"selectedThemeId": "default",` (before)
 - `"telemetryConsent": "unset",` (after)
 
@@ -147,11 +162,13 @@ February 20, 2026 - 18:30 UTC
 ## Questions to Ask Yourself
 
 **Before editing**:
+
 - [ ] Have I read which file to edit? (`src/__tests__/readSettings.test.ts`)
 - [ ] Do I know how many lines to add? (2 lines in 2 locations)
 - [ ] Do I understand field ordering? (Alphabetical between selectedThemeId and telemetryConsent)
 
 **After editing**:
+
 - [ ] Did I run `npm run test`?
 - [ ] Did tests pass?
 - [ ] Did I run `npm run build && npm run e2e`?
@@ -162,9 +179,9 @@ February 20, 2026 - 18:30 UTC
 ## Support
 
 If snapshots don't update correctly:
+
 1. Check field spelling: `selectedDesignSystemId` (exact case)
 2. Check field positioning: Must be between `selectedThemeId` and `telemetryConsent`
 3. Check default value: Must be empty string `""`
 4. Check JSON format: Must have comma after the field
 5. Run tests with: `npm run test -- --reporter=verbose`
-

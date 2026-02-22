@@ -94,6 +94,27 @@ export const SyncSupabaseEnvParamsSchema = z.object({
 
 export type SyncSupabaseEnvParams = z.infer<typeof SyncSupabaseEnvParamsSchema>;
 
+export const DeviceAuthStartResponseSchema = z.object({
+  userCode: z.string(),
+  verificationUri: z.string(),
+  verificationUriComplete: z.string(),
+  expiresIn: z.number(),
+  interval: z.number(),
+});
+
+export type DeviceAuthStartResponse = z.infer<
+  typeof DeviceAuthStartResponseSchema
+>;
+
+export const DeviceAuthPollResponseSchema = z.object({
+  status: z.enum(["pending", "success", "expired", "denied", "error"]),
+  error: z.string().optional(),
+});
+
+export type DeviceAuthPollResponse = z.infer<
+  typeof DeviceAuthPollResponseSchema
+>;
+
 // --- Direct Deploy Schemas ---
 
 export const DirectDeployParamsSchema = z.object({
@@ -150,6 +171,18 @@ export const vercelContracts = {
     channel: "vercel:save-token",
     input: SaveVercelAccessTokenParamsSchema,
     output: z.void(),
+  }),
+
+  startDeviceAuth: defineContract({
+    channel: "vercel:start-device-auth",
+    input: z.void(),
+    output: DeviceAuthStartResponseSchema,
+  }),
+
+  pollDeviceAuth: defineContract({
+    channel: "vercel:poll-device-auth",
+    input: z.void(),
+    output: DeviceAuthPollResponseSchema,
   }),
 
   listProjects: defineContract({

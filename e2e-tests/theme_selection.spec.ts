@@ -46,7 +46,9 @@ test("theme selection - anyon-wide default theme is persisted", async ({
   await po.page.getByRole("menuitem", { name: "Themes" }).click();
   await expect(po.page.getByTestId("design-system-option-mui")).toBeVisible();
   await po.page.getByTestId("design-system-option-mui").click();
-  await expect(po.page.getByTestId("design-system-option-mui")).not.toBeVisible();
+  await expect(
+    po.page.getByTestId("design-system-option-mui"),
+  ).not.toBeVisible();
 
   expect(po.recordSettings().selectedDesignSystemId).toBe("mui");
 
@@ -59,7 +61,9 @@ test("theme selection - anyon-wide default theme is persisted", async ({
     /bg-primary/,
   );
   await po.page.getByTestId("design-system-option-none").click();
-  await expect(po.page.getByTestId("design-system-option-none")).not.toBeVisible();
+  await expect(
+    po.page.getByTestId("design-system-option-none"),
+  ).not.toBeVisible();
 
   expect(po.recordSettings().selectedDesignSystemId).toBe("");
 });

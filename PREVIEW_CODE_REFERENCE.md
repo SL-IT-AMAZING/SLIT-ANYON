@@ -109,6 +109,7 @@ export function registerPreviewProtocol(): void {
 ```
 
 **Key Takeaways:**
+
 - Validates hostname against DESIGN_SYSTEM_IDS list
 - Builds path: `preview-apps/preview-{id}/dist/{file}`
 - Path traversal protection with normalization check
@@ -152,6 +153,7 @@ export async function stopActivePreview(): Promise<void> {
 ```
 
 **Key Takeaways:**
+
 - Simple state machine: tracks active design system
 - Generates UUID nonce for request tracking
 - Encodes parentOrigin as query param
@@ -224,6 +226,7 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
 ```
 
 **Key Takeaways:**
+
 - Fetches HTML string via IPC on mount
 - Stores in simple state: `previewHtml`
 - Uses srcDoc with sandbox
@@ -266,6 +269,7 @@ export function registerTemplateHandlers() {
 ```
 
 **Key Takeaways:**
+
 - `fetchTemplateContent()` reads entire HTML file
 - Returns as single string in response
 - Error handling with fallback
@@ -304,6 +308,7 @@ export const templateClient = createClient(templateContracts);
 ```
 
 **Key Takeaways:**
+
 - Input: path to template file
 - Output: raw HTML string
 - Zod schemas for validation
@@ -324,7 +329,7 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
     category: "minimal",
     tier: 1,
     scaffoldDir: "scaffold",
-    previewDir: "preview-shadcn",  // <-- Maps to preview-apps/preview-shadcn/dist/
+    previewDir: "preview-shadcn", // <-- Maps to preview-apps/preview-shadcn/dist/
     defaultPlatform: "react",
     tags: ["minimalist", "professional", "saas", "tailwind"],
     colorScheme: {
@@ -350,6 +355,7 @@ export function getDesignSystemById(id: string): DesignSystem | undefined {
 ```
 
 **Key Takeaways:**
+
 - 6 design systems total
 - Each has `id` used in protocol: `anyon-preview://{id}/`
 - `previewDir` matches `preview-{id}` folder name
@@ -372,12 +378,13 @@ registerPreviewScheme();
 app.whenReady().then(() => {
   // Line ~140: AFTER app.whenReady()
   registerPreviewProtocol();
-  
+
   // ... rest of setup
 });
 ```
 
 **Key Takeaways:**
+
 - `registerPreviewScheme()` MUST be before ready
 - `registerPreviewProtocol()` MUST be after ready
 - Two-phase protocol registration is critical
@@ -389,7 +396,7 @@ app.whenReady().then(() => {
 ### Key State Management
 
 ```typescript
-const [reloadKey, setReloadKey] = useState(0);           // Force iframe reload
+const [reloadKey, setReloadKey] = useState(0); // Force iframe reload
 const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
 const [currentHistoryPosition, setCurrentHistoryPosition] = useState(0);
 const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -422,7 +429,7 @@ return (
 // Listen for messages FROM iframe
 const handleMessage = (event: MessageEvent) => {
   if (event.source !== iframeRef.current?.contentWindow) {
-    return;  // Ignore messages not from our iframe
+    return; // Ignore messages not from our iframe
   }
 
   // Console logs
@@ -493,6 +500,7 @@ anyon-preview://shadcn/index.html?nonce=12345&parentOrigin=http%3A%2F%2Flocalhos
 **Request:** `anyon-preview://shadcn/assets/style.css`
 
 **Resolution Path:**
+
 ```
 1. URL hostname: "shadcn"
 2. Validate in DESIGN_SYSTEM_IDS: ✓
@@ -509,6 +517,7 @@ anyon-preview://shadcn/index.html?nonce=12345&parentOrigin=http%3A%2F%2Flocalhos
 ## Error Scenarios
 
 ### Invalid Design System ID
+
 ```
 Request: anyon-preview://invalid-id/index.html
 Response: 404 Not Found
@@ -516,6 +525,7 @@ Log: "Rejected preview request for unknown ID: invalid-id"
 ```
 
 ### Path Traversal Attempt
+
 ```
 Request: anyon-preview://shadcn/../../../etc/passwd
 Response: 403 Forbidden
@@ -523,6 +533,7 @@ Log: "Rejected path traversal attempt: ../../etc/passwd"
 ```
 
 ### File Not Found (with fallback)
+
 ```
 Request: anyon-preview://shadcn/nonexistent.js
 1. Check for nonexistent.js: not found
@@ -531,6 +542,7 @@ Request: anyon-preview://shadcn/nonexistent.js
 ```
 
 ### Absolute Path Attempt
+
 ```
 Request: anyon-preview://shadcn//etc/passwd
 Response: 403 Forbidden
@@ -542,27 +554,30 @@ Log: "Rejected path traversal attempt: /etc/passwd"
 ## Integration Points
 
 ### 1. Renderer → Main (IPC)
+
 ```typescript
 // In React component
 import { ipc } from "@/ipc/types";
 
 const html = await ipc.template.getTemplateContent({
-  templatePath: "/path/to/template.html"
+  templatePath: "/path/to/template.html",
 });
 ```
 
 ### 2. Main → Renderer (Protocol)
+
 ```typescript
 // In iframe src
 <iframe src="anyon-preview://shadcn/index.html" />
 ```
 
 ### 3. Iframe ↔ Parent (postMessage)
+
 ```typescript
 // Iframe sends message
 window.parent.postMessage(
   { type: "console-log", level: "info", args: ["Hello"] },
-  "*"
+  "*",
 );
 
 // Parent receives and handles
@@ -574,4 +589,3 @@ window.addEventListener("message", (event) => {
 ```
 
 ---
-

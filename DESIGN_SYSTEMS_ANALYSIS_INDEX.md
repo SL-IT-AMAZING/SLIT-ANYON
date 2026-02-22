@@ -5,7 +5,9 @@ This directory now contains a comprehensive gap analysis for design systems sele
 ## 📋 Documents Included
 
 ### 1. **QUICK SUMMARY** (Start Here!)
+
 📄 **File**: `DESIGN_SYSTEMS_QUICK_SUMMARY.md`
+
 - **Best for**: Quick understanding, executive summary
 - **Length**: ~400 lines
 - **Contains**:
@@ -17,7 +19,9 @@ This directory now contains a comprehensive gap analysis for design systems sele
   - What's missing checklist
 
 ### 2. **DETAILED GAP ANALYSIS**
+
 📄 **File**: `DESIGN_SYSTEMS_GAP_ANALYSIS.md`
+
 - **Best for**: Comprehensive understanding, reference
 - **Length**: ~600 lines
 - **Contains**:
@@ -30,7 +34,9 @@ This directory now contains a comprehensive gap analysis for design systems sele
   - Summary table: what's working vs not
 
 ### 3. **VISUAL TRACE DIAGRAM**
+
 📄 **File**: `TRACE_DIAGRAM.txt`
+
 - **Best for**: Understanding the complete flow visually
 - **Length**: ASCII art diagram
 - **Contains**:
@@ -43,36 +49,40 @@ This directory now contains a comprehensive gap analysis for design systems sele
 
 ## 🎯 Quick Facts
 
-| Aspect | Status |
-|--------|--------|
-| Design systems in Home '+' menu | ✅ Exists |
-| But they're discoverable | ❌ Hidden in Themes submenu |
-| Persisted to settings | ✅ Yes |
-| Passed to createApp | ✅ Yes |
-| Stored in database | ✅ Yes |
-| Can be changed later | ❌ No |
-| Has UI label | ❌ No |
-| Has default value | ❌ No |
+| Aspect                          | Status                      |
+| ------------------------------- | --------------------------- |
+| Design systems in Home '+' menu | ✅ Exists                   |
+| But they're discoverable        | ❌ Hidden in Themes submenu |
+| Persisted to settings           | ✅ Yes                      |
+| Passed to createApp             | ✅ Yes                      |
+| Stored in database              | ✅ Yes                      |
+| Can be changed later            | ❌ No                       |
+| Has UI label                    | ❌ No                       |
+| Has default value               | ❌ No                       |
 
 ---
 
 ## 🔍 Key Files to Know
 
 ### UI Layer
+
 - `src/components/chat/AuxiliaryActionsMenu.tsx` - Design system selection UI (lines 21, 65, 74, 125-130, 220-250)
 - `src/components/chat/HomeChatInput.tsx` - Renders menu
 - `src/hooks/useDesignSystems.ts` - Fetches design systems
 
 ### Settings Layer
+
 - `src/lib/schemas.ts` - UserSettingsSchema (line 295)
 - `src/main/settings.ts` - Default values
 - `src/ipc/types/settings.ts` - Settings IPC contract
 
 ### IPC Layer
+
 - `src/ipc/types/app.ts` - CreateAppParamsSchema (lines 53-57)
 - `src/ipc/handlers/app_handlers.ts` - createApp handler
 
 ### Home Page Flow
+
 - `src/pages/home.tsx` - App creation (lines 134-137)
 - `src/pages/home.tsx` - Theme application (lines 139-145)
 
@@ -81,19 +91,25 @@ This directory now contains a comprehensive gap analysis for design systems sele
 ## 📌 The 3 Main Issues
 
 ### 1. **Hidden UI** ❌
+
 Design systems appear in the Themes submenu with no label:
+
 - No "Design Systems" header
 - Just listed after separator
 - Users might not know they're there
 
 ### 2. **No Runtime Changes** ❌
+
 `handleDesignSystemSelect()` returns early if `appId != null`
+
 - Themes CAN be changed on existing apps
 - Design systems CANNOT be changed
 - Only applies at creation time
 
 ### 3. **No Default Value** ❌
+
 Settings defaults to empty string `""`
+
 - Should default to `"shadcn"` like themes do
 - Creates undefined/inconsistent behavior
 
@@ -102,9 +118,11 @@ Settings defaults to empty string `""`
 ## 🛠️ Suggested Fixes (Complexity Order)
 
 ### 1. Add Menu Label (5 minutes)
+
 **File**: `src/components/chat/AuxiliaryActionsMenu.tsx:220`
 
 Add before design systems list:
+
 ```tsx
 <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
   Design Systems
@@ -112,15 +130,19 @@ Add before design systems list:
 ```
 
 ### 2. Set Default (2 minutes)
+
 **File**: `src/main/settings.ts`
 
 Change:
+
 ```ts
 selectedDesignSystemId: "shadcn",  // Instead of ""
 ```
 
 ### 3. Allow Runtime Changes (Complex)
+
 Would need:
+
 - `setAppDesignSystem()` IPC handler
 - Remove `if (appId != null) return;` check
 - Update app record with new design system
@@ -142,6 +164,7 @@ Would need:
 ## ✅ What's Actually Working
 
 The infrastructure is solid:
+
 - [x] Design systems are fetched via hook
 - [x] Selection is saved to settings
 - [x] Value is persisted across app restarts

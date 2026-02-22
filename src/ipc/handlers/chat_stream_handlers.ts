@@ -41,6 +41,7 @@ import { getTestResponse } from "./testing_chat_handlers";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { inArray } from "drizzle-orm";
+import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
 import { prompts as promptsTable } from "../../db/schema";
 import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
@@ -164,6 +165,7 @@ async function processStreamChunks({
     fullResponse += chunk;
     incrementalResponse += chunk;
     fullResponse = cleanFullResponse(fullResponse);
+    fullResponse = sanitizeVisibleOutput(fullResponse);
     fullResponse = await processResponseChunkUpdate({
       fullResponse,
     });
@@ -183,168 +185,168 @@ export function registerChatStreamHandlers() {
     void (async () => {
       const attachmentPaths: string[] = [];
       try {
-      const fileUploadsState = FileUploadsState.getInstance();
-      // Clear any stale state from previous requests for this chat
-      fileUploadsState.clear(req.chatId);
-      let anyonRequestId: string | undefined;
-      // Create an AbortController for this stream
-      const abortController = new AbortController();
-      activeStreams.set(req.chatId, abortController);
+        const fileUploadsState = FileUploadsState.getInstance();
+        // Clear any stale state from previous requests for this chat
+        fileUploadsState.clear(req.chatId);
+        let anyonRequestId: string | undefined;
+        // Create an AbortController for this stream
+        const abortController = new AbortController();
+        activeStreams.set(req.chatId, abortController);
 
-      // Notify renderer that stream is starting
-      safeSend(event.sender, "chat:stream:start", { chatId: req.chatId });
+        // Notify renderer that stream is starting
+        safeSend(event.sender, "chat:stream:start", { chatId: req.chatId });
 
-      // Get the chat to check for existing messages
-      const chat = await db.query.chats.findFirst({
-        where: eq(chats.id, req.chatId),
-        with: {
-          messages: {
-            orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+        // Get the chat to check for existing messages
+        const chat = await db.query.chats.findFirst({
+          where: eq(chats.id, req.chatId),
+          with: {
+            messages: {
+              orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+            },
+            app: true, // Include app information
           },
-          app: true, // Include app information
-        },
-      });
+        });
 
-      if (!chat) {
-        throw new Error(`Chat not found: ${req.chatId}`);
-      }
-
-      const streamBaseMessages = [...chat.messages];
-
-      // Handle redo option: remove the most recent messages if needed
-      if (req.redo) {
-        // Find the most recent user message
-        let lastUserMessageIndex = streamBaseMessages.length - 1;
-        while (
-          lastUserMessageIndex >= 0 &&
-          streamBaseMessages[lastUserMessageIndex].role !== "user"
-        ) {
-          lastUserMessageIndex--;
+        if (!chat) {
+          throw new Error(`Chat not found: ${req.chatId}`);
         }
 
-        if (lastUserMessageIndex >= 0) {
-          // Delete the user message
-          await db
-            .delete(messages)
-            .where(
-              eq(messages.id, streamBaseMessages[lastUserMessageIndex].id),
-            );
-          streamBaseMessages.splice(lastUserMessageIndex, 1);
+        const streamBaseMessages = [...chat.messages];
 
-          // If there's an assistant message after the user message, delete it too
-          if (
-            lastUserMessageIndex < streamBaseMessages.length &&
-            streamBaseMessages[lastUserMessageIndex].role === "assistant"
+        // Handle redo option: remove the most recent messages if needed
+        if (req.redo) {
+          // Find the most recent user message
+          let lastUserMessageIndex = streamBaseMessages.length - 1;
+          while (
+            lastUserMessageIndex >= 0 &&
+            streamBaseMessages[lastUserMessageIndex].role !== "user"
           ) {
+            lastUserMessageIndex--;
+          }
+
+          if (lastUserMessageIndex >= 0) {
+            // Delete the user message
             await db
               .delete(messages)
               .where(
                 eq(messages.id, streamBaseMessages[lastUserMessageIndex].id),
               );
             streamBaseMessages.splice(lastUserMessageIndex, 1);
+
+            // If there's an assistant message after the user message, delete it too
+            if (
+              lastUserMessageIndex < streamBaseMessages.length &&
+              streamBaseMessages[lastUserMessageIndex].role === "assistant"
+            ) {
+              await db
+                .delete(messages)
+                .where(
+                  eq(messages.id, streamBaseMessages[lastUserMessageIndex].id),
+                );
+              streamBaseMessages.splice(lastUserMessageIndex, 1);
+            }
           }
         }
-      }
 
-      // Process attachments if any
-      let attachmentInfo = "";
+        // Process attachments if any
+        let attachmentInfo = "";
 
-      if (req.attachments && req.attachments.length > 0) {
-        attachmentInfo = "\n\nAttachments:\n";
+        if (req.attachments && req.attachments.length > 0) {
+          attachmentInfo = "\n\nAttachments:\n";
 
-        for (const [index, attachment] of req.attachments.entries()) {
-          // Generate a unique filename
-          const hash = crypto
-            .createHash("md5")
-            .update(attachment.name + Date.now())
-            .digest("hex");
-          const fileExtension = path.extname(attachment.name);
-          const filename = `${hash}${fileExtension}`;
-          const filePath = path.join(TEMP_DIR, filename);
+          for (const [index, attachment] of req.attachments.entries()) {
+            // Generate a unique filename
+            const hash = crypto
+              .createHash("md5")
+              .update(attachment.name + Date.now())
+              .digest("hex");
+            const fileExtension = path.extname(attachment.name);
+            const filename = `${hash}${fileExtension}`;
+            const filePath = path.join(TEMP_DIR, filename);
 
-          // Extract the base64 data (remove the data:mime/type;base64, prefix)
-          const base64Data = attachment.data.split(";base64,").pop() || "";
+            // Extract the base64 data (remove the data:mime/type;base64, prefix)
+            const base64Data = attachment.data.split(";base64,").pop() || "";
 
-          await writeFile(filePath, Buffer.from(base64Data, "base64"));
-          attachmentPaths.push(filePath);
+            await writeFile(filePath, Buffer.from(base64Data, "base64"));
+            attachmentPaths.push(filePath);
 
-          if (attachment.attachmentType === "upload-to-codebase") {
-            // For upload-to-codebase, create a unique file ID and store the mapping
-            const fileId = `ANYON_ATTACHMENT_${index}`;
+            if (attachment.attachmentType === "upload-to-codebase") {
+              // For upload-to-codebase, create a unique file ID and store the mapping
+              const fileId = `ANYON_ATTACHMENT_${index}`;
 
-            fileUploadsState.addFileUpload(
-              { chatId: req.chatId, fileId },
-              {
-                filePath,
-                originalName: attachment.name,
-              },
-            );
+              fileUploadsState.addFileUpload(
+                { chatId: req.chatId, fileId },
+                {
+                  filePath,
+                  originalName: attachment.name,
+                },
+              );
 
-            // Add instruction for AI to use anyon-write tag
-            attachmentInfo += `\n\nFile to upload to codebase: ${attachment.name} (file id: ${fileId})\n`;
-          } else {
-            // For chat-context, use the existing logic
-            attachmentInfo += `- ${attachment.name} (${attachment.type})\n`;
-            // If it's a text-based file, try to include the content
-            if (await isTextFile(filePath)) {
-              try {
-                attachmentInfo += `<anyon-text-attachment filename="${attachment.name}" type="${attachment.type}" path="${filePath}">
+              // Add instruction for AI to use anyon-write tag
+              attachmentInfo += `\n\nFile to upload to codebase: ${attachment.name} (file id: ${fileId})\n`;
+            } else {
+              // For chat-context, use the existing logic
+              attachmentInfo += `- ${attachment.name} (${attachment.type})\n`;
+              // If it's a text-based file, try to include the content
+              if (await isTextFile(filePath)) {
+                try {
+                  attachmentInfo += `<anyon-text-attachment filename="${attachment.name}" type="${attachment.type}" path="${filePath}">
                 </anyon-text-attachment>
                 \n\n`;
-              } catch (err) {
-                logger.error(`Error reading file content: ${err}`);
+                } catch (err) {
+                  logger.error(`Error reading file content: ${err}`);
+                }
               }
             }
           }
         }
-      }
 
-      // Add user message to database with attachment info
-      let userPrompt = req.prompt + (attachmentInfo ? attachmentInfo : "");
-      // Inline referenced prompt contents for mentions like @prompt:<id>
-      try {
-        const matches = Array.from(userPrompt.matchAll(/@prompt:(\d+)/g));
-        if (matches.length > 0) {
-          const ids = Array.from(new Set(matches.map((m) => Number(m[1]))));
-          const referenced = await db
-            .select()
-            .from(promptsTable)
-            .where(inArray(promptsTable.id, ids));
-          if (referenced.length > 0) {
-            const promptsMap: Record<number, string> = {};
-            for (const p of referenced) {
-              promptsMap[p.id] = p.content;
-            }
-            userPrompt = replacePromptReference(userPrompt, promptsMap);
-          }
-        }
-      } catch (e) {
-        logger.error("Failed to inline referenced prompts:", e);
-      }
-
-      // Expand /implement-plan= into full implementation prompt
-      // Keep the original short form for display in the UI; the expanded
-      // content is only injected into the AI message history.
-      let implementPlanDisplayPrompt: string | undefined;
-      const implementPlanMatch = userPrompt.match(/^\/implement-plan=(.+)$/);
-      if (implementPlanMatch) {
+        // Add user message to database with attachment info
+        let userPrompt = req.prompt + (attachmentInfo ? attachmentInfo : "");
+        // Inline referenced prompt contents for mentions like @prompt:<id>
         try {
-          implementPlanDisplayPrompt = userPrompt;
-          const planSlug = implementPlanMatch[1];
-          validatePlanId(planSlug);
-          const appPath = getAnyonAppPath(chat.app.path);
-          const planFilePath = path.join(
-            appPath,
-            ".anyon",
-            "plans",
-            `${planSlug}.md`,
-          );
-          const raw = await fs.promises.readFile(planFilePath, "utf-8");
-          const { meta, content } = parsePlanFile(raw);
+          const matches = Array.from(userPrompt.matchAll(/@prompt:(\d+)/g));
+          if (matches.length > 0) {
+            const ids = Array.from(new Set(matches.map((m) => Number(m[1]))));
+            const referenced = await db
+              .select()
+              .from(promptsTable)
+              .where(inArray(promptsTable.id, ids));
+            if (referenced.length > 0) {
+              const promptsMap: Record<number, string> = {};
+              for (const p of referenced) {
+                promptsMap[p.id] = p.content;
+              }
+              userPrompt = replacePromptReference(userPrompt, promptsMap);
+            }
+          }
+        } catch (e) {
+          logger.error("Failed to inline referenced prompts:", e);
+        }
 
-          const planPath = `.anyon/plans/${planSlug}.md`;
+        // Expand /implement-plan= into full implementation prompt
+        // Keep the original short form for display in the UI; the expanded
+        // content is only injected into the AI message history.
+        let implementPlanDisplayPrompt: string | undefined;
+        const implementPlanMatch = userPrompt.match(/^\/implement-plan=(.+)$/);
+        if (implementPlanMatch) {
+          try {
+            implementPlanDisplayPrompt = userPrompt;
+            const planSlug = implementPlanMatch[1];
+            validatePlanId(planSlug);
+            const appPath = getAnyonAppPath(chat.app.path);
+            const planFilePath = path.join(
+              appPath,
+              ".anyon",
+              "plans",
+              `${planSlug}.md`,
+            );
+            const raw = await fs.promises.readFile(planFilePath, "utf-8");
+            const { meta, content } = parsePlanFile(raw);
 
-          userPrompt = `Please implement the following plan:
+            const planPath = `.anyon/plans/${planSlug}.md`;
+
+            userPrompt = `Please implement the following plan:
 
 ## ${meta.title || "Implementation Plan"}
 
@@ -352,391 +354,394 @@ ${content}
 
 Start implementing this plan now. Follow the steps outlined and create/modify the necessary files.
 You may update the plan at \`${planPath}\` to mark your progress.`;
-        } catch (e) {
-          implementPlanDisplayPrompt = undefined;
-          logger.error("Failed to expand /implement-plan= prompt:", e);
+          } catch (e) {
+            implementPlanDisplayPrompt = undefined;
+            logger.error("Failed to expand /implement-plan= prompt:", e);
+          }
         }
-      }
 
-      const componentsToProcess = req.selectedComponents || [];
+        const componentsToProcess = req.selectedComponents || [];
 
-      if (componentsToProcess.length > 0) {
-        userPrompt += "\n\nSelected components:\n";
+        if (componentsToProcess.length > 0) {
+          userPrompt += "\n\nSelected components:\n";
 
-        for (const component of componentsToProcess) {
-          let componentSnippet = "[component snippet not available]";
-          try {
-            const componentFileContent = await readFile(
-              path.join(getAnyonAppPath(chat.app.path), component.relativePath),
-              "utf8",
-            );
-            const lines = componentFileContent.split(/\r?\n/);
-            const selectedIndex = component.lineNumber - 1;
+          for (const component of componentsToProcess) {
+            let componentSnippet = "[component snippet not available]";
+            try {
+              const componentFileContent = await readFile(
+                path.join(
+                  getAnyonAppPath(chat.app.path),
+                  component.relativePath,
+                ),
+                "utf8",
+              );
+              const lines = componentFileContent.split(/\r?\n/);
+              const selectedIndex = component.lineNumber - 1;
 
-            // Let's get one line before and three after for context.
-            const startIndex = Math.max(0, selectedIndex - 1);
-            const endIndex = Math.min(lines.length, selectedIndex + 4);
+              // Let's get one line before and three after for context.
+              const startIndex = Math.max(0, selectedIndex - 1);
+              const endIndex = Math.min(lines.length, selectedIndex + 4);
 
-            const snippetLines = lines.slice(startIndex, endIndex);
-            const selectedLineInSnippetIndex = selectedIndex - startIndex;
+              const snippetLines = lines.slice(startIndex, endIndex);
+              const selectedLineInSnippetIndex = selectedIndex - startIndex;
 
-            if (snippetLines[selectedLineInSnippetIndex]) {
-              snippetLines[selectedLineInSnippetIndex] =
-                `${snippetLines[selectedLineInSnippetIndex]} // <-- EDIT HERE`;
+              if (snippetLines[selectedLineInSnippetIndex]) {
+                snippetLines[selectedLineInSnippetIndex] =
+                  `${snippetLines[selectedLineInSnippetIndex]} // <-- EDIT HERE`;
+              }
+
+              componentSnippet = snippetLines.join("\n");
+            } catch (err) {
+              logger.error(
+                `Error reading selected component file content: ${err}`,
+              );
             }
 
-            componentSnippet = snippetLines.join("\n");
-          } catch (err) {
-            logger.error(
-              `Error reading selected component file content: ${err}`,
-            );
-          }
-
-          userPrompt += `\n${componentsToProcess.length > 1 ? `${componentsToProcess.indexOf(component) + 1}. ` : ""}Component: ${component.name} (file: ${component.relativePath})
+            userPrompt += `\n${componentsToProcess.length > 1 ? `${componentsToProcess.indexOf(component) + 1}. ` : ""}Component: ${component.name} (file: ${component.relativePath})
 
 Snippet:
 \`\`\`
 ${componentSnippet}
 \`\`\`
 `;
+          }
         }
-      }
 
-      const [insertedUserMessage] = await db
-        .insert(messages)
-        .values({
-          chatId: req.chatId,
-          role: "user",
-          content: implementPlanDisplayPrompt ?? userPrompt,
-        })
-        .returning();
-      const settings = readSettings();
-      const testResponse = getTestResponse(req.prompt);
-      const chatAppPath = getAnyonAppPath(chat.app.path);
-
-      const modelClientPromise = testResponse
-        ? null
-        : getModelClient(settings.selectedModel, settings, {
+        const [insertedUserMessage] = await db
+          .insert(messages)
+          .values({
             chatId: req.chatId,
-            appPath: chatAppPath,
-          });
-      const creditCheckPromise = testResponse
-        ? null
-        : checkCreditsForModel(settings.selectedModel.name);
-      const sourceCommitHashPromise = getCurrentCommitHash({
-        path: chatAppPath,
-      });
+            role: "user",
+            content: implementPlanDisplayPrompt ?? userPrompt,
+          })
+          .returning();
+        const settings = readSettings();
+        const testResponse = getTestResponse(req.prompt);
+        const chatAppPath = getAnyonAppPath(chat.app.path);
 
-      // Only ANYON Pro requests have request ids.
-      if (settings.enableAnyonPro) {
-        // Generate requestId early so it can be saved with the message
-        anyonRequestId = uuidv4();
-      }
+        const modelClientPromise = testResponse
+          ? null
+          : getModelClient(settings.selectedModel, settings, {
+              chatId: req.chatId,
+              appPath: chatAppPath,
+            });
+        const creditCheckPromise = testResponse
+          ? null
+          : checkCreditsForModel(settings.selectedModel.name);
+        const sourceCommitHashPromise = getCurrentCommitHash({
+          path: chatAppPath,
+        });
 
-      // Add a placeholder assistant message immediately
-      const [placeholderAssistantMessage] = await db
-        .insert(messages)
-        .values({
+        // Only ANYON Pro requests have request ids.
+        if (settings.enableAnyonPro) {
+          // Generate requestId early so it can be saved with the message
+          anyonRequestId = uuidv4();
+        }
+
+        // Add a placeholder assistant message immediately
+        const [placeholderAssistantMessage] = await db
+          .insert(messages)
+          .values({
+            chatId: req.chatId,
+            role: "assistant",
+            content: "", // Start with empty content
+            requestId: anyonRequestId,
+            model: settings.selectedModel.name,
+            sourceCommitHash: await sourceCommitHashPromise,
+          })
+          .returning();
+
+        const streamMessages = [
+          ...streamBaseMessages,
+          insertedUserMessage,
+          placeholderAssistantMessage,
+        ];
+
+        // Send the messages right away so that the loading state is shown for the message.
+        safeSend(event.sender, "chat:response:chunk", {
           chatId: req.chatId,
-          role: "assistant",
-          content: "", // Start with empty content
-          requestId: anyonRequestId,
-          model: settings.selectedModel.name,
-          sourceCommitHash: await sourceCommitHashPromise,
-        })
-        .returning();
+          messages: streamMessages,
+        });
 
-      const streamMessages = [
-        ...streamBaseMessages,
-        insertedUserMessage,
-        placeholderAssistantMessage,
-      ];
+        let fullResponse = "";
 
-      // Send the messages right away so that the loading state is shown for the message.
-      safeSend(event.sender, "chat:response:chunk", {
-        chatId: req.chatId,
-        messages: streamMessages,
-      });
-
-      let fullResponse = "";
-
-      if (testResponse) {
-        // For test prompts, use the dedicated function
-        fullResponse = await streamTestResponse(
-          event,
-          req.chatId,
-          testResponse,
-          abortController,
-          { messages: streamMessages },
-        );
-      } else {
-        // Normal AI processing for non-test prompts
-        if (!creditCheckPromise || !modelClientPromise) {
-          throw new Error("Failed to initialize streaming dependencies");
-        }
-
-        const [creditCheck, modelClientResult] = await Promise.all([
-          creditCheckPromise,
-          modelClientPromise,
-        ]);
-
-        if (!creditCheck.allowed) {
-          throw new Error(creditCheck.reason ?? "Credits exhausted");
-        }
-
-        const { modelClient, isOpenCodeMode } = modelClientResult;
-
-        // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
-        // history assembly, system prompt construction, post-response file processing).
-        // OpenCode handles everything internally via its own tools and sessions.
-        if (isOpenCodeMode) {
-          const aiRules = await readAiRules(chatAppPath);
-          const themePrompt = await getFullSystemPrompt(
-            chat.app?.designSystemId ?? null,
-            chat.app?.themeId ?? null,
+        if (testResponse) {
+          // For test prompts, use the dedicated function
+          fullResponse = await streamTestResponse(
+            event,
+            req.chatId,
+            testResponse,
+            abortController,
+            { messages: streamMessages },
           );
-          let openCodeSystemPrompt = constructSystemPrompt({
-            aiRules,
-            themePrompt,
-            selectedAgent: settings.selectedAgent,
-          });
-
-          // Append Supabase context so OpenCode's AI knows about
-          // the connected project, tables, and client code.
-          if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
-            const [supabaseClientCode, supabaseContext] = await Promise.all([
-              getSupabaseClientCode({
-                projectId: chat.app.supabaseProjectId,
-                organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
-              }),
-              getSupabaseContext({
-                supabaseProjectId: chat.app.supabaseProjectId,
-                organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
-              }),
-            ]);
-            openCodeSystemPrompt += `\n\n${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseContext}`;
+        } else {
+          // Normal AI processing for non-test prompts
+          if (!creditCheckPromise || !modelClientPromise) {
+            throw new Error("Failed to initialize streaming dependencies");
           }
 
-          openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
+          const [creditCheck, modelClientResult] = await Promise.all([
+            creditCheckPromise,
+            modelClientPromise,
+          ]);
 
-          if (settings.enableBooster) {
-            openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
+          if (!creditCheck.allowed) {
+            throw new Error(creditCheck.reason ?? "Credits exhausted");
           }
 
-          // Send only the current user prompt — no codebase, no history.
-          // OpenCode manages its own session history and reads files via tools.
-          const openCodeMessages: ModelMessage[] = [
-            { role: "user", content: userPrompt },
-          ];
+          const { modelClient, isOpenCodeMode } = modelClientResult;
 
-          let lastDbSaveAt = 0;
-          const openCodeProcessChunkUpdate = async ({
-            fullResponse,
-          }: {
-            fullResponse: string;
-          }) => {
-            partialResponses.set(req.chatId, fullResponse);
-            const now = Date.now();
-            if (now - lastDbSaveAt >= 150) {
-              await db
-                .update(messages)
-                .set({ content: fullResponse })
-                .where(eq(messages.id, placeholderAssistantMessage.id));
-              lastDbSaveAt = now;
-            }
-
-            const currentMessages = [...streamMessages];
-            if (
-              currentMessages.length > 0 &&
-              currentMessages[currentMessages.length - 1].role === "assistant"
-            ) {
-              currentMessages[currentMessages.length - 1].content =
-                fullResponse;
-            }
-
-            safeSend(event.sender, "chat:response:chunk", {
-              chatId: req.chatId,
-              messages: currentMessages,
-            });
-            return fullResponse;
-          };
-
-          try {
-            const [maxOutputTokens, temperature] = await Promise.all([
-              getMaxTokens(settings.selectedModel),
-              getTemperature(settings.selectedModel),
-            ]);
-
-            const streamResult = streamText({
-              maxOutputTokens,
-              temperature,
-              maxRetries: 2,
-              model: modelClient.model,
-              system: openCodeSystemPrompt,
-              messages: openCodeMessages,
-              abortSignal: abortController.signal,
-              onFinish: (response) => {
-                const totalTokens = response.usage?.totalTokens;
-                if (typeof totalTokens === "number") {
-                  void db
-                    .update(messages)
-                    .set({ maxTokensUsed: totalTokens })
-                    .where(eq(messages.id, placeholderAssistantMessage.id))
-                    .catch((error) => {
-                      logger.error(
-                        "Failed to save total tokens for assistant message",
-                        error,
-                      );
-                    });
-                  // Report token usage to Polar for credit metering
-                  void reportTokenUsage(
-                    totalTokens,
-                    settings.selectedModel.name,
-                  );
-                }
-              },
-              onError: (error: any) => {
-                const errorMessage = (error as any)?.error?.message;
-                const message = errorMessage || JSON.stringify(error);
-                logger.error(`Stream error: ${message}`);
-                event.sender.send("chat:response:error", {
-                  chatId: req.chatId,
-                  error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
-                });
-                activeStreams.delete(req.chatId);
-              },
+          // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
+          // history assembly, system prompt construction, post-response file processing).
+          // OpenCode handles everything internally via its own tools and sessions.
+          if (isOpenCodeMode) {
+            const aiRules = await readAiRules(chatAppPath);
+            const themePrompt = await getFullSystemPrompt(
+              chat.app?.designSystemId ?? null,
+              chat.app?.themeId ?? null,
+            );
+            let openCodeSystemPrompt = constructSystemPrompt({
+              aiRules,
+              themePrompt,
+              selectedAgent: settings.selectedAgent,
             });
 
-            const result = await processStreamChunks({
-              fullStream: streamResult.fullStream,
+            // Append Supabase context so OpenCode's AI knows about
+            // the connected project, tables, and client code.
+            if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
+              const [supabaseClientCode, supabaseContext] = await Promise.all([
+                getSupabaseClientCode({
+                  projectId: chat.app.supabaseProjectId,
+                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+                }),
+                getSupabaseContext({
+                  supabaseProjectId: chat.app.supabaseProjectId,
+                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+                }),
+              ]);
+              openCodeSystemPrompt += `\n\n${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseContext}`;
+            }
+
+            openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
+
+            if (settings.enableBooster) {
+              openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
+            }
+
+            // Send only the current user prompt — no codebase, no history.
+            // OpenCode manages its own session history and reads files via tools.
+            const openCodeMessages: ModelMessage[] = [
+              { role: "user", content: userPrompt },
+            ];
+
+            let lastDbSaveAt = 0;
+            const openCodeProcessChunkUpdate = async ({
               fullResponse,
-              abortController,
-              chatId: req.chatId,
-              processResponseChunkUpdate: openCodeProcessChunkUpdate,
-            });
-            fullResponse = result.fullResponse;
-          } catch (streamError) {
-            if (abortController.signal.aborted) {
-              const partialResponse = partialResponses.get(req.chatId);
-              if (partialResponse) {
+            }: {
+              fullResponse: string;
+            }) => {
+              partialResponses.set(req.chatId, fullResponse);
+              const now = Date.now();
+              if (now - lastDbSaveAt >= 150) {
                 await db
                   .update(messages)
-                  .set({
-                    content: `${partialResponse}\n\n[Response cancelled by user]`,
-                  })
+                  .set({ content: fullResponse })
                   .where(eq(messages.id, placeholderAssistantMessage.id));
-                partialResponses.delete(req.chatId);
-              }
-              return req.chatId;
-            }
-            throw streamError;
-          }
-
-          if (!abortController.signal.aborted) {
-            let chatSummary: string | undefined;
-            let appDisplayName: string | undefined;
-
-            if (fullResponse) {
-              const chatTitle = fullResponse.match(
-                /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
-              );
-              chatSummary = chatTitle?.[1];
-              if (chatSummary) {
-                await db
-                  .update(chats)
-                  .set({ title: chatSummary })
-                  .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+                lastDbSaveAt = now;
               }
 
-              const appNameMatch = fullResponse.match(
-                /<anyon-app-name>(.*?)<\/anyon-app-name>/,
-              );
-              appDisplayName = appNameMatch?.[1];
-              if (appDisplayName && !chat.app.displayName) {
-                await db
-                  .update(apps)
-                  .set({ displayName: appDisplayName })
-                  .where(eq(apps.id, chat.app.id));
+              const currentMessages = [...streamMessages];
+              if (
+                currentMessages.length > 0 &&
+                currentMessages[currentMessages.length - 1].role === "assistant"
+              ) {
+                currentMessages[currentMessages.length - 1].content =
+                  fullResponse;
               }
 
-              await db
-                .update(messages)
-                .set({ content: fullResponse })
-                .where(eq(messages.id, placeholderAssistantMessage.id));
+              safeSend(event.sender, "chat:response:chunk", {
+                chatId: req.chatId,
+                messages: currentMessages,
+              });
+              return fullResponse;
+            };
 
-              try {
-                const uncommittedFiles = await getGitUncommittedFiles({
-                  path: chatAppPath,
-                });
-                if (uncommittedFiles.length > 0) {
-                  await gitAddAll({ path: chatAppPath });
-                  const commitHash = await gitCommit({
-                    path: chatAppPath,
-                    message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+            try {
+              const [maxOutputTokens, temperature] = await Promise.all([
+                getMaxTokens(settings.selectedModel),
+                getTemperature(settings.selectedModel),
+              ]);
+
+              const streamResult = streamText({
+                maxOutputTokens,
+                temperature,
+                maxRetries: 2,
+                model: modelClient.model,
+                system: openCodeSystemPrompt,
+                messages: openCodeMessages,
+                abortSignal: abortController.signal,
+                onFinish: (response) => {
+                  const totalTokens = response.usage?.totalTokens;
+                  if (typeof totalTokens === "number") {
+                    void db
+                      .update(messages)
+                      .set({ maxTokensUsed: totalTokens })
+                      .where(eq(messages.id, placeholderAssistantMessage.id))
+                      .catch((error) => {
+                        logger.error(
+                          "Failed to save total tokens for assistant message",
+                          error,
+                        );
+                      });
+                    // Report token usage to Polar for credit metering
+                    void reportTokenUsage(
+                      totalTokens,
+                      settings.selectedModel.name,
+                    );
+                  }
+                },
+                onError: (error: any) => {
+                  const errorMessage = (error as any)?.error?.message;
+                  const message = errorMessage || JSON.stringify(error);
+                  logger.error(`Stream error: ${message}`);
+                  event.sender.send("chat:response:error", {
+                    chatId: req.chatId,
+                    error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
                   });
+                  activeStreams.delete(req.chatId);
+                },
+              });
+
+              const result = await processStreamChunks({
+                fullStream: streamResult.fullStream,
+                fullResponse,
+                abortController,
+                chatId: req.chatId,
+                processResponseChunkUpdate: openCodeProcessChunkUpdate,
+              });
+              fullResponse = result.fullResponse;
+            } catch (streamError) {
+              if (abortController.signal.aborted) {
+                const partialResponse = partialResponses.get(req.chatId);
+                if (partialResponse) {
                   await db
                     .update(messages)
-                    .set({ commitHash })
+                    .set({
+                      content: `${partialResponse}\n\n[Response cancelled by user]`,
+                    })
                     .where(eq(messages.id, placeholderAssistantMessage.id));
-                  logger.log(
-                    `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
-                  );
+                  partialResponses.delete(req.chatId);
                 }
-              } catch (gitError) {
-                logger.error("Git commit failed:", gitError);
+                return req.chatId;
               }
+              throw streamError;
             }
 
-            safeSend(event.sender, "chat:response:end", {
-              chatId: req.chatId,
-              updatedFiles: false,
-              chatSummary,
-              appDisplayName,
-            } satisfies ChatResponseEnd);
+            if (!abortController.signal.aborted) {
+              let chatSummary: string | undefined;
+              let appDisplayName: string | undefined;
+
+              if (fullResponse) {
+                const chatTitle = fullResponse.match(
+                  /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
+                );
+                chatSummary = chatTitle?.[1];
+                if (chatSummary) {
+                  await db
+                    .update(chats)
+                    .set({ title: chatSummary })
+                    .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+                }
+
+                const appNameMatch = fullResponse.match(
+                  /<anyon-app-name>(.*?)<\/anyon-app-name>/,
+                );
+                appDisplayName = appNameMatch?.[1];
+                if (appDisplayName && !chat.app.displayName) {
+                  await db
+                    .update(apps)
+                    .set({ displayName: appDisplayName })
+                    .where(eq(apps.id, chat.app.id));
+                }
+
+                await db
+                  .update(messages)
+                  .set({ content: fullResponse })
+                  .where(eq(messages.id, placeholderAssistantMessage.id));
+
+                try {
+                  const uncommittedFiles = await getGitUncommittedFiles({
+                    path: chatAppPath,
+                  });
+                  if (uncommittedFiles.length > 0) {
+                    await gitAddAll({ path: chatAppPath });
+                    const commitHash = await gitCommit({
+                      path: chatAppPath,
+                      message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                    });
+                    await db
+                      .update(messages)
+                      .set({ commitHash })
+                      .where(eq(messages.id, placeholderAssistantMessage.id));
+                    logger.log(
+                      `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                    );
+                  }
+                } catch (gitError) {
+                  logger.error("Git commit failed:", gitError);
+                }
+              }
+
+              safeSend(event.sender, "chat:response:end", {
+                chatId: req.chatId,
+                updatedFiles: false,
+                chatSummary,
+                appDisplayName,
+              } satisfies ChatResponseEnd);
+            }
+
+            return req.chatId;
           }
 
           return req.chatId;
         }
 
         return req.chatId;
-      }
+      } catch (error) {
+        logger.error("Error calling LLM:", error);
+        safeSend(event.sender, "chat:response:error", {
+          chatId: req.chatId,
+          error: `Sorry, there was an error processing your request: ${error}`,
+        });
 
-      return req.chatId;
-    } catch (error) {
-      logger.error("Error calling LLM:", error);
-      safeSend(event.sender, "chat:response:error", {
-        chatId: req.chatId,
-        error: `Sorry, there was an error processing your request: ${error}`,
-      });
+        return "error";
+      } finally {
+        // Clean up the abort controller
+        activeStreams.delete(req.chatId);
 
-      return "error";
-    } finally {
-      // Clean up the abort controller
-      activeStreams.delete(req.chatId);
+        // Notify renderer that stream has ended
+        safeSend(event.sender, "chat:stream:end", { chatId: req.chatId });
 
-      // Notify renderer that stream has ended
-      safeSend(event.sender, "chat:stream:end", { chatId: req.chatId });
-
-      // Clean up any temporary files
-      if (attachmentPaths.length > 0) {
-        for (const filePath of attachmentPaths) {
-          try {
-            // We don't immediately delete files because they might be needed for reference
-            // Instead, schedule them for deletion after some time
-            setTimeout(
-              async () => {
-                if (fs.existsSync(filePath)) {
-                  await unlink(filePath);
-                  logger.log(`Deleted temporary file: ${filePath}`);
-                }
-              },
-              30 * 60 * 1000,
-            ); // Delete after 30 minutes
-          } catch (error) {
-            logger.error(`Error scheduling file deletion: ${error}`);
+        // Clean up any temporary files
+        if (attachmentPaths.length > 0) {
+          for (const filePath of attachmentPaths) {
+            try {
+              // We don't immediately delete files because they might be needed for reference
+              // Instead, schedule them for deletion after some time
+              setTimeout(
+                async () => {
+                  if (fs.existsSync(filePath)) {
+                    await unlink(filePath);
+                    logger.log(`Deleted temporary file: ${filePath}`);
+                  }
+                },
+                30 * 60 * 1000,
+              ); // Delete after 30 minutes
+            } catch (error) {
+              logger.error(`Error scheduling file deletion: ${error}`);
+            }
           }
         }
-      }
       }
     })();
 

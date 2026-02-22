@@ -221,6 +221,8 @@ export type {
   CreateVercelProjectParams,
   GetVercelDeploymentsParams,
   DisconnectVercelProjectParams,
+  DeviceAuthStartResponse,
+  DeviceAuthPollResponse,
   DirectDeployParams,
   DeployProgressChunk,
   DeployEnd,
