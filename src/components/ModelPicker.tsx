@@ -1,3 +1,4 @@
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,11 +15,13 @@ import {
 } from "@/components/ui/popover";
 import { useLanguageModelProviders } from "@/hooks/useLanguageModelProviders";
 import { useLanguageModelsByProviders } from "@/hooks/useLanguageModelsByProviders";
+import { useLoadApp } from "@/hooks/useLoadApp";
 import { useSettings } from "@/hooks/useSettings";
 import type { LanguageModel } from "@/ipc/types";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,11 +43,13 @@ export function ModelPicker() {
   const [search, setSearch] = useState("");
   const { settings, updateSettings } = useSettings();
   const queryClient = useQueryClient();
+  const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const { app } = useLoadApp(selectedAppId);
 
   const { data: modelsByProviders, isLoading: modelsLoading } =
-    useLanguageModelsByProviders();
+    useLanguageModelsByProviders(app?.path);
   const { data: providers, isLoading: providersLoading } =
-    useLanguageModelProviders();
+    useLanguageModelProviders(app?.path);
 
   const isLoading = modelsLoading || providersLoading;
 

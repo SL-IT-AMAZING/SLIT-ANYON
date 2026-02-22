@@ -1,5 +1,5 @@
-import { openCodeServer } from "./opencode_server";
 import log from "electron-log";
+import { openCodeServer } from "./opencode_server";
 
 const logger = log.scope("opencode-api");
 
@@ -33,8 +33,9 @@ export interface OpenCodeProviderListResponse {
 async function fetchOpenCodeAPI<T>(
   path: string,
   options?: RequestInit,
+  cwd?: string,
 ): Promise<T> {
-  const serverInfo = await openCodeServer.ensureRunning();
+  const serverInfo = await openCodeServer.ensureRunning(cwd ? { cwd } : {});
   const url = `${serverInfo.url}${path}`;
   const credentials = Buffer.from(`opencode:${serverInfo.password}`).toString(
     "base64",
@@ -61,9 +62,15 @@ async function fetchOpenCodeAPI<T>(
   return response.json() as Promise<T>;
 }
 
-export async function getOpenCodeProviders(): Promise<OpenCodeProviderListResponse> {
-  logger.debug("Fetching providers from OpenCode server");
-  return fetchOpenCodeAPI<OpenCodeProviderListResponse>("/provider");
+export async function getOpenCodeProviders(
+  appPath?: string,
+): Promise<OpenCodeProviderListResponse> {
+  logger.debug("Fetching providers from OpenCode server", { appPath });
+  return fetchOpenCodeAPI<OpenCodeProviderListResponse>(
+    "/provider",
+    undefined,
+    appPath,
+  );
 }
 
 export async function getOpenCodeAuthMethods(): Promise<
@@ -87,9 +94,15 @@ export interface OpenCodeAgent {
   };
 }
 
-export async function getOpenCodeAgents(): Promise<OpenCodeAgent[]> {
-  logger.debug("Fetching agents from OpenCode server");
-  const agents = await fetchOpenCodeAPI<OpenCodeAgent[]>("/agent");
+export async function getOpenCodeAgents(
+  appPath?: string,
+): Promise<OpenCodeAgent[]> {
+  logger.debug("Fetching agents from OpenCode server", { appPath });
+  const agents = await fetchOpenCodeAPI<OpenCodeAgent[]>(
+    "/agent",
+    undefined,
+    appPath,
+  );
   // Match OpenCode desktop app's filter: show all non-subagent, non-hidden agents
   // This includes mode "primary" and "all" (agents usable as both primary and subagent)
   return agents.filter((a) => !a.hidden && a.mode !== "subagent");

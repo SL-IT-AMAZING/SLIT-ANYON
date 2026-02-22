@@ -52,19 +52,22 @@ export type LocalModel = z.infer<typeof LocalModelSchema>;
 export const languageModelContracts = {
   getProviders: defineContract({
     channel: "get-language-model-providers",
-    input: z.void(),
+    input: z.object({ appPath: z.string().optional() }),
     output: z.array(LanguageModelProviderSchema),
   }),
 
   getModels: defineContract({
     channel: "get-language-models",
-    input: z.object({ providerId: z.string() }),
+    input: z.object({
+      providerId: z.string(),
+      appPath: z.string().optional(),
+    }),
     output: z.array(LanguageModelSchema),
   }),
 
   getModelsByProviders: defineContract({
     channel: "get-language-models-by-providers",
-    input: z.void(),
+    input: z.object({ appPath: z.string().optional() }),
     output: z.record(z.string(), z.array(LanguageModelSchema)),
   }),
 
@@ -81,7 +84,7 @@ export const languageModelContracts = {
   }),
   getOpenCodeAgents: defineContract({
     channel: "get-opencode-agents",
-    input: z.void(),
+    input: z.object({ appPath: z.string().optional() }),
     output: z.array(
       z.object({
         name: z.string(),

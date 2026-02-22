@@ -1,3 +1,4 @@
+import type { LanguageModelV2CallOptions } from "@ai-sdk/provider";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createOpenCodeProvider,
@@ -15,11 +16,35 @@ interface SessionLookupModel {
   getOrCreateSession: (conversationId: string) => Promise<{ id: string }>;
 }
 
+interface GenerateModel {
+  doGenerate: (options: LanguageModelV2CallOptions) => Promise<unknown>;
+}
+
 function createJsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json",
+    },
+  });
+}
+
+function createSseResponse(events: unknown[]): Response {
+  const payload = events
+    .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+    .join("");
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(payload));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
     },
   });
 }
@@ -250,5 +275,78 @@ describe("OpenCode provider session caching", () => {
     );
 
     expect(createCalls).toHaveLength(1);
+  });
+
+  it("throws when OpenCode reports retry then idle without output", async () => {
+    const sessionId = "sess-overloaded";
+
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (url.endsWith("/session") && init?.method === "POST") {
+          return createJsonResponse({ id: sessionId });
+        }
+
+        if (url.endsWith("/event")) {
+          return createSseResponse([
+            { type: "server.connected", properties: {} },
+            {
+              type: "session.status",
+              properties: {
+                sessionID: sessionId,
+                status: {
+                  type: "retry",
+                  attempt: 1,
+                  message: "Provider is overloaded",
+                },
+              },
+            },
+            {
+              type: "session.status",
+              properties: {
+                sessionID: sessionId,
+                status: { type: "idle" },
+              },
+            },
+          ]);
+        }
+
+        if (
+          url.endsWith(`/session/${sessionId}/message`) &&
+          init?.method === "POST"
+        ) {
+          return createJsonResponse({ ok: true });
+        }
+
+        throw new Error(
+          `Unexpected fetch call: ${url} ${init?.method ?? "GET"}`,
+        );
+      },
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const model = createOpenCodeProvider({
+      conversationId: "anyon-chat-overloaded",
+    })("dummy-model") as unknown as GenerateModel;
+
+    const options = {
+      prompt: [
+        {
+          role: "user",
+          content: [{ type: "text", text: "hello" }],
+        },
+      ],
+    } as unknown as LanguageModelV2CallOptions;
+
+    await expect(model.doGenerate(options)).rejects.toThrow(
+      "Provider is overloaded",
+    );
   });
 });

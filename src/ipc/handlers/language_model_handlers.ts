@@ -15,8 +15,11 @@ const handle = createLoggedHandler(logger);
 export function registerLanguageModelHandlers() {
   handle(
     "get-language-model-providers",
-    async (): Promise<LanguageModelProvider[]> => {
-      return getLanguageModelProviders();
+    async (
+      event: IpcMainInvokeEvent,
+      params?: { appPath?: string },
+    ): Promise<LanguageModelProvider[]> => {
+      return getLanguageModelProviders(params?.appPath);
     },
   );
 
@@ -24,28 +27,37 @@ export function registerLanguageModelHandlers() {
     "get-language-models",
     async (
       event: IpcMainInvokeEvent,
-      params: { providerId: string },
+      params: { providerId: string; appPath?: string },
     ): Promise<LanguageModel[]> => {
       if (!params || typeof params.providerId !== "string") {
         throw new Error("Invalid parameters: providerId (string) is required.");
       }
-      const providers = await getLanguageModelProviders();
+      const providers = await getLanguageModelProviders(params.appPath);
       const provider = providers.find((p) => p.id === params.providerId);
       if (!provider) {
         throw new Error(`Provider with ID "${params.providerId}" not found`);
       }
-      return getLanguageModels({ providerId: params.providerId });
+      return getLanguageModels({
+        providerId: params.providerId,
+        appPath: params.appPath,
+      });
     },
   );
 
   handle(
     "get-language-models-by-providers",
-    async (): Promise<Record<string, LanguageModel[]>> => {
-      return getLanguageModelsByProviders();
+    async (
+      event: IpcMainInvokeEvent,
+      params?: { appPath?: string },
+    ): Promise<Record<string, LanguageModel[]>> => {
+      return getLanguageModelsByProviders(params?.appPath);
     },
   );
 
-  handle("get-opencode-agents", async () => {
-    return getOpenCodeAgents();
-  });
+  handle(
+    "get-opencode-agents",
+    async (event: IpcMainInvokeEvent, params?: { appPath?: string }) => {
+      return getOpenCodeAgents(params?.appPath);
+    },
+  );
 }

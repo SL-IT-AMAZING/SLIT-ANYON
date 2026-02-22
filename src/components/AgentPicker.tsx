@@ -1,3 +1,4 @@
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -12,10 +13,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useLoadApp } from "@/hooks/useLoadApp";
 import { useSettings } from "@/hooks/useSettings";
 import { languageModelClient } from "@/ipc/types/language-model";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -79,9 +82,14 @@ export function AgentPicker() {
   const getDisplayName = useAgentDisplayName();
   const getDescription = useAgentDescription();
 
+  const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const { app } = useLoadApp(selectedAppId);
+
   const { data: serverAgents } = useQuery({
-    queryKey: ["opencode-agents"] as const,
-    queryFn: () => languageModelClient.getOpenCodeAgents(),
+    queryKey: ["opencode-agents", app?.path] as const,
+    queryFn: () =>
+      languageModelClient.getOpenCodeAgents({ appPath: app?.path }),
+    enabled: open && !!app?.path,
   });
 
   const agents = serverAgents?.length ? serverAgents : FALLBACK_AGENTS;

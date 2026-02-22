@@ -1,18 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import { ipc, type LanguageModelProvider } from "@/ipc/types";
-import { useSettings } from "./useSettings";
-import { cloudProviders } from "@/lib/schemas";
-import { queryKeys } from "@/lib/queryKeys";
+import { type LanguageModelProvider, ipc } from "@/ipc/types";
 import { isProviderSetup as isProviderSetupUtil } from "@/lib/providerUtils";
+import { queryKeys } from "@/lib/queryKeys";
+import { cloudProviders } from "@/lib/schemas";
+import { useQuery } from "@tanstack/react-query";
+import { useSettings } from "./useSettings";
 
-export function useLanguageModelProviders() {
+export function useLanguageModelProviders(appPath?: string) {
   const { settings, envVars } = useSettings();
 
   const queryResult = useQuery<LanguageModelProvider[], Error>({
-    queryKey: queryKeys.languageModels.providers,
+    queryKey: queryKeys.languageModels.providers({ appPath }),
     queryFn: async () => {
-      return ipc.languageModel.getProviders();
+      return ipc.languageModel.getProviders({ appPath });
     },
+    enabled: !!appPath,
   });
 
   const isProviderSetup = (provider: string) => {

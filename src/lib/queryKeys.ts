@@ -186,8 +186,10 @@ export const queryKeys = {
   // Language Models / Providers
   // ─────────────────────────────────────────────────────────────────────────────
   languageModels: {
-    providers: ["languageModelProviders"] as const,
-    byProviders: ["language-models-by-providers"] as const,
+    providers: ({ appPath }: { appPath?: string }) =>
+      ["languageModelProviders", appPath ?? null] as const,
+    byProviders: ({ appPath }: { appPath?: string }) =>
+      ["language-models-by-providers", appPath ?? null] as const,
     forProvider: ({ providerId }: { providerId: string }) =>
       ["language-models", providerId] as const,
   },
