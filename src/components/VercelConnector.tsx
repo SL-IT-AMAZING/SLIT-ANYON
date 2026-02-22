@@ -22,6 +22,7 @@ import { toast } from "sonner";
 interface VercelConnectorProps {
   appId: number | null;
   folderName: string;
+  onProjectCreated?: () => void;
 }
 
 interface VercelProject {
@@ -42,6 +43,7 @@ interface UnconnectedVercelConnectorProps {
   settings: any;
   refreshSettings: () => void;
   refreshApp: () => void;
+  onProjectCreated?: () => void;
 }
 
 /** Sanitize a string into a Vercel-compatible project name */
@@ -243,6 +245,7 @@ function UnconnectedVercelConnector({
   settings,
   refreshSettings,
   refreshApp,
+  onProjectCreated,
 }: UnconnectedVercelConnectorProps) {
   const { t } = useTranslation("app");
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
@@ -522,6 +525,7 @@ function UnconnectedVercelConnector({
       setCreateProjectSuccess(true);
       setProjectCheckError(null);
       refreshApp();
+      onProjectCreated?.();
     } catch (err: any) {
       setCreateProjectError(
         err.message ||
@@ -827,7 +831,11 @@ function UnconnectedVercelConnector({
   );
 }
 
-export function VercelConnector({ appId, folderName }: VercelConnectorProps) {
+export function VercelConnector({
+  appId,
+  folderName,
+  onProjectCreated,
+}: VercelConnectorProps) {
   const { app, refreshApp } = useLoadApp(appId);
   const { settings, refreshSettings } = useSettings();
 
@@ -848,6 +856,7 @@ export function VercelConnector({ appId, folderName }: VercelConnectorProps) {
       settings={settings}
       refreshSettings={refreshSettings}
       refreshApp={refreshApp}
+      onProjectCreated={onProjectCreated}
     />
   );
 }

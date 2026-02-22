@@ -1,28 +1,109 @@
 import { Button } from "@/components/ui/button";
-import { useDeepLink } from "@/contexts/DeepLinkContext";
 import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
-import { oauthEndpoints } from "@/lib/oauthConfig";
 import { ExternalLink } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export function VercelHubConnector() {
   const { t } = useTranslation("app");
   const { settings, refreshSettings, updateSettings } = useSettings();
-  const { lastDeepLink, clearLastDeepLink } = useDeepLink();
+
+  const [deviceAuthState, setDeviceAuthState] = useState<{
+    userCode: string;
+    interval: number;
+  } | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
 
   useEffect(() => {
-    const handleDeepLink = async () => {
-      if (lastDeepLink?.type === "vercel-oauth-return") {
-        await refreshSettings();
-        toast.success(t("connect.vercel.connected"));
-        clearLastDeepLink();
+    if (!deviceAuthState) {
+      return;
+    }
+
+    let isMounted = true;
+    let isPolling = false;
+    const poll = async () => {
+      if (isPolling || !isMounted) return;
+      isPolling = true;
+      try {
+        const result = await ipc.vercel.pollDeviceAuth();
+        if (!isMounted) return;
+
+        if (result.status === "success") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError(null);
+          await refreshSettings();
+          toast.success(t("connect.vercel.connected"));
+          return;
+        }
+
+        if (result.status === "expired") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError("Device authorization expired. Please try again.");
+          return;
+        }
+
+        if (result.status === "denied") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError("Authorization was denied. Please try again.");
+          return;
+        }
+
+        if (result.status === "error") {
+          setDeviceAuthState(null);
+          setIsConnecting(false);
+          setConnectError(
+            result.error || "Failed to complete Vercel device authorization.",
+          );
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        setDeviceAuthState(null);
+        setIsConnecting(false);
+        setConnectError(
+          error instanceof Error
+            ? error.message
+            : "Failed to poll Vercel authorization status.",
+        );
+      } finally {
+        isPolling = false;
       }
     };
-    handleDeepLink();
-  }, [lastDeepLink?.timestamp]);
+
+    const intervalId = setInterval(poll, deviceAuthState.interval * 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [deviceAuthState, refreshSettings, t]);
+
+  const handleStartDeviceAuth = async () => {
+    setConnectError(null);
+    setIsConnecting(true);
+
+    try {
+      const start = await ipc.vercel.startDeviceAuth();
+      setDeviceAuthState({
+        userCode: start.userCode,
+        interval: start.interval,
+      });
+      await ipc.system.openExternalUrl(start.verificationUriComplete);
+    } catch (error) {
+      setIsConnecting(false);
+      setDeviceAuthState(null);
+      setConnectError(
+        error instanceof Error
+          ? error.message
+          : "Failed to start Vercel device authorization.",
+      );
+    }
+  };
 
   const isConnected =
     !!settings?.vercel?.accessToken || !!settings?.vercelAccessToken;
@@ -76,16 +157,89 @@ export function VercelHubConnector() {
         <p className="text-sm text-muted-foreground pb-3">
           {t("connect.vercel.description")}
         </p>
-        <div
-          onClick={async () => {
-            await ipc.system.openExternalUrl(oauthEndpoints.vercel.login);
-          }}
-          className="w-auto h-10 cursor-pointer flex items-center justify-center px-4 py-2 rounded-md border-2 transition-colors font-medium text-sm dark:bg-muted dark:border-border"
+
+        <Button
+          onClick={handleStartDeviceAuth}
+          variant="outline"
+          className="w-auto h-10 inline-flex items-center gap-2"
+          disabled={isConnecting}
           data-testid="connect-vercel-hub-button"
         >
-          <span className="mr-2">{t("connect.vercel.connectPrefix")}</span>
-          <VercelSvg />
-        </div>
+          {deviceAuthState ? (
+            <>
+              <svg
+                className="h-4 w-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              {`Enter code: ${deviceAuthState.userCode}`}
+            </>
+          ) : isConnecting ? (
+            "Opening browser..."
+          ) : (
+            <>
+              <span>{t("connect.vercel.connectPrefix")}</span>
+              <VercelSvg />
+            </>
+          )}
+        </Button>
+
+        {deviceAuthState && (
+          <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 w-full max-w-100">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg
+                className="h-4 w-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              Waiting for authorization...
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Enter this code in your browser:
+            </p>
+            <p className="mt-1 font-mono text-lg font-semibold tracking-wider">
+              {deviceAuthState.userCode}
+            </p>
+          </div>
+        )}
+
+        {connectError && (
+          <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3 w-full max-w-100">
+            <p className="text-sm text-red-800 dark:text-red-200">
+              {connectError}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

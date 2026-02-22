@@ -27,6 +27,7 @@ export function handleVercelOAuthReturn({
       tokenTimestamp: Math.floor(Date.now() / 1000),
       ...(teamId && { teamId }),
       ...(installationId && { installationId }),
+      authMethod: "oauth" as const,
     },
   });
 }

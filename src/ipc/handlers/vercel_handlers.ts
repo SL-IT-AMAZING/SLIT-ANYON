@@ -1,3 +1,4 @@
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { retryWithRateLimit } from "@/ipc/utils/retryWithRateLimit";
@@ -100,11 +101,14 @@ interface GetVercelProjectsResponse {
  */
 async function getVercelProjects(
   token: string,
-  options?: { search?: string },
+  options?: { search?: string; teamId?: string | null },
 ): Promise<GetVercelProjectsResponse> {
   const url = new URL(`${VERCEL_API_BASE}/v9/projects`);
   if (options?.search) {
     url.searchParams.set("search", options.search);
+  }
+  if (options?.teamId) {
+    url.searchParams.set("teamId", options.teamId);
   }
 
   const response = await fetch(url.toString(), {
@@ -142,7 +146,6 @@ async function validateVercelToken(token: string): Promise<boolean> {
 // Resolution: GET /v2/user (northstar defaultTeamId) → fallback GET /v2/teams
 async function getDefaultTeamId(token: string): Promise<string | null> {
   try {
-    // First try the user endpoint — northstar accounts have defaultTeamId
     const userResponse = await fetch(`${VERCEL_API_BASE}/v2/user`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -152,18 +155,21 @@ async function getDefaultTeamId(token: string): Promise<string | null> {
 
     if (userResponse.ok) {
       const userData = await userResponse.json();
+      logger.info(
+        `[getDefaultTeamId] /v2/user response: version=${userData.user?.version}, defaultTeamId=${userData.user?.defaultTeamId}, username=${userData.user?.username}`,
+      );
       if (
         userData.user?.version === "northstar" &&
         userData.user?.defaultTeamId
       ) {
-        logger.info(
-          `Resolved defaultTeamId from northstar user: ${userData.user.defaultTeamId}`,
-        );
         return userData.user.defaultTeamId;
       }
+    } else {
+      logger.warn(
+        `[getDefaultTeamId] /v2/user failed: ${userResponse.status} ${userResponse.statusText}`,
+      );
     }
 
-    // Fallback: try the teams endpoint
     const teamsResponse = await fetch(`${VERCEL_API_BASE}/v2/teams?limit=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -173,23 +179,23 @@ async function getDefaultTeamId(token: string): Promise<string | null> {
 
     if (!teamsResponse.ok) {
       logger.warn(
-        `Failed to fetch teams: ${teamsResponse.status} ${teamsResponse.statusText}`,
+        `[getDefaultTeamId] /v2/teams failed: ${teamsResponse.status} ${teamsResponse.statusText}`,
       );
       return null;
     }
 
     const teamsData = await teamsResponse.json();
+    logger.info(
+      `[getDefaultTeamId] /v2/teams returned ${teamsData.teams?.length ?? 0} teams`,
+    );
 
     if (teamsData.teams && teamsData.teams.length > 0) {
-      logger.info(
-        `Resolved teamId from teams endpoint: ${teamsData.teams[0].id}`,
-      );
       return teamsData.teams[0].id;
     }
 
     return null;
   } catch (error) {
-    logger.warn("Could not fetch team information:", error);
+    logger.warn("[getDefaultTeamId] error:", error);
     return null;
   }
 }
@@ -267,6 +273,55 @@ async function detectFramework(
   } catch (error) {
     logger.error("Error detecting framework:", error);
     return undefined;
+  }
+}
+
+/**
+ * Returns explicit build settings for the detected framework.
+ * While Vercel auto-detects these from the framework field, explicit
+ * specification is more reliable for direct API deploys.
+ */
+function getFrameworkBuildSettings(
+  framework: CreateProjectFramework | undefined,
+  appPath: string,
+): {
+  buildCommand: string | null;
+  outputDirectory: string | null;
+  installCommand: string | null;
+} {
+  // Detect package manager from lock files
+  let installCommand: string | null = null;
+  if (fs.existsSync(path.join(appPath, "bun.lock")) || fs.existsSync(path.join(appPath, "bun.lockb"))) {
+    installCommand = "bun install";
+  } else if (fs.existsSync(path.join(appPath, "pnpm-lock.yaml"))) {
+    installCommand = "pnpm install";
+  } else if (fs.existsSync(path.join(appPath, "yarn.lock"))) {
+    installCommand = "yarn install";
+  } else {
+    installCommand = "npm install";
+  }
+
+  // Framework-specific build command and output directory
+  switch (framework) {
+    case "vite":
+    case "vue":
+    case "svelte":
+    case "astro":
+      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
+    case "nextjs":
+      return { buildCommand: "npm run build", outputDirectory: ".next", installCommand };
+    case "nuxtjs":
+      return { buildCommand: "npm run build", outputDirectory: ".output", installCommand };
+    case "create-react-app":
+      return { buildCommand: "npm run build", outputDirectory: "build", installCommand };
+    case "gatsby":
+      return { buildCommand: "npm run build", outputDirectory: "public", installCommand };
+    case "angular":
+      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
+    case "remix":
+      return { buildCommand: "npm run build", outputDirectory: "public", installCommand };
+    default:
+      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
   }
 }
 
@@ -478,7 +533,14 @@ async function handlePollDeviceAuth(): Promise<DeviceAuthPollResponse> {
       },
     });
 
-    await fetchAndStoreUserDefaultTeamId(tokens.access_token);
+    try {
+      await fetchAndStoreUserDefaultTeamId(tokens.access_token);
+    } catch (teamIdError) {
+      logger.warn(
+        "Failed to resolve default teamId after device auth (non-fatal):",
+        teamIdError,
+      );
+    }
 
     activeDeviceAuthSession = null;
     return { status: "success" };
@@ -519,7 +581,8 @@ async function handlePollDeviceAuth(): Promise<DeviceAuthPollResponse> {
 async function handleListVercelProjects(): Promise<VercelProject[]> {
   try {
     const accessToken = await getVercelAccessToken();
-    const response = await getVercelProjects(accessToken);
+    const teamId = getVercelTeamId();
+    const response = await getVercelProjects(accessToken, { teamId });
 
     if (!response.projects) {
       throw new Error("Failed to retrieve projects from Vercel.");
@@ -543,9 +606,10 @@ async function handleIsProjectAvailable(
 ): Promise<{ available: boolean; error?: string }> {
   try {
     const accessToken = await getVercelAccessToken();
+    const teamId = getVercelTeamId();
 
     // Check if project name is available by searching for projects with that name
-    const response = await getVercelProjects(accessToken, { search: name });
+    const response = await getVercelProjects(accessToken, { search: name, teamId });
 
     if (!response.projects) {
       return {
@@ -593,6 +657,9 @@ async function handleCreateProject(
 
     const vercel = createVercelClient(accessToken);
 
+    const appPath = getAnyonAppPath(app.path);
+    const buildSettings = getFrameworkBuildSettings(detectedFramework, appPath);
+
     const requestBody = hasGitHub
       ? {
           name: name,
@@ -601,24 +668,144 @@ async function handleCreateProject(
             repo: `${app.githubOrg}/${app.githubRepo}`,
           },
           framework: detectedFramework,
+          buildCommand: buildSettings.buildCommand,
+          outputDirectory: buildSettings.outputDirectory,
+          installCommand: buildSettings.installCommand,
         }
       : {
           name: name,
           framework: detectedFramework,
+          buildCommand: buildSettings.buildCommand,
+          outputDirectory: buildSettings.outputDirectory,
+          installCommand: buildSettings.installCommand,
         };
 
+    // --- Resolve teamId ---
+    // Always force-resolve from /v2/user at creation time (don't rely on cached settings)
     let teamId: string | null = getVercelTeamId();
+    let userDiagnostic = "";
     if (!teamId) {
-      teamId = await fetchAndStoreUserDefaultTeamId(accessToken);
+      // Force-fetch from /v2/user to get Northstar defaultTeamId
+      try {
+        const userRes = await fetch(`${VERCEL_API_BASE}/v2/user`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const u = userData.user;
+          userDiagnostic = `version=${u?.version}, defaultTeamId=${u?.defaultTeamId}, username=${u?.username}`;
+          if (u?.version === "northstar" && u?.defaultTeamId) {
+            teamId = u.defaultTeamId;
+            // Persist for future use
+            const settings = readSettings();
+            writeSettings({
+              vercel: { ...settings.vercel, teamId: teamId ?? undefined },
+            });
+          }
+        } else {
+          const userErrBody = await userRes.text().catch(() => "(unreadable)");
+          userDiagnostic = `/v2/user returned ${userRes.status}: ${userErrBody.slice(0, 200)}`;
+        }
+      } catch (e) {
+        userDiagnostic = `/v2/user threw: ${e instanceof Error ? e.message : String(e)}`;
+      }
+
+      // Fallback: try /v2/teams
+      if (!teamId) {
+        try {
+          const teamsRes = await fetch(`${VERCEL_API_BASE}/v2/teams?limit=1`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (teamsRes.ok) {
+            const teamsData = await teamsRes.json();
+            if (teamsData.teams?.length > 0) {
+              teamId = teamsData.teams[0].id;
+              userDiagnostic += `, teams[0].id=${teamId}`;
+              const settings = readSettings();
+              writeSettings({
+                vercel: { ...settings.vercel, teamId: teamId ?? undefined },
+              });
+            } else {
+              userDiagnostic += ", teams=empty";
+            }
+          } else {
+            const teamsErrBody = await teamsRes.text().catch(() => "(unreadable)");
+            userDiagnostic += `, /v2/teams returned ${teamsRes.status}: ${teamsErrBody.slice(0, 200)}`;
+          }
+        } catch (e) {
+          userDiagnostic += `, /v2/teams threw: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      }
+    } else {
+      userDiagnostic = "from cached settings";
     }
     logger.info(
-      `Resolved teamId for project creation: ${teamId ?? "none (personal scope)"}`,
+      `[createProject] teamId=${teamId ?? "none"} (${userDiagnostic})`,
     );
 
-    const projectData = await vercel.projects.createProject({
-      ...(teamId && { teamId }),
-      requestBody,
-    });
+    // Helper to attempt project creation with a given scope
+    const attemptCreateProject = async (
+      scopeTeamId: string | null,
+      scopeLabel: string,
+    ): Promise<Response> => {
+      const url = new URL(`${VERCEL_API_BASE}/v1/projects`);
+      if (scopeTeamId) {
+        url.searchParams.set("teamId", scopeTeamId);
+      }
+      logger.info(
+        `[createProject] POST ${url.toString()} (scope: ${scopeLabel}) body=${JSON.stringify(requestBody)}`,
+      );
+      return fetch(url.toString(), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    };
+
+    // Try primary scope, then fallback to opposite scope if 403
+    let createResponse = await attemptCreateProject(
+      teamId,
+      teamId ? `team:${teamId}` : "personal",
+    );
+
+    if (createResponse.status === 403) {
+      if (teamId) {
+        // Had teamId but 403 → try personal scope
+        logger.warn(
+          `[createProject] 403 with teamId=${teamId}, retrying without teamId...`,
+        );
+        createResponse = await attemptCreateProject(null, "personal-fallback");
+      } else {
+        // No teamId and 403 → force-resolve teamId and retry with it
+        logger.warn(
+          `[createProject] 403 without teamId. User diagnostic: ${userDiagnostic}`,
+        );
+        // If we still don't have teamId, we can't retry — just fall through to error
+      }
+    }
+
+    if (!createResponse.ok) {
+      const errorBody = await createResponse.text();
+      const tokenPrefix = accessToken.substring(0, 8);
+      logger.error(
+        `[createProject] Failed: ${createResponse.status} ${createResponse.statusText} - ${errorBody}`,
+      );
+      const settings = readSettings();
+      const tokenSource = settings.vercel?.accessToken?.value
+        ? "vercel.accessToken"
+        : settings.vercelAccessToken?.value
+          ? "vercelAccessToken(legacy)"
+          : "none";
+      throw new Error(
+        `Failed to create project: ${createResponse.status} - ${errorBody}\n` +
+          `[Debug] teamId=${teamId ?? "none"}, token=${tokenPrefix}..., authMethod=${settings.vercel?.authMethod ?? "unknown"}, tokenSource=${tokenSource}, IS_TEST_BUILD=${IS_TEST_BUILD}, API_BASE=${VERCEL_API_BASE}, userInfo=(${userDiagnostic})`,
+      );
+    }
+
+    const projectData = await createResponse.json();
 
     if (!projectData?.id) {
       throw new Error("Failed to create project: No project ID returned.");
@@ -838,6 +1025,53 @@ async function handleDirectDeploy(
       );
     }
 
+    // Detect framework before upload so we can inject vercel.json if needed
+    const detectedFramework = await detectFramework(appPath);
+
+    // Inject vercel.json with SPA routing for client-side frameworks
+    // that need catch-all rewrites to index.html. SSR frameworks (Next.js,
+    // Nuxt, Remix, Astro) handle routing server-side and don't need this.
+    const SPA_FRAMEWORKS: CreateProjectFramework[] = [
+      "vite",
+      "create-react-app",
+      "vue",
+      "svelte",
+      "angular",
+      "gatsby",
+    ];
+
+    const hasVercelJson = files.some((f) => f.filePath === "vercel.json");
+
+    if (
+      detectedFramework &&
+      SPA_FRAMEWORKS.includes(detectedFramework) &&
+      !hasVercelJson
+    ) {
+      const vercelJsonContent = JSON.stringify(
+        {
+          rewrites: [{ source: "/(.*)", destination: "/index.html" }],
+        },
+        null,
+        2,
+      );
+      const contentBuffer = Buffer.from(vercelJsonContent, "utf-8");
+      const sha1 = crypto
+        .createHash("sha1")
+        .update(contentBuffer)
+        .digest("hex");
+
+      files.push({
+        filePath: "vercel.json",
+        sha1,
+        size: contentBuffer.length,
+        content: contentBuffer,
+      });
+
+      logger.info(
+        `Injected vercel.json with SPA routing for framework: ${detectedFramework}`,
+      );
+    }
+
     sendProgress({
       appId,
       phase: "uploading",
@@ -870,13 +1104,13 @@ async function handleDirectDeploy(
       progress: 0,
     });
 
-    const detectedFramework = await detectFramework(appPath);
-
     const deploymentFiles = files.map((f) => ({
       file: f.filePath,
       sha: f.sha1,
       size: f.size,
     }));
+
+    const buildSettings = getFrameworkBuildSettings(detectedFramework, appPath);
 
     const deploymentResponse = await vercel.deployments.createDeployment({
       ...(resolvedTeamId && { teamId: resolvedTeamId }),
@@ -887,6 +1121,9 @@ async function handleDirectDeploy(
         files: deploymentFiles,
         projectSettings: {
           framework: detectedFramework || null,
+          buildCommand: buildSettings.buildCommand,
+          outputDirectory: buildSettings.outputDirectory,
+          installCommand: buildSettings.installCommand,
         },
       },
     });
@@ -959,19 +1196,20 @@ async function handleConnectToExistingProject(
       `Connecting to existing Vercel project: ${projectId} for app ${appId}`,
     );
 
+    // Resolve teamId first so we can scope the project lookup
+    let teamId = getVercelTeamId();
+    if (!teamId) {
+      teamId = await fetchAndStoreUserDefaultTeamId(accessToken);
+    }
+
     // Verify the project exists and get its details
-    const response = await getVercelProjects(accessToken);
+    const response = await getVercelProjects(accessToken, { teamId });
     const projectData = response.projects?.find(
       (p) => p.id === projectId || p.name === projectId,
     );
 
     if (!projectData) {
       throw new Error("Project not found. Please check the project ID.");
-    }
-
-    let teamId = getVercelTeamId();
-    if (!teamId) {
-      teamId = await fetchAndStoreUserDefaultTeamId(accessToken);
     }
 
     await updateAppVercelProject({
