@@ -15,6 +15,8 @@ type RegistryFile = {
 };
 
 const LOG_PREFIX = "[build-previews]";
+const EMBEDDED_PLACEHOLDER_SVG_DATA_URI =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MCcgaGVpZ2h0PSc0MCcgdmlld0JveD0nMCAwIDQwIDQwJyBmaWxsPSdub25lJz48cmVjdCB3aWR0aD0nNDAnIGhlaWdodD0nNDAnIHJ4PSc2JyBmaWxsPScjRUFFRUYyJy8+PHBhdGggZD0nTTEzIDI4bDYtNkwyNCAyN2wzLTNsNiA0JyBzdHJva2U9JyM5NEEzQjgnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJy8+PGNpcmNsZSBjeD0nMTUnIGN5PScxNScgcj0nMycgZmlsbD0nIzk0QTNCOCcvPjwvc3ZnPg==";
 
 function log(message: string): void {
   process.stdout.write(`${LOG_PREFIX} ${message}\n`);
@@ -71,28 +73,87 @@ function escapeInlineScriptForHtml(scriptContent: string): string {
   return scriptContent.replace(/<\/script/gi, "<\\/script");
 }
 
-async function inlineFontUrlsInCss(
+function replaceUnresolvableAssetUrls(html: string): string {
+  const localhostAssetUrlPattern =
+    /https?:\/\/localhost:\d+\/assets\/[A-Za-z0-9._-]+\.svg/g;
+  const placeholderSvgPattern = /\/?placeholder\.svg(?:\?[^"')<\s]*)?/g;
+
+  return html
+    .replace(localhostAssetUrlPattern, EMBEDDED_PLACEHOLDER_SVG_DATA_URI)
+    .replace(placeholderSvgPattern, EMBEDDED_PLACEHOLDER_SVG_DATA_URI);
+}
+
+function getMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".woff2":
+      return "font/woff2";
+    case ".woff":
+      return "font/woff";
+    case ".ttf":
+      return "font/ttf";
+    case ".otf":
+      return "font/otf";
+    case ".svg":
+      return "image/svg+xml";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".webp":
+      return "image/webp";
+    case ".gif":
+      return "image/gif";
+    case ".avif":
+      return "image/avif";
+    default:
+      return "application/octet-stream";
+  }
+}
+
+async function inlineAssetUrlsInCss(
   cssContent: string,
+  cssPath: string,
   outDir: string,
 ): Promise<string> {
-  const fontUrlRegex =
-    /url\((['"]?)(\/_next\/static\/media\/[^)'"?#]+\.woff2(?:\?[^)'"#]*)?(?:#[^)'"#]*)?)\1\)/g;
-
+  const cssUrlRegex = /url\((['"]?)([^)'"\s]+)\1\)/g;
   const matchedUrls = new Set<string>();
-  for (const match of cssContent.matchAll(fontUrlRegex)) {
-    const matchedUrl = match[2];
-    if (matchedUrl) {
-      matchedUrls.add(matchedUrl);
+
+  for (const match of cssContent.matchAll(cssUrlRegex)) {
+    const assetUrl = match[2];
+    if (!assetUrl) {
+      continue;
     }
+    if (
+      assetUrl.startsWith("data:") ||
+      assetUrl.startsWith("http://") ||
+      assetUrl.startsWith("https://") ||
+      assetUrl.startsWith("#")
+    ) {
+      continue;
+    }
+    matchedUrls.add(assetUrl);
   }
 
   let inlinedCss = cssContent;
 
-  for (const matchedUrl of matchedUrls) {
-    const fontPath = toOutAssetPath(outDir, matchedUrl);
-    const fontFile = await readFile(fontPath);
-    const dataUri = `data:font/woff2;base64,${fontFile.toString("base64")}`;
-    inlinedCss = inlinedCss.split(matchedUrl).join(dataUri);
+  for (const assetUrl of matchedUrls) {
+    const normalizedUrl = assetUrl.split("?")[0]?.split("#")[0] ?? assetUrl;
+    const assetPath = normalizedUrl.startsWith("/")
+      ? toOutAssetPath(outDir, normalizedUrl)
+      : path.resolve(path.dirname(cssPath), normalizedUrl);
+
+    try {
+      const assetFile = await readFile(assetPath);
+      const mimeType = getMimeType(assetPath);
+      const dataUri = `data:${mimeType};base64,${assetFile.toString("base64")}`;
+      inlinedCss = inlinedCss.split(assetUrl).join(dataUri);
+    } catch (error) {
+      log(
+        `Skipped unresolved CSS asset URL "${assetUrl}": ${formatError(error)}`,
+      );
+    }
   }
 
   return inlinedCss;
@@ -117,7 +178,7 @@ async function inlineTemplateAssets(templateDir: string): Promise<void> {
 
     const cssPath = toOutAssetPath(outDir, href);
     const rawCss = await readFile(cssPath, "utf8");
-    const inlinedCss = await inlineFontUrlsInCss(rawCss, outDir);
+    const inlinedCss = await inlineAssetUrlsInCss(rawCss, cssPath, outDir);
 
     const styleNode = $("<style></style>");
     styleNode.text(inlinedCss);
@@ -156,7 +217,8 @@ async function inlineTemplateAssets(templateDir: string): Promise<void> {
   $("link[rel='preload']").remove();
 
   await mkdir(previewDir, { recursive: true });
-  await writeFile(previewHtmlPath, $.html(), "utf8");
+  const htmlWithPatchedAssets = replaceUnresolvableAssetUrls($.html());
+  await writeFile(previewHtmlPath, htmlWithPatchedAssets, "utf8");
 }
 
 async function cleanupTemplateBuildArtifacts(
@@ -218,7 +280,7 @@ async function main(): Promise<void> {
       log("Step 2/4: Building static export (CI=1 npx next build)");
       runCommand("CI=1 npx next build", templateDir, 600_000);
 
-      log("Step 3/4: Inlining CSS/JS/fonts into preview/index.html");
+      log("Step 3/4: Inlining CSS/JS/assets into preview/index.html");
       await inlineTemplateAssets(templateDir);
 
       log("Template preview generated successfully.");

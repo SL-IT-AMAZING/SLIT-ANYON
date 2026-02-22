@@ -15,6 +15,10 @@ let registryCache: TemplateRegistry | null = null;
 let registryFetchPromise: Promise<TemplateRegistry> | null = null;
 const templateContentCache = new Map<string, string>();
 
+function isTemplateContentCacheEnabled(): boolean {
+  return app.isPackaged;
+}
+
 function getLocalRegistryPath(): string {
   return path.join(app.getAppPath(), "templates", "registry.json");
 }
@@ -99,9 +103,13 @@ export async function fetchTemplateRegistry(): Promise<TemplateRegistry> {
 export async function fetchTemplateContent(
   templatePath: string,
 ): Promise<string> {
-  const cached = templateContentCache.get(templatePath);
-  if (cached !== undefined) {
-    return cached;
+  const cacheEnabled = isTemplateContentCacheEnabled();
+
+  if (cacheEnabled) {
+    const cached = templateContentCache.get(templatePath);
+    if (cached !== undefined) {
+      return cached;
+    }
   }
 
   // Try preview/index.html first (pre-built Next.js/Vite templates)
@@ -113,7 +121,9 @@ export async function fetchTemplateContent(
 
     if (response.ok) {
       const html = await response.text();
-      templateContentCache.set(templatePath, html);
+      if (cacheEnabled) {
+        templateContentCache.set(templatePath, html);
+      }
       return html;
     }
   } catch {
@@ -126,7 +136,9 @@ export async function fetchTemplateContent(
     const localPreviewPath = getLocalTemplatePreviewHtmlPath(templatePath);
     const html = await fs.readFile(localPreviewPath, "utf8");
     logger.info(`Loaded local preview HTML: ${localPreviewPath}`);
-    templateContentCache.set(templatePath, html);
+    if (cacheEnabled) {
+      templateContentCache.set(templatePath, html);
+    }
     return html;
   } catch {
     logger.debug(
@@ -148,7 +160,9 @@ export async function fetchTemplateContent(
     }
 
     const html = await response.text();
-    templateContentCache.set(templatePath, html);
+    if (cacheEnabled) {
+      templateContentCache.set(templatePath, html);
+    }
     return html;
   } catch (error) {
     logger.error(
@@ -161,7 +175,9 @@ export async function fetchTemplateContent(
     const localHtmlPath = getLocalTemplateHtmlPath(templatePath);
     logger.info(`Falling back to local template HTML: ${localHtmlPath}`);
     const html = await fs.readFile(localHtmlPath, "utf8");
-    templateContentCache.set(templatePath, html);
+    if (cacheEnabled) {
+      templateContentCache.set(templatePath, html);
+    }
     return html;
   } catch (localError) {
     logger.error(
@@ -170,7 +186,9 @@ export async function fetchTemplateContent(
     );
   }
 
-  templateContentCache.set(templatePath, "");
+  if (cacheEnabled) {
+    templateContentCache.set(templatePath, "");
+  }
   return "";
 }
 

@@ -14,7 +14,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface TemplateDetailPageProps {
@@ -53,6 +53,23 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  const previewBlobUrl = useMemo(() => {
+    if (!previewHtml || previewHtml.length === 0) {
+      return null;
+    }
+
+    const blob = new Blob([previewHtml], { type: "text/html" });
+    return URL.createObjectURL(blob);
+  }, [previewHtml]);
+
+  useEffect(() => {
+    return () => {
+      if (previewBlobUrl) {
+        URL.revokeObjectURL(previewBlobUrl);
+      }
+    };
+  }, [previewBlobUrl]);
 
   if (!template) {
     return (
@@ -131,15 +148,14 @@ const TemplateDetailPage: React.FC<TemplateDetailPageProps> = ({
             className="relative overflow-hidden bg-white"
             style={{ aspectRatio: "16 / 9" }}
           >
-            {previewHtml && previewHtml.length > 0 ? (
+            {previewBlobUrl ? (
               <iframe
-                srcDoc={previewHtml}
+                src={previewBlobUrl}
                 title={template.title}
-                sandbox="allow-scripts"
                 className="absolute top-0 left-0 border-none"
                 style={{
                   width: "1280px",
-                  height: `${3000 / previewScale}px`,
+                  height: `${1200 / previewScale}px`,
                   zoom: previewScale,
                 }}
               />
