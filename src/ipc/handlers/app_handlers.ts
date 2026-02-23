@@ -28,6 +28,7 @@ import {
 import { getEnvVar } from "../utils/read_env";
 
 import { learnAppProfile } from "@/ipc/services/profileLearning";
+import { getSupabasePublishableKey } from "./vercel_handlers";
 import fixPath from "fix-path";
 
 import util from "util";
@@ -205,12 +206,46 @@ async function executeAppLocalNode({
   startCommand: string;
 }): Promise<void> {
   const command = getCommand({ appId, installCommand, startCommand });
+  const app = await db.query.apps.findFirst({
+    where: eq(apps.id, appId),
+  });
+
+  if (!app) {
+    throw new Error("App not found");
+  }
+
+  let env = { ...process.env };
+
+  if (app.supabaseProjectId) {
+    try {
+      const supabaseUrl = `https://${app.supabaseProjectId}.supabase.co`;
+      const supabaseAnonKey = await getSupabasePublishableKey({
+        projectId: app.supabaseProjectId,
+        organizationSlug: app.supabaseOrganizationSlug,
+      });
+      // Set all common env var prefixes so the app works regardless of
+      // which prefix the AI agent used in generated code.
+      env.SUPABASE_URL = supabaseUrl;
+      env.SUPABASE_ANON_KEY = supabaseAnonKey;
+      env.VITE_SUPABASE_URL = supabaseUrl;
+      env.VITE_SUPABASE_ANON_KEY = supabaseAnonKey;
+      env.NEXT_PUBLIC_SUPABASE_URL = supabaseUrl;
+      env.NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;
+      env.ANYON_SUPABASE_URL = supabaseUrl;
+      env.ANYON_SUPABASE_ANON_KEY = supabaseAnonKey;
+    } catch (error: any) {
+      logger.warn(`Failed to retrieve Supabase credentials for app ${appId}, falling back to platform env: ${error.message}`);
+    }
+  }
+
   const spawnedProcess = spawn(command, [], {
     cwd: appPath,
     shell: true,
-    stdio: "pipe", // Ensure stdio is piped so we can capture output/errors and detect close
-    detached: false, // Ensure child process is attached to the main process lifecycle unless explicitly backgrounded
+    stdio: "pipe",
+    detached: false,
+    env,
   });
+
 
   // Check if process spawned correctly
   if (!spawnedProcess.pid) {

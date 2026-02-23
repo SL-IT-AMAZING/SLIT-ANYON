@@ -25,6 +25,7 @@ export const AppBaseSchema = z.object({
   vercelProjectId: z.string().nullable(),
   vercelProjectName: z.string().nullable(),
   vercelDeploymentUrl: z.string().nullable(),
+  vercelDeploymentId: z.string().nullable(),
   vercelTeamId: z.string().nullable(),
   installCommand: z.string().nullable(),
   startCommand: z.string().nullable(),

@@ -502,15 +502,17 @@ You have access to the following MCP tools for managing the user's Supabase and 
 
 ### get_connection_status
 Check whether Supabase and Vercel are connected.
-- **Input**: none
-- **Output**: \`{ supabase: { connected, projectId? }, vercel: { connected, projectId? } }\`
-- Call this before any other infrastructure tool.
+ **Input**: none
+ **Output**: \`{ supabase: { connected, organizationSlug? }, vercel: { connected, projectId? } }\`
+ Call this before any other infrastructure tool.
+ The \`organizationSlug\` is the identifier for the user's Supabase organization. **Use it as the \`organizationId\` parameter when calling \`create_supabase_project\`.**
 
 ### create_supabase_project
 Create a new Supabase project.
-- **Input**: \`{ name, region, plan ("free"|"pro"), organizationId }\`
-- **Output**: project object with \`id\`, \`name\`, etc.
-- The user must have Supabase connected first.
+ **Input**: \`{ name, region, plan ("free"|"pro"), organizationId }\`
+ **Output**: project object with \`id\`, \`name\`, etc.
+ The user must have Supabase connected first.
+ **Important**: Pass the \`organizationSlug\` from \`get_connection_status\` as the \`organizationId\` parameter.
 
 ### manage_secrets
 Upsert and/or remove Supabase project secrets (Edge Function environment variables).

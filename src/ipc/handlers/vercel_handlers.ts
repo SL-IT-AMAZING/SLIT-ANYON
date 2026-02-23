@@ -59,6 +59,10 @@ const VERCEL_ENV_TARGETS = ["production", "preview", "development"] as const;
 const SUPABASE_VERCEL_ENV_KEYS = {
   publicUrl: "NEXT_PUBLIC_SUPABASE_URL",
   publicAnonKey: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  vitePublicUrl: "VITE_SUPABASE_URL",
+  vitePublicAnonKey: "VITE_SUPABASE_ANON_KEY",
+  anyonPublicUrl: "ANYON_SUPABASE_URL",
+  anyonPublicAnonKey: "ANYON_SUPABASE_ANON_KEY",
   serverUrl: "SUPABASE_URL",
   serverAnonKey: "SUPABASE_ANON_KEY",
 } as const;
@@ -290,15 +294,20 @@ function getFrameworkBuildSettings(
   installCommand: string | null;
 } {
   // Detect package manager from lock files
-  let installCommand: string | null = null;
+  let installCommand: string;
+  let buildPrefix: string;
   if (fs.existsSync(path.join(appPath, "bun.lock")) || fs.existsSync(path.join(appPath, "bun.lockb"))) {
     installCommand = "bun install";
+    buildPrefix = "bun run";
   } else if (fs.existsSync(path.join(appPath, "pnpm-lock.yaml"))) {
     installCommand = "pnpm install";
+    buildPrefix = "pnpm run";
   } else if (fs.existsSync(path.join(appPath, "yarn.lock"))) {
     installCommand = "yarn install";
+    buildPrefix = "yarn";
   } else {
     installCommand = "npm install";
+    buildPrefix = "npm run";
   }
 
   // Framework-specific build command and output directory
@@ -307,25 +316,25 @@ function getFrameworkBuildSettings(
     case "vue":
     case "svelte":
     case "astro":
-      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
     case "nextjs":
-      return { buildCommand: "npm run build", outputDirectory: ".next", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: ".next", installCommand };
     case "nuxtjs":
-      return { buildCommand: "npm run build", outputDirectory: ".output", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: ".output", installCommand };
     case "create-react-app":
-      return { buildCommand: "npm run build", outputDirectory: "build", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "build", installCommand };
     case "gatsby":
-      return { buildCommand: "npm run build", outputDirectory: "public", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "public", installCommand };
     case "angular":
-      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
     case "remix":
-      return { buildCommand: "npm run build", outputDirectory: "public", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "public", installCommand };
     default:
-      return { buildCommand: "npm run build", outputDirectory: "dist", installCommand };
+      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
   }
 }
 
-async function getSupabasePublishableKey({
+export async function getSupabasePublishableKey({
   projectId,
   organizationSlug,
 }: {
@@ -417,6 +426,30 @@ export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
             type: "plain",
             target: [...VERCEL_ENV_TARGETS],
           },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.vitePublicUrl,
+            value: supabaseUrl,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.vitePublicAnonKey,
+            value: supabaseAnonKey,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.anyonPublicUrl,
+            value: supabaseUrl,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
+          {
+            key: SUPABASE_VERCEL_ENV_KEYS.anyonPublicAnonKey,
+            value: supabaseAnonKey,
+            type: "plain",
+            target: [...VERCEL_ENV_TARGETS],
+          },
         ],
       }),
     `Sync Supabase env vars to Vercel project ${vercelProjectId}`,
@@ -431,18 +464,21 @@ export async function autoSyncSupabaseEnvVarsIfConnected(
   appId: number,
 ): Promise<void> {
   const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
-
-  if (!app?.supabaseProjectId || !app.vercelProjectId) {
+  if (!app?.supabaseProjectId || !app?.vercelProjectId) {
     return;
   }
 
   try {
     await syncSupabaseEnvVarsForApp(appId);
   } catch (error) {
-    logger.warn(
+    // Log the error for diagnostics, then re-throw so callers know the sync
+    // failed.  handleDirectDeploy can still proceed because the injected .env
+    // file provides a fallback, but the caller should be aware.
+    logger.error(
       `Automatic Supabase->Vercel env sync failed for app ${appId}:`,
       error,
     );
+    throw error;
   }
 }
 
@@ -980,6 +1016,15 @@ async function handleDirectDeploy(
       throw new Error("App must have a Vercel project. Create one first.");
     }
 
+
+    // Sync Supabase env vars before every deploy (in case they were connected after project creation).
+    // Non-fatal: the injected .env file provides a fallback if the project-level sync fails.
+    try {
+      await autoSyncSupabaseEnvVarsIfConnected(appId);
+    } catch {
+      // Error already logged inside autoSyncSupabaseEnvVarsIfConnected.
+    }
+
     const accessToken = await getVercelAccessToken();
     const vercel = createVercelClient(accessToken);
     const appPath = getAnyonAppPath(app.path);
@@ -1072,6 +1117,62 @@ async function handleDirectDeploy(
       );
     }
 
+
+    // Inject .env file with Supabase env vars so Vite has them at build time.
+    // Project-level env vars set via the API are available during builds, but
+    // build cache can serve stale artifacts that miss newly-added vars.
+    // Including .env in the file upload guarantees Vite sees them regardless.
+    if (app.supabaseProjectId) {
+      try {
+        const supabaseUrl = `https://${app.supabaseProjectId}.supabase.co`;
+        const supabaseAnonKey = await getSupabasePublishableKey({
+          projectId: app.supabaseProjectId,
+          organizationSlug: app.supabaseOrganizationSlug,
+        });
+
+        const envLines = [
+          `SUPABASE_URL=${supabaseUrl}`,
+          `SUPABASE_ANON_KEY=${supabaseAnonKey}`,
+          `VITE_SUPABASE_URL=${supabaseUrl}`,
+          `VITE_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
+          `NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl}`,
+          `NEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
+          `ANYON_SUPABASE_URL=${supabaseUrl}`,
+          `ANYON_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
+        ];
+
+        const envContent = envLines.join("\n") + "\n";
+        const envBuffer = Buffer.from(envContent, "utf-8");
+        const envSha1 = crypto
+          .createHash("sha1")
+          .update(envBuffer)
+          .digest("hex");
+
+        // Remove any existing .env from collected files (shouldn't exist due to
+        // SECURITY_DENY_PATTERNS, but guard against it to avoid duplicates).
+        const envIdx = files.findIndex((f) => f.filePath === ".env");
+        if (envIdx !== -1) {
+          files.splice(envIdx, 1);
+        }
+
+        files.push({
+          filePath: ".env",
+          sha1: envSha1,
+          size: envBuffer.length,
+          content: envBuffer,
+        });
+
+        logger.info(
+          `Injected .env file with Supabase env vars for deploy of app ${appId}`,
+        );
+      } catch (envError) {
+        logger.warn(
+          `Failed to inject .env file for app ${appId} (non-fatal, relying on project-level env vars):`,
+          envError,
+        );
+      }
+    }
+
     sendProgress({
       appId,
       phase: "uploading",
@@ -1114,6 +1215,7 @@ async function handleDirectDeploy(
 
     const deploymentResponse = await vercel.deployments.createDeployment({
       ...(resolvedTeamId && { teamId: resolvedTeamId }),
+      forceNew: "1",
       requestBody: {
         name: app.vercelProjectName || app.vercelProjectId,
         project: app.vercelProjectId,
@@ -1163,7 +1265,10 @@ async function handleDirectDeploy(
       const deploymentUrl = `https://${result.url}`;
       await db
         .update(apps)
-        .set({ vercelDeploymentUrl: deploymentUrl })
+        .set({ 
+          vercelDeploymentUrl: deploymentUrl,
+          vercelDeploymentId: deploymentResponse.id,
+        })
         .where(eq(apps.id, appId));
     }
 
@@ -1319,6 +1424,7 @@ async function handleDisconnectVercelProject(
       vercelProjectName: null,
       vercelTeamId: null,
       vercelDeploymentUrl: null,
+      vercelDeploymentId: null,
     })
     .where(eq(apps.id, appId));
 }
