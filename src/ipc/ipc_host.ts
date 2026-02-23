@@ -12,6 +12,7 @@ import { registerDebugHandlers } from "./handlers/debug_handlers";
 import { registerDependencyHandlers } from "./handlers/dependency_handlers";
 import { registerDesignSystemHandlers } from "./handlers/design_system_handlers";
 import { registerEntitlementHandlers } from "./handlers/entitlement_handlers";
+import { registerUpdateHandlers } from "./handlers/update_handlers";
 import { registerFreeAgentQuotaHandlers } from "./handlers/free_agent_quota_handlers";
 import { registerGithubBranchHandlers } from "./handlers/git_branch_handlers";
 import { registerGithubHandlers } from "./handlers/github_handlers";
@@ -84,5 +85,6 @@ export function registerIpcHandlers() {
   registerPlanHandlers();
   registerAuthHandlers();
   registerEntitlementHandlers();
+  registerUpdateHandlers();
   registerDesignSystemHandlers();
 }

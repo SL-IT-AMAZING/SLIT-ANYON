@@ -279,7 +279,22 @@ export const systemContracts = {
     input: z.void(),
     output: z.void(),
   }),
+  /** Quit and install a downloaded update. */
+  installUpdate: defineContract({
+    channel: "install-update",
+    input: z.void(),
+    output: z.void(),
+  }),
 } as const;
+
+
+export const UpdateStatusSchema = z.object({
+  status: z.enum(["available", "downloaded", "error"]),
+  version: z.string().optional(),
+  error: z.string().optional(),
+});
+
+export type UpdateStatus = z.infer<typeof UpdateStatusSchema>;
 
 // =============================================================================
 // System Event Contracts
@@ -294,6 +309,12 @@ export const systemEvents = {
   forceCloseDetected: defineEvent({
     channel: "force-close-detected",
     payload: ForceCloseDetectedPayloadSchema,
+  }),
+
+  /** Emitted when an app update is available or downloaded. */
+  updateStatus: defineEvent({
+    channel: "app:update-status",
+    payload: UpdateStatusSchema,
   }),
 } as const;
 

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { CustomErrorToast } from "../components/CustomErrorToast";
 import { InputRequestToast } from "../components/InputRequestToast";
 import { McpConsentToast } from "../components/McpConsentToast";
+import { UpdateNotificationToast } from "../components/UpdateNotificationToast";
 
 /**
  * Toast utility functions for consistent notifications across the app
@@ -133,6 +134,18 @@ export function showMcpConsentToast(args: {
   );
   return toastId;
 }
+
+
+/**
+ * Show update notification toast when a new version has been downloaded
+ */
+export const showUpdateNotification = (version?: string) => {
+  const toastId = toast.custom(
+    (t) => <UpdateNotificationToast toastId={t} version={version} />,
+    { duration: Number.POSITIVE_INFINITY },
+  );
+  return toastId;
+};
 
 export const showExtraFilesToast = ({
   files,

@@ -1,11 +1,10 @@
 import fs from "fs";
 import * as path from "node:path";
 import dotenv from "dotenv";
-import { BrowserWindow, Menu, app, dialog } from "electron";
+import { BrowserWindow, Menu, app, autoUpdater, dialog } from "electron";
 import log from "electron-log";
 // @ts-ignore
 import started from "electron-squirrel-startup";
-import { UpdateSourceType, updateElectronApp } from "update-electron-app";
 import { BackupManager } from "./backup_manager";
 import { getDatabasePath, initializeDatabase } from "./db";
 import {
@@ -91,6 +90,55 @@ if (!process.defaultApp) {
   app.setAsDefaultProtocolClient("anyon");
 }
 
+
+// ---------------------------------------------------------------------------
+// Auto-updater (Squirrel-based, GitHub Releases as static storage)
+// ---------------------------------------------------------------------------
+
+const REPO_OWNER = "SL-IT-AMAZING";
+const REPO_NAME = "SLIT-ANYON";
+
+function initAutoUpdater() {
+  const feedBase = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest/download`;
+
+  // macOS Squirrel expects a JSON feed; Windows Squirrel expects just the base URL.
+  const feedUrl =
+    process.platform === "darwin"
+      ? `${feedBase}/RELEASES.json`
+      : feedBase;
+
+  logger.info("Auto-updater feed URL:", feedUrl);
+  autoUpdater.setFeedURL({ url: feedUrl });
+
+  autoUpdater.on("update-available", () => {
+    logger.info("Update available");
+    mainWindow?.webContents.send("app:update-status", {
+      status: "available" as const,
+    });
+  });
+
+  autoUpdater.on("update-downloaded", (_event, releaseNotes, releaseName) => {
+    logger.info("Update downloaded:", releaseName);
+    mainWindow?.webContents.send("app:update-status", {
+      status: "downloaded" as const,
+      version: releaseName ?? undefined,
+    });
+  });
+
+  autoUpdater.on("error", (err) => {
+    logger.error("Auto-updater error:", err);
+    mainWindow?.webContents.send("app:update-status", {
+      status: "error" as const,
+      error: err.message,
+    });
+  });
+
+  // Check for updates after a short delay so the window is fully loaded.
+  setTimeout(() => {
+    autoUpdater.checkForUpdates();
+  }, 10_000);
+}
+
 export async function onReady() {
   try {
     const backupManager = new BackupManager({
@@ -140,16 +188,8 @@ export async function onReady() {
   createApplicationMenu();
 
   logger.info("Auto-update enabled=", settings.enableAutoUpdate);
-  if (settings.enableAutoUpdate) {
-    // Using GitHub Releases directly, no custom host needed
-    logger.info("Auto-update release channel=stable");
-    updateElectronApp({
-      logger,
-      updateSource: {
-        type: UpdateSourceType.StaticStorage,
-        baseUrl: `https://github.com/SL-IT-AMAZING/SLIT-ANYON/releases/latest/download`,
-      },
-    });
+  if (settings.enableAutoUpdate && app.isPackaged) {
+    initAutoUpdater();
   }
 
   // Staged rollout: log the user's deterministic bucket (0–99) for observability.
