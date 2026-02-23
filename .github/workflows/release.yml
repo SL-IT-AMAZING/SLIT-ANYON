@@ -125,6 +125,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: "Developer ID Application: DOHYUN JEON (${{ secrets.APPLE_TEAM_ID }})"
+          # Supabase credentials (public anon key) — injected at build time via Vite define
+          ANYON_SUPABASE_URL: ${{ secrets.ANYON_SUPABASE_URL }}
+          ANYON_SUPABASE_ANON_KEY: ${{ secrets.ANYON_SUPABASE_ANON_KEY }}
 
   verify-assets:
     name: Verify Release Assets
