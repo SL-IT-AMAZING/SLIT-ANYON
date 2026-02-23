@@ -17,8 +17,8 @@ async function verifyReleaseAssets() {
     console.log(`🔍 Verifying release assets for version ${version}...`);
 
     // GitHub API configuration
-    const owner = "anyon-sh";
-    const repo = "anyon";
+    const owner = "SL-IT-AMAZING";
+    const repo = "SLIT-ANYON";
     const token = process.env.GITHUB_TOKEN;
 
     if (!token) {
@@ -81,15 +81,12 @@ async function verifyReleaseAssets() {
 
     // Define expected assets with platform-specific version handling
     const expectedAssets = [
-      `anyon-${normalizeVersionForPlatform(version, "rpm")}-1.x86_64.rpm`,
       `anyon-${normalizeVersionForPlatform(version, "nupkg")}-full.nupkg`,
-      `anyon-${version}.Setup.exe`,
-      `anyon-${version}-arm64.dmg`,
-      `anyon-${version}-x64.dmg`,
-      `anyon-darwin-arm64-${version}.zip`,
-      `anyon-darwin-x64-${version}.zip`,
-      `anyon_${normalizeVersionForPlatform(version, "deb")}_amd64.deb`,
-      `anyon_${version}_x86_64.AppImage`,
+      `ANYON-${version}.Setup.exe`,
+      `ANYON-${version}-arm64.dmg`,
+      `ANYON-${version}-x64.dmg`,
+      `ANYON-darwin-arm64-${version}.zip`,
+      `ANYON-darwin-x64-${version}.zip`,
       "RELEASES",
     ];
 
