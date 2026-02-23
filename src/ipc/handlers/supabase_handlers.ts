@@ -204,7 +204,10 @@ export function registerSupabaseHandlers() {
       `Associated app ${appId} with Supabase project ${projectId} (organization: ${organizationSlug})${parentProjectId ? ` and parent project ${parentProjectId}` : ""}`,
     );
 
-    await autoSyncSupabaseEnvVarsIfConnected(appId);
+    const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
+    await autoSyncSupabaseEnvVarsIfConnected(appId, {
+      teamId: app?.vercelTeamId,
+    });
   });
 
   // Unset app project - removes the link between a Anyon app and a Supabase project

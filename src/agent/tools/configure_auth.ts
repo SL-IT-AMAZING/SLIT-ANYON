@@ -1,11 +1,15 @@
 import { z } from "zod";
 import { fetchWithRetry } from "@/ipc/utils/retryWithRateLimit";
 import { readSettings } from "@/main/settings";
-import { refreshSupabaseToken } from "@/supabase_admin/supabase_management_client";
+import {
+  getSupabaseClientForOrganization,
+  refreshSupabaseToken,
+} from "@/supabase_admin/supabase_management_client";
 import { TOOL_FETCH_TIMEOUT_MS, type ToolSpec } from "./spec";
 
 type ConfigureAuthInput = {
   projectRef: string;
+  organizationId?: string;
   config: Record<string, unknown>;
 };
 
@@ -33,15 +37,24 @@ export const configureAuthTool: ToolSpec<
   inputSchema: z
     .object({
       projectRef: z.string().min(1),
+      organizationId: z.string().min(1).optional(),
       config: z.record(z.string(), z.unknown()),
     })
     .strict(),
   outputSchema: z.object({ result: z.unknown() }).strict(),
-  async execute({ projectRef, config }) {
-    await refreshSupabaseToken();
+  async execute({ projectRef, organizationId, config }) {
+    let token: string | undefined;
 
-    const settings = readSettings();
-    const token = settings.supabase?.accessToken?.value;
+    if (organizationId) {
+      await getSupabaseClientForOrganization(organizationId);
+      token =
+        readSettings().supabase?.organizations?.[organizationId]?.accessToken
+          ?.value;
+    } else {
+      await refreshSupabaseToken();
+      token = readSettings().supabase?.accessToken?.value;
+    }
+
     if (!token) {
       throw new Error(
         "Supabase access token not found. Please authenticate first.",

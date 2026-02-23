@@ -393,7 +393,7 @@ export async function syncSupabaseEnvVarsForApp(
   const teamId =
     options?.teamId ?? app.vercelTeamId ?? getVercelTeamId() ?? undefined;
 
-  await retryWithRateLimit(
+  const syncResult = await retryWithRateLimit(
     () =>
       vercel.projects.createProjectEnv({
         idOrName: vercelProjectId,
@@ -409,8 +409,20 @@ export async function syncSupabaseEnvVarsForApp(
     `Sync Supabase env vars to Vercel project ${vercelProjectId}`,
   );
 
+  // The Vercel API returns { created, failed } — check for partial failures.
+  const failed = (syncResult as { failed?: Array<{ error: { message: string; key?: string } }> })
+    ?.failed;
+  if (failed && failed.length > 0) {
+    const failedKeys = failed
+      .map((f) => f.error?.key ?? f.error?.message ?? "unknown")
+      .join(", ");
+    throw new Error(
+      `Vercel accepted the request but ${failed.length} env var(s) failed: ${failedKeys}`,
+    );
+  }
+
   logger.info(
-    `Synced Supabase env vars to Vercel project ${vercelProjectId} for app ${appId}`,
+    `Synced ${envEntries.length} Supabase env vars to Vercel project ${vercelProjectId} for app ${appId}`,
   );
 }
 
@@ -817,7 +829,7 @@ async function handleCreateProject(
       deploymentUrl: projectUrl,
     });
 
-    await autoSyncSupabaseEnvVarsIfConnected(appId);
+    await autoSyncSupabaseEnvVarsIfConnected(appId, { teamId });
 
     logger.info(`Successfully created Vercel project: ${projectData.id}`);
 
@@ -982,19 +994,30 @@ async function handleDirectDeploy(
       resolvedTeamId = await fetchAndStoreUserDefaultTeamId(accessToken);
     }
 
-    try {
-      await autoSyncSupabaseEnvVarsIfConnected(appId, {
-        teamId: resolvedTeamId,
-      });
-    } catch (error: any) {
-      const message =
-        error instanceof Error ? error.message : "Failed to sync env vars.";
-      sendProgress({
-        appId,
-        phase: "collecting",
-        message: `Warning: Vercel project env sync failed (${message}). Continuing with deploy fallback...`,
-        progress: 0,
-      });
+    if (app.supabaseProjectId) {
+      try {
+        await autoSyncSupabaseEnvVarsIfConnected(appId, {
+          teamId: resolvedTeamId,
+        });
+      } catch (error: any) {
+        const message =
+          error instanceof Error ? error.message : "Failed to sync env vars.";
+        sendProgress({
+          appId,
+          phase: "collecting",
+          message: `Error: Vercel project env sync failed (${message}). Stopping deploy.`,
+          progress: 0,
+        });
+        throw new Error(
+          `Supabase env sync to Vercel failed. Deployment was stopped so missing env vars cannot slip through. ${message}`,
+        );
+      }
+    } else {
+      logger.warn(
+        `App ${appId} has no supabaseProjectId set — skipping Vercel project env sync. ` +
+          `Supabase env vars will NOT be available in the Vercel dashboard. ` +
+          `Link a Supabase project to this app to enable automatic env sync.`,
+      );
     }
 
     sendProgress({
@@ -1282,7 +1305,7 @@ async function handleConnectToExistingProject(
         : null,
     });
 
-    await autoSyncSupabaseEnvVarsIfConnected(appId);
+    await autoSyncSupabaseEnvVarsIfConnected(appId, { teamId });
 
     logger.info(`Successfully connected to Vercel project: ${projectData.id}`);
   } catch (err: any) {

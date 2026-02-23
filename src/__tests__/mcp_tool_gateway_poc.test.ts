@@ -79,7 +79,7 @@ function makeJsonRpc(method: string, params?: unknown, id?: number) {
     method,
     ...(params != null ? { params } : {}),
   });
-  return msg + "\n";
+  return `${msg}\n`;
 }
 
 function readMcpMessage(
@@ -277,11 +277,13 @@ describe("MCP Tool Gateway POC", () => {
         }>;
       };
       expect(body.tools).toBeInstanceOf(Array);
-      expect(body.tools.length).toBe(6);
+      expect(body.tools.length).toBe(8);
 
       const names = body.tools.map((t) => t.name);
       expect(names).toContain("get_connection_status");
       expect(names).toContain("create_supabase_project");
+      expect(names).toContain("set_supabase_app_project");
+      expect(names).toContain("get_supabase_api_keys");
       expect(names).toContain("manage_secrets");
       expect(names).toContain("configure_auth");
       expect(names).toContain("set_vercel_env_vars");
@@ -397,7 +399,7 @@ describe("MCP Tool Gateway POC", () => {
       expect(listResult.jsonrpc).toBe("2.0");
       expect(listResult.id).toBe(2);
       expect(listResult.result.tools).toBeInstanceOf(Array);
-      expect(listResult.result.tools.length).toBe(6);
+      expect(listResult.result.tools.length).toBe(8);
       const toolNames = listResult.result.tools.map(
         (t: { name: string }) => t.name,
       );
