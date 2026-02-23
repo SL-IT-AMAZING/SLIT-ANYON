@@ -35,8 +35,6 @@ jobs:
       matrix:
         os: [
             { name: "windows", image: "windows-latest" },
-            # See https://github.com/SL-IT-AMAZING/SLIT-ANYON/issues/96
-            { name: "linux", image: "ubuntu-22.04" },
             { name: "macos-intel", image: "macos-15-intel" },
             { name: "macos", image: "macos-latest" },
           ]
@@ -146,37 +144,6 @@ jobs:
       #     '@ | Out-File -Encoding utf8 signing-metadata.json
       #
       #     echo "AZURE_METADATA_JSON=$PWD\signing-metadata.json" >> $env:GITHUB_ENV
-
-      - name: Import GPG key
-        if: contains(matrix.os.name, 'linux') && secrets.GPG_PRIVATE_KEY != ''
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --import --batch --no-tty || true
-          echo "GPG_KEY_IMPORTED=true" >> $GITHUB_ENV
-
-      - name: Sign Linux packages (DEB)
-        if: contains(matrix.os.name, 'linux') && env.GPG_KEY_IMPORTED == 'true'
-        run: |
-          for deb in out/make/*.deb; do
-            if [ -f "$deb" ]; then
-              echo "Signing $deb..."
-              dpkg-sig -k "${{ secrets.GPG_KEY_ID }}" --sign builder "$deb" || echo "Warning: Failed to sign $deb"
-            fi
-          done
-        continue-on-error: true
-
-      - name: Sign Linux packages (RPM)
-        if: contains(matrix.os.name, 'linux') && env.GPG_KEY_IMPORTED == 'true'
-        run: |
-          for rpm in out/make/*.rpm; do
-            if [ -f "$rpm" ]; then
-              echo "Signing $rpm..."
-              rpm --addsign "$rpm" || echo "Warning: Failed to sign $rpm"
-            fi
-          done
-        continue-on-error: true
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-
       # - name: Set up certificate
       #   if: contains(matrix.os.name, 'windows')
       #   run: |
