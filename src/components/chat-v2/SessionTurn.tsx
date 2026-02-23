@@ -77,6 +77,7 @@ export interface SessionTurnProps {
   error?: string;
   permissions?: PermissionItem[];
   className?: string;
+  isActive?: boolean;
 }
 
 export function SessionTurn({
@@ -91,6 +92,7 @@ export function SessionTurn({
   onToggleSteps,
   error,
   permissions,
+  isActive = false,
   className,
 }: SessionTurnProps) {
   // Reasoning steps are ephemeral: only visible while the AI is actively working
@@ -109,7 +111,12 @@ export function SessionTurn({
       className={cn("flex flex-col", className)}
     >
       {hasUserMessage && (
-        <div className="sticky top-0 z-10 bg-background pb-1">
+        <div
+          className={cn(
+            "z-10 bg-background pb-1",
+            isActive && "sticky top-0",
+          )}
+        >
           <div className="ml-auto w-fit max-w-[92%] rounded-xl border border-border/70 bg-muted/35 px-3 py-1.5">
             <div className="text-sm text-foreground whitespace-pre-wrap break-words">
               {userMessage}
@@ -121,8 +128,9 @@ export function SessionTurn({
       {hasSteps && (
         <div
           className={cn(
-            "sticky z-10 bg-background",
-            hasUserMessage ? "top-[28px]" : "top-0",
+            "z-10 bg-background",
+            isActive && "sticky",
+            isActive && hasUserMessage ? "top-[28px]" : isActive ? "top-0" : "",
           )}
         >
           <button

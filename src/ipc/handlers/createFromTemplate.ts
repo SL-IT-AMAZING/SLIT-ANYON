@@ -22,6 +22,29 @@ export async function createFromTemplate({
   templateId?: string;
   designSystemId?: string;
 }) {
+  // Marketplace templates take priority over design system scaffolds.
+  // These are pre-built HTML/CSS/JS templates that don't use React design systems.
+  const isBuiltinScaffold = templateId === "react" || templateId === "next";
+
+  if (!isBuiltinScaffold && templateId !== DEFAULT_TEMPLATE_ID) {
+    const template = await getMarketTemplateOrThrow(templateId);
+    const repoCachePath = await cloneRepo(getTemplateRepoUrl());
+    const templateSourcePath = path.join(
+      repoCachePath,
+      "templates",
+      template.path,
+    );
+
+    if (!fs.existsSync(templateSourcePath)) {
+      throw new Error(
+        `Template directory not found: templates/${template.path}`,
+      );
+    }
+
+    await copyRepoToApp(templateSourcePath, fullAppPath);
+    return;
+  }
+
   if (designSystemId) {
     const designSystem = DESIGN_SYSTEMS.find((ds) => ds.id === designSystemId);
     if (!designSystem) {
@@ -57,20 +80,6 @@ export async function createFromTemplate({
     );
     return;
   }
-
-  const template = await getMarketTemplateOrThrow(templateId);
-  const repoCachePath = await cloneRepo(getTemplateRepoUrl());
-  const templateSourcePath = path.join(
-    repoCachePath,
-    "templates",
-    template.path,
-  );
-
-  if (!fs.existsSync(templateSourcePath)) {
-    throw new Error(`Template directory not found: templates/${template.path}`);
-  }
-
-  await copyRepoToApp(templateSourcePath, fullAppPath);
 }
 
 async function cloneRepo(repoUrl: string): Promise<string> {

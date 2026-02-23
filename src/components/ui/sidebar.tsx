@@ -242,7 +242,8 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "fixed z-10 flex w-(--sidebar-width) transition-all duration-200 ease-linear",
+          "fixed flex w-(--sidebar-width) transition-all duration-200 ease-linear",
+          isCollapsed && isHovering ? "z-40" : "z-10",
           isCollapsed && isHovering
             ? cn(
                 "top-24 bottom-6 rounded-xl shadow-2xl border border-sidebar-border",

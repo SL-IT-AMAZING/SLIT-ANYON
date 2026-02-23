@@ -43,6 +43,7 @@ import {
   type CollectedFile,
   collectDeployFiles,
 } from "../utils/file_collector";
+import { buildSupabaseEnvEntries } from "../utils/supabase_env";
 import { IS_TEST_BUILD } from "../utils/test_utils";
 import { createTypedHandler } from "./base";
 
@@ -55,17 +56,6 @@ const VERCEL_API_BASE = IS_TEST_BUILD
   ? `${TEST_SERVER_BASE}/vercel/api`
   : "https://api.vercel.com";
 const VERCEL_ENV_TARGETS = ["production", "preview", "development"] as const;
-
-const SUPABASE_VERCEL_ENV_KEYS = {
-  publicUrl: "NEXT_PUBLIC_SUPABASE_URL",
-  publicAnonKey: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  vitePublicUrl: "VITE_SUPABASE_URL",
-  vitePublicAnonKey: "VITE_SUPABASE_ANON_KEY",
-  anyonPublicUrl: "ANYON_SUPABASE_URL",
-  anyonPublicAnonKey: "ANYON_SUPABASE_ANON_KEY",
-  serverUrl: "SUPABASE_URL",
-  serverAnonKey: "SUPABASE_ANON_KEY",
-} as const;
 
 interface ActiveDeviceAuthSession {
   deviceCode: string;
@@ -370,7 +360,10 @@ export async function getSupabasePublishableKey({
   return publishableKey.api_key;
 }
 
-export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
+export async function syncSupabaseEnvVarsForApp(
+  appId: number,
+  options?: { teamId?: string | null },
+): Promise<void> {
   const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
 
   if (!app) {
@@ -390,10 +383,15 @@ export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
     projectId: app.supabaseProjectId,
     organizationSlug: app.supabaseOrganizationSlug,
   });
+  const envEntries = buildSupabaseEnvEntries({
+    supabaseUrl,
+    supabaseAnonKey,
+  });
 
   const accessToken = await getVercelAccessToken();
   const vercel = createVercelClient(accessToken);
-  const teamId = app.vercelTeamId ?? getVercelTeamId() ?? undefined;
+  const teamId =
+    options?.teamId ?? app.vercelTeamId ?? getVercelTeamId() ?? undefined;
 
   await retryWithRateLimit(
     () =>
@@ -401,56 +399,12 @@ export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
         idOrName: vercelProjectId,
         teamId,
         upsert: "true",
-        requestBody: [
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.publicUrl,
-            value: supabaseUrl,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.publicAnonKey,
-            value: supabaseAnonKey,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.serverUrl,
-            value: supabaseUrl,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.serverAnonKey,
-            value: supabaseAnonKey,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.vitePublicUrl,
-            value: supabaseUrl,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.vitePublicAnonKey,
-            value: supabaseAnonKey,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.anyonPublicUrl,
-            value: supabaseUrl,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-          {
-            key: SUPABASE_VERCEL_ENV_KEYS.anyonPublicAnonKey,
-            value: supabaseAnonKey,
-            type: "plain",
-            target: [...VERCEL_ENV_TARGETS],
-          },
-        ],
+        requestBody: envEntries.map(({ key, value }) => ({
+          key,
+          value,
+          type: "plain" as const,
+          target: [...VERCEL_ENV_TARGETS],
+        })),
       }),
     `Sync Supabase env vars to Vercel project ${vercelProjectId}`,
   );
@@ -462,6 +416,7 @@ export async function syncSupabaseEnvVarsForApp(appId: number): Promise<void> {
 
 export async function autoSyncSupabaseEnvVarsIfConnected(
   appId: number,
+  options?: { teamId?: string | null },
 ): Promise<void> {
   const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
   if (!app?.supabaseProjectId || !app?.vercelProjectId) {
@@ -469,7 +424,7 @@ export async function autoSyncSupabaseEnvVarsIfConnected(
   }
 
   try {
-    await syncSupabaseEnvVarsForApp(appId);
+    await syncSupabaseEnvVarsForApp(appId, options);
   } catch (error) {
     // Log the error for diagnostics, then re-throw so callers know the sync
     // failed.  handleDirectDeploy can still proceed because the injected .env
@@ -1015,16 +970,6 @@ async function handleDirectDeploy(
     if (!app.vercelProjectId) {
       throw new Error("App must have a Vercel project. Create one first.");
     }
-
-
-    // Sync Supabase env vars before every deploy (in case they were connected after project creation).
-    // Non-fatal: the injected .env file provides a fallback if the project-level sync fails.
-    try {
-      await autoSyncSupabaseEnvVarsIfConnected(appId);
-    } catch {
-      // Error already logged inside autoSyncSupabaseEnvVarsIfConnected.
-    }
-
     const accessToken = await getVercelAccessToken();
     const vercel = createVercelClient(accessToken);
     const appPath = getAnyonAppPath(app.path);
@@ -1035,6 +980,21 @@ async function handleDirectDeploy(
     }
     if (!resolvedTeamId) {
       resolvedTeamId = await fetchAndStoreUserDefaultTeamId(accessToken);
+    }
+
+    try {
+      await autoSyncSupabaseEnvVarsIfConnected(appId, {
+        teamId: resolvedTeamId,
+      });
+    } catch (error: any) {
+      const message =
+        error instanceof Error ? error.message : "Failed to sync env vars.";
+      sendProgress({
+        appId,
+        phase: "collecting",
+        message: `Warning: Vercel project env sync failed (${message}). Continuing with deploy fallback...`,
+        progress: 0,
+      });
     }
 
     sendProgress({
@@ -1129,19 +1089,14 @@ async function handleDirectDeploy(
           projectId: app.supabaseProjectId,
           organizationSlug: app.supabaseOrganizationSlug,
         });
+        const envEntries = buildSupabaseEnvEntries({
+          supabaseUrl,
+          supabaseAnonKey,
+        });
 
-        const envLines = [
-          `SUPABASE_URL=${supabaseUrl}`,
-          `SUPABASE_ANON_KEY=${supabaseAnonKey}`,
-          `VITE_SUPABASE_URL=${supabaseUrl}`,
-          `VITE_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
-          `NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl}`,
-          `NEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
-          `ANYON_SUPABASE_URL=${supabaseUrl}`,
-          `ANYON_SUPABASE_ANON_KEY=${supabaseAnonKey}`,
-        ];
+        const envLines = envEntries.map(({ key, value }) => `${key}=${value}`);
 
-        const envContent = envLines.join("\n") + "\n";
+        const envContent = `${envLines.join("\n")}\n`;
         const envBuffer = Buffer.from(envContent, "utf-8");
         const envSha1 = crypto
           .createHash("sha1")
