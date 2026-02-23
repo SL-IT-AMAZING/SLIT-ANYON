@@ -78,11 +78,7 @@ const config: ForgeConfig = {
     ],
     icon: "./assets/icon/logo",
 
-    osxSign: isEndToEndTestBuild
-      ? undefined
-      : {
-          identity: process.env.APPLE_TEAM_ID,
-        },
+    osxSign: isEndToEndTestBuild ? undefined : {},
     osxNotarize: isEndToEndTestBuild
       ? undefined
       : {

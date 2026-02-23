@@ -30,18 +30,21 @@ security default-keychain -s $KEY_CHAIN
 # Unlock the keychain
 security unlock-keychain -p actions $KEY_CHAIN
 
+# Add keychain to search list so codesign can find identities
+security list-keychain -d user -s $KEY_CHAIN
+
 # The latest Developer ID Intermediate Certificate from Apple is
 # missing on GitHub Actions (?), but we need it for the cert to be valid
 curl https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer -o DeveloperIDG2CA.cer
 sudo security add-trusted-cert -d -r unspecified -k $KEY_CHAIN DeveloperIDG2CA.cer
 rm -f DeveloperIDG2CA.cer
 
-security import $MACOS_CERT_P12_FILE -k $KEY_CHAIN -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign;
+security import $MACOS_CERT_P12_FILE -k $KEY_CHAIN -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security;
 
-security set-key-partition-list -S apple-tool:,apple: -s -k actions $KEY_CHAIN
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $KEY_CHAIN
 
 # Debugging output
-security find-identity
+security find-identity -v -p codesigning
 
 # remove certs
 rm -fr *.p12
