@@ -16,7 +16,7 @@ export interface SystemPromptInput {
 
 const PROMPTS_DIR = path.join(__dirname, "../../prompts/agent");
 
-function readPromptFile(fileName: string): string {
+export function readPromptFile(fileName: string): string {
   return fs.readFileSync(path.join(PROMPTS_DIR, fileName), "utf8").trim();
 }
 
