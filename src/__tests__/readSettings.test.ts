@@ -75,6 +75,7 @@ describe("readSettings", () => {
           "selectedThemeId": "default",
           "telemetryConsent": "unset",
           "telemetryUserId": "[scrubbed]",
+          "useNativeAgent": false,
         }
       `);
     });
@@ -332,6 +333,7 @@ describe("readSettings", () => {
           "selectedThemeId": "default",
           "telemetryConsent": "unset",
           "telemetryUserId": "[scrubbed]",
+          "useNativeAgent": false,
         }
       `);
     });

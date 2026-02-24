@@ -33,6 +33,7 @@ export async function getModelClient(
     return {
       ...result,
       isOpenCodeMode: false,
+      isNativeAgentMode: settings.useNativeAgent === true,
     };
   }
 
