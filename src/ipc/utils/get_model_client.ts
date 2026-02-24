@@ -21,6 +21,7 @@ export async function getModelClient(
   isEngineEnabled?: boolean;
   isSmartContextEnabled?: boolean;
   isOpenCodeMode?: boolean;
+  isNativeAgentMode?: boolean;
 }> {
   // E2E test mode: use original upstream provider routing so the
   // fake-llm-server (OpenAI-format) works without an OpenCode server.
@@ -32,6 +33,18 @@ export async function getModelClient(
     return {
       ...result,
       isOpenCodeMode: false,
+    };
+  }
+
+  if (settings.useNativeAgent) {
+    logger.info(
+      `Native agent mode: using upstream provider for model: ${model.provider}/${model.name}`,
+    );
+    const result = await getModelClientUpstream(model, settings);
+    return {
+      ...result,
+      isOpenCodeMode: false,
+      isNativeAgentMode: true,
     };
   }
 

@@ -14,6 +14,16 @@ import fs from "node:fs";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import { findNativeAgent, getDefaultAgent } from "@/agent/runtime/agent_config";
+import {
+  AgentRuntime,
+  type AgentRuntimeParams,
+} from "@/agent/runtime/agent_runtime";
+import { requestNativeToolConsent } from "@/agent/runtime/consent";
+import { waitForAgentQuestion } from "@/agent/runtime/question";
+import { assembleSystemPrompt } from "@/agent/runtime/system_prompt";
+import { createDefaultRegistry } from "@/agent/runtime/tool_registry";
+import type { StreamCallbacks, ToolContext } from "@/agent/runtime/types";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
 import log from "electron-log";
@@ -61,6 +71,7 @@ const logger = log.scope("chat_stream_handlers");
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
+const activeRuntimes = new Map<number, AgentRuntime>();
 
 // Track partial responses for cancelled streams
 const partialResponses = new Map<number, string>();
@@ -489,7 +500,239 @@ ${componentSnippet}
             throw new Error(creditCheck.reason ?? "Credits exhausted");
           }
 
-          const { modelClient, isOpenCodeMode } = modelClientResult;
+          const { modelClient, isOpenCodeMode, isNativeAgentMode } =
+            modelClientResult;
+
+          if (isNativeAgentMode) {
+            const agentConfig =
+              findNativeAgent(settings.selectedAgent ?? "") ??
+              getDefaultAgent();
+
+            const aiRules = await readAiRules(chatAppPath);
+            const themePrompt = await getFullSystemPrompt(
+              chat.app?.designSystemId ?? null,
+              chat.app?.themeId ?? null,
+            );
+
+            let supabaseContext: string | undefined;
+
+            if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
+              const [supabaseClientCode, supabaseCtx] = await Promise.all([
+                getSupabaseClientCode({
+                  projectId: chat.app.supabaseProjectId,
+                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+                }),
+                getSupabaseContext({
+                  supabaseProjectId: chat.app.supabaseProjectId,
+                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
+                }),
+              ]);
+              supabaseContext = `${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseCtx}`;
+            }
+
+            const systemPrompt = assembleSystemPrompt({
+              modelProvider: settings.selectedModel.provider,
+              modelId: settings.selectedModel.name,
+              agentConfig,
+              appPath: chatAppPath,
+              customRules: aiRules ?? undefined,
+              themePrompt: themePrompt ?? undefined,
+              supabaseContext,
+              anyonMcpPrompt: ANYON_MCP_TOOLS_PROMPT,
+            });
+
+            const askConsent: ToolContext["askConsent"] = async (params) => {
+              const decision = await requestNativeToolConsent({
+                toolName: params.toolName,
+                riskLevel: params.riskLevel,
+                inputPreview: params.inputPreview,
+                chatId: req.chatId,
+                event,
+              });
+              return decision === "accept-once" || decision === "accept-always";
+            };
+
+            const askQuestion: ToolContext["askQuestion"] = async (params) => {
+              const requestId = crypto.randomUUID();
+              safeSend(event.sender, "agent:question-request", {
+                requestId,
+                chatId: req.chatId,
+                questions: params.questions,
+              });
+
+              const answers = await waitForAgentQuestion(requestId);
+              if (!answers) {
+                return [];
+              }
+
+              return params.questions.map((question, index) => ({
+                question: question.question,
+                selectedOptions: answers[index] ?? [],
+              }));
+            };
+
+            const registry = createDefaultRegistry();
+            const toolContext: ToolContext = {
+              sessionId: chat.id,
+              chatId: req.chatId,
+              appPath: chatAppPath,
+              abort: abortController.signal,
+              askConsent,
+              askQuestion,
+              event,
+            };
+
+            const [maxOutputTokens, temperature] = await Promise.all([
+              getMaxTokens(settings.selectedModel),
+              getTemperature(settings.selectedModel),
+            ]);
+
+            let lastDbSaveAt = 0;
+            const callbacks: StreamCallbacks = {
+              onTextDelta: (_text) => {},
+              onReasoningDelta: (_text) => {},
+              onToolCall: (_toolName, _toolCallId, _input) => {},
+              onToolResult: (_toolName, _toolCallId, _output) => {},
+              onToolError: (_toolName, _toolCallId, _error) => {},
+              onStepFinish: (_usage) => {
+                const runtime = activeRuntimes.get(req.chatId);
+                if (!runtime) {
+                  return;
+                }
+
+                const responseText = runtime.getAccumulatedResponseText();
+                partialResponses.set(req.chatId, responseText);
+
+                const now = Date.now();
+                if (now - lastDbSaveAt >= 150) {
+                  const currentMessages = [...streamMessages];
+                  if (
+                    currentMessages.length > 0 &&
+                    currentMessages[currentMessages.length - 1].role ===
+                      "assistant"
+                  ) {
+                    currentMessages[currentMessages.length - 1].content =
+                      responseText;
+                  }
+                  safeSend(event.sender, "chat:response:chunk", {
+                    chatId: req.chatId,
+                    messages: currentMessages,
+                  });
+                  lastDbSaveAt = now;
+                }
+              },
+              onFinish: (_totalUsage) => {},
+              onError: (error) => {
+                const message = error.message || String(error);
+                logger.error(`Native agent stream error: ${message}`);
+                safeSend(event.sender, "chat:response:error", {
+                  chatId: req.chatId,
+                  error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
+                });
+              },
+            };
+
+            const runtimeParams: AgentRuntimeParams = {
+              chatId: req.chatId,
+              assistantMessageId: placeholderAssistantMessage.id,
+              sessionId: chat.id,
+              appPath: chatAppPath,
+              model: modelClient.model,
+              systemPrompt,
+              registry,
+              toolContext,
+              callbacks,
+              agentConfig,
+              maxOutputTokens: maxOutputTokens ?? undefined,
+              temperature: temperature ?? undefined,
+            };
+            const runtime = new AgentRuntime(runtimeParams);
+
+            activeRuntimes.set(req.chatId, runtime);
+
+            try {
+              const result = await runtime.loop();
+              logger.log(
+                `Native agent completed: ${result} (chat ${req.chatId})`,
+              );
+            } catch (runtimeError) {
+              if (!abortController.signal.aborted) {
+                throw runtimeError;
+              }
+            } finally {
+              activeRuntimes.delete(req.chatId);
+            }
+
+            const tokens = runtime.getCumulativeTokens();
+            const totalTokens = tokens.input + tokens.output;
+            if (totalTokens > 0) {
+              void db
+                .update(messages)
+                .set({ maxTokensUsed: totalTokens })
+                .where(eq(messages.id, placeholderAssistantMessage.id))
+                .catch((error) => {
+                  logger.error("Failed to save token usage", error);
+                });
+              void reportTokenUsage(totalTokens, settings.selectedModel.name);
+            }
+
+            fullResponse = runtime.getAccumulatedResponseText();
+
+            if (!abortController.signal.aborted && fullResponse) {
+              const chatTitle = fullResponse.match(
+                /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
+              );
+              const chatSummary = chatTitle?.[1];
+              if (chatSummary) {
+                await db
+                  .update(chats)
+                  .set({ title: chatSummary })
+                  .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+              }
+
+              const appNameMatch = fullResponse.match(
+                /<anyon-app-name>(.*?)<\/anyon-app-name>/,
+              );
+              const appDisplayName = appNameMatch?.[1];
+              if (appDisplayName && !chat.app.displayName) {
+                await db
+                  .update(apps)
+                  .set({ displayName: appDisplayName })
+                  .where(eq(apps.id, chat.app.id));
+              }
+
+              try {
+                const uncommittedFiles = await getGitUncommittedFiles({
+                  path: chatAppPath,
+                });
+                if (uncommittedFiles.length > 0) {
+                  await gitAddAll({ path: chatAppPath });
+                  const commitHash = await gitCommit({
+                    path: chatAppPath,
+                    message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                  });
+                  await db
+                    .update(messages)
+                    .set({ commitHash })
+                    .where(eq(messages.id, placeholderAssistantMessage.id));
+                  logger.log(
+                    `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                  );
+                }
+              } catch (gitError) {
+                logger.error("Git commit failed:", gitError);
+              }
+
+              safeSend(event.sender, "chat:response:end", {
+                chatId: req.chatId,
+                updatedFiles: false,
+                chatSummary,
+                appDisplayName,
+              } satisfies ChatResponseEnd);
+            }
+
+            return req.chatId;
+          }
 
           // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
           // history assembly, system prompt construction, post-response file processing).
@@ -752,6 +995,11 @@ ${componentSnippet}
   // Handler to cancel an ongoing stream
   createTypedHandler(chatContracts.cancelStream, async (event, chatId) => {
     const abortController = activeStreams.get(chatId);
+    const runtime = activeRuntimes.get(chatId);
+    if (runtime) {
+      runtime.abort();
+      activeRuntimes.delete(chatId);
+    }
 
     if (abortController) {
       // Abort the stream
