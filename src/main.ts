@@ -15,10 +15,7 @@ import {
 } from "./ipc/deep_link_data";
 import { registerIpcHandlers } from "./ipc/ipc_host";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
-import { setupOpenCodeConfig } from "./ipc/utils/opencode_config_setup";
-import { openCodeServer } from "./ipc/utils/opencode_server";
 import { IS_TEST_BUILD } from "./ipc/utils/test_utils";
-import { resolveVendorBinaries } from "./ipc/utils/vendor_binary_utils";
 import { getUserRolloutBucket } from "./lib/rollout";
 import type { UserSettings } from "./lib/schemas";
 import { initSentryMain } from "./lib/sentry";
@@ -80,8 +77,6 @@ if (fs.existsSync(gitDir)) {
   process.env.LOCAL_GIT_DIRECTORY = gitDir;
 }
 
-resolveVendorBinaries();
-
 // https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app#main-process-mainjs
 // In dev mode (process.defaultApp), skip protocol registration so the
 // installed /Applications/ANYON.app handles anyon:// deep links instead
@@ -89,7 +84,6 @@ resolveVendorBinaries();
 if (!process.defaultApp) {
   app.setAsDefaultProtocolClient("anyon");
 }
-
 
 // ---------------------------------------------------------------------------
 // Auto-updater (Squirrel-based, GitHub Releases as static storage)
@@ -103,9 +97,7 @@ function initAutoUpdater() {
 
   // macOS Squirrel expects a JSON feed; Windows Squirrel expects just the base URL.
   const feedUrl =
-    process.platform === "darwin"
-      ? `${feedBase}/RELEASES.json`
-      : feedBase;
+    process.platform === "darwin" ? `${feedBase}/RELEASES.json` : feedBase;
 
   logger.info("Auto-updater feed URL:", feedUrl);
   autoUpdater.setFeedURL({ url: feedUrl });
@@ -182,9 +174,6 @@ export async function onReady() {
   await onFirstRunMaybe(settings);
   registerPreviewProtocol();
   createWindow();
-  void setupOpenCodeConfig().catch((err) => {
-    logger.error("OpenCode config setup failed:", err);
-  });
   createApplicationMenu();
 
   logger.info("Auto-update enabled=", settings.enableAutoUpdate);
@@ -666,9 +655,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-// Clean up OpenCode server and persist settings when the app quits.
-// `openCodeServer.stop()` is async (sends SIGTERM, waits up to 5 s, then
-// SIGKILL), so we prevent the default quit, run cleanup, then re-trigger quit.
 let isCleaningUp = false;
 app.on("will-quit", (event) => {
   if (isCleaningUp) return; // Allow quit on second pass
@@ -677,16 +663,8 @@ app.on("will-quit", (event) => {
 
   logger.info("App is quitting, cleaning up...");
   stopPerformanceMonitoring();
-
-  openCodeServer
-    .stop()
-    .catch((err: unknown) =>
-      logger.warn("Failed to stop OpenCode server during quit:", err),
-    )
-    .finally(() => {
-      writeSettings({ isRunning: false });
-      app.quit(); // Re-triggers will-quit; isCleaningUp guard prevents loop
-    });
+  writeSettings({ isRunning: false });
+  app.quit(); // Re-triggers will-quit; isCleaningUp guard prevents loop
 });
 
 app.on("activate", () => {

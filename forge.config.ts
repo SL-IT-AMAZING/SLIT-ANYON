@@ -78,7 +78,12 @@ const config: ForgeConfig = {
     ],
     icon: "./assets/icon/logo",
 
-    osxSign: isEndToEndTestBuild ? undefined : { identity: process.env.APPLE_SIGNING_IDENTITY || null, continueOnError: false },
+    osxSign: isEndToEndTestBuild
+      ? undefined
+      : {
+          identity: process.env.APPLE_SIGNING_IDENTITY || null,
+          continueOnError: false,
+        },
     osxNotarize: isEndToEndTestBuild
       ? undefined
       : {
@@ -91,10 +96,6 @@ const config: ForgeConfig = {
     extraResource: [
       "node_modules/dugite/git",
       "node_modules/@vscode",
-      ...(fs.existsSync("vendor/opencode") ? ["vendor/opencode"] : []),
-      ...(fs.existsSync("vendor/oh-my-opencode")
-        ? ["vendor/oh-my-opencode"]
-        : []),
       ...(fs.existsSync("preview-dists") ? ["preview-dists"] : []),
     ],
     // ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],

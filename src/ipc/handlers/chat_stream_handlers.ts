@@ -1,9 +1,3 @@
-import {
-  type ModelMessage,
-  type TextStreamPart,
-  type ToolSet,
-  streamText,
-} from "ai";
 import { ipcMain } from "electron";
 import { v4 as uuidv4 } from "uuid";
 import { chatContracts } from "../types/chat";
@@ -35,7 +29,6 @@ import { getAnyonAppPath } from "../../paths/paths";
 import { getSupabaseAvailableSystemPrompt } from "../../prompts/supabase_prompt";
 import {
   ANYON_MCP_TOOLS_PROMPT,
-  constructSystemPrompt,
   readAiRules,
 } from "../../prompts/system_prompt";
 import {
@@ -51,9 +44,7 @@ import { getTestResponse } from "./testing_chat_handlers";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { inArray } from "drizzle-orm";
-import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
 import { prompts as promptsTable } from "../../db/schema";
-import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
 import {
   getCurrentCommitHash,
@@ -64,8 +55,6 @@ import {
 import { replacePromptReference } from "../utils/replacePromptReference";
 import { safeSend } from "../utils/safe_sender";
 import { parsePlanFile, validatePlanId } from "./planUtils";
-
-type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
 const logger = log.scope("chat_stream_handlers");
 
@@ -98,97 +87,9 @@ async function isTextFile(filePath: string): Promise<boolean> {
 
 // Use escapeXmlAttr from shared/xmlEscape for XML escaping
 
-// Safely parse an MCP tool key that combines server and tool names.
-// We split on the LAST occurrence of "__" to avoid ambiguity if either
-// side contains "__" as part of its sanitized name.
-function parseMcpToolKey(toolKey: string): {
-  serverName: string;
-  toolName: string;
-} {
-  const separator = "__";
-  const lastIndex = toolKey.lastIndexOf(separator);
-  if (lastIndex === -1) {
-    return { serverName: "", toolName: toolKey };
-  }
-  const serverName = toolKey.slice(0, lastIndex);
-  const toolName = toolKey.slice(lastIndex + separator.length);
-  return { serverName, toolName };
-}
-
 // Ensure the temp directory exists
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
-}
-
-// Helper function to process stream chunks
-async function processStreamChunks({
-  fullStream,
-  fullResponse,
-  abortController,
-  chatId,
-  processResponseChunkUpdate,
-}: {
-  fullStream: AsyncIterableStream<TextStreamPart<ToolSet>>;
-  fullResponse: string;
-  abortController: AbortController;
-  chatId: number;
-  processResponseChunkUpdate: (params: {
-    fullResponse: string;
-  }) => Promise<string>;
-}): Promise<{ fullResponse: string; incrementalResponse: string }> {
-  let incrementalResponse = "";
-  let inThinkingBlock = false;
-
-  for await (const part of fullStream) {
-    let chunk = "";
-    if (
-      inThinkingBlock &&
-      !["reasoning-delta", "reasoning-end", "reasoning-start"].includes(
-        part.type,
-      )
-    ) {
-      chunk = "</think>";
-      inThinkingBlock = false;
-    }
-    if (part.type === "text-delta") {
-      chunk += part.text;
-    } else if (part.type === "reasoning-delta") {
-      if (!inThinkingBlock) {
-        chunk = "<think>";
-        inThinkingBlock = true;
-      }
-
-      chunk += escapeAnyonTags(part.text);
-    } else if (part.type === "tool-call") {
-      const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeAnyonTags(JSON.stringify(part.input));
-      chunk = `<anyon-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-call>\n`;
-    } else if (part.type === "tool-result") {
-      const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeAnyonTags(part.output);
-      chunk = `<anyon-mcp-tool-result server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-result>\n`;
-    }
-
-    if (!chunk) {
-      continue;
-    }
-
-    fullResponse += chunk;
-    incrementalResponse += chunk;
-    fullResponse = cleanFullResponse(fullResponse);
-    fullResponse = sanitizeVisibleOutput(fullResponse);
-    fullResponse = await processResponseChunkUpdate({
-      fullResponse,
-    });
-
-    // If the stream was aborted, exit early
-    if (abortController.signal.aborted) {
-      logger.log(`Stream for chat ${chatId} was aborted`);
-      break;
-    }
-  }
-
-  return { fullResponse, incrementalResponse };
 }
 
 export function registerChatStreamHandlers() {
@@ -500,8 +401,7 @@ ${componentSnippet}
             throw new Error(creditCheck.reason ?? "Credits exhausted");
           }
 
-          const { modelClient, isOpenCodeMode, isNativeAgentMode } =
-            modelClientResult;
+          const { modelClient, isNativeAgentMode } = modelClientResult;
 
           if (isNativeAgentMode) {
             const agentConfig =
@@ -734,219 +634,6 @@ ${componentSnippet}
             return req.chatId;
           }
 
-          // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
-          // history assembly, system prompt construction, post-response file processing).
-          // OpenCode handles everything internally via its own tools and sessions.
-          if (isOpenCodeMode) {
-            const aiRules = await readAiRules(chatAppPath);
-            const themePrompt = await getFullSystemPrompt(
-              chat.app?.designSystemId ?? null,
-              chat.app?.themeId ?? null,
-            );
-            let openCodeSystemPrompt = constructSystemPrompt({
-              aiRules,
-              themePrompt,
-              selectedAgent: settings.selectedAgent,
-            });
-
-            // Append Supabase context so OpenCode's AI knows about
-            // the connected project, tables, and client code.
-            if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
-              const [supabaseClientCode, supabaseContext] = await Promise.all([
-                getSupabaseClientCode({
-                  projectId: chat.app.supabaseProjectId,
-                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
-                }),
-                getSupabaseContext({
-                  supabaseProjectId: chat.app.supabaseProjectId,
-                  organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
-                }),
-              ]);
-              openCodeSystemPrompt += `\n\n${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseContext}`;
-            }
-
-            openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
-            openCodeSystemPrompt += `\n\nCurrent app context:\n- appId: ${chat.app.id}\n- appName: ${chat.app.name}`;
-
-            if (settings.enableBooster) {
-              openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
-            }
-
-            // Send only the current user prompt — no codebase, no history.
-            // OpenCode manages its own session history and reads files via tools.
-            const openCodeMessages: ModelMessage[] = [
-              { role: "user", content: userPrompt },
-            ];
-
-            let lastDbSaveAt = 0;
-            const openCodeProcessChunkUpdate = async ({
-              fullResponse,
-            }: {
-              fullResponse: string;
-            }) => {
-              partialResponses.set(req.chatId, fullResponse);
-              const now = Date.now();
-              if (now - lastDbSaveAt >= 150) {
-                await db
-                  .update(messages)
-                  .set({ content: fullResponse })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-                lastDbSaveAt = now;
-              }
-
-              const currentMessages = [...streamMessages];
-              if (
-                currentMessages.length > 0 &&
-                currentMessages[currentMessages.length - 1].role === "assistant"
-              ) {
-                currentMessages[currentMessages.length - 1].content =
-                  fullResponse;
-              }
-
-              safeSend(event.sender, "chat:response:chunk", {
-                chatId: req.chatId,
-                messages: currentMessages,
-              });
-              return fullResponse;
-            };
-
-            try {
-              const [maxOutputTokens, temperature] = await Promise.all([
-                getMaxTokens(settings.selectedModel),
-                getTemperature(settings.selectedModel),
-              ]);
-
-              const streamResult = streamText({
-                maxOutputTokens,
-                temperature,
-                maxRetries: 2,
-                model: modelClient.model,
-                system: openCodeSystemPrompt,
-                messages: openCodeMessages,
-                abortSignal: abortController.signal,
-                onFinish: (response) => {
-                  const totalTokens = response.usage?.totalTokens;
-                  if (typeof totalTokens === "number") {
-                    void db
-                      .update(messages)
-                      .set({ maxTokensUsed: totalTokens })
-                      .where(eq(messages.id, placeholderAssistantMessage.id))
-                      .catch((error) => {
-                        logger.error(
-                          "Failed to save total tokens for assistant message",
-                          error,
-                        );
-                      });
-                    // Report token usage to Polar for credit metering
-                    void reportTokenUsage(
-                      totalTokens,
-                      settings.selectedModel.name,
-                    );
-                  }
-                },
-                onError: (error: any) => {
-                  const errorMessage = (error as any)?.error?.message;
-                  const message = errorMessage || JSON.stringify(error);
-                  logger.error(`Stream error: ${message}`);
-                  event.sender.send("chat:response:error", {
-                    chatId: req.chatId,
-                    error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
-                  });
-                  activeStreams.delete(req.chatId);
-                },
-              });
-
-              const result = await processStreamChunks({
-                fullStream: streamResult.fullStream,
-                fullResponse,
-                abortController,
-                chatId: req.chatId,
-                processResponseChunkUpdate: openCodeProcessChunkUpdate,
-              });
-              fullResponse = result.fullResponse;
-            } catch (streamError) {
-              if (abortController.signal.aborted) {
-                const partialResponse = partialResponses.get(req.chatId);
-                if (partialResponse) {
-                  await db
-                    .update(messages)
-                    .set({
-                      content: `${partialResponse}\n\n[Response cancelled by user]`,
-                    })
-                    .where(eq(messages.id, placeholderAssistantMessage.id));
-                  partialResponses.delete(req.chatId);
-                }
-                return req.chatId;
-              }
-              throw streamError;
-            }
-
-            if (!abortController.signal.aborted) {
-              let chatSummary: string | undefined;
-              let appDisplayName: string | undefined;
-
-              if (fullResponse) {
-                const chatTitle = fullResponse.match(
-                  /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
-                );
-                chatSummary = chatTitle?.[1];
-                if (chatSummary) {
-                  await db
-                    .update(chats)
-                    .set({ title: chatSummary })
-                    .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
-                }
-
-                const appNameMatch = fullResponse.match(
-                  /<anyon-app-name>(.*?)<\/anyon-app-name>/,
-                );
-                appDisplayName = appNameMatch?.[1];
-                if (appDisplayName && !chat.app.displayName) {
-                  await db
-                    .update(apps)
-                    .set({ displayName: appDisplayName })
-                    .where(eq(apps.id, chat.app.id));
-                }
-
-                await db
-                  .update(messages)
-                  .set({ content: fullResponse })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-
-                try {
-                  const uncommittedFiles = await getGitUncommittedFiles({
-                    path: chatAppPath,
-                  });
-                  if (uncommittedFiles.length > 0) {
-                    await gitAddAll({ path: chatAppPath });
-                    const commitHash = await gitCommit({
-                      path: chatAppPath,
-                      message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
-                    });
-                    await db
-                      .update(messages)
-                      .set({ commitHash })
-                      .where(eq(messages.id, placeholderAssistantMessage.id));
-                    logger.log(
-                      `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
-                    );
-                  }
-                } catch (gitError) {
-                  logger.error("Git commit failed:", gitError);
-                }
-              }
-
-              safeSend(event.sender, "chat:response:end", {
-                chatId: req.chatId,
-                updatedFiles: false,
-                chatSummary,
-                appDisplayName,
-              } satisfies ChatResponseEnd);
-            }
-
-            return req.chatId;
-          }
-
           return req.chatId;
         }
 
@@ -1084,14 +771,4 @@ export function hasUnclosedAnyonWrite(text: string): boolean {
   const hasClosingTag = /<\/anyon-write>/.test(textAfterLastOpen);
 
   return !hasClosingTag;
-}
-
-function escapeAnyonTags(text: string): string {
-  // Escape anyon tags in reasoning content
-  // We are replacing the opening tag with a look-alike character
-  // to avoid issues where thinking content includes anyon tags
-  // and are mishandled by:
-  // 1. FE markdown parser
-  // 2. Main process response processor
-  return text.replace(/<anyon/g, "＜anyon").replace(/<\/anyon/g, "＜/anyon");
 }

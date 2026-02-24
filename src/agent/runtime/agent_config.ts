@@ -1,6 +1,18 @@
-import type { OpenCodeAgent } from "@/ipc/utils/opencode_api";
-
 import type { AgentConfig } from "./types";
+
+export type AgentDescriptor = {
+  name: string;
+  description: string;
+  mode: "primary" | "subagent" | "all";
+  native: boolean;
+  hidden?: boolean;
+  color?: string;
+  variant?: string;
+  model?: {
+    providerID: string;
+    modelID: string;
+  };
+};
 
 export const NATIVE_AGENTS: AgentConfig[] = [
   {
@@ -61,7 +73,7 @@ export function findNativeAgent(name: string): AgentConfig | undefined {
   return NATIVE_AGENTS.find((a) => a.name.toLowerCase() === name.toLowerCase());
 }
 
-export function getNativeAgents(): OpenCodeAgent[] {
+export function getNativeAgents(): AgentDescriptor[] {
   return NATIVE_AGENTS.filter((a) => a.mode !== "subagent").map((a) => ({
     name: a.name,
     description: a.description,

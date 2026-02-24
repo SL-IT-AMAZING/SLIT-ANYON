@@ -7,11 +7,6 @@ import type { LanguageModel, LanguageModelProvider } from "@/ipc/types";
 import { eq } from "drizzle-orm";
 import log from "electron-log";
 import {
-  type OpenCodeProviderListResponse,
-  getOpenCodeProviders,
-} from "../utils/opencode_api";
-import { IS_TEST_BUILD } from "../utils/test_utils";
-import {
   CLOUD_PROVIDERS,
   LOCAL_PROVIDERS,
   MODEL_OPTIONS,
@@ -169,150 +164,31 @@ async function getLanguageModelsByProvidersUpstream(): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// OpenCode API-based helpers — used in production
-// ---------------------------------------------------------------------------
-
-const PROVIDER_CACHE_KEY_DEFAULT = "__default__";
-const cachedProviders = new Map<string, OpenCodeProviderListResponse>();
-const cacheTimestamps = new Map<string, number>();
-const CACHE_TTL = 30_000;
-const providerFetchPromises = new Map<
-  string,
-  Promise<OpenCodeProviderListResponse>
->();
-
-function toProviderCacheKey(appPath?: string): string {
-  return appPath ?? PROVIDER_CACHE_KEY_DEFAULT;
-}
-
-async function fetchProviders(
-  appPath?: string,
-): Promise<OpenCodeProviderListResponse> {
-  const cacheKey = toProviderCacheKey(appPath);
-  const now = Date.now();
-  const cached = cachedProviders.get(cacheKey);
-  const timestamp = cacheTimestamps.get(cacheKey) ?? 0;
-  if (cached && now - timestamp < CACHE_TTL) {
-    return cached;
-  }
-
-  const inFlight = providerFetchPromises.get(cacheKey);
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const fetchPromise = (async () => {
-    try {
-      const providers = await getOpenCodeProviders(appPath);
-      cachedProviders.set(cacheKey, providers);
-      cacheTimestamps.set(cacheKey, Date.now());
-      return providers;
-    } catch (error) {
-      logger.error("Failed to fetch providers from OpenCode:", error);
-      const stale = cachedProviders.get(cacheKey);
-      if (stale) {
-        return stale;
-      }
-      return { all: [], default: {}, connected: [] };
-    } finally {
-      providerFetchPromises.delete(cacheKey);
-    }
-  })();
-
-  providerFetchPromises.set(cacheKey, fetchPromise);
-  return fetchPromise;
-}
-
-async function getLanguageModelProvidersOpenCode(
-  appPath?: string,
-): Promise<LanguageModelProvider[]> {
-  const data = await fetchProviders(appPath);
-  return data.all.map((p) => ({
-    id: p.id,
-    name: p.name,
-    type: "cloud" as const,
-    hasFreeTier: p.id === "opencode",
-    isConnected: data.connected.includes(p.id),
-  }));
-}
-
-async function getLanguageModelsOpenCode({
-  providerId,
-  appPath,
-}: {
-  providerId: string;
-  appPath?: string;
-}): Promise<LanguageModel[]> {
-  const data = await fetchProviders(appPath);
-  const provider = data.all.find((p) => p.id === providerId);
-  if (!provider) return [];
-
-  return Object.values(provider.models).map((m) => ({
-    apiName: m.id,
-    displayName: m.name,
-    maxOutputTokens: m.max_output,
-    contextWindow: m.context_length,
-    type: "cloud" as const,
-  }));
-}
-
-async function getLanguageModelsByProvidersOpenCode(
-  appPath?: string,
-): Promise<Record<string, LanguageModel[]>> {
-  const data = await fetchProviders(appPath);
-  const record: Record<string, LanguageModel[]> = {};
-
-  for (const provider of data.all) {
-    if (!data.connected.includes(provider.id)) continue;
-    record[provider.id] = Object.values(provider.models).map((m) => ({
-      apiName: m.id,
-      displayName: m.name,
-      maxOutputTokens: m.max_output,
-      contextWindow: m.context_length,
-      type: "cloud" as const,
-    }));
-  }
-
-  return record;
-}
-
-// ---------------------------------------------------------------------------
-// Public API — delegates to upstream or OpenCode based on build mode
+// Public API
 // ---------------------------------------------------------------------------
 
 export async function getLanguageModelProviders(
-  appPath?: string,
+  _appPath?: string,
 ): Promise<LanguageModelProvider[]> {
-  if (IS_TEST_BUILD) {
-    return getLanguageModelProvidersUpstream();
-  }
-  return getLanguageModelProvidersOpenCode(appPath);
+  return getLanguageModelProvidersUpstream();
 }
 
 export async function getLanguageModels({
   providerId,
-  appPath,
+  appPath: _appPath,
 }: {
   providerId: string;
   appPath?: string;
 }): Promise<LanguageModel[]> {
-  if (IS_TEST_BUILD) {
-    return getLanguageModelsUpstream({ providerId });
-  }
-  return getLanguageModelsOpenCode({ providerId, appPath });
+  return getLanguageModelsUpstream({ providerId });
 }
 
 export async function getLanguageModelsByProviders(
-  appPath?: string,
+  _appPath?: string,
 ): Promise<Record<string, LanguageModel[]>> {
-  if (IS_TEST_BUILD) {
-    return getLanguageModelsByProvidersUpstream();
-  }
-  return getLanguageModelsByProvidersOpenCode(appPath);
+  return getLanguageModelsByProvidersUpstream();
 }
 
 export function invalidateProviderCache() {
-  cachedProviders.clear();
-  cacheTimestamps.clear();
-  providerFetchPromises.clear();
+  logger.debug("Provider cache invalidation is a no-op in native runtime mode");
 }

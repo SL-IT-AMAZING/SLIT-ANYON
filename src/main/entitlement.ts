@@ -1,6 +1,5 @@
 import { shell } from "electron";
 import log from "electron-log";
-import { updateOmocConfig } from "../ipc/utils/opencode_config_setup";
 import { oauthEndpoints } from "../lib/oauthConfig";
 import { refreshSession } from "./auth";
 import { readSettings, writeSettings } from "./settings";
@@ -391,22 +390,13 @@ export async function syncEntitlements(): Promise<EntitlementState> {
   }
 }
 
-/**
- * Applies the appropriate model preset to the oh-my-opencode config
- * based on the user's subscription plan.
- */
 export async function applyModelPreset(
   plan: "free" | "starter" | "pro" | "power",
 ): Promise<void> {
-  const preset = plan === "pro" || plan === "power" ? PRO_PRESET : LIGHT_PRESET;
-  try {
-    updateOmocConfig(preset);
-    logger.info(
-      `Applied ${plan === "pro" || plan === "power" ? "Pro" : "Light"} model preset for plan: ${plan}`,
-    );
-  } catch (error) {
-    logger.error("Failed to apply model preset:", error);
-  }
+  const presetName = plan === "pro" || plan === "power" ? "Pro" : "Light";
+  logger.info(
+    `Model preset sync skipped (${presetName}) for native agent runtime`,
+  );
 }
 
 export async function startCheckout(
