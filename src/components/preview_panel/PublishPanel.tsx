@@ -121,6 +121,9 @@ export const PublishPanel = () => {
                 totalFiles={deploy.totalFiles}
                 filesUploaded={deploy.filesUploaded}
                 deploymentUrl={deploy.deploymentUrl}
+                deploymentId={deploy.deploymentId}
+                projectName={app.vercelProjectName}
+                teamSlug={app.vercelTeamSlug}
                 error={deploy.error}
                 onRetry={deploy.startDeploy}
                 onDismiss={deploy.reset}

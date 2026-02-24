@@ -8,6 +8,9 @@ interface DeployProgressProps {
   totalFiles: number;
   filesUploaded: number;
   deploymentUrl: string | null;
+  deploymentId: string | null;
+  projectName: string | null;
+  teamSlug: string | null;
   error: string | null;
   onRetry: () => void;
   onDismiss: () => void;
@@ -31,6 +34,9 @@ export function DeployProgress({
   message,
   progress,
   deploymentUrl,
+  deploymentId,
+  projectName,
+  teamSlug,
   error,
   onRetry,
   onDismiss,
@@ -113,6 +119,20 @@ export function DeployProgress({
               >
                 Open Site
               </button>
+              {deploymentId && projectName && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const baseUrl = teamSlug 
+                      ? `https://vercel.com/${teamSlug}/${projectName}`
+                      : `https://vercel.com/${projectName}`;
+                    ipc.system.openExternalUrl(`${baseUrl}/${deploymentId}`);
+                  }}
+                  className="rounded-md border border-green-300 px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/50"
+                >
+                  Build Logs
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onDismiss}

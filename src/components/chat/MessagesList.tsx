@@ -549,7 +549,14 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         });
         const userMessageText = turn.userMessage?.content ?? "";
         const hasAssistantContent = turn.assistantMessages.length > 0;
-        const stepsExpanded = expandedTurnIds.has(turn.id);
+        // Auto-expand steps for completed turns with no response text
+        // so the user always sees something when the agent finishes
+        const shouldAutoExpand =
+          !isTurnWorking &&
+          !turnSummary.response &&
+          turnSummary.steps.length > 0;
+        const stepsExpanded =
+          expandedTurnIds.has(turn.id) || shouldAutoExpand;
 
         return (
           <div className="px-4" key={turn.id}>
@@ -558,6 +565,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
               steps={turnSummary.steps}
               response={turnSummary.response}
               working={isTurnWorking}
+              isActive={isTurnWorking}
               statusText={turnSummary.statusText}
               duration={displayDuration}
               stepsExpanded={stepsExpanded}
@@ -655,7 +663,13 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
               fallbackDuration,
             });
             const hasAssistantContent = turn.assistantMessages.length > 0;
-            const stepsExpanded = expandedTurnIds.has(turn.id);
+            // Auto-expand steps for completed turns with no response text
+            const shouldAutoExpand =
+              !isTurnWorking &&
+              !turnSummary.response &&
+              turnSummary.steps.length > 0;
+            const stepsExpanded =
+              expandedTurnIds.has(turn.id) || shouldAutoExpand;
             return (
               <div className="px-4" key={turn.id}>
                 <SessionTurn
@@ -663,6 +677,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
                   steps={turnSummary.steps}
                   response={turnSummary.response}
                   working={isTurnWorking}
+                  isActive={isTurnWorking}
                   statusText={turnSummary.statusText}
                   duration={displayDuration}
                   stepsExpanded={stepsExpanded}

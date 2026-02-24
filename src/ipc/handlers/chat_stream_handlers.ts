@@ -523,6 +523,7 @@ ${componentSnippet}
             }
 
             openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
+            openCodeSystemPrompt += `\n\nCurrent app context:\n- appId: ${chat.app.id}\n- appName: ${chat.app.name}`;
 
             if (settings.enableBooster) {
               openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;

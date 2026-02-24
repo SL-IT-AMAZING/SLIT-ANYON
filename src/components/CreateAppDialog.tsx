@@ -49,6 +49,8 @@ export function CreateAppDialog({
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const [appName, setAppName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMarketplaceTemplate =
+    template != null && template.id !== "react" && template.id !== "next";
   const [selectedDesignSystem, setSelectedDesignSystem] = useState<string>(
     initialDesignSystemId ?? "shadcn",
   );
@@ -75,7 +77,10 @@ export function CreateAppDialog({
       const result = await createApp({
         name: appName.trim(),
         templateId: template?.id,
-        designSystemId: selectedDesignSystem,
+        // Marketplace templates are pre-built HTML/CSS/JS — design systems don't apply.
+        designSystemId: isMarketplaceTemplate
+          ? undefined
+          : selectedDesignSystem,
       });
       setSelectedAppId(result.app.id);
       // Navigate to the new app's first chat
@@ -116,41 +121,43 @@ export function CreateAppDialog({
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Design System</Label>
-              <ScrollArea className="h-[200px]">
-                <div className="grid grid-cols-2 gap-2">
-                  {designSystems.map((ds) => (
-                    <button
-                      key={ds.id}
-                      type="button"
-                      onClick={() => setSelectedDesignSystem(ds.id)}
-                      className={cn(
-                        "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors text-left",
-                        selectedDesignSystem === ds.id
-                          ? "border-indigo-500 bg-indigo-500/10"
-                          : "border-border hover:bg-accent/50",
-                      )}
-                    >
-                      <div
-                        className="w-8 h-8 rounded-md shrink-0"
-                        style={{
-                          background: `linear-gradient(135deg, ${ds.colorScheme.primary}, ${ds.colorScheme.secondary})`,
-                        }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-sm truncate">
-                          {ds.displayName}
+            {!isMarketplaceTemplate && (
+              <div className="grid gap-2">
+                <Label>Design System</Label>
+                <ScrollArea className="h-[200px]">
+                  <div className="grid grid-cols-2 gap-2">
+                    {designSystems.map((ds) => (
+                      <button
+                        key={ds.id}
+                        type="button"
+                        onClick={() => setSelectedDesignSystem(ds.id)}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors text-left",
+                          selectedDesignSystem === ds.id
+                            ? "border-indigo-500 bg-indigo-500/10"
+                            : "border-border hover:bg-accent/50",
+                        )}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-md shrink-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${ds.colorScheme.primary}, ${ds.colorScheme.secondary})`,
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm truncate">
+                            {ds.displayName}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {ds.libraryName}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {ds.libraryName}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="appName">
                 {t("labels.name", { ns: "common" })}

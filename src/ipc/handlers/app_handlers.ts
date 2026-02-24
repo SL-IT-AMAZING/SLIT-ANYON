@@ -26,9 +26,11 @@ import {
   stopAppByInfo,
 } from "../utils/process_manager";
 import { getEnvVar } from "../utils/read_env";
+import { buildSupabaseEnvEntries } from "../utils/supabase_env";
 
 import { learnAppProfile } from "@/ipc/services/profileLearning";
 import fixPath from "fix-path";
+import { getSupabasePublishableKey } from "./vercel_handlers";
 
 import util from "util";
 import type { AppSearchResult } from "@/lib/schemas";
@@ -205,12 +207,43 @@ async function executeAppLocalNode({
   startCommand: string;
 }): Promise<void> {
   const command = getCommand({ appId, installCommand, startCommand });
+  const app = await db.query.apps.findFirst({
+    where: eq(apps.id, appId),
+  });
+
+  if (!app) {
+    throw new Error("App not found");
+  }
+
+  const env = { ...process.env };
+
+  if (app.supabaseProjectId) {
+    try {
+      const supabaseUrl = `https://${app.supabaseProjectId}.supabase.co`;
+      const supabaseAnonKey = await getSupabasePublishableKey({
+        projectId: app.supabaseProjectId,
+        organizationSlug: app.supabaseOrganizationSlug,
+      });
+      const envEntries = buildSupabaseEnvEntries({
+        supabaseUrl,
+        supabaseAnonKey,
+      });
+      for (const { key, value } of envEntries) {
+        env[key] = value;
+      }
+    } catch (error: any) {
+      logger.warn(`Failed to retrieve Supabase credentials for app ${appId}, falling back to platform env: ${error.message}`);
+    }
+  }
+
   const spawnedProcess = spawn(command, [], {
     cwd: appPath,
     shell: true,
-    stdio: "pipe", // Ensure stdio is piped so we can capture output/errors and detect close
-    detached: false, // Ensure child process is attached to the main process lifecycle unless explicitly backgrounded
+    stdio: "pipe",
+    detached: false,
+    env,
   });
+
 
   // Check if process spawned correctly
   if (!spawnedProcess.pid) {
@@ -391,6 +424,10 @@ async function executeAppInDocker({
   startCommand: string;
 }): Promise<void> {
   const containerName = `anyon-app-${appId}`;
+  const app = await db.query.apps.findFirst({ where: eq(apps.id, appId) });
+  if (!app) {
+    throw new Error("App not found");
+  }
 
   // First, check if Docker is available
   try {
@@ -479,7 +516,26 @@ RUN npm install -g pnpm
     });
   });
 
-  // Run the Docker container
+  const dockerEnvArgs = ["-e", "PNPM_STORE_PATH=/app/.pnpm-store"];
+  if (app.supabaseProjectId) {
+    try {
+      const supabaseUrl = `https://${app.supabaseProjectId}.supabase.co`;
+      const supabaseAnonKey = await getSupabasePublishableKey({
+        projectId: app.supabaseProjectId,
+        organizationSlug: app.supabaseOrganizationSlug,
+      });
+      const envEntries = buildSupabaseEnvEntries({
+        supabaseUrl,
+        supabaseAnonKey,
+      });
+      for (const { key, value } of envEntries) {
+        dockerEnvArgs.push("-e", `${key}=${value}`);
+      }
+    } catch (error: any) {
+      logger.warn(`Failed to inject Supabase env vars for Docker app ${appId}: ${error.message}`);
+    }
+  }
+
   const port = getAppPort(appId);
   const process = spawn(
     "docker",
@@ -494,8 +550,7 @@ RUN npm install -g pnpm
       `${appPath}:/app`,
       "-v",
       `anyon-pnpm-${appId}:/app/.pnpm-store`,
-      "-e",
-      "PNPM_STORE_PATH=/app/.pnpm-store",
+      ...dockerEnvArgs,
       "-w",
       "/app",
       `anyon-app-${appId}`,

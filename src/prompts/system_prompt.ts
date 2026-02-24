@@ -502,25 +502,43 @@ You have access to the following MCP tools for managing the user's Supabase and 
 
 ### get_connection_status
 Check whether Supabase and Vercel are connected.
-- **Input**: none
-- **Output**: \`{ supabase: { connected, projectId? }, vercel: { connected, projectId? } }\`
-- Call this before any other infrastructure tool.
+ **Input**: none
+ **Output**: \`{ supabase: { connected, organizationSlug? }, vercel: { connected, projectId? } }\`
+ Call this before any other infrastructure tool.
+ The \`organizationSlug\` is the identifier for the user's Supabase organization. **Use it as the \`organizationId\` parameter when calling \`create_supabase_project\`.**
 
 ### create_supabase_project
 Create a new Supabase project.
-- **Input**: \`{ name, region, plan ("free"|"pro"), organizationId }\`
-- **Output**: project object with \`id\`, \`name\`, etc.
-- The user must have Supabase connected first.
+ **Input**: \`{ name, region, plan ("free"|"pro"), organizationId }\`
+ **Output**: project object with \`id\`, \`name\`, etc.
+ The user must have Supabase connected first.
+ **Important**: Pass the \`organizationSlug\` from \`get_connection_status\` as the \`organizationId\` parameter.
+
+### set_supabase_app_project
+Link a Supabase project to the current app.
+- **Input**: \`{ appId, projectRef, organizationId?, parentProjectRef? }\`
+- **Output**: \`{ appId, projectRef, organizationId, parentProjectRef, syncedToVercel }\`
+- Use this after \`create_supabase_project\` so deploy/redeploy can sync Supabase env vars to Vercel.
+- If provided, \`organizationId\` should be the \`organizationSlug\` from \`get_connection_status\`.
+
+### get_supabase_api_keys
+Get a project's Supabase publishable/anon key.
+- **Input**: \`{ projectRef, organizationId? }\`
+- **Output**: \`{ projectRef, supabaseUrl, anonKey, publishableKey }\`
+- If provided, \`organizationId\` should be the \`organizationSlug\` from \`get_connection_status\`.
+- Use this immediately after project creation when you need the anon key.
 
 ### manage_secrets
 Upsert and/or remove Supabase project secrets (Edge Function environment variables).
-- **Input**: \`{ projectRef, upsert?: [{ name, value }], remove?: [name] }\`
+- **Input**: \`{ projectRef, organizationId?, upsert?: [{ name, value }], remove?: [name] }\`
 - Use \`projectRef\` (the project's reference ID, not the UUID).
+- If provided, \`organizationId\` should be the \`organizationSlug\` from \`get_connection_status\`.
 
 ### configure_auth
 Patch Supabase auth configuration for a project.
-- **Input**: \`{ projectRef, config: { ... } }\`
+- **Input**: \`{ projectRef, organizationId?, config: { ... } }\`
 - \`config\` is a partial Auth config object (site_url, external providers, etc.).
+- If provided, \`organizationId\` should be the \`organizationSlug\` from \`get_connection_status\`.
 
 ### set_vercel_env_vars
 Create environment variables on a Vercel project.
@@ -534,6 +552,8 @@ Add a custom domain to a Vercel project.
 ## Usage Guidelines
 - If a service is not connected, tell the user to connect it from the Anyon settings panel. Do NOT ask them to go to the Supabase/Vercel dashboard.
 - When creating a project, suggest "free" plan and a sensible region (e.g. "us-east-1" or closest to the user).
+- After creating a Supabase project, call \`set_supabase_app_project\` to attach it to the app before deploy.
+- If the user needs the Supabase anon/publishable key, call \`get_supabase_api_keys\` with \`projectRef\`.
 - After creating a Supabase project, remember to sync relevant env vars to Vercel using \`set_vercel_env_vars\`.
 - For secrets, always use \`manage_secrets\` — never instruct the user to set secrets manually in the Supabase console.
 `;
