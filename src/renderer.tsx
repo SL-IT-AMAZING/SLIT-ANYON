@@ -14,15 +14,22 @@ import { RouterProvider } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
-import { StrictMode, useEffect } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { version } from "../package.json";
 import { agentTodosByChatIdAtom } from "./atoms/chatAtoms";
 import { getTelemetryUserId, isTelemetryOptedIn } from "./hooks/useSettings";
 import { ipc } from "./ipc/types";
 import { queryKeys } from "./lib/queryKeys";
-import { showError, showMcpConsentToast, showUpdateNotification } from "./lib/toast";
+import {
+  showError,
+  showMcpConsentToast,
+  showNativeToolConsentToast,
+  showUpdateNotification,
+} from "./lib/toast";
 import { router } from "./router";
+import type { AgentQuestionRequestPayload } from "./ipc/types";
+import { AgentQuestionDialog } from "./components/chat/AgentQuestionDialog";
 
 // @ts-ignore
 console.log("Running in mode:", import.meta.env.MODE);
@@ -108,6 +115,9 @@ posthog.register({
 });
 
 function App() {
+  const [pendingAgentQuestion, setPendingAgentQuestion] =
+    useState<AgentQuestionRequestPayload | null>(null);
+
   useEffect(() => {
     // Subscribe to navigation state changes
     const unsubscribe = router.subscribe("onResolved", (navigation) => {
@@ -142,6 +152,32 @@ function App() {
             decision: d,
           }),
       });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Native tool consent requests
+  useEffect(() => {
+    const unsubscribe = ipc.events.mcp.onNativeToolConsentRequest((payload) => {
+      showNativeToolConsentToast({
+        requestId: payload.requestId,
+        toolName: payload.toolName,
+        riskLevel: payload.riskLevel,
+        inputPreview: payload.inputPreview,
+        onDecision: (d) =>
+          ipc.mcp.respondToNativeToolConsent({
+            requestId: payload.requestId,
+            decision: d,
+          }),
+      });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Agent question requests
+  useEffect(() => {
+    const unsubscribe = ipc.events.agent.onQuestionRequest((payload) => {
+      setPendingAgentQuestion(payload);
     });
     return () => unsubscribe();
   }, []);
@@ -193,7 +229,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-
   // Auto-update notification
   useEffect(() => {
     const unsubscribe = ipc.events.system.onUpdateStatus((payload) => {
@@ -204,7 +239,30 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      {pendingAgentQuestion && (
+        <AgentQuestionDialog
+          pending={pendingAgentQuestion}
+          onSubmit={(answers) => {
+            ipc.agentRuntime.respondToQuestion({
+              requestId: pendingAgentQuestion.requestId,
+              answers,
+            });
+            setPendingAgentQuestion(null);
+          }}
+          onCancel={() => {
+            ipc.agentRuntime.respondToQuestion({
+              requestId: pendingAgentQuestion.requestId,
+              answers: null,
+            });
+            setPendingAgentQuestion(null);
+          }}
+        />
+      )}
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(
