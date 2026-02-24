@@ -311,6 +311,7 @@ export const UserSettingsSchema = z
     autoExpandPreviewPanel: z.boolean().optional(),
     enableChatCompletionNotifications: z.boolean().optional(),
     enableNativeGit: z.boolean().optional(),
+    useNativeAgent: z.boolean().default(false),
     openCodeConnectionMode: OpenCodeConnectionModeSchema.optional(),
     enableAutoUpdate: z.boolean(),
     releaseChannel: ReleaseChannelSchema,

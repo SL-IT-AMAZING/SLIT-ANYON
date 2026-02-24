@@ -262,6 +262,16 @@ export const mcpToolConsents = sqliteTable(
   (table) => [unique("uniq_mcp_consent").on(table.serverId, table.toolName)],
 );
 
+// --- Native Tool Consents table (for native agent runtime) ---
+export const nativeToolConsents = sqliteTable("native_tool_consents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  toolName: text("tool_name").notNull().unique(),
+  consent: text("consent", { enum: ["accept-always", "decline"] }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
+    sql`(unixepoch())`,
+  ),
+});
+
 // --- Custom Themes table ---
 export const customThemes = sqliteTable("custom_themes", {
   id: integer("id").primaryKey({ autoIncrement: true }),

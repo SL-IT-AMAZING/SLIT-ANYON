@@ -200,5 +200,13 @@ export function registerMcpHandlers() {
     resolveConsent(data.requestId, data.decision);
   });
 
+  // Native tool consent response handshake
+  createTypedHandler(
+    mcpContracts.respondToNativeToolConsent,
+    async (_, data) => {
+      resolveConsent(data.requestId, data.decision);
+    },
+  );
+
   logger.debug("Registered MCP IPC handlers");
 }

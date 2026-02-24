@@ -1,6 +1,7 @@
 import { registerThemesHandlers } from "../pro/main/ipc/handlers/themes_handlers";
 import { registerVisualEditingHandlers } from "../pro/main/ipc/handlers/visual_editing_handlers";
 
+import { registerAgentHandlers } from "./handlers/agent_handlers";
 import { registerAppHandlers } from "./handlers/app_handlers";
 import { registerAppUpgradeHandlers } from "./handlers/app_upgrade_handlers";
 import { registerAuthHandlers } from "./handlers/auth_handlers";
@@ -87,4 +88,5 @@ export function registerIpcHandlers() {
   registerEntitlementHandlers();
   registerUpdateHandlers();
   registerDesignSystemHandlers();
+  registerAgentHandlers();
 }

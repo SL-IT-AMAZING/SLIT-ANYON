@@ -31,7 +31,7 @@ export { entitlementContracts } from "./entitlement";
 export { settingsContracts } from "./settings";
 export { appContracts } from "./app";
 export { chatContracts, chatStreamContract } from "./chat";
-export { agentEvents } from "./agent";
+export { agentContracts, agentEvents } from "./agent";
 export { githubContracts, gitContracts, githubEvents } from "./github";
 export { mcpContracts, mcpEvents } from "./mcp";
 export { vercelContracts, vercelDeployStreamContract } from "./vercel";
@@ -66,7 +66,7 @@ export { entitlementClient } from "./entitlement";
 export { settingsClient } from "./settings";
 export { appClient } from "./app";
 export { chatClient, chatStreamClient } from "./chat";
-export { agentEventClient } from "./agent";
+export { agentClient, agentEventClient } from "./agent";
 export { githubClient, gitClient, githubEventClient } from "./github";
 export { mcpClient, mcpEventClient } from "./mcp";
 export { vercelClient, vercelDeployStreamClient } from "./vercel";
@@ -178,6 +178,10 @@ export type {
   AgentProblemsUpdatePayload,
   Problem,
   ProblemReport,
+  AgentQuestionOption,
+  AgentQuestion,
+  AgentQuestionRequestPayload,
+  AgentQuestionResponseParams,
 } from "./agent";
 
 // GitHub types
@@ -208,6 +212,8 @@ export type {
   SetMcpToolConsentParams,
   McpConsentRequestPayload,
   McpConsentResponseParams,
+  NativeToolConsentRequestPayload,
+  NativeToolConsentResponseParams,
 } from "./mcp";
 
 // Vercel types
@@ -353,7 +359,19 @@ export {
   ChatResponseEndSchema,
 } from "./chat";
 
-export { AgentTodoSchema, AgentTodosUpdateSchema } from "./agent";
+export {
+  AgentTodoSchema,
+  AgentTodosUpdateSchema,
+  AgentQuestionOptionSchema,
+  AgentQuestionSchema,
+  AgentQuestionRequestSchema,
+  AgentQuestionResponseSchema,
+} from "./agent";
+
+export {
+  NativeToolConsentRequestSchema,
+  NativeToolConsentResponseSchema,
+} from "./mcp";
 
 export { AuthUserSchema, AuthStateSchema } from "./auth";
 
@@ -377,6 +395,7 @@ export {
 // =============================================================================
 
 import { agentEventClient } from "./agent";
+import { agentClient } from "./agent";
 import { appClient } from "./app";
 import { authClient } from "./auth";
 import { capacitorClient } from "./capacitor";
@@ -464,6 +483,7 @@ export const ipc = {
   misc: miscClient,
   freeAgentQuota: freeAgentQuotaClient,
   designSystem: dsClient,
+  agentRuntime: agentClient,
 
   // Event clients for main->renderer pub/sub
   events: {
