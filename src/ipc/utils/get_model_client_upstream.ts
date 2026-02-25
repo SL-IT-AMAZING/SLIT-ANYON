@@ -443,14 +443,14 @@ function getRegularModelClient(
 // Supabase access tokens and forwards to real provider APIs with server-side keys.
 //
 // URL mapping per provider (proxy route: /api/v1/[provider]/[...path]):
-//   Anthropic SDK: baseURL/v1/messages  → proxy/anthropic/v1/messages  → api.anthropic.com/v1/messages
-//   OpenAI SDK:    baseURL/chat/completions → proxy/openai/v1/chat/completions → api.openai.com/v1/chat/completions
-//   Google SDK:    baseURL/models/:gen    → proxy/google/v1beta/models/:gen → generativelanguage.googleapis.com/v1beta/models/:gen
-//   XAI SDK:       baseURL/chat/completions → proxy/xai/v1/chat/completions → api.x.ai/v1/chat/completions
+//   Anthropic SDK: baseURL + /messages         → proxy/anthropic/v1/messages         → api.anthropic.com/v1/messages
+//   OpenAI SDK:    baseURL + /chat/completions  → proxy/openai/v1/chat/completions   → api.openai.com/v1/chat/completions
+//   Google SDK:    baseURL + /models/:gen        → proxy/google/v1beta/models/:gen     → generativelanguage.googleapis.com/v1beta/models/:gen
+//   XAI SDK:       baseURL + /chat/completions   → proxy/xai/v1/chat/completions      → api.x.ai/v1/chat/completions
 
 /** Maps provider ID → base URL suffix appended to the proxy root. */
 const PROXY_PROVIDER_PATHS: Record<string, string> = {
-  anthropic: "/anthropic",
+  anthropic: "/anthropic/v1",
   openai: "/openai/v1",
   google: "/google/v1beta",
   xai: "/xai/v1",
