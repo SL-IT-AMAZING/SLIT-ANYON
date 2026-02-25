@@ -81,7 +81,7 @@ const config: ForgeConfig = {
     osxSign: isEndToEndTestBuild
       ? undefined
       : {
-          identity: process.env.APPLE_SIGNING_IDENTITY || null,
+          identity: process.env.APPLE_SIGNING_IDENTITY || undefined,
           continueOnError: false,
         },
     osxNotarize: isEndToEndTestBuild
