@@ -18,6 +18,11 @@ import { requestNativeToolConsent } from "@/agent/runtime/consent";
 import { waitForAgentQuestion } from "@/agent/runtime/question";
 import { assembleSystemPrompt } from "@/agent/runtime/system_prompt";
 import { createDefaultRegistry } from "@/agent/runtime/tool_registry";
+import {
+  initializeOmoRuntime,
+  cleanupOmoRuntime,
+  type OmoRuntimeContext,
+} from "@/agent/runtime/omo_initializer";
 import type { StreamCallbacks, ToolContext } from "@/agent/runtime/types";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
@@ -62,6 +67,9 @@ const logger = log.scope("chat_stream_handlers");
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
 const activeRuntimes = new Map<number, AgentRuntime>();
+
+// OMO runtime contexts per chat session
+export const activeOmoContexts = new Map<number, OmoRuntimeContext>();
 
 // Track partial responses for cancelled streams
 const partialResponses = new Map<number, string>();
@@ -548,6 +556,22 @@ ${componentSnippet}
               },
             };
 
+            // --- Phase 9.5: Initialize OMO runtime (hooks, skills, commands, agents) ---
+            let omoCtx: OmoRuntimeContext | undefined;
+            try {
+              omoCtx = await initializeOmoRuntime({
+                projectDir: chatAppPath,
+                chatId: req.chatId,
+                sessionId: chat.id,
+              });
+              activeOmoContexts.set(req.chatId, omoCtx);
+            } catch (omoErr) {
+              logger.warn(
+                "OMO runtime init failed (continuing without OMO features):",
+                omoErr,
+              );
+            }
+
             const runtimeParams: AgentRuntimeParams = {
               chatId: req.chatId,
               assistantMessageId: placeholderAssistantMessage.id,
@@ -562,6 +586,8 @@ ${componentSnippet}
               maxOutputTokens: maxOutputTokens ?? undefined,
               temperature: temperature ?? undefined,
               runContext,
+              hookRegistry: omoCtx?.hookRegistry,
+              contextCollector: omoCtx?.contextCollector,
             };
             const runtime = new AgentRuntime(runtimeParams);
 
@@ -605,6 +631,14 @@ ${componentSnippet}
               }
             } finally {
               activeRuntimes.delete(req.chatId);
+              // Cleanup OMO runtime for this chat
+              const omoToClean = activeOmoContexts.get(req.chatId);
+              if (omoToClean) {
+                activeOmoContexts.delete(req.chatId);
+                void cleanupOmoRuntime(omoToClean).catch((e) =>
+                  logger.warn("OMO cleanup failed:", e),
+                );
+              }
             }
 
             const tokens = runtime.getCumulativeTokens();
