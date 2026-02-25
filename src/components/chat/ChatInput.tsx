@@ -26,6 +26,7 @@ import {
   chatMessagesByIdAtom,
   selectedChatIdAtom,
 } from "@/atoms/chatAtoms";
+import { omoCommandPaletteOpenAtom } from "@/atoms/omoAtoms";
 import { Button } from "@/components/ui/button";
 import { useProposal } from "@/hooks/useProposal";
 import { useSettings } from "@/hooks/useSettings";
@@ -85,6 +86,8 @@ import { QuestionnaireInput } from "./QuestionnaireInput";
 import { SelectedComponentsDisplay } from "./SelectedComponentDisplay";
 import { useSummarizeInNewChat } from "./SummarizeInNewChatButton";
 import { TodoList } from "./TodoList";
+import { OmoAgentSelector } from "./OmoAgentSelector";
+import { OmoCommandPalette } from "./OmoCommandPalette";
 
 const showTokenBarAtom = atom(false);
 
@@ -129,6 +132,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const { navigate } = useRouter();
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const { invalidateChats } = useChats(appId);
+  const setOmoCommandPaletteOpen = useSetAtom(omoCommandPaletteOpenAtom);
   // Use the attachments hook
   const {
     attachments,
@@ -207,6 +211,12 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       isStreaming ||
       !chatId
     ) {
+      return;
+    }
+
+    // If input starts with '/', open OMO command palette instead of submitting
+    if (inputValue.trim().startsWith("/")) {
+      setOmoCommandPaletteOpen(true);
       return;
     }
 
@@ -485,8 +495,9 @@ export function ChatInput({ chatId }: { chatId?: number }) {
             )}
           </div>
           <div className="px-3 pb-2 flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center gap-1">
               <ChatInputControls showContextFilesPicker={false} />
+              <OmoAgentSelector />
             </div>
 
             <AuxiliaryActionsMenu
@@ -500,6 +511,11 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           {showTokenBar && <TokenBar chatId={chatId} />}
         </div>
       </div>
+      <OmoCommandPalette
+        onSelectCommand={(cmdName) => {
+          setInputValue(cmdName + " ");
+        }}
+      />
     </>
   );
 }
