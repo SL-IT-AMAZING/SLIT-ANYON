@@ -10,3 +10,4 @@ export {
   getAgentDefinition,
   getAgentDescriptors,
 } from "./register_all";
+export { readPromptFile as readOmoPromptFile } from "./omo_prompt_reader";

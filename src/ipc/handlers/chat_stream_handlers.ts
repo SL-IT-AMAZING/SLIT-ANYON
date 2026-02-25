@@ -23,6 +23,12 @@ import {
   cleanupOmoRuntime,
   type OmoRuntimeContext,
 } from "@/agent/runtime/omo_initializer";
+import {
+  getAgentDefinition,
+  getAgentDescriptors,
+  buildSisyphusPrompt,
+} from "@/agent/runtime/agents";
+import { readPromptFile as readOmoPromptFile } from "@/agent/runtime/agents/omo_prompt_reader";
 import type { StreamCallbacks, ToolContext } from "@/agent/runtime/types";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
@@ -570,6 +576,37 @@ ${componentSnippet}
                 "OMO runtime init failed (continuing without OMO features):",
                 omoErr,
               );
+            }
+
+            // --- Phase 9.6: Inject OMO agent system prompt ---
+            if (omoCtx) {
+              // Determine which OMO agent to use (default: sisyphus)
+              const omoAgentDef = getAgentDefinition("sisyphus");
+              if (omoAgentDef) {
+                // 1. Load the agent's base prompt
+                const basePrompt = readOmoPromptFile(
+                  omoAgentDef.systemPromptFile,
+                );
+                if (basePrompt) {
+                  systemPrompt.push(basePrompt);
+                }
+
+                // 2. Build dynamic context (skills, commands, agents)
+                const dynamicPrompt = buildSisyphusPrompt({
+                  skills: omoCtx.skillLoader.list(),
+                  commands: omoCtx.commandRegistry.list(),
+                  agents: getAgentDescriptors(),
+                  variant: "orchestrator",
+                  projectDir: chatAppPath,
+                });
+                if (dynamicPrompt) {
+                  systemPrompt.push(dynamicPrompt);
+                }
+
+                logger.info(
+                  `Injected OMO agent prompt: ${omoAgentDef.name} (${omoAgentDef.systemPromptFile})`,
+                );
+              }
             }
 
             const runtimeParams: AgentRuntimeParams = {
