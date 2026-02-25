@@ -11,5 +11,7 @@ export function getEnvVar(key: string) {
   if (!_env) {
     _env = shellEnvSync();
   }
-  return _env[key];
+  // shellEnvSync reads the user's login shell env (needed for packaged macOS apps).
+  // Fall back to process.env which picks up dotenv-loaded vars in dev mode.
+  return _env[key] ?? process.env[key];
 }
