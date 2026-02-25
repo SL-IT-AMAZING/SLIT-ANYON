@@ -7,6 +7,8 @@ import { db } from "@/db";
 import { messages as messagesTable } from "@/db/schema";
 import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
 
+import type { ContextCollector } from "./context_collector";
+import type { HookContext, HookRegistry } from "./hook_system";
 import { applyContextLimit, loadChatMessages } from "./message_converter";
 import { StreamBridge } from "./stream_bridge";
 import { readPromptFile } from "./system_prompt";
@@ -37,6 +39,10 @@ export interface AgentRuntimeParams {
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   temperature?: number;
+  /** OMO hook registry — if provided, hooks are called at lifecycle points. */
+  hookRegistry?: HookRegistry;
+  /** OMO context collector — if provided, injections are appended to system prompt. */
+  contextCollector?: ContextCollector;
 }
 
 export class AgentRuntime {
@@ -59,6 +65,16 @@ export class AgentRuntime {
     const contextWindow =
       this.params.contextWindowTokens ?? DEFAULT_CONTEXT_WINDOW;
 
+    // Build hook context once (stable across steps)
+    const hookCtx: HookContext | undefined = this.params.hookRegistry
+      ? {
+          sessionId: String(this.params.sessionId),
+          chatId: this.params.chatId,
+          agent: this.params.agentConfig.name,
+          directory: this.params.appPath,
+        }
+      : undefined;
+
     while (true) {
       // 1. Load all session messages from DB
       const dbMessages = await loadChatMessages(this.params.chatId);
@@ -74,6 +90,16 @@ export class AgentRuntime {
         `Step ${this.step}/${maxSteps} for chat ${this.params.chatId}`,
       );
 
+      // --- HOOK: agent.step.before ---
+      if (this.params.hookRegistry && hookCtx) {
+        await this.params.hookRegistry.execute(
+          "agent.step.before",
+          { step: this.step, maxSteps, isLastStep },
+          { messages },
+          hookCtx,
+        );
+      }
+
       // 4. Resolve tools (empty on last step to force text-only response)
       const tools = isLastStep
         ? {}
@@ -82,15 +108,29 @@ export class AgentRuntime {
             this.params.toolContext,
           );
 
-      // 5. If last step, inject MAX_STEPS assistant prefill
-      const finalMessages = isLastStep
-        ? this.injectMaxStepsPrompt(messages)
-        : messages;
+      // --- HOOK: messages.transform ---
+      // Hooks can mutate the messages array (e.g. context injection, thinking block validation)
+      const transformableMessages = { messages: isLastStep ? this.injectMaxStepsPrompt(messages) : messages };
+      if (this.params.hookRegistry && hookCtx) {
+        await this.params.hookRegistry.execute(
+          "messages.transform",
+          {},
+          transformableMessages,
+          hookCtx,
+        );
+      }
+      const finalMessages = transformableMessages.messages;
+
+      // 5. Build system prompt (base + context collector injections)
+      let systemPromptText = this.params.systemPrompt.join("\n\n");
+      if (this.params.contextCollector && this.params.contextCollector.size > 0) {
+        systemPromptText += "\n\n" + this.params.contextCollector.toPromptString();
+      }
 
       // 6. Call streamText
       const streamResult = streamText({
         model: this.params.model,
-        system: this.params.systemPrompt.join("\n\n"),
+        system: systemPromptText,
         messages: finalMessages,
         tools,
         maxOutputTokens: this.params.maxOutputTokens,
@@ -132,6 +172,16 @@ export class AgentRuntime {
 
       // 12. Save to DB: update assistant message content + aiMessagesJson
       await this.saveToDb();
+
+      // --- HOOK: agent.step.after ---
+      if (this.params.hookRegistry && hookCtx) {
+        await this.params.hookRegistry.execute(
+          "agent.step.after",
+          { step: this.step, finishReason, tokens: this.cumulativeTokens },
+          { responseText: bridgeResult.fullResponseText },
+          hookCtx,
+        );
+      }
 
       // 13. Check exit conditions
       if (this.abortController.signal.aborted) {
