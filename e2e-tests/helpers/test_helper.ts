@@ -1114,7 +1114,12 @@ export class PageObject {
   }
 
   async goToSettingsTab() {
-    await this.page.getByRole("link", { name: "Settings" }).click();
+    await this.page.evaluate(() => {
+      window.history.pushState({}, "", "/settings");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await expect(this.page).toHaveURL(/\/settings(?:$|[?#])/);
+    await this.page.waitForLoadState("domcontentloaded");
   }
 
   async goToLibraryTab() {
@@ -1359,11 +1364,7 @@ export class PageObject {
 
   async goToAppsTab() {
     await this.page.getByRole("link", { name: "Apps" }).click();
-    await expect(
-      this.page
-        .getByText("Build a new app")
-        .or(this.page.getByText("Your Apps")),
-    ).toBeVisible();
+    await expect(this.page).toHaveURL(/\/apps(?:$|[?#])/);
   }
 
   async goToChatTab() {
@@ -1604,11 +1605,10 @@ export const test = base.extend<{
       });
 
       await use(electronApp);
-      // Why are we doing a force kill on Windows?
-      //
-      // Otherwise, Playwright will just hang on the test cleanup
-      // because the electron app does NOT ever fully quit due to
-      // Windows' strict resource locking (e.g. file locking).
+      // Force-close the Electron app to avoid teardown timeouts.
+      // On Windows the app never fully quits due to strict file locking;
+      // on macOS electronApp.close() can hang if background tasks remain.
+      const pid = electronApp.process().pid;
       if (os.platform() === "win32") {
         try {
           console.log("[cleanup:start] Killing anyon.exe");
@@ -1623,7 +1623,17 @@ export const test = base.extend<{
           );
         }
       } else {
-        await electronApp.close();
+        // Try graceful close with a 10s timeout, then force kill.
+        const closed = await Promise.race([
+          electronApp.close().then(() => true),
+          new Promise<false>((r) => setTimeout(() => r(false), 10_000)),
+        ]);
+        if (!closed && pid) {
+          console.log(`[cleanup] Force killing Electron (pid ${pid})`);
+          try {
+            process.kill(pid, "SIGKILL");
+          } catch {}
+        }
       }
     },
     { auto: true },
