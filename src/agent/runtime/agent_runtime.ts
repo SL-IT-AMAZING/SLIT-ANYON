@@ -10,6 +10,7 @@ import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
 import type { RunContext } from "./run_context";
 import type { ContextCollector } from "./context_collector";
 import type { HookContext, HookRegistry } from "./hook_system";
+import { createRunHookRegistry, type RunHookRegistry } from "./run_hook_registry";
 import { applyContextLimit, loadChatMessages } from "./message_converter";
 import { StreamBridge } from "./stream_bridge";
 import { readPromptFile } from "./system_prompt";
@@ -55,12 +56,17 @@ export class AgentRuntime {
   private accumulatedResponseText = "";
   private allResponseMessages: ModelMessage[] = [];
   private activeBridge: StreamBridge | null = null;
+  private runHooks: RunHookRegistry | null = null;
 
   constructor(private params: AgentRuntimeParams) {
     this.abortController = new AbortController();
     // Propagate runId from RunContext into ToolContext so tools can access it
     if (params.runContext?.runId && !params.toolContext.runId) {
       params.toolContext.runId = params.runContext.runId;
+    }
+    // Build per-run hook registry if both hookRegistry and runContext are provided
+    if (params.hookRegistry && params.runContext) {
+      this.runHooks = createRunHookRegistry(params.hookRegistry, params.runContext);
     }
   }
 
@@ -73,15 +79,21 @@ export class AgentRuntime {
       this.params.contextWindowTokens ?? DEFAULT_CONTEXT_WINDOW;
 
     // Build hook context once (stable across steps)
-    const hookCtx: HookContext | undefined = this.params.hookRegistry
-      ? {
-          sessionId: String(this.params.sessionId),
-          chatId: this.params.chatId,
-          agent: this.params.agentConfig.name,
-          directory: this.params.appPath,
-          runId: this.params.runContext?.runId,
-        }
-      : undefined;
+    const hookCtx: HookContext | undefined = this.runHooks
+      ? this.runHooks.getHookContext()
+      : this.params.hookRegistry
+        ? {
+            sessionId: String(this.params.sessionId),
+            chatId: this.params.chatId,
+            agent: this.params.agentConfig.name,
+            directory: this.params.appPath,
+            runId: this.params.runContext?.runId,
+          }
+        : undefined;
+    // Ensure directory is set on hookCtx
+    if (hookCtx) {
+      hookCtx.directory = this.params.appPath;
+    }
 
     while (true) {
       // 1. Load all session messages from DB
@@ -99,13 +111,16 @@ export class AgentRuntime {
       );
 
       // --- HOOK: agent.step.before ---
-      if (this.params.hookRegistry && hookCtx) {
-        await this.params.hookRegistry.execute(
-          "agent.step.before",
-          { step: this.step, maxSteps, isLastStep },
-          { messages },
-          hookCtx,
-        );
+      if (hookCtx) {
+        const hookExecutor = this.runHooks ?? this.params.hookRegistry;
+        if (hookExecutor) {
+          await hookExecutor.execute(
+            "agent.step.before",
+            { step: this.step, maxSteps, isLastStep },
+            { messages },
+            hookCtx,
+          );
+        }
       }
 
       // 4. Resolve tools (empty on last step to force text-only response)
@@ -121,13 +136,16 @@ export class AgentRuntime {
       const transformableMessages = {
         messages: isLastStep ? this.injectMaxStepsPrompt(messages) : messages,
       };
-      if (this.params.hookRegistry && hookCtx) {
-        await this.params.hookRegistry.execute(
-          "messages.transform",
-          {},
-          transformableMessages,
-          hookCtx,
-        );
+      if (hookCtx) {
+        const hookExecutor = this.runHooks ?? this.params.hookRegistry;
+        if (hookExecutor) {
+          await hookExecutor.execute(
+            "messages.transform",
+            {},
+            transformableMessages,
+            hookCtx,
+          );
+        }
       }
       const finalMessages = transformableMessages.messages;
 
@@ -188,13 +206,16 @@ export class AgentRuntime {
       await this.saveToDb();
 
       // --- HOOK: agent.step.after ---
-      if (this.params.hookRegistry && hookCtx) {
-        await this.params.hookRegistry.execute(
-          "agent.step.after",
-          { step: this.step, finishReason, tokens: this.cumulativeTokens },
-          { responseText: bridgeResult.fullResponseText },
-          hookCtx,
-        );
+      if (hookCtx) {
+        const hookExecutor = this.runHooks ?? this.params.hookRegistry;
+        if (hookExecutor) {
+          await hookExecutor.execute(
+            "agent.step.after",
+            { step: this.step, finishReason, tokens: this.cumulativeTokens },
+            { responseText: bridgeResult.fullResponseText },
+            hookCtx,
+          );
+        }
       }
 
       // 13. Check exit conditions

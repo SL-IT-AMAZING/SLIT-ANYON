@@ -56,6 +56,9 @@ export type HookHandler = (
   ctx: HookContext,
 ) => Promise<{ abort?: boolean } | void>;
 
+/** Hook scope classification for per-run filtering. */
+export type HookScope = "run" | "session" | "global";
+
 /** Internal representation of a registered hook. */
 interface HookEntry {
   name: string;
@@ -63,6 +66,8 @@ interface HookEntry {
   handler: HookHandler;
   /** Lower number = higher priority (executed first). Default 100. */
   priority: number;
+  /** Scope for per-run filtering. Default "global" (always executes). */
+  scope: HookScope;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,6 +96,7 @@ export class HookRegistry {
     name: string,
     handler: HookHandler,
     priority = 100,
+    scope: HookScope = "global",
   ): void {
     const list = this.hooks.get(point);
     if (!list) {
@@ -104,12 +110,12 @@ export class HookRegistry {
       list.splice(existing, 1);
     }
 
-    list.push({ name, point, handler, priority });
+    list.push({ name, point, handler, priority, scope });
     // Re-sort after insertion (stable sort by priority ascending)
     list.sort((a, b) => a.priority - b.priority);
 
     logger.log(
-      `Registered hook "${name}" on "${point}" (priority ${priority})`,
+      `Registered hook "${name}" on "${point}" (priority ${priority}, scope ${scope})`,
     );
   }
 
