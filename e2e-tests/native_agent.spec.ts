@@ -5,8 +5,9 @@ import { testSkipIfWindows } from "./helpers/test_helper";
 testSkipIfWindows(
   "native-agent - read tool with streamed response",
   async ({ po }) => {
-    await po.setUp();
+    await po.setUpAnyonPro({ localAgent: true });
     await po.importApp("minimal");
+    await po.selectLocalAgentMode();
 
     // Enable native agent mode by writing to settings file directly
     // (no UI toggle exists yet for this feature flag)

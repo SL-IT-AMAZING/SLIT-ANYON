@@ -2,6 +2,7 @@ import { type Tool, type ToolSet, tool } from "ai";
 
 import type { NativeTool, RiskLevel } from "./tool_interface";
 import type { ToolContext } from "./types";
+import { allNativeTools } from "./tools/index";
 
 export type { Tool, ToolSet };
 
@@ -82,8 +83,6 @@ function needsConsent(riskLevel: RiskLevel): boolean {
 }
 
 export function createDefaultRegistry(): ToolRegistry {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { allNativeTools } = require("./tools/index");
   const registry = new ToolRegistry();
   registry.registerAll(allNativeTools);
   return registry;
