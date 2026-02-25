@@ -31,6 +31,8 @@ import { getEnvVar } from "./read_env";
 import { getOllamaApiUrl } from "../handlers/local_model_ollama_handler";
 import { LM_STUDIO_BASE_URL } from "./lm_studio_utils";
 import { createOllamaProvider } from "./ollama_provider";
+import { getActiveAccessToken } from "../../main/entitlement";
+import { PROXY_BASE_URL } from "../../lib/oauthConfig";
 
 const anyonEngineUrl = process.env.ANYON_ENGINE_URL;
 
@@ -81,54 +83,53 @@ export async function getModelClientUpstream(
     throw new Error(`Configuration not found for provider: ${model.provider}`);
   }
 
-  // Handle ANYON Pro override
-  if (anyonApiKey && settings.enableAnyonPro) {
-    // Check if the selected provider supports ANYON Pro (has a gateway prefix) OR
-    // we're using local engine.
-    // IMPORTANT: some providers like OpenAI have an empty string gateway prefix,
-    // so we do a nullish and not a truthy check here.
-    if (providerConfig.gatewayPrefix != null || anyonEngineUrl) {
-      const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
-      const provider = createAnyonEngine({
-        apiKey: anyonApiKey,
-        baseURL: anyonEngineUrl ?? "https://engine.any-on.dev/v1",
-        anyonOptions: {
-          enableLazyEdits:
-            settings.enableProLazyEditsMode &&
-            settings.proLazyEditsMode !== "v2",
-          enableSmartFilesContext,
-          enableWebSearch: settings.enableProWebSearch,
-        },
-        settings,
-      });
+  // ── Anyon Pro proxy routing ──────────────────────────────────────────────
+  // The Vercel server at server-green-seven.vercel.app/api/v1/[provider]/[...path]
+  // authenticates via Supabase access tokens and proxies to real LLM APIs.
+  // Priority: 1) Legacy engine (ANYON_ENGINE_URL + API key), 2) Vercel proxy (Supabase auth)
+  if (settings.enableAnyonPro) {
+    // Legacy engine path: explicit engine URL + dedicated API key
+    if (anyonEngineUrl && anyonApiKey) {
+      if (providerConfig.gatewayPrefix != null) {
+        const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
+        const provider = createAnyonEngine({
+          apiKey: anyonApiKey,
+          baseURL: anyonEngineUrl,
+          anyonOptions: {
+            enableLazyEdits:
+              settings.enableProLazyEditsMode &&
+              settings.proLazyEditsMode !== "v2",
+            enableSmartFilesContext,
+            enableWebSearch: settings.enableProWebSearch,
+          },
+          settings,
+        });
 
-      logger.info(
-        `\x1b[1;97;44m Using ANYON Pro API key for model: ${model.name} \x1b[0m`,
-      );
+        logger.info(
+          `\x1b[1;97;44m Using ANYON Engine for model: ${model.name} \x1b[0m`,
+        );
 
-      logger.info(
-        `\x1b[1;30;42m Using ANYON Pro engine: ${anyonEngineUrl ?? "<prod>"} \x1b[0m`,
-      );
+        const modelName = model.name.split(":free")[0];
+        const proModelClient = getProModelClient({
+          model,
+          provider,
+          modelId: `${providerConfig.gatewayPrefix || ""}${modelName}`,
+        });
 
-      // Do not use free variant (for openrouter).
-      const modelName = model.name.split(":free")[0];
-      const proModelClient = getProModelClient({
-        model,
-        provider,
-        modelId: `${providerConfig.gatewayPrefix || ""}${modelName}`,
-      });
-
-      return {
-        modelClient: proModelClient,
-        isEngineEnabled: true,
-        isSmartContextEnabled: enableSmartFilesContext,
-      };
-    } else {
-      logger.warn(
-        `ANYON Pro enabled, but provider ${model.provider} does not have a gateway prefix defined. Falling back to direct provider connection.`,
-      );
-      // Fall through to regular provider logic if gateway prefix is missing
+        return {
+          modelClient: proModelClient,
+          isEngineEnabled: true,
+          isSmartContextEnabled: enableSmartFilesContext,
+        };
+      }
     }
+
+    // New: Route through Vercel proxy using Supabase auth token
+    const proxyClient = await tryProxyModelClient(model, settings);
+    if (proxyClient) {
+      return proxyClient;
+    }
+    // Fall through to direct provider if proxy auth fails
   }
   // Handle 'auto' provider by trying each model in AUTO_MODELS until one works
   if (model.provider === "auto") {
@@ -434,5 +435,130 @@ function getRegularModelClient(
       // If it's not a known ID and not type 'custom', it's unsupported
       throw new Error(`Unsupported model provider: ${model.provider}`);
     }
+  }
+}
+
+// ── Anyon Pro Vercel Proxy routing ────────────────────────────────────────────
+// Routes LLM requests through the Vercel server proxy which authenticates via
+// Supabase access tokens and forwards to real provider APIs with server-side keys.
+//
+// URL mapping per provider (proxy route: /api/v1/[provider]/[...path]):
+//   Anthropic SDK: baseURL/v1/messages  → proxy/anthropic/v1/messages  → api.anthropic.com/v1/messages
+//   OpenAI SDK:    baseURL/chat/completions → proxy/openai/v1/chat/completions → api.openai.com/v1/chat/completions
+//   Google SDK:    baseURL/models/:gen    → proxy/google/v1beta/models/:gen → generativelanguage.googleapis.com/v1beta/models/:gen
+//   XAI SDK:       baseURL/chat/completions → proxy/xai/v1/chat/completions → api.x.ai/v1/chat/completions
+
+/** Maps provider ID → base URL suffix appended to the proxy root. */
+const PROXY_PROVIDER_PATHS: Record<string, string> = {
+  anthropic: "/anthropic",
+  openai: "/openai/v1",
+  google: "/google/v1beta",
+  xai: "/xai/v1",
+};
+
+/**
+ * Attempts to create a model client routed through the Anyon Pro Vercel proxy.
+ * Returns null if the provider is unsupported or the user is not authenticated.
+ */
+async function tryProxyModelClient(
+  model: LargeLanguageModel,
+  settings: UserSettings,
+): Promise<{
+  modelClient: ModelClient;
+  isEngineEnabled: boolean;
+} | null> {
+  const providerPath = PROXY_PROVIDER_PATHS[model.provider];
+  if (!providerPath) {
+    logger.warn(
+      `Anyon Pro proxy: provider ${model.provider} not supported, falling back to direct`,
+    );
+    return null;
+  }
+
+  let accessToken: string;
+  try {
+    accessToken = await getActiveAccessToken("anyon-pro-proxy");
+  } catch (error) {
+    logger.warn(
+      "Anyon Pro proxy: auth failed, falling back to direct provider:",
+      error,
+    );
+    return null;
+  }
+
+  const baseURL = `${PROXY_BASE_URL}${providerPath}`;
+  const authHeaders = { Authorization: `Bearer ${accessToken}` };
+
+  logger.info(
+    `\x1b[1;97;44m Using Anyon Pro proxy for ${model.provider}/${model.name} \x1b[0m`,
+  );
+  logger.info(`\x1b[1;30;42m Proxy base: ${baseURL} \x1b[0m`);
+
+  const modelClient = createProxyProviderClient(
+    model,
+    baseURL,
+    accessToken,
+    authHeaders,
+  );
+
+  return { modelClient, isEngineEnabled: true };
+}
+
+/**
+ * Creates native AI SDK provider clients pointed at the Vercel proxy.
+ * Auth is handled by sending the Supabase token as Authorization header.
+ * The proxy strips it for auth verification, then adds real provider keys.
+ */
+function createProxyProviderClient(
+  model: LargeLanguageModel,
+  baseURL: string,
+  accessToken: string,
+  authHeaders: Record<string, string>,
+): ModelClient {
+  switch (model.provider) {
+    case "anthropic": {
+      // Anthropic SDK sends x-api-key header (proxy overwrites with real key)
+      // We add Authorization header for proxy auth verification
+      const provider = createAnthropic({
+        apiKey: "proxy-managed",
+        baseURL,
+        headers: authHeaders,
+      });
+      return { model: provider(model.name), builtinProviderId: model.provider };
+    }
+    case "openai": {
+      // OpenAI SDK sends Authorization header with apiKey — use Supabase token
+      // Proxy reads it for auth, then replaces with real OpenAI key
+      const provider = createOpenAI({
+        apiKey: accessToken,
+        baseURL,
+      });
+      return {
+        model: provider.responses(model.name),
+        builtinProviderId: model.provider,
+      };
+    }
+    case "google": {
+      // Google SDK sends x-goog-api-key header (proxy overwrites with real key)
+      // We add Authorization header for proxy auth verification
+      const provider = createGoogle({
+        apiKey: "proxy-managed",
+        baseURL,
+        headers: authHeaders,
+      });
+      return { model: provider(model.name), builtinProviderId: model.provider };
+    }
+    case "xai": {
+      // XAI SDK sends Authorization header like OpenAI
+      const provider = createXai({
+        apiKey: accessToken,
+        baseURL,
+      });
+      return { model: provider(model.name), builtinProviderId: model.provider };
+    }
+    default:
+      throw new Error(
+        `Anyon Pro proxy: unsupported provider ${model.provider}`,
+      );
   }
 }

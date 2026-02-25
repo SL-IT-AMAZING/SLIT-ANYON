@@ -210,7 +210,7 @@ function tokenPreview(token: string): string {
     : `invalid-length(${token.length})`;
 }
 
-async function getActiveAccessToken(operation: string): Promise<string> {
+export async function getActiveAccessToken(operation: string): Promise<string> {
   const accessToken = getAccessToken();
   if (!accessToken) {
     throw new Error("You must be logged in to continue");

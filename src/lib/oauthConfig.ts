@@ -12,6 +12,9 @@ const OAUTH_SERVER_URL =
 const EDGE_FUNCTIONS_URL =
   "https://hboncsycgqhsdqpocpsb.supabase.co/functions/v1";
 
+export const PROXY_BASE_URL =
+  (typeof process !== "undefined" && process.env.ANYON_PROXY_URL) ||
+  `${OAUTH_SERVER_URL}/api/v1`;
 export { OAUTH_SERVER_URL };
 
 export const oauthEndpoints = {
