@@ -623,6 +623,20 @@ ${componentSnippet}
                 logger.error("Git commit failed:", gitError);
               }
 
+              // Send final chunk with complete response text to renderer
+              const finalMessages = [...streamMessages];
+              if (
+                finalMessages.length > 0 &&
+                finalMessages[finalMessages.length - 1].role === "assistant"
+              ) {
+                finalMessages[finalMessages.length - 1].content =
+                  fullResponse;
+              }
+              safeSend(event.sender, "chat:response:chunk", {
+                chatId: req.chatId,
+                messages: finalMessages,
+              });
+
               safeSend(event.sender, "chat:response:end", {
                 chatId: req.chatId,
                 updatedFiles: false,

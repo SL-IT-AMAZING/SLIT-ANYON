@@ -19,6 +19,11 @@ export class StreamBridge {
     private nativeToolIds: Set<string>,
   ) {}
 
+  /** Returns the response text accumulated so far (during or after streaming). */
+  getCurrentText(): string {
+    return this.fullResponseText;
+  }
+
   async processStream(
     fullStream: AsyncIterableStream<TextStreamPart<ToolSet>>,
     abort: AbortSignal,

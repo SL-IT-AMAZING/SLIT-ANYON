@@ -45,6 +45,7 @@ export class AgentRuntime {
   private cumulativeTokens = { input: 0, output: 0 };
   private accumulatedResponseText = "";
   private allResponseMessages: ModelMessage[] = [];
+  private activeBridge: StreamBridge | null = null;
 
   constructor(private params: AgentRuntimeParams) {
     this.abortController = new AbortController();
@@ -103,11 +104,13 @@ export class AgentRuntime {
         this.params.registry.list().map((t) => t.id),
       );
       const bridge = new StreamBridge(this.params.callbacks, nativeToolIds);
+      this.activeBridge = bridge;
 
       const bridgeResult = await bridge.processStream(
         streamResult.fullStream,
         this.abortController.signal,
       );
+      this.activeBridge = null;
 
       // 8. Accumulate response text
       this.accumulatedResponseText += bridgeResult.fullResponseText;
@@ -156,7 +159,9 @@ export class AgentRuntime {
   }
 
   getAccumulatedResponseText(): string {
-    return this.accumulatedResponseText;
+    // Include in-progress text from the active bridge (streaming step)
+    const bridgeText = this.activeBridge?.getCurrentText() ?? "";
+    return this.accumulatedResponseText + bridgeText;
   }
 
   abort(): void {
