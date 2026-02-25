@@ -70,7 +70,9 @@ export async function getModelClientUpstream(
 }> {
   const allProviders = await getLanguageModelProviders();
 
-  const anyonApiKey = settings.providerSettings?.auto?.apiKey?.value;
+  const anyonApiKey =
+    settings.providerSettings?.auto?.apiKey?.value ||
+    getEnvVar("ANYON_PRO_API_KEY");
 
   // --- Handle specific provider ---
   const providerConfig = allProviders.find((p) => p.id === model.provider);
