@@ -33,6 +33,11 @@ interface CreditCheckResult {
 }
 
 async function checkCredits(userId: string): Promise<CreditCheckResult> {
+  // Dev bypass: skip Polar credit check entirely
+  if (process.env.BYPASS_CREDITS === "1") {
+    return { allowed: true };
+  }
+
   try {
     const customers = await polar.customers.list({ query: userId });
     const customer = customers.result.items[0];
