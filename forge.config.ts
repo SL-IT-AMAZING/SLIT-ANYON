@@ -28,6 +28,9 @@ const ignore = (file: string) => {
   if (file.startsWith("/scaffold")) {
     return false;
   }
+  if (file.startsWith("/prompts")) {
+    return false;
+  }
 
   if (file.startsWith("/worker") && !file.startsWith("/workers")) {
     return false;
