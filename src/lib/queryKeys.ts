@@ -208,6 +208,14 @@ export const queryKeys = {
     status: ["freeAgentQuotaStatus"] as const,
   },
 
+  omo: {
+    agents: ["omo", "agents"] as const,
+    backgroundTasks: ({ chatId }: { chatId: number }) =>
+      ["omo", "background-tasks", chatId] as const,
+    skills: ["omo", "skills"] as const,
+    commands: ["omo", "commands"] as const,
+  },
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Vercel Deployments
   // ─────────────────────────────────────────────────────────────────────────────
@@ -325,6 +333,7 @@ export type AppQueryKey =
   | QueryKeyOf<
       (typeof queryKeys.freeAgentQuota)[keyof typeof queryKeys.freeAgentQuota]
     >
+  | QueryKeyOf<(typeof queryKeys.omo)[keyof typeof queryKeys.omo]>
   | QueryKeyOf<(typeof queryKeys.vercel)[keyof typeof queryKeys.vercel]>
   | QueryKeyOf<
       (typeof queryKeys.appUpgrades)[keyof typeof queryKeys.appUpgrades]
