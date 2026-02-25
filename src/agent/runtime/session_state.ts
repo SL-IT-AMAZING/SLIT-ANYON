@@ -25,6 +25,8 @@ export interface SessionInfo {
   parentSessionId?: string;
 }
 
+export type StateScope = "global" | "session" | "run";
+
 // ---------------------------------------------------------------------------
 // SessionStateManager
 // ---------------------------------------------------------------------------
@@ -32,6 +34,9 @@ export interface SessionInfo {
 export class SessionStateManager {
   private mainSessionId: string | undefined;
   private sessions = new Map<string, SessionInfo>();
+  private globalStore = new Map<string, unknown>();
+  private sessionStores = new Map<string, Map<string, unknown>>();
+  private runStores = new Map<string, Map<string, unknown>>();
 
   // ---- Main session -------------------------------------------------------
 
@@ -82,6 +87,7 @@ export class SessionStateManager {
   /** Clear agent and metadata for a session. */
   clearSession(sessionId: string): void {
     this.sessions.delete(sessionId);
+    this.sessionStores.delete(sessionId);
     logger.log(`Session cleared: ${sessionId}`);
   }
 
@@ -113,18 +119,74 @@ export class SessionStateManager {
 
   /** Set a metadata value for a session. */
   setMetadata(sessionId: string, key: string, value: unknown): void {
-    const info = this.getOrCreate(sessionId);
-    info.metadata.set(key, value);
+    this.setState(key, value, "session", sessionId);
   }
 
   /** Get a metadata value from a session. */
   getMetadata<T = unknown>(sessionId: string, key: string): T | undefined {
-    return this.sessions.get(sessionId)?.metadata.get(key) as T | undefined;
+    return this.getState<T>(key, "session", sessionId);
   }
 
   /** Delete a metadata key from a session. */
   deleteMetadata(sessionId: string, key: string): void {
-    this.sessions.get(sessionId)?.metadata.delete(key);
+    this.deleteState(key, "session", sessionId);
+  }
+
+  getState<T = unknown>(
+    key: string,
+    scope: StateScope,
+    scopeId?: string,
+  ): T | undefined {
+    return this.getStore(scope, scopeId).get(key) as T | undefined;
+  }
+
+  setState(
+    key: string,
+    value: unknown,
+    scope: StateScope,
+    scopeId?: string,
+  ): void {
+    this.getStore(scope, scopeId).set(key, value);
+  }
+
+  deleteState(key: string, scope: StateScope, scopeId?: string): void {
+    this.getStore(scope, scopeId).delete(key);
+  }
+
+  getNamespaced<T = unknown>(
+    namespace: string,
+    key: string,
+    scope: StateScope,
+    scopeId?: string,
+  ): T | undefined {
+    return this.getState<T>(
+      this.toNamespacedKey(namespace, key),
+      scope,
+      scopeId,
+    );
+  }
+
+  setNamespaced(
+    namespace: string,
+    key: string,
+    value: unknown,
+    scope: StateScope,
+    scopeId?: string,
+  ): void {
+    this.setState(this.toNamespacedKey(namespace, key), value, scope, scopeId);
+  }
+
+  deleteNamespaced(
+    namespace: string,
+    key: string,
+    scope: StateScope,
+    scopeId?: string,
+  ): void {
+    this.deleteState(this.toNamespacedKey(namespace, key), scope, scopeId);
+  }
+
+  clearRunStore(runId: string): void {
+    this.runStores.delete(runId);
   }
 
   // ---- Introspection ------------------------------------------------------
@@ -158,6 +220,7 @@ export class SessionStateManager {
     for (const [id, info] of this.sessions) {
       if (info.createdAt < cutoff && id !== this.mainSessionId) {
         this.sessions.delete(id);
+        this.sessionStores.delete(id);
         pruned++;
       }
     }
@@ -170,6 +233,9 @@ export class SessionStateManager {
   /** Clear all session state (for testing). */
   clear(): void {
     this.sessions.clear();
+    this.globalStore.clear();
+    this.sessionStores.clear();
+    this.runStores.clear();
     this.mainSessionId = undefined;
   }
 
@@ -182,6 +248,37 @@ export class SessionStateManager {
       this.sessions.set(sessionId, info);
     }
     return info;
+  }
+
+  private getStore(scope: StateScope, scopeId?: string): Map<string, unknown> {
+    if (scope === "global") {
+      return this.globalStore;
+    }
+
+    if (!scopeId) {
+      throw new Error("scopeId required for session/run scope");
+    }
+
+    if (scope === "session") {
+      this.getOrCreate(scopeId);
+      let sessionStore = this.sessionStores.get(scopeId);
+      if (!sessionStore) {
+        sessionStore = new Map<string, unknown>();
+        this.sessionStores.set(scopeId, sessionStore);
+      }
+      return sessionStore;
+    }
+
+    let runStore = this.runStores.get(scopeId);
+    if (!runStore) {
+      runStore = new Map<string, unknown>();
+      this.runStores.set(scopeId, runStore);
+    }
+    return runStore;
+  }
+
+  private toNamespacedKey(namespace: string, key: string): string {
+    return `${namespace}::${key}`;
   }
 }
 

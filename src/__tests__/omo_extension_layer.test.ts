@@ -43,11 +43,7 @@ describe("HookRegistry", () => {
     await registry.execute("chat.message", { text: "hi" }, {}, dummyHookCtx);
 
     expect(handler).toHaveBeenCalledOnce();
-    expect(handler).toHaveBeenCalledWith(
-      { text: "hi" },
-      {},
-      dummyHookCtx,
-    );
+    expect(handler).toHaveBeenCalledWith({ text: "hi" }, {}, dummyHookCtx);
   });
 
   it("executes hooks in priority order", async () => {
@@ -196,8 +192,16 @@ describe("HookRegistry", () => {
   });
 
   it("bulk disables hooks", () => {
-    registry.register("event", "h1", vi.fn(async () => {}));
-    registry.register("event", "h2", vi.fn(async () => {}));
+    registry.register(
+      "event",
+      "h1",
+      vi.fn(async () => {}),
+    );
+    registry.register(
+      "event",
+      "h2",
+      vi.fn(async () => {}),
+    );
     registry.disableMultiple(["h1", "h2"]);
 
     expect(registry.isEnabled("h1")).toBe(false);
@@ -205,13 +209,25 @@ describe("HookRegistry", () => {
   });
 
   it("reports size correctly", () => {
-    registry.register("event", "a", vi.fn(async () => {}));
-    registry.register("chat.message", "b", vi.fn(async () => {}));
+    registry.register(
+      "event",
+      "a",
+      vi.fn(async () => {}),
+    );
+    registry.register(
+      "chat.message",
+      "b",
+      vi.fn(async () => {}),
+    );
     expect(registry.size).toBe(2);
   });
 
   it("clears all hooks", () => {
-    registry.register("event", "a", vi.fn(async () => {}));
+    registry.register(
+      "event",
+      "a",
+      vi.fn(async () => {}),
+    );
     registry.clear();
     expect(registry.size).toBe(0);
   });
@@ -229,7 +245,11 @@ describe("HookRegistry", () => {
 
     it("resets properly", () => {
       const a = getGlobalHookRegistry();
-      a.register("event", "test", vi.fn(async () => {}));
+      a.register(
+        "event",
+        "test",
+        vi.fn(async () => {}),
+      );
       resetGlobalHookRegistry();
       const b = getGlobalHookRegistry();
       expect(b.size).toBe(0);
@@ -630,6 +650,74 @@ describe("SessionStateManager", () => {
     expect(manager.getMetadata("ses-1", "key1")).toBeUndefined();
   });
 
+  describe("3-scope state management", () => {
+    it("global state persists across any scope access", () => {
+      manager.setState("app-version", "1.0", "global");
+      expect(manager.getState("app-version", "global")).toBe("1.0");
+    });
+
+    it("session state is isolated per sessionId", () => {
+      manager.setState("theme", "dark", "session", "sess-1");
+      manager.setState("theme", "light", "session", "sess-2");
+      expect(manager.getState("theme", "session", "sess-1")).toBe("dark");
+      expect(manager.getState("theme", "session", "sess-2")).toBe("light");
+    });
+
+    it("run state is isolated per runId", () => {
+      manager.setState("step", 1, "run", "run-1");
+      manager.setState("step", 5, "run", "run-2");
+      expect(manager.getState("step", "run", "run-1")).toBe(1);
+      expect(manager.getState("step", "run", "run-2")).toBe(5);
+    });
+
+    it("throws when scopeId missing for session/run scope", () => {
+      expect(() => manager.setState("x", 1, "session")).toThrow();
+      expect(() => manager.setState("x", 1, "run")).toThrow();
+    });
+
+    it("clearRunStore removes only that run's data", () => {
+      manager.setState("a", 1, "run", "r1");
+      manager.setState("b", 2, "run", "r2");
+      manager.clearRunStore("r1");
+      expect(manager.getState("a", "run", "r1")).toBeUndefined();
+      expect(manager.getState("b", "run", "r2")).toBe(2);
+    });
+  });
+
+  describe("namespaced state", () => {
+    it("namespaces isolate keys", () => {
+      manager.setNamespaced("hook-ralph", "active", true, "run", "r1");
+      manager.setNamespaced("hook-todo", "active", false, "run", "r1");
+      expect(manager.getNamespaced("hook-ralph", "active", "run", "r1")).toBe(
+        true,
+      );
+      expect(manager.getNamespaced("hook-todo", "active", "run", "r1")).toBe(
+        false,
+      );
+    });
+
+    it("deleteNamespaced only affects the target", () => {
+      manager.setNamespaced("ns1", "key", "val1", "global");
+      manager.setNamespaced("ns2", "key", "val2", "global");
+      manager.deleteNamespaced("ns1", "key", "global");
+      expect(manager.getNamespaced("ns1", "key", "global")).toBeUndefined();
+      expect(manager.getNamespaced("ns2", "key", "global")).toBe("val2");
+    });
+  });
+
+  describe("backward compatibility", () => {
+    it("setMetadata/getMetadata still work", () => {
+      manager.setMetadata("sess-1", "foo", "bar");
+      expect(manager.getMetadata("sess-1", "foo")).toBe("bar");
+    });
+
+    it("deleteMetadata still works", () => {
+      manager.setMetadata("sess-1", "foo", "bar");
+      manager.deleteMetadata("sess-1", "foo");
+      expect(manager.getMetadata("sess-1", "foo")).toBeUndefined();
+    });
+  });
+
   it("lists sessions", () => {
     manager.setMainSession("a");
     manager.setSessionAgent("b", "Atlas");
@@ -659,9 +747,15 @@ describe("SessionStateManager", () => {
   it("clears all", () => {
     manager.setMainSession("a");
     manager.setSessionAgent("b", "Atlas");
+    manager.setState("x", 1, "global");
+    manager.setState("y", 2, "session", "a");
+    manager.setState("z", 3, "run", "run-1");
     manager.clear();
     expect(manager.size).toBe(0);
     expect(manager.getMainSessionId()).toBeUndefined();
+    expect(manager.getState("x", "global")).toBeUndefined();
+    expect(manager.getState("y", "session", "a")).toBeUndefined();
+    expect(manager.getState("z", "run", "run-1")).toBeUndefined();
   });
 
   describe("global singleton", () => {

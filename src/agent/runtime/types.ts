@@ -18,6 +18,8 @@ export interface ToolContext {
   askConsent: (params: ConsentRequest) => Promise<boolean>;
   askQuestion: (params: QuestionRequest) => Promise<QuestionAnswer[]>;
   event: Electron.IpcMainInvokeEvent;
+  /** Run ID for the current agent execution (set when RunContext exists). */
+  runId?: string;
 }
 
 export interface ConsentRequest {

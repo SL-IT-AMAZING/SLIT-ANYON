@@ -13,6 +13,7 @@ import {
   AgentRuntime,
   type AgentRuntimeParams,
 } from "@/agent/runtime/agent_runtime";
+import { createPrimaryRunContext } from "@/agent/runtime/run_context";
 import { requestNativeToolConsent } from "@/agent/runtime/consent";
 import { waitForAgentQuestion } from "@/agent/runtime/question";
 import { assembleSystemPrompt } from "@/agent/runtime/system_prompt";
@@ -22,7 +23,7 @@ import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
-import { apps, chats, messages } from "../../db/schema";
+import { agentRuns, apps, chats, messages } from "../../db/schema";
 import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
 import { readSettings } from "../../main/settings";
 import { getAnyonAppPath } from "../../paths/paths";
@@ -482,6 +483,21 @@ ${componentSnippet}
               event,
             };
 
+            // --- Phase 0.7: Create RunContext + persist agentRuns record ---
+            const runContext = createPrimaryRunContext({
+              chatId: req.chatId,
+              agentName: agentConfig.name,
+            });
+            await db.insert(agentRuns).values({
+              runId: runContext.runId,
+              rootChatId: runContext.rootChatId,
+              chatId: runContext.chatId,
+              parentRunId: runContext.parentRunId ?? null,
+              agentName: runContext.agentName,
+              agentKind: runContext.agentKind,
+              status: "running",
+            });
+
             const [maxOutputTokens, temperature] = await Promise.all([
               getMaxTokens(settings.selectedModel),
               getTemperature(settings.selectedModel),
@@ -545,17 +561,45 @@ ${componentSnippet}
               agentConfig,
               maxOutputTokens: maxOutputTokens ?? undefined,
               temperature: temperature ?? undefined,
+              runContext,
             };
             const runtime = new AgentRuntime(runtimeParams);
 
             activeRuntimes.set(req.chatId, runtime);
 
+            let loopResult: string | undefined;
             try {
-              const result = await runtime.loop();
+              loopResult = await runtime.loop();
               logger.log(
-                `Native agent completed: ${result} (chat ${req.chatId})`,
+                `Native agent completed: ${loopResult} (chat ${req.chatId})`,
               );
+              // Update agentRuns status on success
+              void db
+                .update(agentRuns)
+                .set({
+                  status: "completed",
+                  endedAt: new Date(),
+                })
+                .where(eq(agentRuns.runId, runContext.runId))
+                .catch((e) =>
+                  logger.error("Failed to update agentRuns status", e),
+                );
             } catch (runtimeError) {
+              // Update agentRuns status on error/abort
+              const finalStatus = abortController.signal.aborted
+                ? "cancelled"
+                : "error";
+              void db
+                .update(agentRuns)
+                .set({
+                  status: finalStatus,
+                  endedAt: new Date(),
+                  abortReason: String(runtimeError),
+                })
+                .where(eq(agentRuns.runId, runContext.runId))
+                .catch((e) =>
+                  logger.error("Failed to update agentRuns status", e),
+                );
               if (!abortController.signal.aborted) {
                 throw runtimeError;
               }
@@ -629,8 +673,7 @@ ${componentSnippet}
                 finalMessages.length > 0 &&
                 finalMessages[finalMessages.length - 1].role === "assistant"
               ) {
-                finalMessages[finalMessages.length - 1].content =
-                  fullResponse;
+                finalMessages[finalMessages.length - 1].content = fullResponse;
               }
               safeSend(event.sender, "chat:response:chunk", {
                 chatId: req.chatId,

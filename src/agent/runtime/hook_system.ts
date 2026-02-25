@@ -41,6 +41,8 @@ export interface HookContext {
   chatId: number;
   agent: string;
   directory: string;
+  /** Run ID for the current agent execution. */
+  runId?: string;
 }
 
 /**

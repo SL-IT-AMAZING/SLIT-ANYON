@@ -225,6 +225,13 @@
       "when": 1771928790361,
       "tag": "0031_fantastic_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1772013975341,
+      "tag": "0032_strange_albert_cleary",
+      "breakpoints": true
     }
   ]
 }

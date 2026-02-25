@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { messages as messagesTable } from "@/db/schema";
 import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
 
+import type { RunContext } from "./run_context";
 import type { ContextCollector } from "./context_collector";
 import type { HookContext, HookRegistry } from "./hook_system";
 import { applyContextLimit, loadChatMessages } from "./message_converter";
@@ -43,6 +44,8 @@ export interface AgentRuntimeParams {
   hookRegistry?: HookRegistry;
   /** OMO context collector — if provided, injections are appended to system prompt. */
   contextCollector?: ContextCollector;
+  /** Run context — tracks this agent execution's identity. */
+  runContext?: RunContext;
 }
 
 export class AgentRuntime {
@@ -55,6 +58,10 @@ export class AgentRuntime {
 
   constructor(private params: AgentRuntimeParams) {
     this.abortController = new AbortController();
+    // Propagate runId from RunContext into ToolContext so tools can access it
+    if (params.runContext?.runId && !params.toolContext.runId) {
+      params.toolContext.runId = params.runContext.runId;
+    }
   }
 
   async loop(): Promise<LoopResult> {
@@ -72,6 +79,7 @@ export class AgentRuntime {
           chatId: this.params.chatId,
           agent: this.params.agentConfig.name,
           directory: this.params.appPath,
+          runId: this.params.runContext?.runId,
         }
       : undefined;
 
@@ -110,7 +118,9 @@ export class AgentRuntime {
 
       // --- HOOK: messages.transform ---
       // Hooks can mutate the messages array (e.g. context injection, thinking block validation)
-      const transformableMessages = { messages: isLastStep ? this.injectMaxStepsPrompt(messages) : messages };
+      const transformableMessages = {
+        messages: isLastStep ? this.injectMaxStepsPrompt(messages) : messages,
+      };
       if (this.params.hookRegistry && hookCtx) {
         await this.params.hookRegistry.execute(
           "messages.transform",
@@ -123,8 +133,12 @@ export class AgentRuntime {
 
       // 5. Build system prompt (base + context collector injections)
       let systemPromptText = this.params.systemPrompt.join("\n\n");
-      if (this.params.contextCollector && this.params.contextCollector.size > 0) {
-        systemPromptText += "\n\n" + this.params.contextCollector.toPromptString();
+      if (
+        this.params.contextCollector &&
+        this.params.contextCollector.size > 0
+      ) {
+        systemPromptText +=
+          "\n\n" + this.params.contextCollector.toPromptString();
       }
 
       // 6. Call streamText
