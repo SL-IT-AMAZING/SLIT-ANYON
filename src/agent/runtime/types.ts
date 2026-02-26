@@ -61,4 +61,18 @@ export interface StreamCallbacks {
   onError: (error: Error) => void;
 }
 
-export type LoopResult = "completed" | "aborted" | "max-steps";
+export interface ContinuationRequest {
+  /** The content to inject as a continuation message. */
+  content: string;
+  /** Human-readable reason for the continuation (for logging). */
+  reason: string;
+  /** Whether this continuation should be visible in the chat UI. Default false. */
+  visible?: boolean;
+}
+
+/** Extended loop result that includes continuation info. */
+export type LoopResult =
+  | "completed"
+  | "aborted"
+  | "max-steps"
+  | "max-continuations";

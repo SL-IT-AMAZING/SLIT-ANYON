@@ -3,6 +3,7 @@ import { type Tool, type ToolSet, tool } from "ai";
 import type { NativeTool, RiskLevel } from "./tool_interface";
 import type { ToolContext } from "./types";
 import { allNativeTools } from "./tools/index";
+import { createBatchTool } from "./tools/batch";
 
 export type { Tool, ToolSet };
 
@@ -85,5 +86,7 @@ function needsConsent(riskLevel: RiskLevel): boolean {
 export function createDefaultRegistry(): ToolRegistry {
   const registry = new ToolRegistry();
   registry.registerAll(allNativeTools);
+  // Batch tool needs the registry reference (factory pattern)
+  registry.register(createBatchTool(registry));
   return registry;
 }

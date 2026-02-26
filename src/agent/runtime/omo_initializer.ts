@@ -9,6 +9,7 @@ import { HookRegistry } from "./hook_system";
 import { registerAllOmoHooks } from "./hooks";
 import { SessionStateManager } from "./session_state";
 import { SkillLoader } from "./skills";
+import { cleanupOldTranscripts } from "./features/transcript_recorder";
 
 const logger = log.scope("omo-initializer");
 
@@ -53,6 +54,13 @@ export async function initializeOmoRuntime(opts: {
 
   registerAllOmoHooks(hookRegistry);
   logger.info("OMO hooks registered");
+
+  // Cleanup old transcript files on init (fire-and-forget)
+  try {
+    cleanupOldTranscripts(7);
+  } catch (err) {
+    logger.warn("Transcript cleanup failed:", err);
+  }
 
   const agentDefinitions = getAllAgentDefinitions();
 

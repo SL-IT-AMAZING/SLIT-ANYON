@@ -35,6 +35,8 @@ import { todoReadTool } from "./todoread";
 import { todoWriteTool } from "./todowrite";
 import { webfetchTool } from "./webfetch";
 import { websearchTool } from "./websearch";
+import { multieditTool } from "./multiedit";
+import { planEnterTool, planExitTool } from "./plan";
 
 export const allNativeTools: NativeTool[] = [
   astGrepReplaceTool,
@@ -73,4 +75,8 @@ export const allNativeTools: NativeTool[] = [
   webfetchTool,
   codesearchTool,
   questionTool,
+  questionTool,
+  multieditTool,
+  planEnterTool,
+  planExitTool,
 ];

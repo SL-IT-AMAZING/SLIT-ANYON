@@ -7,16 +7,20 @@ import { db } from "@/db";
 import { messages as messagesTable } from "@/db/schema";
 import { getAiMessagesJsonIfWithinLimit } from "@/ipc/utils/ai_messages_utils";
 
-import type { RunContext } from "./run_context";
 import type { ContextCollector } from "./context_collector";
 import type { HookContext, HookRegistry } from "./hook_system";
-import { createRunHookRegistry, type RunHookRegistry } from "./run_hook_registry";
 import { applyContextLimit, loadChatMessages } from "./message_converter";
+import type { RunContext } from "./run_context";
+import {
+  type RunHookRegistry,
+  createRunHookRegistry,
+} from "./run_hook_registry";
 import { StreamBridge } from "./stream_bridge";
 import { readPromptFile } from "./system_prompt";
 import type { ToolRegistry } from "./tool_registry";
 import type {
   AgentConfig,
+  ContinuationRequest,
   LoopResult,
   StreamCallbacks,
   ToolContext,
@@ -57,6 +61,9 @@ export class AgentRuntime {
   private allResponseMessages: ModelMessage[] = [];
   private activeBridge: StreamBridge | null = null;
   private runHooks: RunHookRegistry | null = null;
+  private continuationQueue: ContinuationRequest[] = [];
+  private autoContinueCount = 0;
+  private readonly maxAutoContinues = 15;
 
   constructor(private params: AgentRuntimeParams) {
     this.abortController = new AbortController();
@@ -66,11 +73,86 @@ export class AgentRuntime {
     }
     // Build per-run hook registry if both hookRegistry and runContext are provided
     if (params.hookRegistry && params.runContext) {
-      this.runHooks = createRunHookRegistry(params.hookRegistry, params.runContext);
+      this.runHooks = createRunHookRegistry(
+        params.hookRegistry,
+        params.runContext,
+      );
     }
   }
 
   async loop(): Promise<LoopResult> {
+    while (true) {
+      this.continuationQueue = [];
+
+      const turnResult = await this.runSingleTurn();
+
+      if (turnResult === "aborted") {
+        return turnResult;
+      }
+
+      const hookCtx = this.buildHookContext();
+      const hookExecutor = this.runHooks ?? this.params.hookRegistry;
+      if (hookCtx && hookExecutor) {
+        await hookExecutor.execute(
+          "agent.turn.stop",
+          {
+            finishReason: turnResult,
+            autoContinueCount: this.autoContinueCount,
+            maxAutoContinues: this.maxAutoContinues,
+          },
+          { continuationQueue: this.continuationQueue },
+          hookCtx,
+        );
+      }
+
+      if (
+        this.continuationQueue.length > 0 &&
+        this.autoContinueCount < this.maxAutoContinues
+      ) {
+        const continuation = this.continuationQueue.shift();
+        if (!continuation) {
+          return turnResult;
+        }
+
+        this.autoContinueCount++;
+
+        logger.log(
+          `Continuation #${this.autoContinueCount}/${this.maxAutoContinues}: ${continuation.reason}`,
+        );
+
+        if (hookCtx && hookExecutor) {
+          await hookExecutor.execute(
+            "agent.turn.before",
+            {
+              continuationCount: this.autoContinueCount,
+              reason: continuation.reason,
+            },
+            {},
+            hookCtx,
+          );
+        }
+
+        await this.injectContinuationMessage(continuation);
+
+        this.step = 0;
+        continue;
+      }
+
+      if (
+        this.continuationQueue.length > 0 &&
+        this.autoContinueCount >= this.maxAutoContinues
+      ) {
+        logger.warn(
+          `Max auto-continuations (${this.maxAutoContinues}) reached`,
+        );
+        return "max-continuations";
+      }
+
+      return turnResult;
+    }
+  }
+
+  private async runSingleTurn(): Promise<LoopResult> {
     const maxSteps =
       this.params.agentConfig.steps > 0
         ? this.params.agentConfig.steps
@@ -78,22 +160,7 @@ export class AgentRuntime {
     const contextWindow =
       this.params.contextWindowTokens ?? DEFAULT_CONTEXT_WINDOW;
 
-    // Build hook context once (stable across steps)
-    const hookCtx: HookContext | undefined = this.runHooks
-      ? this.runHooks.getHookContext()
-      : this.params.hookRegistry
-        ? {
-            sessionId: String(this.params.sessionId),
-            chatId: this.params.chatId,
-            agent: this.params.agentConfig.name,
-            directory: this.params.appPath,
-            runId: this.params.runContext?.runId,
-          }
-        : undefined;
-    // Ensure directory is set on hookCtx
-    if (hookCtx) {
-      hookCtx.directory = this.params.appPath;
-    }
+    const hookCtx: HookContext | undefined = this.buildHookContext();
 
     while (true) {
       // 1. Load all session messages from DB
@@ -155,8 +222,7 @@ export class AgentRuntime {
         this.params.contextCollector &&
         this.params.contextCollector.size > 0
       ) {
-        systemPromptText +=
-          "\n\n" + this.params.contextCollector.toPromptString();
+        systemPromptText += `\n\n${this.params.contextCollector.toPromptString()}`;
       }
 
       // 6. Call streamText
@@ -249,6 +315,10 @@ export class AgentRuntime {
     return this.accumulatedResponseText + bridgeText;
   }
 
+  getContinuationCount(): number {
+    return this.autoContinueCount;
+  }
+
   abort(): void {
     this.abortController.abort();
   }
@@ -256,6 +326,37 @@ export class AgentRuntime {
   private injectMaxStepsPrompt(messages: ModelMessage[]): ModelMessage[] {
     const maxStepsText = readPromptFile("max-steps.txt");
     return [...messages, { role: "assistant" as const, content: maxStepsText }];
+  }
+
+  private buildHookContext(): HookContext | undefined {
+    if (this.runHooks) {
+      return this.runHooks.getHookContext();
+    }
+    if (this.params.hookRegistry) {
+      return {
+        sessionId: String(this.params.sessionId),
+        chatId: this.params.chatId,
+        agent: this.params.agentConfig.name,
+        directory: this.params.appPath,
+        runId: this.params.runContext?.runId,
+      };
+    }
+    return undefined;
+  }
+
+  private async injectContinuationMessage(
+    continuation: ContinuationRequest,
+  ): Promise<void> {
+    try {
+      await db.insert(messagesTable).values({
+        chatId: this.params.chatId,
+        role: "user",
+        content: continuation.content,
+      });
+      logger.log(`Injected continuation message: ${continuation.reason}`);
+    } catch (err) {
+      logger.error("Failed to inject continuation message:", err);
+    }
   }
 
   private async saveToDb(): Promise<void> {

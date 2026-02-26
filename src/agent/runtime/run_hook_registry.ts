@@ -13,7 +13,7 @@
 import log from "electron-log";
 
 import type { HookContext, HookPoint, HookScope } from "./hook_system";
-import type { HookRegistry, } from "./hook_system";
+import type { HookRegistry } from "./hook_system";
 import type { RunContext } from "./run_context";
 
 const logger = log.scope("run-hook-registry");

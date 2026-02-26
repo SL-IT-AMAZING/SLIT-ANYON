@@ -22,6 +22,10 @@ export type HookPoint =
   | "event"
   | "tool.execute.before"
   | "tool.execute.after"
+  | "agent.turn.stop"
+  | "agent.turn.before"
+  | "compaction.before"
+  | "compaction.after"
   | "agent.step.before"
   | "agent.step.after";
 
@@ -31,6 +35,10 @@ export const ALL_HOOK_POINTS: HookPoint[] = [
   "event",
   "tool.execute.before",
   "tool.execute.after",
+  "agent.turn.stop",
+  "agent.turn.before",
+  "compaction.before",
+  "compaction.after",
   "agent.step.before",
   "agent.step.after",
 ];
@@ -54,7 +62,7 @@ export type HookHandler = (
   input: unknown,
   output: unknown,
   ctx: HookContext,
-) => Promise<{ abort?: boolean } | void>;
+) => Promise<{ abort?: boolean } | undefined>;
 
 /** Hook scope classification for per-run filtering. */
 export type HookScope = "run" | "session" | "global";

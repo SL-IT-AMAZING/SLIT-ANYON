@@ -35,6 +35,15 @@ import { registerKeywordDetectorHook } from "./keyword_detector";
 import { registerStartWorkHook } from "./start_work";
 import { registerTaskResumeInfoHook } from "./task_resume_info";
 
+// --- V3 hooks: atlas, claude-code-bridge, compaction, session recovery ---
+import { registerAtlasHook } from "./atlas";
+import { registerBackgroundCompactionHook } from "./background_compaction";
+import { registerClaudeCodeBridgeHook } from "./claude_code_bridge";
+import { registerCommentCheckerHook } from "./comment_checker";
+import { registerCompactionContextInjectorHook } from "./compaction_context_injector";
+import { registerPrometheusMdOnlyHook } from "./prometheus_md_only";
+import { registerSessionRecoveryHook } from "./session_recovery";
+
 /**
  * Register all OMO hooks with the given registry.
  *
@@ -73,4 +82,19 @@ export function registerAllOmoHooks(registry: HookRegistry): void {
   registerKeywordDetectorHook(registry); // priority 20
   registerAutoSlashCommandHook(registry); // priority 25
   registerStartWorkHook(registry); // priority 30
+
+  // --- V3: Atlas (turn-level auto-continuation + delegation enforcement) ---
+  registerAtlasHook(registry); // agent.turn.stop (50) + agent.step.after (85)
+
+  // --- V3: Claude-code-bridge (transcript, todowrite, error state, compaction) ---
+  registerClaudeCodeBridgeHook(registry); // multiple hook points
+
+  // --- V3: Compaction hooks ---
+  registerBackgroundCompactionHook(registry); // compaction.before/after (40)
+  registerCompactionContextInjectorHook(registry); // compaction.after (60)
+
+  // --- V3: Additional hooks ---
+  registerSessionRecoveryHook(registry); // tool.execute.after, step lifecycle
+  registerPrometheusMdOnlyHook(registry); // tool.execute.before for planning agents
+  registerCommentCheckerHook(registry); // tool.execute.after for write/edit tools
 }
