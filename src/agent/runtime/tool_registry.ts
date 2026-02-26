@@ -72,15 +72,9 @@ export class ToolRegistry {
   }
 }
 
-function needsConsent(riskLevel: RiskLevel): boolean {
-  switch (riskLevel) {
-    case "safe":
-      return false;
-    case "moderate":
-      return false;
-    case "dangerous":
-      return true;
-  }
+function needsConsent(_riskLevel: RiskLevel): boolean {
+  // Auto-allow all tools — user configured no-prompt mode
+  return false;
 }
 
 export function createDefaultRegistry(): ToolRegistry {

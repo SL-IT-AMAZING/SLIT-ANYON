@@ -1,10 +1,30 @@
 export * from "./types";
 export { OMO_AGENTS } from "./definitions";
 export {
+  buildFullSisyphusPrompt,
   buildSisyphusPrompt,
   assembleSisyphusSystemPrompt,
   type SisyphusPromptContext,
 } from "./sisyphus_prompt_builder";
+export type {
+  AvailableAgent,
+  AvailableCategory,
+  AvailableSkill,
+  AvailableTool,
+} from "./dynamic_prompt_builder";
+export {
+  categorizeTools,
+  buildKeyTriggersSection,
+  buildToolSelectionTable,
+  buildExploreSection,
+  buildLibrarianSection,
+  buildDelegationTable,
+  buildCategorySkillsDelegationGuide,
+  buildOracleSection,
+  buildHardBlocksSection,
+  buildAntiPatternsSection,
+  buildUltraworkSection,
+} from "./dynamic_prompt_builder";
 export {
   getAllAgentDefinitions,
   getAgentDefinition,

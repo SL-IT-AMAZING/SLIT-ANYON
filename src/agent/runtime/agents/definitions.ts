@@ -74,6 +74,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ALL_TOOLS,
     mode: "primary",
     cost: "expensive",
+    promptMetadata: {
+      category: "specialist",
+      cost: "EXPENSIVE",
+      triggers: [
+        {
+          domain: "Primary orchestration",
+          trigger: "Complex multi-step autonomous tasks requiring full lifecycle execution",
+        },
+      ],
+    },
     temperature: 0,
     thinking: { enabled: true, budgetTokens: 10000 },
   },
@@ -86,6 +96,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: [...CORE_TOOLS, ...LSP_TOOLS],
     mode: "subagent",
     cost: "moderate",
+    promptMetadata: {
+      category: "specialist",
+      cost: "CHEAP",
+      triggers: [
+        {
+          domain: "Implementation",
+          trigger: "Direct task execution",
+        },
+      ],
+    },
     temperature: 0,
   },
   {
@@ -104,6 +124,40 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     ],
     mode: "subagent",
     cost: "expensive",
+    promptMetadata: {
+      category: "advisor",
+      cost: "EXPENSIVE",
+      promptAlias: "Oracle",
+      triggers: [
+        {
+          domain: "Architecture decisions",
+          trigger: "Multi-system tradeoffs, unfamiliar patterns",
+        },
+        {
+          domain: "Self-review",
+          trigger: "After completing significant implementation",
+        },
+        {
+          domain: "Hard debugging",
+          trigger: "After 2+ failed fix attempts",
+        },
+      ],
+      useWhen: [
+        "Complex architecture design",
+        "After completing significant work",
+        "2+ failed fix attempts",
+        "Unfamiliar code patterns",
+        "Security/performance concerns",
+        "Multi-system tradeoffs",
+      ],
+      avoidWhen: [
+        "Simple file operations (use direct tools)",
+        "First attempt at any fix (try yourself first)",
+        "Questions answerable from code you've read",
+        "Trivial decisions (variable names, formatting)",
+        "Things you can infer from existing code patterns",
+      ],
+    },
     temperature: 0,
     thinking: { enabled: true, budgetTokens: 15000 },
   },
@@ -124,6 +178,24 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     ],
     mode: "subagent",
     cost: "moderate",
+    promptMetadata: {
+      category: "exploration",
+      cost: "CHEAP",
+      promptAlias: "Librarian",
+      keyTrigger: "External library/source mentioned → fire `librarian` background",
+      triggers: [
+        {
+          domain: "Librarian",
+          trigger: "Unfamiliar packages / libraries",
+        },
+      ],
+      useWhen: [
+        "How do I use [library]?",
+        "What's the best practice for [framework feature]?",
+        "Why does [external dependency] behave this way?",
+        "Find examples of [library] usage",
+      ],
+    },
     temperature: 0,
   },
   {
@@ -134,6 +206,28 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ["read", "glob", "grep", "list", "codesearch"],
     mode: "subagent",
     cost: "free",
+    promptMetadata: {
+      category: "exploration",
+      cost: "FREE",
+      promptAlias: "Explore",
+      keyTrigger: "2+ modules involved → fire `explore` background",
+      triggers: [
+        {
+          domain: "Explore",
+          trigger: "Find existing codebase structure, patterns and styles",
+        },
+      ],
+      useWhen: [
+        "Multiple search angles needed",
+        "Unfamiliar module structure",
+        "Cross-layer pattern discovery",
+      ],
+      avoidWhen: [
+        "You know exactly what to search",
+        "Single keyword/pattern suffices",
+        "Known file location",
+      ],
+    },
     temperature: 0,
   },
   {
@@ -145,6 +239,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ["read", "glob", "grep", "list", "codesearch", "write", "edit"],
     mode: "subagent",
     cost: "expensive",
+    promptMetadata: {
+      category: "advisor",
+      cost: "EXPENSIVE",
+      triggers: [
+        {
+          domain: "Strategic planning",
+          trigger: "Creating comprehensive work plans",
+        },
+      ],
+    },
     temperature: 0,
     thinking: { enabled: true, budgetTokens: 10000 },
   },
@@ -157,6 +261,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ["read", "glob", "grep", "list", "codesearch"],
     mode: "subagent",
     cost: "expensive",
+    promptMetadata: {
+      category: "advisor",
+      cost: "EXPENSIVE",
+      triggers: [
+        {
+          domain: "Pre-planning",
+          trigger: "Complex task requiring scope clarification",
+        },
+      ],
+    },
     temperature: 0,
     thinking: { enabled: true, budgetTokens: 8000 },
   },
@@ -169,6 +283,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ["read", "glob", "grep", "list", "codesearch"],
     mode: "subagent",
     cost: "expensive",
+    promptMetadata: {
+      category: "advisor",
+      cost: "EXPENSIVE",
+      triggers: [
+        {
+          domain: "Plan review",
+          trigger: "Evaluate work plans for clarity and completeness",
+        },
+      ],
+    },
     temperature: 0,
     thinking: { enabled: true, budgetTokens: 8000 },
   },
@@ -188,6 +312,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     ],
     mode: "subagent",
     cost: "moderate",
+    promptMetadata: {
+      category: "specialist",
+      cost: "EXPENSIVE",
+      triggers: [
+        {
+          domain: "Orchestration",
+          trigger: "Complex multi-step autonomous tasks",
+        },
+      ],
+    },
     temperature: 0,
   },
   {
@@ -199,6 +333,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: [...CORE_TOOLS, ...LSP_TOOLS],
     mode: "subagent",
     cost: "expensive",
+    promptMetadata: {
+      category: "specialist",
+      cost: "CHEAP",
+      triggers: [
+        {
+          domain: "Frontend",
+          trigger: "UI/UX components, styling",
+        },
+      ],
+    },
     temperature: 0,
   },
   {
@@ -210,6 +354,16 @@ export const OMO_AGENTS: OmoAgentDefinition[] = [
     tools: ["read", "glob", "grep", "list", "mcp_look_at"],
     mode: "subagent",
     cost: "moderate",
+    promptMetadata: {
+      category: "utility",
+      cost: "CHEAP",
+      triggers: [
+        {
+          domain: "Visual analysis",
+          trigger: "Screenshots, diagrams, images",
+        },
+      ],
+    },
     temperature: 0,
   },
 ];

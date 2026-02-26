@@ -13,22 +13,23 @@ import {
   AgentRuntime,
   type AgentRuntimeParams,
 } from "@/agent/runtime/agent_runtime";
-import { createPrimaryRunContext } from "@/agent/runtime/run_context";
+import {
+  type AvailableAgent,
+  type AvailableCategory,
+  type AvailableSkill,
+  buildFullSisyphusPrompt,
+  getAgentDefinition,
+} from "@/agent/runtime/agents";
 import { requestNativeToolConsent } from "@/agent/runtime/consent";
+import {
+  type OmoRuntimeContext,
+  cleanupOmoRuntime,
+  initializeOmoRuntime,
+} from "@/agent/runtime/omo_initializer";
 import { waitForAgentQuestion } from "@/agent/runtime/question";
+import { createPrimaryRunContext } from "@/agent/runtime/run_context";
 import { assembleSystemPrompt } from "@/agent/runtime/system_prompt";
 import { createDefaultRegistry } from "@/agent/runtime/tool_registry";
-import {
-  initializeOmoRuntime,
-  cleanupOmoRuntime,
-  type OmoRuntimeContext,
-} from "@/agent/runtime/omo_initializer";
-import {
-  getAgentDefinition,
-  getAgentDescriptors,
-  buildSisyphusPrompt,
-} from "@/agent/runtime/agents";
-import { readPromptFile as readOmoPromptFile } from "@/agent/runtime/agents/omo_prompt_reader";
 import type { StreamCallbacks, ToolContext } from "@/agent/runtime/types";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
@@ -69,6 +70,66 @@ import { safeSend } from "../utils/safe_sender";
 import { parsePlanFile, validatePlanId } from "./planUtils";
 
 const logger = log.scope("chat_stream_handlers");
+
+const DEFAULT_OMO_CATEGORIES: AvailableCategory[] = [
+  {
+    name: "visual-engineering",
+    description: "Frontend, UI/UX, design, styling, animation",
+  },
+  {
+    name: "ultrabrain",
+    description:
+      "Deep logical reasoning, complex architecture decisions requiring extensive analysis",
+  },
+  {
+    name: "artistry",
+    description: "Highly creative/artistic tasks, novel ideas",
+  },
+  {
+    name: "quick",
+    description: "Trivial tasks - single file changes, typo fixes, simple modifications",
+  },
+  {
+    name: "unspecified-low",
+    description: "Tasks that don't fit other categories, low effort required",
+  },
+  {
+    name: "unspecified-high",
+    description: "Tasks that don't fit other categories, high effort required",
+  },
+  {
+    name: "writing",
+    description: "Documentation, prose, technical writing",
+  },
+];
+
+function createEnvContext(): string {
+  const now = new Date();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+
+  const dateStr = now.toLocaleDateString(locale, {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  const timeStr = now.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  return `
+<omo-env>
+  Current date: ${dateStr}
+  Current time: ${timeStr}
+  Timezone: ${timezone}
+  Locale: ${locale}
+</omo-env>`;
+}
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
@@ -583,28 +644,40 @@ ${componentSnippet}
               // Determine which OMO agent to use (default: sisyphus)
               const omoAgentDef = getAgentDefinition("sisyphus");
               if (omoAgentDef) {
-                // 1. Load the agent's base prompt
-                const basePrompt = readOmoPromptFile(
-                  omoAgentDef.systemPromptFile,
-                );
-                if (basePrompt) {
-                  systemPrompt.push(basePrompt);
-                }
+                const availableAgents: AvailableAgent[] = omoCtx.agentDefinitions
+                  .filter((agentDef) => !!agentDef.promptMetadata)
+                  .map((agentDef) => ({
+                    name: agentDef.name as AvailableAgent["name"],
+                    description: agentDef.description,
+                    metadata: agentDef.promptMetadata!,
+                  }));
 
-                // 2. Build dynamic context (skills, commands, agents)
-                const dynamicPrompt = buildSisyphusPrompt({
-                  skills: omoCtx.skillLoader.list(),
-                  commands: omoCtx.commandRegistry.list(),
-                  agents: getAgentDescriptors(),
-                  variant: "orchestrator",
-                  projectDir: chatAppPath,
-                });
-                if (dynamicPrompt) {
-                  systemPrompt.push(dynamicPrompt);
+                const availableSkills: AvailableSkill[] = omoCtx.skillLoader
+                  .list()
+                  .map((skill) => ({
+                    name: skill.name,
+                    description: skill.description,
+                    location:
+                      skill.scope === "user"
+                        ? "user"
+                        : skill.scope === "project"
+                          ? "project"
+                          : "plugin",
+                  }));
+
+                const fullPrompt = buildFullSisyphusPrompt(
+                  availableAgents,
+                  [],
+                  availableSkills,
+                  DEFAULT_OMO_CATEGORIES,
+                );
+                if (fullPrompt) {
+                  systemPrompt.push(fullPrompt);
+                  systemPrompt.push(createEnvContext());
                 }
 
                 logger.info(
-                  `Injected OMO agent prompt: ${omoAgentDef.name} (${omoAgentDef.systemPromptFile})`,
+                  `Injected OMO dynamic prompt: ${omoAgentDef.name}`,
                 );
               }
             }

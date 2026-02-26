@@ -2,6 +2,39 @@
  * Agent definition types for the OMO native port.
  */
 
+export type AgentCategory = "exploration" | "specialist" | "advisor" | "utility";
+
+export type AgentCost = "FREE" | "CHEAP" | "EXPENSIVE";
+
+export interface DelegationTrigger {
+  domain: string;
+  trigger: string;
+}
+
+export interface AgentPromptMetadata {
+  category: AgentCategory;
+  cost: AgentCost;
+  triggers: DelegationTrigger[];
+  useWhen?: string[];
+  avoidWhen?: string[];
+  dedicatedSection?: string;
+  promptAlias?: string;
+  keyTrigger?: string;
+}
+
+export type BuiltinAgentName =
+  | "sisyphus"
+  | "oracle"
+  | "librarian"
+  | "explore"
+  | "multimodal-looker"
+  | "metis"
+  | "momus"
+  | "prometheus"
+  | "atlas"
+  | "hephaestus"
+  | "sisyphus-junior";
+
 export interface OmoAgentDefinition {
   name: string;
   description: string;
@@ -16,6 +49,7 @@ export interface OmoAgentDefinition {
   maxTokens?: number;
   temperature?: number;
   thinking?: { enabled: boolean; budgetTokens?: number };
+  promptMetadata?: AgentPromptMetadata;
 }
 
 export interface AgentDescriptor {

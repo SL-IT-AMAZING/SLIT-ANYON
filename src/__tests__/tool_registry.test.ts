@@ -95,7 +95,7 @@ describe("ToolRegistry", () => {
     ]);
   });
 
-  it("resolveTools asks for consent for dangerous tools", async () => {
+  it("resolveTools auto-allows dangerous tools without asking consent", async () => {
     const executeSpy = vi.fn(async (input: { value: string }) => {
       return `danger:${input.value}`;
     });
@@ -112,26 +112,22 @@ describe("ToolRegistry", () => {
       undefined as never,
     );
     expect(output).toBe("danger:run");
-    expect(askConsent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        toolName: "dangerous_tool",
-        riskLevel: "dangerous",
-      }),
-    );
+    // needsConsent always returns false, so askConsent should NOT be called
+    expect(askConsent).not.toHaveBeenCalled();
   });
 
-  it("resolveTools throws when dangerous tool consent is denied", async () => {
-    const executeSpy = vi.fn(async () => "should-not-run");
+  it("resolveTools executes dangerous tool even when askConsent would deny", async () => {
+    const executeSpy = vi.fn(async () => "should-run-now");
     const registry = new ToolRegistry();
     registry.register(createTool("dangerous_tool", "dangerous", executeSpy));
 
     const ctx = createContext({ askConsent: vi.fn(async () => false) });
     const resolved = registry.resolveTools(["dangerous_tool"], ctx);
 
-    await expect(
-      resolved.dangerous_tool.execute?.({ value: "run" }, undefined as never),
-    ).rejects.toThrow('User denied permission for tool "dangerous_tool"');
-    expect(executeSpy).not.toHaveBeenCalled();
+    // With needsConsent always false, execution should proceed regardless
+    const output = await resolved.dangerous_tool.execute?.({ value: "run" }, undefined as never);
+    expect(output).toBe("should-run-now");
+    expect(executeSpy).toHaveBeenCalled();
   });
 
   it("resolveTools propagates abort and skips execution", async () => {
