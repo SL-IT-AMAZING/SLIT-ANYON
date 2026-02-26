@@ -75,7 +75,6 @@ export const allNativeTools: NativeTool[] = [
   webfetchTool,
   codesearchTool,
   questionTool,
-  questionTool,
   multieditTool,
   planEnterTool,
   planExitTool,
