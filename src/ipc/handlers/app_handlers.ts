@@ -1084,6 +1084,8 @@ export function registerAppHandlers() {
         startCommand,
       });
 
+      fixBrokenViteConfigImport(appPath);
+
       try {
         // There may have been a previous run that left a process on this port.
         await cleanUpPort(getAppPort(appId));
@@ -2101,6 +2103,47 @@ async function maybeUpgradeNextStartCommandToWebpack({
     .where(eq(apps.id, appId));
 
   return finalStart;
+}
+
+/**
+ * Auto-fix broken vite.config that references the non-existent anyonScriptsPlugin.
+ * Early scaffolds included an import from "../src/lib/vite-anyon-scripts-plugin"
+ * which breaks when the scaffold is copied to user app directories.
+ * The proxy server already handles script injection, so the plugin is unnecessary.
+ */
+function fixBrokenViteConfigImport(appPath: string): void {
+  const configPaths = [
+    path.join(appPath, "vite.config.ts"),
+    path.join(appPath, "vite.config.js"),
+  ];
+
+  for (const configPath of configPaths) {
+    if (!fs.existsSync(configPath)) continue;
+
+    try {
+      const content = fs.readFileSync(configPath, "utf-8");
+      if (!content.includes("anyonScriptsPlugin")) return;
+
+      const fixed = content
+        // Remove the import line
+        .replace(
+          /import\s+\{?\s*anyonScriptsPlugin\s*\}?\s+from\s+["'][^"']+["'];?\s*\n?/g,
+          "",
+        )
+        // Remove anyonScriptsPlugin() from plugins array
+        .replace(/anyonScriptsPlugin\(\)\s*,?\s*/g, "")
+        // Clean up leading comma after opening bracket
+        .replace(/plugins:\s*\[\s*,/g, "plugins: [");
+
+      fs.writeFileSync(configPath, fixed);
+      logger.info(
+        `Auto-fixed broken anyonScriptsPlugin import in ${configPath}`,
+      );
+    } catch (e) {
+      logger.warn(`Failed to auto-fix vite config at ${configPath}:`, e);
+    }
+    return;
+  }
 }
 
 function isNextJsProject(appPath: string): boolean {
