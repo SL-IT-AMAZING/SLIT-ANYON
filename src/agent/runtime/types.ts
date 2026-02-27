@@ -20,6 +20,10 @@ export interface ToolContext {
   event: Electron.IpcMainInvokeEvent;
   /** Run ID for the current agent execution (set when RunContext exists). */
   runId?: string;
+  /** BackgroundManager for sub-agent delegation (set when OMO runtime is active). */
+  backgroundManager?: import("./background_manager").BackgroundManager;
+  /** RunContext for the current agent execution. */
+  runContext?: import("./run_context").RunContext;
 }
 
 export interface ConsentRequest {

@@ -14,7 +14,21 @@ export const backgroundCancelTool: NativeTool<BackgroundCancelInput> = {
   description: "Cancel one or more background tasks",
   parameters,
   riskLevel: "safe",
-  execute: async () => {
-    return "Background cancellation requires BackgroundManager wiring (Phase 9)";
+  execute: async (input, context) => {
+    if (!context.backgroundManager) {
+      return "BackgroundManager is not available in this runtime.";
+    }
+
+    if (input.all) {
+      context.backgroundManager.cancelAll();
+      return "All background tasks cancelled.";
+    }
+
+    if (input.taskId) {
+      context.backgroundManager.cancelTask(input.taskId);
+      return `Task ${input.taskId} cancelled.`;
+    }
+
+    return "Must provide taskId or set all=true";
   },
 };

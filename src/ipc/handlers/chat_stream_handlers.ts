@@ -639,6 +639,12 @@ ${componentSnippet}
               );
             }
 
+            // --- Phase 9.5.1: Wire BackgroundManager + RunContext into ToolContext ---
+            if (omoCtx) {
+              toolContext.backgroundManager = omoCtx.backgroundManager;
+              toolContext.runContext = runContext;
+            }
+
             // --- Phase 9.6: Inject OMO agent system prompt ---
             if (omoCtx) {
               // Determine which OMO agent to use (default: sisyphus)

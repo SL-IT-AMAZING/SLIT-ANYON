@@ -21,7 +21,31 @@ export const backgroundOutputTool: NativeTool<BackgroundOutputInput> = {
   description: "Get output for a background task",
   parameters,
   riskLevel: "safe",
-  execute: async () => {
-    return "Background output requires BackgroundManager wiring (Phase 9)";
+  execute: async (input, context) => {
+    if (!context.backgroundManager) {
+      return "BackgroundManager is not available in this runtime.";
+    }
+
+    if (input.block) {
+      const deadline = Date.now() + (input.timeout ?? 30_000);
+      while (Date.now() < deadline) {
+        const status = context.backgroundManager.getTaskStatus(input.task_id);
+        if (
+          status === "completed" ||
+          status === "error" ||
+          status === "cancelled"
+        ) {
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+
+    const output = context.backgroundManager.getTaskOutput(input.task_id);
+    if (!output) {
+      return `Task not found: ${input.task_id}`;
+    }
+
+    return `# Full Session Output\n\nTask ID: ${output.taskId}\nDescription: ${output.description}\nStatus: ${output.status}\nDuration: ${output.duration ?? 0}ms\n\n## Result\n\n${output.result ?? output.error ?? "No output yet"}`;
   },
 };
