@@ -1,9 +1,3 @@
-import {
-  type ModelMessage,
-  type TextStreamPart,
-  type ToolSet,
-  streamText,
-} from "ai";
 import { ipcMain } from "electron";
 import { v4 as uuidv4 } from "uuid";
 import { chatContracts } from "../types/chat";
@@ -14,18 +8,40 @@ import fs from "node:fs";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import { findNativeAgent, getDefaultAgent } from "@/agent/runtime/agent_config";
+import {
+  AgentRuntime,
+  type AgentRuntimeParams,
+} from "@/agent/runtime/agent_runtime";
+import {
+  type AvailableAgent,
+  type AvailableCategory,
+  type AvailableSkill,
+  buildFullSisyphusPrompt,
+  getAgentDefinition,
+} from "@/agent/runtime/agents";
+import { requestNativeToolConsent } from "@/agent/runtime/consent";
+import {
+  type OmoRuntimeContext,
+  cleanupOmoRuntime,
+  initializeOmoRuntime,
+} from "@/agent/runtime/omo_initializer";
+import { waitForAgentQuestion } from "@/agent/runtime/question";
+import { createPrimaryRunContext } from "@/agent/runtime/run_context";
+import { assembleSystemPrompt } from "@/agent/runtime/system_prompt";
+import { createDefaultRegistry } from "@/agent/runtime/tool_registry";
+import type { StreamCallbacks, ToolContext } from "@/agent/runtime/types";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
-import { apps, chats, messages } from "../../db/schema";
+import { agentRuns, apps, chats, messages } from "../../db/schema";
 import { checkCreditsForModel, reportTokenUsage } from "../../main/entitlement";
 import { readSettings } from "../../main/settings";
 import { getAnyonAppPath } from "../../paths/paths";
 import { getSupabaseAvailableSystemPrompt } from "../../prompts/supabase_prompt";
 import {
   ANYON_MCP_TOOLS_PROMPT,
-  constructSystemPrompt,
   readAiRules,
 } from "../../prompts/system_prompt";
 import {
@@ -41,9 +57,7 @@ import { getTestResponse } from "./testing_chat_handlers";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { inArray } from "drizzle-orm";
-import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
 import { prompts as promptsTable } from "../../db/schema";
-import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
 import {
   getCurrentCommitHash,
@@ -55,12 +69,74 @@ import { replacePromptReference } from "../utils/replacePromptReference";
 import { safeSend } from "../utils/safe_sender";
 import { parsePlanFile, validatePlanId } from "./planUtils";
 
-type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
-
 const logger = log.scope("chat_stream_handlers");
+
+const DEFAULT_OMO_CATEGORIES: AvailableCategory[] = [
+  {
+    name: "visual-engineering",
+    description: "Frontend, UI/UX, design, styling, animation",
+  },
+  {
+    name: "ultrabrain",
+    description:
+      "Deep logical reasoning, complex architecture decisions requiring extensive analysis",
+  },
+  {
+    name: "artistry",
+    description: "Highly creative/artistic tasks, novel ideas",
+  },
+  {
+    name: "quick",
+    description: "Trivial tasks - single file changes, typo fixes, simple modifications",
+  },
+  {
+    name: "unspecified-low",
+    description: "Tasks that don't fit other categories, low effort required",
+  },
+  {
+    name: "unspecified-high",
+    description: "Tasks that don't fit other categories, high effort required",
+  },
+  {
+    name: "writing",
+    description: "Documentation, prose, technical writing",
+  },
+];
+
+function createEnvContext(): string {
+  const now = new Date();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+
+  const dateStr = now.toLocaleDateString(locale, {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  const timeStr = now.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  return `
+<omo-env>
+  Current date: ${dateStr}
+  Current time: ${timeStr}
+  Timezone: ${timezone}
+  Locale: ${locale}
+</omo-env>`;
+}
 
 // Track active streams for cancellation
 const activeStreams = new Map<number, AbortController>();
+const activeRuntimes = new Map<number, AgentRuntime>();
+
+// OMO runtime contexts per chat session
+export const activeOmoContexts = new Map<number, OmoRuntimeContext>();
 
 // Track partial responses for cancelled streams
 const partialResponses = new Map<number, string>();
@@ -87,97 +163,9 @@ async function isTextFile(filePath: string): Promise<boolean> {
 
 // Use escapeXmlAttr from shared/xmlEscape for XML escaping
 
-// Safely parse an MCP tool key that combines server and tool names.
-// We split on the LAST occurrence of "__" to avoid ambiguity if either
-// side contains "__" as part of its sanitized name.
-function parseMcpToolKey(toolKey: string): {
-  serverName: string;
-  toolName: string;
-} {
-  const separator = "__";
-  const lastIndex = toolKey.lastIndexOf(separator);
-  if (lastIndex === -1) {
-    return { serverName: "", toolName: toolKey };
-  }
-  const serverName = toolKey.slice(0, lastIndex);
-  const toolName = toolKey.slice(lastIndex + separator.length);
-  return { serverName, toolName };
-}
-
 // Ensure the temp directory exists
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
-}
-
-// Helper function to process stream chunks
-async function processStreamChunks({
-  fullStream,
-  fullResponse,
-  abortController,
-  chatId,
-  processResponseChunkUpdate,
-}: {
-  fullStream: AsyncIterableStream<TextStreamPart<ToolSet>>;
-  fullResponse: string;
-  abortController: AbortController;
-  chatId: number;
-  processResponseChunkUpdate: (params: {
-    fullResponse: string;
-  }) => Promise<string>;
-}): Promise<{ fullResponse: string; incrementalResponse: string }> {
-  let incrementalResponse = "";
-  let inThinkingBlock = false;
-
-  for await (const part of fullStream) {
-    let chunk = "";
-    if (
-      inThinkingBlock &&
-      !["reasoning-delta", "reasoning-end", "reasoning-start"].includes(
-        part.type,
-      )
-    ) {
-      chunk = "</think>";
-      inThinkingBlock = false;
-    }
-    if (part.type === "text-delta") {
-      chunk += part.text;
-    } else if (part.type === "reasoning-delta") {
-      if (!inThinkingBlock) {
-        chunk = "<think>";
-        inThinkingBlock = true;
-      }
-
-      chunk += escapeAnyonTags(part.text);
-    } else if (part.type === "tool-call") {
-      const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeAnyonTags(JSON.stringify(part.input));
-      chunk = `<anyon-mcp-tool-call server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-call>\n`;
-    } else if (part.type === "tool-result") {
-      const { serverName, toolName } = parseMcpToolKey(part.toolName);
-      const content = escapeAnyonTags(part.output);
-      chunk = `<anyon-mcp-tool-result server="${serverName}" tool="${toolName}">\n${content}\n</anyon-mcp-tool-result>\n`;
-    }
-
-    if (!chunk) {
-      continue;
-    }
-
-    fullResponse += chunk;
-    incrementalResponse += chunk;
-    fullResponse = cleanFullResponse(fullResponse);
-    fullResponse = sanitizeVisibleOutput(fullResponse);
-    fullResponse = await processResponseChunkUpdate({
-      fullResponse,
-    });
-
-    // If the stream was aborted, exit early
-    if (abortController.signal.aborted) {
-      logger.log(`Stream for chat ${chatId} was aborted`);
-      break;
-    }
-  }
-
-  return { fullResponse, incrementalResponse };
 }
 
 export function registerChatStreamHandlers() {
@@ -489,27 +477,23 @@ ${componentSnippet}
             throw new Error(creditCheck.reason ?? "Credits exhausted");
           }
 
-          const { modelClient, isOpenCodeMode } = modelClientResult;
+          const { modelClient, isNativeAgentMode } = modelClientResult;
 
-          // OpenCode mode: skip all Anyon-specific processing (codebase extraction,
-          // history assembly, system prompt construction, post-response file processing).
-          // OpenCode handles everything internally via its own tools and sessions.
-          if (isOpenCodeMode) {
+          if (isNativeAgentMode) {
+            const agentConfig =
+              findNativeAgent(settings.selectedAgent ?? "") ??
+              getDefaultAgent();
+
             const aiRules = await readAiRules(chatAppPath);
             const themePrompt = await getFullSystemPrompt(
               chat.app?.designSystemId ?? null,
               chat.app?.themeId ?? null,
             );
-            let openCodeSystemPrompt = constructSystemPrompt({
-              aiRules,
-              themePrompt,
-              selectedAgent: settings.selectedAgent,
-            });
 
-            // Append Supabase context so OpenCode's AI knows about
-            // the connected project, tables, and client code.
+            let supabaseContext: string | undefined;
+
             if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
-              const [supabaseClientCode, supabaseContext] = await Promise.all([
+              const [supabaseClientCode, supabaseCtx] = await Promise.all([
                 getSupabaseClientCode({
                   projectId: chat.app.supabaseProjectId,
                   organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
@@ -519,179 +503,332 @@ ${componentSnippet}
                   organizationSlug: chat.app.supabaseOrganizationSlug ?? null,
                 }),
               ]);
-              openCodeSystemPrompt += `\n\n${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseContext}`;
+              supabaseContext = `${getSupabaseAvailableSystemPrompt(supabaseClientCode)}\n\n${supabaseCtx}`;
             }
 
-            openCodeSystemPrompt += `\n\n${ANYON_MCP_TOOLS_PROMPT}`;
-            openCodeSystemPrompt += `\n\nCurrent app context:\n- appId: ${chat.app.id}\n- appName: ${chat.app.name}`;
+            const systemPrompt = assembleSystemPrompt({
+              modelProvider: settings.selectedModel.provider,
+              modelId: settings.selectedModel.name,
+              agentConfig,
+              appPath: chatAppPath,
+              customRules: aiRules ?? undefined,
+              themePrompt: themePrompt ?? undefined,
+              supabaseContext,
+              anyonMcpPrompt: ANYON_MCP_TOOLS_PROMPT,
+            });
 
-            if (settings.enableBooster) {
-              openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
-            }
-
-            // Send only the current user prompt — no codebase, no history.
-            // OpenCode manages its own session history and reads files via tools.
-            const openCodeMessages: ModelMessage[] = [
-              { role: "user", content: userPrompt },
-            ];
-
-            let lastDbSaveAt = 0;
-            const openCodeProcessChunkUpdate = async ({
-              fullResponse,
-            }: {
-              fullResponse: string;
-            }) => {
-              partialResponses.set(req.chatId, fullResponse);
-              const now = Date.now();
-              if (now - lastDbSaveAt >= 150) {
-                await db
-                  .update(messages)
-                  .set({ content: fullResponse })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-                lastDbSaveAt = now;
-              }
-
-              const currentMessages = [...streamMessages];
-              if (
-                currentMessages.length > 0 &&
-                currentMessages[currentMessages.length - 1].role === "assistant"
-              ) {
-                currentMessages[currentMessages.length - 1].content =
-                  fullResponse;
-              }
-
-              safeSend(event.sender, "chat:response:chunk", {
+            const askConsent: ToolContext["askConsent"] = async (params) => {
+              const decision = await requestNativeToolConsent({
+                toolName: params.toolName,
+                riskLevel: params.riskLevel,
+                inputPreview: params.inputPreview,
                 chatId: req.chatId,
-                messages: currentMessages,
+                event,
               });
-              return fullResponse;
+              return decision === "accept-once" || decision === "accept-always";
             };
 
-            try {
-              const [maxOutputTokens, temperature] = await Promise.all([
-                getMaxTokens(settings.selectedModel),
-                getTemperature(settings.selectedModel),
-              ]);
-
-              const streamResult = streamText({
-                maxOutputTokens,
-                temperature,
-                maxRetries: 2,
-                model: modelClient.model,
-                system: openCodeSystemPrompt,
-                messages: openCodeMessages,
-                abortSignal: abortController.signal,
-                onFinish: (response) => {
-                  const totalTokens = response.usage?.totalTokens;
-                  if (typeof totalTokens === "number") {
-                    void db
-                      .update(messages)
-                      .set({ maxTokensUsed: totalTokens })
-                      .where(eq(messages.id, placeholderAssistantMessage.id))
-                      .catch((error) => {
-                        logger.error(
-                          "Failed to save total tokens for assistant message",
-                          error,
-                        );
-                      });
-                    // Report token usage to Polar for credit metering
-                    void reportTokenUsage(
-                      totalTokens,
-                      settings.selectedModel.name,
-                    );
-                  }
-                },
-                onError: (error: any) => {
-                  const errorMessage = (error as any)?.error?.message;
-                  const message = errorMessage || JSON.stringify(error);
-                  logger.error(`Stream error: ${message}`);
-                  event.sender.send("chat:response:error", {
-                    chatId: req.chatId,
-                    error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
-                  });
-                  activeStreams.delete(req.chatId);
-                },
-              });
-
-              const result = await processStreamChunks({
-                fullStream: streamResult.fullStream,
-                fullResponse,
-                abortController,
+            const askQuestion: ToolContext["askQuestion"] = async (params) => {
+              const requestId = crypto.randomUUID();
+              safeSend(event.sender, "agent:question-request", {
+                requestId,
                 chatId: req.chatId,
-                processResponseChunkUpdate: openCodeProcessChunkUpdate,
+                questions: params.questions,
               });
-              fullResponse = result.fullResponse;
-            } catch (streamError) {
-              if (abortController.signal.aborted) {
-                const partialResponse = partialResponses.get(req.chatId);
-                if (partialResponse) {
-                  await db
-                    .update(messages)
-                    .set({
-                      content: `${partialResponse}\n\n[Response cancelled by user]`,
-                    })
-                    .where(eq(messages.id, placeholderAssistantMessage.id));
-                  partialResponses.delete(req.chatId);
-                }
-                return req.chatId;
+
+              const answers = await waitForAgentQuestion(requestId);
+              if (!answers) {
+                return [];
               }
-              throw streamError;
+
+              return params.questions.map((question, index) => ({
+                question: question.question,
+                selectedOptions: answers[index] ?? [],
+              }));
+            };
+
+            const registry = createDefaultRegistry();
+            const toolContext: ToolContext = {
+              sessionId: chat.id,
+              chatId: req.chatId,
+              appPath: chatAppPath,
+              abort: abortController.signal,
+              askConsent,
+              askQuestion,
+              event,
+            };
+
+            // --- Phase 0.7: Create RunContext + persist agentRuns record ---
+            const runContext = createPrimaryRunContext({
+              chatId: req.chatId,
+              agentName: agentConfig.name,
+            });
+            await db.insert(agentRuns).values({
+              runId: runContext.runId,
+              rootChatId: runContext.rootChatId,
+              chatId: runContext.chatId,
+              parentRunId: runContext.parentRunId ?? null,
+              agentName: runContext.agentName,
+              agentKind: runContext.agentKind,
+              status: "running",
+            });
+
+            const [maxOutputTokens, temperature] = await Promise.all([
+              getMaxTokens(settings.selectedModel),
+              getTemperature(settings.selectedModel),
+            ]);
+
+            let lastDbSaveAt = 0;
+            const callbacks: StreamCallbacks = {
+              onTextDelta: (_text) => {},
+              onReasoningDelta: (_text) => {},
+              onToolCall: (_toolName, _toolCallId, _input) => {},
+              onToolResult: (_toolName, _toolCallId, _output) => {},
+              onToolError: (_toolName, _toolCallId, _error) => {},
+              onStepFinish: (_usage) => {
+                const runtime = activeRuntimes.get(req.chatId);
+                if (!runtime) {
+                  return;
+                }
+
+                const responseText = runtime.getAccumulatedResponseText();
+                partialResponses.set(req.chatId, responseText);
+
+                const now = Date.now();
+                if (now - lastDbSaveAt >= 150) {
+                  const currentMessages = [...streamMessages];
+                  if (
+                    currentMessages.length > 0 &&
+                    currentMessages[currentMessages.length - 1].role ===
+                      "assistant"
+                  ) {
+                    currentMessages[currentMessages.length - 1].content =
+                      responseText;
+                  }
+                  safeSend(event.sender, "chat:response:chunk", {
+                    chatId: req.chatId,
+                    messages: currentMessages,
+                  });
+                  lastDbSaveAt = now;
+                }
+              },
+              onFinish: (_totalUsage) => {},
+              onError: (error) => {
+                const message = error.message || String(error);
+                logger.error(`Native agent stream error: ${message}`);
+                safeSend(event.sender, "chat:response:error", {
+                  chatId: req.chatId,
+                  error: `${AI_STREAMING_ERROR_MESSAGE_PREFIX}${message}`,
+                });
+              },
+            };
+
+            // --- Phase 9.5: Initialize OMO runtime (hooks, skills, commands, agents) ---
+            let omoCtx: OmoRuntimeContext | undefined;
+            try {
+              omoCtx = await initializeOmoRuntime({
+                projectDir: chatAppPath,
+                chatId: req.chatId,
+                sessionId: chat.id,
+              });
+              activeOmoContexts.set(req.chatId, omoCtx);
+            } catch (omoErr) {
+              logger.warn(
+                "OMO runtime init failed (continuing without OMO features):",
+                omoErr,
+              );
             }
 
-            if (!abortController.signal.aborted) {
-              let chatSummary: string | undefined;
-              let appDisplayName: string | undefined;
+            // --- Phase 9.5.1: Wire BackgroundManager + RunContext into ToolContext ---
+            if (omoCtx) {
+              toolContext.backgroundManager = omoCtx.backgroundManager;
+              toolContext.runContext = runContext;
+            }
 
-              if (fullResponse) {
-                const chatTitle = fullResponse.match(
-                  /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
+            // --- Phase 9.6: Inject OMO agent system prompt ---
+            if (omoCtx) {
+              // Determine which OMO agent to use (default: sisyphus)
+              const omoAgentDef = getAgentDefinition("sisyphus");
+              if (omoAgentDef) {
+                const availableAgents: AvailableAgent[] = omoCtx.agentDefinitions
+                  .filter((agentDef) => !!agentDef.promptMetadata)
+                  .map((agentDef) => ({
+                    name: agentDef.name as AvailableAgent["name"],
+                    description: agentDef.description,
+                    metadata: agentDef.promptMetadata!,
+                  }));
+
+                const availableSkills: AvailableSkill[] = omoCtx.skillLoader
+                  .list()
+                  .map((skill) => ({
+                    name: skill.name,
+                    description: skill.description,
+                    location:
+                      skill.scope === "user"
+                        ? "user"
+                        : skill.scope === "project"
+                          ? "project"
+                          : "plugin",
+                  }));
+
+                const fullPrompt = buildFullSisyphusPrompt(
+                  availableAgents,
+                  [],
+                  availableSkills,
+                  DEFAULT_OMO_CATEGORIES,
                 );
-                chatSummary = chatTitle?.[1];
-                if (chatSummary) {
-                  await db
-                    .update(chats)
-                    .set({ title: chatSummary })
-                    .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+                if (fullPrompt) {
+                  systemPrompt.push(fullPrompt);
+                  systemPrompt.push(createEnvContext());
                 }
 
-                const appNameMatch = fullResponse.match(
-                  /<anyon-app-name>(.*?)<\/anyon-app-name>/,
+                logger.info(
+                  `Injected OMO dynamic prompt: ${omoAgentDef.name}`,
                 );
-                appDisplayName = appNameMatch?.[1];
-                if (appDisplayName && !chat.app.displayName) {
-                  await db
-                    .update(apps)
-                    .set({ displayName: appDisplayName })
-                    .where(eq(apps.id, chat.app.id));
-                }
-
-                await db
-                  .update(messages)
-                  .set({ content: fullResponse })
-                  .where(eq(messages.id, placeholderAssistantMessage.id));
-
-                try {
-                  const uncommittedFiles = await getGitUncommittedFiles({
-                    path: chatAppPath,
-                  });
-                  if (uncommittedFiles.length > 0) {
-                    await gitAddAll({ path: chatAppPath });
-                    const commitHash = await gitCommit({
-                      path: chatAppPath,
-                      message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
-                    });
-                    await db
-                      .update(messages)
-                      .set({ commitHash })
-                      .where(eq(messages.id, placeholderAssistantMessage.id));
-                    logger.log(
-                      `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
-                    );
-                  }
-                } catch (gitError) {
-                  logger.error("Git commit failed:", gitError);
-                }
               }
+            }
+
+            const runtimeParams: AgentRuntimeParams = {
+              chatId: req.chatId,
+              assistantMessageId: placeholderAssistantMessage.id,
+              sessionId: chat.id,
+              appPath: chatAppPath,
+              model: modelClient.model,
+              systemPrompt,
+              registry,
+              toolContext,
+              callbacks,
+              agentConfig,
+              maxOutputTokens: maxOutputTokens ?? undefined,
+              temperature: temperature ?? undefined,
+              runContext,
+              hookRegistry: omoCtx?.hookRegistry,
+              contextCollector: omoCtx?.contextCollector,
+            };
+            const runtime = new AgentRuntime(runtimeParams);
+
+            activeRuntimes.set(req.chatId, runtime);
+
+            let loopResult: string | undefined;
+            try {
+              loopResult = await runtime.loop();
+              logger.log(
+                `Native agent completed: ${loopResult} (chat ${req.chatId})`,
+              );
+              // Update agentRuns status on success
+              void db
+                .update(agentRuns)
+                .set({
+                  status: "completed",
+                  endedAt: new Date(),
+                })
+                .where(eq(agentRuns.runId, runContext.runId))
+                .catch((e) =>
+                  logger.error("Failed to update agentRuns status", e),
+                );
+            } catch (runtimeError) {
+              // Update agentRuns status on error/abort
+              const finalStatus = abortController.signal.aborted
+                ? "cancelled"
+                : "error";
+              void db
+                .update(agentRuns)
+                .set({
+                  status: finalStatus,
+                  endedAt: new Date(),
+                  abortReason: String(runtimeError),
+                })
+                .where(eq(agentRuns.runId, runContext.runId))
+                .catch((e) =>
+                  logger.error("Failed to update agentRuns status", e),
+                );
+              if (!abortController.signal.aborted) {
+                throw runtimeError;
+              }
+            } finally {
+              activeRuntimes.delete(req.chatId);
+              // Cleanup OMO runtime for this chat
+              const omoToClean = activeOmoContexts.get(req.chatId);
+              if (omoToClean) {
+                activeOmoContexts.delete(req.chatId);
+                void cleanupOmoRuntime(omoToClean).catch((e) =>
+                  logger.warn("OMO cleanup failed:", e),
+                );
+              }
+            }
+
+            const tokens = runtime.getCumulativeTokens();
+            const totalTokens = tokens.input + tokens.output;
+            if (totalTokens > 0) {
+              void db
+                .update(messages)
+                .set({ maxTokensUsed: totalTokens })
+                .where(eq(messages.id, placeholderAssistantMessage.id))
+                .catch((error) => {
+                  logger.error("Failed to save token usage", error);
+                });
+              void reportTokenUsage(totalTokens, settings.selectedModel.name);
+            }
+
+            fullResponse = runtime.getAccumulatedResponseText();
+
+            if (!abortController.signal.aborted && fullResponse) {
+              const chatTitle = fullResponse.match(
+                /<anyon-chat-summary>(.*?)<\/anyon-chat-summary>/,
+              );
+              const chatSummary = chatTitle?.[1];
+              if (chatSummary) {
+                await db
+                  .update(chats)
+                  .set({ title: chatSummary })
+                  .where(and(eq(chats.id, req.chatId), isNull(chats.title)));
+              }
+
+              const appNameMatch = fullResponse.match(
+                /<anyon-app-name>(.*?)<\/anyon-app-name>/,
+              );
+              const appDisplayName = appNameMatch?.[1];
+              if (appDisplayName && !chat.app.displayName) {
+                await db
+                  .update(apps)
+                  .set({ displayName: appDisplayName })
+                  .where(eq(apps.id, chat.app.id));
+              }
+
+              try {
+                const uncommittedFiles = await getGitUncommittedFiles({
+                  path: chatAppPath,
+                });
+                if (uncommittedFiles.length > 0) {
+                  await gitAddAll({ path: chatAppPath });
+                  const commitHash = await gitCommit({
+                    path: chatAppPath,
+                    message: `[anyon] ${chatSummary ?? "AI changes"} — ${uncommittedFiles.length} file(s)`,
+                  });
+                  await db
+                    .update(messages)
+                    .set({ commitHash })
+                    .where(eq(messages.id, placeholderAssistantMessage.id));
+                  logger.log(
+                    `Git commit: ${commitHash} (${uncommittedFiles.length} files)`,
+                  );
+                }
+              } catch (gitError) {
+                logger.error("Git commit failed:", gitError);
+              }
+
+              // Send final chunk with complete response text to renderer
+              const finalMessages = [...streamMessages];
+              if (
+                finalMessages.length > 0 &&
+                finalMessages[finalMessages.length - 1].role === "assistant"
+              ) {
+                finalMessages[finalMessages.length - 1].content = fullResponse;
+              }
+              safeSend(event.sender, "chat:response:chunk", {
+                chatId: req.chatId,
+                messages: finalMessages,
+              });
 
               safeSend(event.sender, "chat:response:end", {
                 chatId: req.chatId,
@@ -752,6 +889,11 @@ ${componentSnippet}
   // Handler to cancel an ongoing stream
   createTypedHandler(chatContracts.cancelStream, async (event, chatId) => {
     const abortController = activeStreams.get(chatId);
+    const runtime = activeRuntimes.get(chatId);
+    if (runtime) {
+      runtime.abort();
+      activeRuntimes.delete(chatId);
+    }
 
     if (abortController) {
       // Abort the stream
@@ -836,14 +978,4 @@ export function hasUnclosedAnyonWrite(text: string): boolean {
   const hasClosingTag = /<\/anyon-write>/.test(textAfterLastOpen);
 
   return !hasClosingTag;
-}
-
-function escapeAnyonTags(text: string): string {
-  // Escape anyon tags in reasoning content
-  // We are replacing the opening tag with a look-alike character
-  // to avoid issues where thinking content includes anyon tags
-  // and are mishandled by:
-  // 1. FE markdown parser
-  // 2. Main process response processor
-  return text.replace(/<anyon/g, "＜anyon").replace(/<\/anyon/g, "＜/anyon");
 }

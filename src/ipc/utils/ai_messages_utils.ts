@@ -134,7 +134,11 @@ export function parseAiMessagesJson(msg: DbMessageForParsing): ModelMessage[] {
     }
   }
 
-  // Fallback for legacy messages, missing data, or incompatible formats
+  // Fallback for legacy messages, missing data, or incompatible formats.
+  // Skip empty-content messages (e.g. placeholder assistant message not yet populated).
+  if (!msg.content) {
+    return [];
+  }
   return [
     {
       role: msg.role as "user" | "assistant",

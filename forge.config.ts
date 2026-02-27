@@ -28,6 +28,9 @@ const ignore = (file: string) => {
   if (file.startsWith("/scaffold")) {
     return false;
   }
+  if (file.startsWith("/prompts")) {
+    return false;
+  }
 
   if (file.startsWith("/worker") && !file.startsWith("/workers")) {
     return false;
@@ -78,7 +81,12 @@ const config: ForgeConfig = {
     ],
     icon: "./assets/icon/logo",
 
-    osxSign: isEndToEndTestBuild ? undefined : { identity: process.env.APPLE_SIGNING_IDENTITY || null, continueOnError: false },
+    osxSign: isEndToEndTestBuild
+      ? undefined
+      : {
+          identity: process.env.APPLE_SIGNING_IDENTITY || undefined,
+          continueOnError: false,
+        },
     osxNotarize: isEndToEndTestBuild
       ? undefined
       : {
@@ -91,10 +99,6 @@ const config: ForgeConfig = {
     extraResource: [
       "node_modules/dugite/git",
       "node_modules/@vscode",
-      ...(fs.existsSync("vendor/opencode") ? ["vendor/opencode"] : []),
-      ...(fs.existsSync("vendor/oh-my-opencode")
-        ? ["vendor/oh-my-opencode"]
-        : []),
       ...(fs.existsSync("preview-dists") ? ["preview-dists"] : []),
     ],
     // ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],

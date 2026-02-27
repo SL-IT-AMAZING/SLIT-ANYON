@@ -28,6 +28,7 @@ import { importContracts } from "../types/import";
 import { languageModelContracts } from "../types/language-model";
 import { mcpContracts, mcpEvents } from "../types/mcp";
 import { miscContracts, miscEvents } from "../types/misc";
+import { omoContracts, omoEvents } from "../types/omo";
 import { planContracts, planEvents } from "../types/plan";
 import { promptContracts } from "../types/prompts";
 import { proposalContracts } from "../types/proposals";
@@ -106,6 +107,7 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(visualEditingContracts),
   ...getInvokeChannels(securityContracts),
   ...getInvokeChannels(miscContracts),
+  ...getInvokeChannels(omoContracts),
   ...getInvokeChannels(freeAgentQuotaContracts),
   ...getInvokeChannels(planContracts),
   ...getInvokeChannels(authContracts),
@@ -135,6 +137,7 @@ export const VALID_RECEIVE_CHANNELS = [
   ...getReceiveChannels(mcpEvents),
   ...getReceiveChannels(systemEvents),
   ...getReceiveChannels(miscEvents),
+  ...getReceiveChannels(omoEvents),
   ...getReceiveChannels(planEvents),
   ...NODE_INSTALL_STREAM_CHANNELS.receive,
 ] as const;

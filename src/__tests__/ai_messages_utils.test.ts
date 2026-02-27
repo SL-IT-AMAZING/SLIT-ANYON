@@ -444,7 +444,7 @@ describe("parseAiMessagesJson", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle empty content in fallback", () => {
+    it("should skip empty content in fallback (e.g. placeholder assistant message)", () => {
       const msg: DbMessageForParsing = {
         id: 12,
         role: "assistant",
@@ -453,7 +453,7 @@ describe("parseAiMessagesJson", () => {
       };
 
       const result = parseAiMessagesJson(msg);
-      expect(result).toEqual([{ role: "assistant", content: "" }]);
+      expect(result).toEqual([]);
     });
 
     it("should handle empty messages array in v5 format", () => {

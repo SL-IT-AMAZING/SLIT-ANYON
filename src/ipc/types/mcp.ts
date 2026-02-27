@@ -125,6 +125,31 @@ export const McpConsentResponseSchema = z.object({
 export type McpConsentResponseParams = z.infer<typeof McpConsentResponseSchema>;
 
 // =============================================================================
+// Native Tool Consent Schemas (for native agent runtime)
+// =============================================================================
+
+export const NativeToolConsentRequestSchema = z.object({
+  requestId: z.string(),
+  toolName: z.string(),
+  riskLevel: z.enum(["safe", "moderate", "dangerous"]),
+  inputPreview: z.string().nullable().optional(),
+  chatId: z.number(),
+});
+
+export type NativeToolConsentRequestPayload = z.infer<
+  typeof NativeToolConsentRequestSchema
+>;
+
+export const NativeToolConsentResponseSchema = z.object({
+  requestId: z.string(),
+  decision: McpConsentDecisionEnum,
+});
+
+export type NativeToolConsentResponseParams = z.infer<
+  typeof NativeToolConsentResponseSchema
+>;
+
+// =============================================================================
 // MCP Contracts
 // =============================================================================
 
@@ -176,6 +201,12 @@ export const mcpContracts = {
     input: McpConsentResponseSchema,
     output: z.void(),
   }),
+
+  respondToNativeToolConsent: defineContract({
+    channel: "tool:consent-response",
+    input: NativeToolConsentResponseSchema,
+    output: z.void(),
+  }),
 } as const;
 
 // =============================================================================
@@ -186,6 +217,11 @@ export const mcpEvents = {
   consentRequest: defineEvent({
     channel: "mcp:tool-consent-request",
     payload: McpConsentRequestSchema,
+  }),
+
+  nativeToolConsentRequest: defineEvent({
+    channel: "tool:consent-request",
+    payload: NativeToolConsentRequestSchema,
   }),
 } as const;
 

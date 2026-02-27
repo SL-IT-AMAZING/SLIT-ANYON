@@ -135,6 +135,25 @@ export function showMcpConsentToast(args: {
   return toastId;
 }
 
+/**
+ * Show a native tool consent toast for agent runtime tools.
+ * Reuses the MCP consent toast with serverName="Agent".
+ */
+export function showNativeToolConsentToast(args: {
+  requestId: string;
+  toolName: string;
+  riskLevel: string;
+  inputPreview?: string | null;
+  onDecision: (d: "accept-once" | "accept-always" | "decline") => void;
+}) {
+  return showMcpConsentToast({
+    serverName: "Agent",
+    toolName: args.toolName,
+    toolDescription: `Risk level: ${args.riskLevel}`,
+    inputPreview: args.inputPreview,
+    onDecision: args.onDecision,
+  });
+}
 
 /**
  * Show update notification toast when a new version has been downloaded

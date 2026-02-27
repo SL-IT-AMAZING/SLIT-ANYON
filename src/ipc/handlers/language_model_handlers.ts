@@ -1,3 +1,4 @@
+import { getNativeAgents } from "@/agent/runtime/agent_config";
 import type { LanguageModel, LanguageModelProvider } from "@/ipc/types";
 import type { IpcMainInvokeEvent } from "electron";
 import log from "electron-log";
@@ -6,7 +7,6 @@ import {
   getLanguageModels,
   getLanguageModelsByProviders,
 } from "../shared/language_model_helpers";
-import { getOpenCodeAgents } from "../utils/opencode_api";
 import { createLoggedHandler } from "./safe_handle";
 
 const logger = log.scope("language_model_handlers");
@@ -56,8 +56,8 @@ export function registerLanguageModelHandlers() {
 
   handle(
     "get-opencode-agents",
-    async (event: IpcMainInvokeEvent, params?: { appPath?: string }) => {
-      return getOpenCodeAgents(params?.appPath);
+    async (_event: IpcMainInvokeEvent, _params?: { appPath?: string }) => {
+      return getNativeAgents();
     },
   );
 }

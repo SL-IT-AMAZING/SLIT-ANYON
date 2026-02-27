@@ -1,5 +1,4 @@
 import { MaxChatTurnsSelector } from "@/components/MaxChatTurnsSelector";
-import { OpenCodeConnectionModeSelector } from "@/components/OpenCodeConnectionModeSelector";
 import { ThinkingBudgetSelector } from "@/components/ThinkingBudgetSelector";
 import { useTranslation } from "react-i18next";
 
@@ -13,7 +12,6 @@ export function AIPanel() {
       </h2>
 
       <div className="space-y-4">
-        <OpenCodeConnectionModeSelector />
         <ThinkingBudgetSelector />
         <MaxChatTurnsSelector />
       </div>

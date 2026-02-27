@@ -31,9 +31,10 @@ export { entitlementContracts } from "./entitlement";
 export { settingsContracts } from "./settings";
 export { appContracts } from "./app";
 export { chatContracts, chatStreamContract } from "./chat";
-export { agentEvents } from "./agent";
+export { agentContracts, agentEvents } from "./agent";
 export { githubContracts, gitContracts, githubEvents } from "./github";
 export { mcpContracts, mcpEvents } from "./mcp";
+export { omoContracts, omoEvents } from "./omo";
 export { vercelContracts, vercelDeployStreamContract } from "./vercel";
 export { supabaseContracts } from "./supabase";
 export {
@@ -66,9 +67,10 @@ export { entitlementClient } from "./entitlement";
 export { settingsClient } from "./settings";
 export { appClient } from "./app";
 export { chatClient, chatStreamClient } from "./chat";
-export { agentEventClient } from "./agent";
+export { agentClient, agentEventClient } from "./agent";
 export { githubClient, gitClient, githubEventClient } from "./github";
 export { mcpClient, mcpEventClient } from "./mcp";
+export { omoClient, omoEventClient } from "./omo";
 export { vercelClient, vercelDeployStreamClient } from "./vercel";
 export { supabaseClient } from "./supabase";
 export {
@@ -178,6 +180,10 @@ export type {
   AgentProblemsUpdatePayload,
   Problem,
   ProblemReport,
+  AgentQuestionOption,
+  AgentQuestion,
+  AgentQuestionRequestPayload,
+  AgentQuestionResponseParams,
 } from "./agent";
 
 // GitHub types
@@ -208,6 +214,8 @@ export type {
   SetMcpToolConsentParams,
   McpConsentRequestPayload,
   McpConsentResponseParams,
+  NativeToolConsentRequestPayload,
+  NativeToolConsentResponseParams,
 } from "./mcp";
 
 // Vercel types
@@ -334,6 +342,13 @@ export type { FreeAgentQuotaStatus } from "./free_agent_quota";
 // Design system types
 export type { DesignSystemType } from "./design_systems";
 
+export type {
+  OmoAgentInfo,
+  OmoBackgroundTask,
+  OmoSkillInfo,
+  OmoCommandInfo,
+} from "./omo";
+
 // =============================================================================
 // Schema Exports (for validation in handlers/components)
 // =============================================================================
@@ -353,7 +368,26 @@ export {
   ChatResponseEndSchema,
 } from "./chat";
 
-export { AgentTodoSchema, AgentTodosUpdateSchema } from "./agent";
+export {
+  AgentTodoSchema,
+  AgentTodosUpdateSchema,
+  AgentQuestionOptionSchema,
+  AgentQuestionSchema,
+  AgentQuestionRequestSchema,
+  AgentQuestionResponseSchema,
+} from "./agent";
+
+export {
+  NativeToolConsentRequestSchema,
+  NativeToolConsentResponseSchema,
+} from "./mcp";
+
+export {
+  OmoAgentInfoSchema,
+  OmoBackgroundTaskSchema,
+  OmoSkillInfoSchema,
+  OmoCommandInfoSchema,
+} from "./omo";
 
 export { AuthUserSchema, AuthStateSchema } from "./auth";
 
@@ -377,6 +411,7 @@ export {
 // =============================================================================
 
 import { agentEventClient } from "./agent";
+import { agentClient } from "./agent";
 import { appClient } from "./app";
 import { authClient } from "./auth";
 import { capacitorClient } from "./capacitor";
@@ -391,15 +426,16 @@ import { importClient } from "./import";
 import { languageModelClient } from "./language-model";
 import { mcpClient, mcpEventClient } from "./mcp";
 import { miscClient, miscEventClient } from "./misc";
+import { omoClient, omoEventClient } from "./omo";
 import { promptClient } from "./prompts";
 import { proposalClient } from "./proposals";
 import { securityClient } from "./security";
 import { settingsClient } from "./settings";
 import { supabaseClient } from "./supabase";
 import {
+  nodeInstallStreamClient,
   systemClient,
   systemEventClient,
-  nodeInstallStreamClient,
 } from "./system";
 import { templateClient } from "./templates";
 import { upgradeClient } from "./upgrade";
@@ -464,6 +500,8 @@ export const ipc = {
   misc: miscClient,
   freeAgentQuota: freeAgentQuotaClient,
   designSystem: dsClient,
+  omo: omoClient,
+  agentRuntime: agentClient,
 
   // Event clients for main->renderer pub/sub
   events: {
@@ -472,5 +510,6 @@ export const ipc = {
     mcp: mcpEventClient,
     system: systemEventClient,
     misc: miscEventClient,
+    omo: omoEventClient,
   },
 } as const;

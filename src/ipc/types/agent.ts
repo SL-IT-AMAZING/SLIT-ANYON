@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { createEventClient, defineEvent } from "../contracts/core";
+import {
+  createClient,
+  createEventClient,
+  defineContract,
+  defineEvent,
+} from "../contracts/core";
 
 // =============================================================================
 // Agent Schemas
@@ -64,6 +69,46 @@ export type AgentProblemsUpdatePayload = z.infer<
 >;
 
 // =============================================================================
+// Agent Question Schemas (for native agent runtime)
+// =============================================================================
+
+export const AgentQuestionOptionSchema = z.object({
+  label: z.string(),
+  description: z.string().optional(),
+});
+
+export type AgentQuestionOption = z.infer<typeof AgentQuestionOptionSchema>;
+
+export const AgentQuestionSchema = z.object({
+  question: z.string(),
+  header: z.string().max(30),
+  options: z.array(AgentQuestionOptionSchema),
+  multiple: z.boolean().optional().default(false),
+});
+
+export type AgentQuestion = z.infer<typeof AgentQuestionSchema>;
+
+export const AgentQuestionRequestSchema = z.object({
+  requestId: z.string(),
+  chatId: z.number(),
+  questions: z.array(AgentQuestionSchema),
+});
+
+export type AgentQuestionRequestPayload = z.infer<
+  typeof AgentQuestionRequestSchema
+>;
+
+export const AgentQuestionResponseSchema = z.object({
+  requestId: z.string(),
+  // null = user cancelled or timed out
+  answers: z.array(z.array(z.string())).nullable(),
+});
+
+export type AgentQuestionResponseParams = z.infer<
+  typeof AgentQuestionResponseSchema
+>;
+
+// =============================================================================
 // Agent Event Contracts (Main -> Renderer)
 // =============================================================================
 
@@ -83,6 +128,28 @@ export const agentEvents = {
     channel: "agent-tool:problems-update",
     payload: AgentProblemsUpdateSchema,
   }),
+
+  /**
+   * Emitted when the native agent runtime asks the user a question.
+   */
+  questionRequest: defineEvent({
+    channel: "agent:question-request",
+    payload: AgentQuestionRequestSchema,
+  }),
+} as const;
+// =============================================================================
+// Agent Contracts (Renderer -> Main)
+// =============================================================================
+
+export const agentContracts = {
+  /**
+   * Renderer responds to an agent question.
+   */
+  respondToQuestion: defineContract({
+    channel: "agent:question-response",
+    input: AgentQuestionResponseSchema,
+    output: z.void(),
+  }),
 } as const;
 
 // =============================================================================
@@ -99,3 +166,8 @@ export const agentEvents = {
  * // Later: unsubscribe();
  */
 export const agentEventClient = createEventClient(agentEvents);
+
+/**
+ * Type-safe invoke client for agent contracts.
+ */
+export const agentClient = createClient(agentContracts);

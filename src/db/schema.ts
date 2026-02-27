@@ -262,6 +262,16 @@ export const mcpToolConsents = sqliteTable(
   (table) => [unique("uniq_mcp_consent").on(table.serverId, table.toolName)],
 );
 
+// --- Native Tool Consents table (for native agent runtime) ---
+export const nativeToolConsents = sqliteTable("native_tool_consents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  toolName: text("tool_name").notNull().unique(),
+  consent: text("consent", { enum: ["accept-always", "decline"] }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
+    sql`(unixepoch())`,
+  ),
+});
+
 // --- Custom Themes table ---
 export const customThemes = sqliteTable("custom_themes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -275,3 +285,114 @@ export const customThemes = sqliteTable("custom_themes", {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+export const agentRuns = sqliteTable("agent_runs", {
+  runId: text("run_id").primaryKey(),
+  rootChatId: integer("root_chat_id")
+    .notNull()
+    .references(() => chats.id, { onDelete: "cascade" }),
+  chatId: integer("chat_id")
+    .notNull()
+    .references(() => chats.id, { onDelete: "cascade" }),
+  parentRunId: text("parent_run_id"),
+  agentName: text("agent_name").notNull(),
+  agentKind: text("agent_kind", { enum: ["primary", "subagent"] })
+    .notNull()
+    .default("primary"),
+  status: text("status", {
+    enum: ["running", "completed", "error", "cancelled"],
+  })
+    .notNull()
+    .default("running"),
+  startedAt: integer("started_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  endedAt: integer("ended_at", { mode: "timestamp" }),
+  abortReason: text("abort_reason"),
+});
+
+export const backgroundTasks = sqliteTable("background_tasks", {
+  taskId: text("task_id").primaryKey(),
+  runId: text("run_id")
+    .notNull()
+    .references(() => agentRuns.runId, { onDelete: "cascade" }),
+  type: text("type", { enum: ["agent", "command", "other"] })
+    .notNull()
+    .default("agent"),
+  status: text("status", {
+    enum: ["pending", "running", "completed", "error", "cancelled", "stale"],
+  })
+    .notNull()
+    .default("pending"),
+  description: text("description"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  payloadJson: text("payload_json", { mode: "json" }),
+  resultJson: text("result_json", { mode: "json" }),
+  error: text("error"),
+});
+
+export const todoItems = sqliteTable("todo_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  runId: text("run_id")
+    .notNull()
+    .references(() => agentRuns.runId, { onDelete: "cascade" }),
+  chatId: integer("chat_id")
+    .notNull()
+    .references(() => chats.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  status: text("status", {
+    enum: ["pending", "in_progress", "completed", "cancelled"],
+  })
+    .notNull()
+    .default("pending"),
+  priority: text("priority", { enum: ["high", "medium", "low"] })
+    .notNull()
+    .default("medium"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
+export const agentRunsRelations = relations(agentRuns, ({ many, one }) => ({
+  rootChat: one(chats, {
+    fields: [agentRuns.rootChatId],
+    references: [chats.id],
+    relationName: "rootChat",
+  }),
+  chat: one(chats, {
+    fields: [agentRuns.chatId],
+    references: [chats.id],
+    relationName: "runChat",
+  }),
+  backgroundTasks: many(backgroundTasks),
+  todoItems: many(todoItems),
+}));
+
+export const backgroundTasksRelations = relations(
+  backgroundTasks,
+  ({ one }) => ({
+    run: one(agentRuns, {
+      fields: [backgroundTasks.runId],
+      references: [agentRuns.runId],
+    }),
+  }),
+);
+
+export const todoItemsRelations = relations(todoItems, ({ one }) => ({
+  run: one(agentRuns, {
+    fields: [todoItems.runId],
+    references: [agentRuns.runId],
+  }),
+  chat: one(chats, {
+    fields: [todoItems.chatId],
+    references: [chats.id],
+  }),
+}));

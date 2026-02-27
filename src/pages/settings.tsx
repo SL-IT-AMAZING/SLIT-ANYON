@@ -24,7 +24,6 @@ import { AutoUpdateSwitch } from "@/components/AutoUpdateSwitch";
 import { ChatCompletionNotificationSwitch } from "@/components/ChatCompletionNotificationSwitch";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { NodePathSelector } from "@/components/NodePathSelector";
-import { OpenCodeConnectionModeSelector } from "@/components/OpenCodeConnectionModeSelector";
 
 import { RuntimeModeSelector } from "@/components/RuntimeModeSelector";
 import { SettingsList } from "@/components/SettingsList";
@@ -367,10 +366,6 @@ export function AISettings() {
       <h2 className="text-lg font-medium text-foreground mb-4">
         {t("settings.tabs.ai", { ns: "app" })}
       </h2>
-
-      <div className="mt-4">
-        <OpenCodeConnectionModeSelector />
-      </div>
 
       <div id={SETTING_IDS.thinkingBudget} className="mt-4">
         <ThinkingBudgetSelector />

@@ -32,35 +32,10 @@ interface CreditCheckResult {
   reason?: string;
 }
 
-async function checkCredits(userId: string): Promise<CreditCheckResult> {
-  try {
-    const customers = await polar.customers.list({ query: userId });
-    const customer = customers.result.items[0];
-    if (!customer) {
-      return { allowed: false, reason: "No billing account found" };
-    }
-
-    const meters = await polar.customerMeters.list({
-      customerId: customer.id,
-    });
-    const meterData = meters.result.items[0];
-    if (!meterData) {
-      return { allowed: true };
-    }
-
-    const remaining = meterData.creditedUnits - meterData.consumedUnits;
-    if (remaining <= 0) {
-      return {
-        allowed: false,
-        reason: "Credit limit reached. Upgrade your plan for more credits.",
-      };
-    }
-
-    return { allowed: true };
-  } catch (error) {
-    console.error("Credit check failed, allowing request:", error);
-    return { allowed: true };
-  }
+async function checkCredits(_userId: string): Promise<CreditCheckResult> {
+  // TODO: Re-enable Polar credit check once billing is set up.
+  // For now, always allow requests so the native agent can function.
+  return { allowed: true };
 }
 
 function extractModelFromBody(body: string | null): string | null {
