@@ -526,7 +526,7 @@ ${componentSnippet}
             openCodeSystemPrompt += `\n\nCurrent app context:\n- appId: ${chat.app.id}\n- appName: ${chat.app.name}`;
 
             if (settings.enableBooster) {
-              openCodeSystemPrompt = `ulw\n\n${openCodeSystemPrompt}`;
+              userPrompt = `ulw\n\n${userPrompt}`;
             }
 
             // Send only the current user prompt — no codebase, no history.
