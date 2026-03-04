@@ -1,156 +1,226 @@
 import { useDesignSystems } from "@/hooks/useDesignSystems";
 import { useTweakcnThemes } from "@/hooks/useTweakcnThemes";
+import type { TweakcnThemeType } from "@/ipc/types";
 import type { DesignSystemType } from "@/ipc/types/design_systems";
+import type { ThemeTag } from "@/lib/color-utils";
+import { generateThemeTags } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Loader2, PackageOpen, Search } from "lucide-react";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DesignSystemCard } from "./DesignSystemCard";
-import { TweakcnThemeCard } from "./TweakcnThemeCard";
-import { Card } from "./ui/card";
+import type { LibraryFilter } from "./LibraryList";
+import { TweakcnThemeCard, TweakcnThemeCardSkeleton } from "./TweakcnThemeCard";
 import { Input } from "./ui/input";
-import { Skeleton } from "./ui/skeleton";
 
-const CATEGORIES = [
-  { key: "all", label: "All" },
-  { key: "minimal", label: "Minimal" },
-  { key: "material", label: "Material" },
-  { key: "enterprise", label: "Enterprise" },
-  { key: "modern", label: "Modern" },
-  { key: "accessible", label: "Accessible" },
-  { key: "playful", label: "Playful" },
-  { key: "themes", label: "Themes" },
-] as const;
+export type SortOption = "popular" | "newest" | "oldest";
 
-type CategoryKey = (typeof CATEGORIES)[number]["key"];
+const PAGE_SIZE = 20;
 
 interface DesignSystemGalleryProps {
   onPreview: (id: string) => void;
   onUse: (id: string) => void;
+  selectedFilter?: LibraryFilter;
+  selectedTags?: ThemeTag[];
+  sortOption?: SortOption;
+  onSortChange?: (sort: SortOption) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
   onPreview,
   onUse,
+  selectedFilter = "all",
+  selectedTags = [],
+  sortOption = "popular",
+  onSortChange,
+  searchQuery = "",
+  onSearchChange,
 }) => {
   const { designSystems, isLoading } = useDesignSystems();
   const { themes, isLoading: isThemesLoading } = useTweakcnThemes();
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const filterFingerprint = `${searchQuery}|${selectedFilter}|${selectedTags.join(",")}|${sortOption}`;
+  const lastFingerprintRef = useRef(filterFingerprint);
+
+  const themeTagsMap = useMemo(() => {
+    const map = new Map<string, ThemeTag[]>();
+    for (const theme of themes) {
+      map.set(theme.id, generateThemeTags(theme.cssVars.light));
+    }
+    return map;
+  }, [themes]);
 
   const filteredDesignSystems = useMemo(() => {
-    return designSystems.filter((ds: DesignSystemType) => {
-      const matchesCategory =
-        selectedCategory === "all" ||
-        (selectedCategory !== "themes" && ds.category === selectedCategory);
-      const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        !searchQuery ||
-        ds.displayName.toLowerCase().includes(query) ||
-        ds.description.toLowerCase().includes(query) ||
-        ds.tags.some((tag) => tag.toLowerCase().includes(query));
-      return matchesCategory && matchesSearch;
-    });
-  }, [designSystems, selectedCategory, searchQuery]);
+    if (selectedFilter === "design-systems" || selectedFilter === "all") {
+      return designSystems.filter((ds: DesignSystemType) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          !searchQuery ||
+          ds.displayName.toLowerCase().includes(query) ||
+          ds.description.toLowerCase().includes(query) ||
+          ds.tags.some((tag) => tag.toLowerCase().includes(query))
+        );
+      });
+    }
+    return [];
+  }, [designSystems, selectedFilter, searchQuery]);
 
   const filteredThemes = useMemo(() => {
-    return themes.filter((theme) => {
-      const matchesCategory =
-        selectedCategory === "all" || selectedCategory === "themes";
+    if (selectedFilter === "design-systems") return [];
+
+    return themes.filter((theme: TweakcnThemeType) => {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery || theme.name.toLowerCase().includes(query);
-      return matchesCategory && matchesSearch;
+
+      const themeTags = themeTagsMap.get(theme.id) ?? [];
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.some((tag) => themeTags.includes(tag));
+
+      return matchesSearch && matchesTags;
     });
-  }, [themes, selectedCategory, searchQuery]);
+  }, [themes, searchQuery, selectedTags, themeTagsMap, selectedFilter]);
+
+  const sortedThemes = useMemo(() => {
+    const sorted = [...filteredThemes];
+    if (sortOption === "newest") sorted.reverse();
+    return sorted;
+  }, [filteredThemes, sortOption]);
+
+  const totalItems = filteredDesignSystems.length + sortedThemes.length;
+
+  const { visibleDesignSystems, visibleThemes } = useMemo(() => {
+    const dsSlice = filteredDesignSystems.slice(
+      0,
+      Math.min(filteredDesignSystems.length, displayCount),
+    );
+    const remaining = displayCount - dsSlice.length;
+    const themeSlice = remaining > 0 ? sortedThemes.slice(0, remaining) : [];
+    return { visibleDesignSystems: dsSlice, visibleThemes: themeSlice };
+  }, [filteredDesignSystems, sortedThemes, displayCount]);
+
+  const hasMore =
+    visibleDesignSystems.length + visibleThemes.length < totalItems;
+
+  const loadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
+  if (lastFingerprintRef.current !== filterFingerprint) {
+    lastFingerprintRef.current = filterFingerprint;
+    setDisplayCount(PAGE_SIZE);
+  }
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   const isAnyLoading = isLoading || isThemesLoading;
   const hasAnyResults =
-    filteredDesignSystems.length > 0 || filteredThemes.length > 0;
+    visibleDesignSystems.length > 0 || visibleThemes.length > 0;
 
   return (
     <section data-testid="design-system-gallery">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">Design Systems</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Browse visual design concepts for your app
-        </p>
-      </div>
-
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {CATEGORIES.map((cat) => {
-          const isSelected = selectedCategory === cat.key;
-          return (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => setSelectedCategory(cat.key)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-medium border cursor-pointer transition-colors duration-200",
-                isSelected
-                  ? "border-foreground/30 bg-accent text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:bg-accent/50",
-              )}
-            >
-              {cat.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search design systems..."
+          placeholder="Search themes and design systems..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => onSearchChange?.(e.target.value)}
           className="pl-10 w-full"
         />
       </div>
 
-      {/* Grid */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-1 text-sm">
+          {(["popular", "newest", "oldest"] as const).map((opt, i) => (
+            <span key={opt} className="flex items-center">
+              {i > 0 && (
+                <span className="text-muted-foreground/40 mx-1.5">
+                  &middot;
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => onSortChange?.(opt)}
+                className={cn(
+                  "capitalize transition-colors cursor-pointer",
+                  sortOption === opt
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {opt}
+              </button>
+            </span>
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground">
+          Showing {totalItems} {totalItems === 1 ? "theme" : "themes"}
+        </span>
+      </div>
+
       {isAnyLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={`skeleton-${i}`} className="overflow-hidden">
-              <Skeleton className="h-[120px] w-full rounded-none" />
-              <div className="p-4 space-y-3">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-                <div className="flex gap-2 pt-2">
-                  <Skeleton className="h-8 flex-1" />
-                  <Skeleton className="h-8 flex-1" />
-                </div>
-              </div>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <TweakcnThemeCardSkeleton key={`skel-${i}`} />
           ))}
         </div>
       ) : hasAnyResults ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDesignSystems.map((ds) => (
-            <DesignSystemCard
-              key={ds.id}
-              designSystem={ds}
-              onPreview={onPreview}
-              onUse={onUse}
-            />
-          ))}
-          {filteredThemes.map((theme) => (
-            <TweakcnThemeCard
-              key={theme.id}
-              theme={theme}
-              onPreview={(themeId) => onPreview(`themes:${themeId}`)}
-              onUse={(themeId) => onUse(`themes:${themeId}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {visibleDesignSystems.map((ds) => (
+              <DesignSystemCard
+                key={ds.id}
+                designSystem={ds}
+                onPreview={onPreview}
+                onUse={onUse}
+              />
+            ))}
+            {visibleThemes.map((theme) => (
+              <TweakcnThemeCard
+                key={theme.id}
+                theme={theme}
+                onPreview={(themeId) => onPreview(`themes:${themeId}`)}
+                onUse={(themeId) => onUse(`themes:${themeId}`)}
+              />
+            ))}
+          </div>
+
+          <div ref={sentinelRef} className="w-full h-1" />
+
+          {hasMore && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </>
       ) : (
-        <div className="text-muted-foreground text-center py-12">
-          No design systems found matching your criteria.
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <PackageOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
+          <p className="text-lg font-medium text-muted-foreground mb-1">
+            No themes found
+          </p>
+          <p className="text-sm text-muted-foreground/60">
+            Try adjusting your filters or search query
+          </p>
         </div>
       )}
     </section>

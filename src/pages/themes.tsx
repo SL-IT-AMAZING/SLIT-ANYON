@@ -2,9 +2,11 @@ import { CreateAppDialog } from "@/components/CreateAppDialog";
 import { CustomThemeDialog } from "@/components/CustomThemeDialog";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { DesignSystemGallery } from "@/components/DesignSystemGallery";
+import type { SortOption } from "@/components/DesignSystemGallery";
 import { DesignSystemPreviewDialog } from "@/components/DesignSystemPreviewDialog";
 import { EditThemeDialog } from "@/components/EditThemeDialog";
 import { LibraryList } from "@/components/LibraryList";
+import type { LibraryFilter } from "@/components/LibraryList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -12,15 +14,20 @@ import {
   useDeleteCustomTheme,
   useUpdateCustomTheme,
 } from "@/hooks/useCustomThemes";
+import { useTweakcnThemes } from "@/hooks/useTweakcnThemes";
 import type { CustomTheme } from "@/ipc/types";
+import type { ThemeTag } from "@/lib/color-utils";
+import { ALL_THEME_TAGS, generateThemeTags } from "@/lib/color-utils";
 import { showError } from "@/lib/toast";
 import { Blocks, Palette, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function ThemesPage() {
   const { t } = useTranslation(["app", "common"]);
   const { customThemes, isLoading } = useCustomThemes();
+  const { themes: tweakcnThemes, isLoading: isThemesLoading } =
+    useTweakcnThemes();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewDesignSystemId, setPreviewDesignSystemId] = useState<
     string | null
@@ -29,17 +36,47 @@ export default function ThemesPage() {
     string | null
   >(null);
 
+  const [selectedFilter, setSelectedFilter] = useState<LibraryFilter>("all");
+  const [selectedTags, setSelectedTags] = useState<ThemeTag[]>([]);
+  const [sortOption, setSortOption] = useState<SortOption>("popular");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const tagCounts = useMemo(() => {
+    const counts = {} as Record<ThemeTag, number>;
+    for (const tag of ALL_THEME_TAGS) {
+      counts[tag] = 0;
+    }
+    for (const theme of tweakcnThemes) {
+      const tags = generateThemeTags(theme.cssVars.light);
+      for (const tag of tags) {
+        counts[tag] = (counts[tag] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [tweakcnThemes]);
+
   return (
     <div className="flex h-full w-full">
       <aside className="w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
-        <LibraryList />
+        <LibraryList
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          selectedTags={selectedTags}
+          onTagsChange={setSelectedTags}
+          tagCounts={tagCounts}
+          isLoading={isThemesLoading}
+        />
       </aside>
 
       <div className="flex-1 min-w-0 px-8 py-6 overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-5">
-          <Palette className="inline-block h-8 w-8 mr-2" />
-          {t("library.themes.title", { ns: "app" })}
-        </h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {t("library.themes.title", { ns: "app" })}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Browse and apply visual themes for your apps
+          </p>
+        </div>
 
         <Tabs defaultValue="design-systems" className="w-full">
           <TabsList>
@@ -62,6 +99,12 @@ export default function ThemesPage() {
             <DesignSystemGallery
               onPreview={(id) => setPreviewDesignSystemId(id)}
               onUse={(id) => setCreateWithDesignSystem(id)}
+              selectedFilter={selectedFilter}
+              selectedTags={selectedTags}
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           </TabsContent>
 
