@@ -26,6 +26,7 @@ import { gitContracts, githubContracts, githubEvents } from "../types/github";
 import { helpContracts, helpStreamContract } from "../types/help";
 import { importContracts } from "../types/import";
 import { languageModelContracts } from "../types/language-model";
+import { likedThemesContracts } from "../types/liked_themes";
 import { mcpContracts, mcpEvents } from "../types/mcp";
 import { miscContracts, miscEvents } from "../types/misc";
 import { planContracts, planEvents } from "../types/plan";
@@ -74,6 +75,7 @@ const TEST_INVOKE_CHANNELS = [
 export const VALID_INVOKE_CHANNELS = [
   // Core domains
   ...getInvokeChannels(settingsContracts),
+  ...getInvokeChannels(likedThemesContracts),
   ...getInvokeChannels(appContracts),
   ...getInvokeChannels(chatContracts),
 

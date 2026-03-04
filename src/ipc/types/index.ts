@@ -56,6 +56,7 @@ export { securityContracts } from "./security";
 export { miscContracts, miscEvents } from "./misc";
 export { freeAgentQuotaContracts } from "./free_agent_quota";
 export { designSystemContracts } from "./design_systems";
+export { likedThemesContracts } from "./liked_themes";
 
 // =============================================================================
 // Client Exports
@@ -91,6 +92,7 @@ export { securityClient } from "./security";
 export { miscClient, miscEventClient } from "./misc";
 export { freeAgentQuotaClient } from "./free_agent_quota";
 export { designSystemClient } from "./design_systems";
+export { likedThemesClient } from "./liked_themes";
 
 // =============================================================================
 // Type Exports
@@ -333,6 +335,11 @@ export type { FreeAgentQuotaStatus } from "./free_agent_quota";
 
 // Design system types
 export type { DesignSystemType, TweakcnThemeType } from "./design_systems";
+export type {
+  GetLikedThemesOutput,
+  ToggleThemeLikeInput,
+  ToggleThemeLikeOutput,
+} from "./liked_themes";
 
 // =============================================================================
 // Schema Exports (for validation in handlers/components)
@@ -389,6 +396,7 @@ import { gitClient, githubClient, githubEventClient } from "./github";
 import { helpClient, helpStreamClient } from "./help";
 import { importClient } from "./import";
 import { languageModelClient } from "./language-model";
+import { likedThemesClient } from "./liked_themes";
 import { mcpClient, mcpEventClient } from "./mcp";
 import { miscClient, miscEventClient } from "./misc";
 import { promptClient } from "./prompts";
@@ -429,6 +437,7 @@ import { visualEditingClient } from "./visual-editing";
 export const ipc = {
   // Core domains
   settings: settingsClient,
+  likedThemes: likedThemesClient,
   app: appClient,
   chat: chatClient,
   auth: authClient,

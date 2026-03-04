@@ -275,3 +275,17 @@ export const customThemes = sqliteTable("custom_themes", {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+export const likedThemes = sqliteTable(
+  "liked_themes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    themeId: text("theme_id").notNull(),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (table) => [
+    unique("liked_themes_theme_id_unique").on(table.themeId),
+  ],
+);
