@@ -1,13 +1,13 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { isPreviewOpenAtom } from "@/atoms/viewAtoms";
+import { NodeInstallDialog } from "@/components/NodeInstallDialog";
 import { PrivacyBanner } from "@/components/TelemetryBanner";
 import { LogoSpinner } from "@/components/chat-v2/LogoSpinner";
 import { HomeChatInput } from "@/components/chat/HomeChatInput";
-import { NodeInstallDialog } from "@/components/NodeInstallDialog";
 import { useAppVersion } from "@/hooks/useAppVersion";
 import { useLoadApps } from "@/hooks/useLoadApps";
-import { useSettings } from "@/hooks/useSettings";
 import { useNodeStatus } from "@/hooks/useNodeStatus";
+import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { ipc } from "@/ipc/types";
 import { generateCuteAppName, getAppDisplayName } from "@/lib/utils";
@@ -34,8 +34,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
-// @ts-ignore
-import heroBgImage from "../../assets/bg-im.png";
 // @ts-ignore
 import anyonLogo from "../../img/logo3.svg";
 
@@ -218,13 +216,6 @@ export default function HomePage() {
   // Main Home Page Content
   return (
     <div className="relative min-h-full">
-      <div
-        className="sticky top-0 h-screen bg-no-repeat bg-center bg-cover pointer-events-none opacity-25"
-        style={{
-          backgroundImage: `url(${heroBgImage})`,
-          marginBottom: "-100vh",
-        }}
-      />
       <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[8vh] relative">
         <ForceCloseDialog
           isOpen={forceCloseDialogOpen}
