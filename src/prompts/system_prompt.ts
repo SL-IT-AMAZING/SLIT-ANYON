@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import log from "electron-log";
+import { getLanguageInstruction } from "./language_prompt";
 
 const logger = log.scope("system_prompt");
 
@@ -459,15 +460,22 @@ export const constructSystemPrompt = ({
   aiRules,
   themePrompt,
   selectedAgent,
+  language,
 }: {
   aiRules: string | undefined;
   themePrompt?: string;
   selectedAgent?: string;
+  language?: string;
 }) => {
   let prompt = OPENCODE_SYSTEM_PROMPT.replace(
     "[[AI_RULES]]",
     aiRules ?? DEFAULT_AI_RULES,
   );
+
+  const languageInstruction = getLanguageInstruction(language);
+  if (languageInstruction) {
+    prompt = languageInstruction + "\n\n" + prompt;
+  }
 
   if (selectedAgent && getBaseAgentName(selectedAgent) === "Atlas") {
     prompt += `\n\n${ATLAS_PLANNER_SYSTEM_PROMPT}`;

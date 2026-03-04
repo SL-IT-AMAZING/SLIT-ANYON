@@ -139,8 +139,14 @@ export const CompletedWithResponse: Story = {
   render: () => (
     <InteractiveSessionTurn
       userMessage="Refactor the SessionTurn component to use sticky headers and a controlled expand/collapse pattern."
-      steps={SAMPLE_STEPS}
-      response={SAMPLE_RESPONSE}
+      steps={[
+        ...SAMPLE_STEPS,
+        {
+          id: "response-text",
+          type: "text" as const,
+          text: SAMPLE_RESPONSE,
+        },
+      ]}
       diffs={SAMPLE_DIFFS}
       duration="45s"
       stepsExpanded={false}
@@ -152,8 +158,14 @@ export const StepsExpanded: Story = {
   render: () => (
     <InteractiveSessionTurn
       userMessage="Fix the layout bug where the steps section overlaps the response."
-      steps={SAMPLE_STEPS}
-      response="Fixed the z-index stacking issue by adjusting the sticky positioning values."
+      steps={[
+        ...SAMPLE_STEPS,
+        {
+          id: "response-text",
+          type: "text" as const,
+          text: "Fixed the z-index stacking issue by adjusting the sticky positioning values.",
+        },
+      ]}
       diffs={[
         { file: "src/components/SessionTurn.tsx", additions: 4, deletions: 2 },
       ]}
@@ -372,8 +384,12 @@ export const RealisticMultiStep: Story = {
     return (
       <InteractiveSessionTurn
         userMessage="Refactor the SessionTurn component to add an accordion-based file diff viewer in the response section. Make sure the accordion uses our Base UI primitives and integrates cleanly with the existing layout. Run type checks when done."
-        steps={realisticSteps}
-        response={`## Refactoring Complete
+        steps={[
+          ...realisticSteps,
+          {
+            id: "response-text",
+            type: "text" as const,
+            text: `## Refactoring Complete
 
 I've updated \`SessionTurn\` to include an accordion-based file diff viewer:
 
@@ -402,7 +418,9 @@ I've updated \`SessionTurn\` to include an accordion-based file diff viewer:
   stepsExpanded={expanded}
   onToggleSteps={() => setExpanded(e => !e)}
 />
-\`\`\``}
+\`\`\``,
+          },
+        ]}
         diffs={[
           {
             file: "src/components/chat-v2/SessionTurn.tsx",

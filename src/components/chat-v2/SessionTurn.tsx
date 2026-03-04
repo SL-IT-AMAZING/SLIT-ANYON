@@ -4,12 +4,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { chatClient } from "@/ipc/types";
 import { cn } from "@/lib/utils";
-import { ChevronsUpDown, FileCode, Wrench } from "lucide-react";
+import { ChevronsUpDown, FileCode, Search, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { BasicTool } from "./BasicTool";
 import { LogoSpinner } from "./LogoSpinner";
 import { MarkdownContent } from "./MarkdownContent";
+import { type Question, QuestionPrompt } from "./QuestionPrompt";
 
 export function computeStatus(toolName: string | undefined): string {
   switch (toolName) {
@@ -38,14 +41,16 @@ export function computeStatus(toolName: string | undefined): string {
 
 export interface StepItem {
   id: string;
-  type: "tool" | "reasoning" | "text";
+  type: "tool" | "reasoning" | "text" | "question" | "todo" | "context-group";
   toolName?: string;
+  statusToolName?: string;
   toolIcon?: LucideIcon;
   title?: string;
   subtitle?: string;
   args?: string[];
   content?: React.ReactNode;
   text?: string;
+  groupedSteps?: StepItem[];
 }
 
 export interface FileDiff {
@@ -67,7 +72,6 @@ export interface PermissionItem {
 export interface SessionTurnProps {
   userMessage: string;
   steps: StepItem[];
-  response?: string;
   diffs?: FileDiff[];
   working?: boolean;
   statusText?: string;
@@ -80,10 +84,118 @@ export interface SessionTurnProps {
   isActive?: boolean;
 }
 
+function isToggleOnlyStep(step: StepItem): boolean {
+  return (
+    step.type === "tool" ||
+    step.type === "context-group" ||
+    step.type === "reasoning" ||
+    step.type === "todo"
+  );
+}
+
+type Segment =
+  | { kind: "toggle"; steps: StepItem[] }
+  | { kind: "visible"; step: StepItem };
+
+function buildSegments(steps: StepItem[]): Segment[] {
+  const segments: Segment[] = [];
+  let toggleBuf: StepItem[] = [];
+
+  function flushToggle() {
+    if (toggleBuf.length > 0) {
+      segments.push({ kind: "toggle", steps: toggleBuf });
+      toggleBuf = [];
+    }
+  }
+
+  for (const step of steps) {
+    if (isToggleOnlyStep(step)) {
+      toggleBuf.push(step);
+    } else {
+      flushToggle();
+      segments.push({ kind: "visible", step });
+    }
+  }
+  flushToggle();
+  return segments;
+}
+
+function renderToggleStep(step: StepItem): React.ReactNode {
+  if (step.type === "reasoning") {
+    return (
+      <div
+        key={step.id}
+        className="text-xs text-muted-foreground italic pl-6 py-1"
+      >
+        <MarkdownContent content={step.text ?? ""} />
+      </div>
+    );
+  }
+
+  if (step.type === "tool") {
+    const Icon = step.toolIcon ?? Wrench;
+    return (
+      <BasicTool
+        key={step.id}
+        icon={Icon}
+        trigger={{
+          title: step.title ?? step.toolName ?? "Tool",
+          subtitle: step.subtitle,
+          args: step.args,
+        }}
+      >
+        {step.content}
+      </BasicTool>
+    );
+  }
+
+  if (step.type === "context-group" && step.groupedSteps) {
+    const Icon = step.toolIcon ?? Search;
+    return (
+      <BasicTool
+        key={step.id}
+        icon={Icon}
+        trigger={{
+          title: step.title ?? "Gathered context",
+          subtitle: step.subtitle,
+        }}
+      >
+        <div className="space-y-0.5">
+          {step.groupedSteps.map((gs) => {
+            const GsIcon = gs.toolIcon ?? Wrench;
+            return (
+              <BasicTool
+                key={gs.id}
+                icon={GsIcon}
+                trigger={{
+                  title: gs.title ?? gs.toolName ?? "Tool",
+                  subtitle: gs.subtitle,
+                  args: gs.args,
+                }}
+              >
+                {gs.content}
+              </BasicTool>
+            );
+          })}
+        </div>
+      </BasicTool>
+    );
+  }
+
+  if (step.type === "todo") {
+    return null;
+  }
+
+  return (
+    <div key={step.id} className="text-xs text-muted-foreground pl-6 py-1">
+      {step.text}
+    </div>
+  );
+}
+
 export function SessionTurn({
   userMessage,
   steps,
-  response,
   diffs,
   working = false,
   statusText,
@@ -95,15 +207,98 @@ export function SessionTurn({
   isActive = false,
   className,
 }: SessionTurnProps) {
-  // Reasoning steps are ephemeral: only visible while the AI is actively working
+  const [throttledStatus, setThrottledStatus] = useState(statusText);
+  const lastStatusUpdateRef = useRef(0);
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!working) {
+      setThrottledStatus(statusText);
+      return;
+    }
+
+    const now = Date.now();
+    const elapsed = now - lastStatusUpdateRef.current;
+
+    if (elapsed >= 2500) {
+      setThrottledStatus(statusText);
+      lastStatusUpdateRef.current = now;
+    } else {
+      clearTimeout(statusTimerRef.current);
+      statusTimerRef.current = setTimeout(() => {
+        setThrottledStatus(statusText);
+        lastStatusUpdateRef.current = Date.now();
+      }, 2500 - elapsed);
+    }
+
+    return () => clearTimeout(statusTimerRef.current);
+  }, [statusText, working]);
+
+  const submitQuestionAnswer = async (
+    requestID: string,
+    answers: string[][],
+  ) => {
+    await chatClient.replyToQuestion({ requestID, answers });
+  };
+
+  // Reasoning steps are ephemeral: only visible while the AI is actively working.
   const visibleSteps = working
     ? steps
     : steps.filter((s) => s.type !== "reasoning");
-  const hasUserMessage = userMessage.trim().length > 0;
-  const canExpandSteps = working || visibleSteps.length > 0;
+  const displaySteps = visibleSteps.filter((s) => s.type !== "todo");
 
-  const hasSteps = working || visibleSteps.length > 0;
-  const hasResponse = !working && (response || (diffs && diffs.length > 0));
+  const segments = buildSegments(displaySteps);
+  const toggleOnlySteps = displaySteps.filter(isToggleOnlyStep);
+  const hasUserMessage = userMessage.trim().length > 0;
+  const canExpandSteps = toggleOnlySteps.length > 0;
+  const hasSteps = working || canExpandSteps;
+
+  const hasDiffs = !working && !!(diffs && diffs.length > 0);
+
+  const renderVisibleStep = (step: StepItem) => {
+    if (step.type === "text") {
+      return (
+        <div key={step.id} className="text-sm py-2">
+          <MarkdownContent content={step.text ?? ""} />
+        </div>
+      );
+    }
+
+    if (step.type === "question") {
+      let questionData: { requestId: string; questions: Question[] } | null =
+        null;
+
+      try {
+        questionData = step.text
+          ? (JSON.parse(step.text) as {
+              requestId: string;
+              questions: Question[];
+            })
+          : null;
+      } catch {
+        questionData = null;
+      }
+
+      if (!questionData) {
+        return null;
+      }
+
+      return (
+        <div key={step.id} className="py-2">
+          <QuestionPrompt
+            questions={questionData.questions}
+            onSubmit={(answers) =>
+              submitQuestionAnswer(questionData.requestId, answers)
+            }
+          />
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div
@@ -112,10 +307,7 @@ export function SessionTurn({
     >
       {hasUserMessage && (
         <div
-          className={cn(
-            "z-10 bg-background pb-1",
-            isActive && "sticky top-0",
-          )}
+          className={cn("z-10 bg-background pb-1", isActive && "sticky top-0")}
         >
           <div className="ml-auto w-fit max-w-[92%] rounded-xl border border-border/70 bg-muted/35 px-3 py-1.5">
             <div className="text-sm text-foreground whitespace-pre-wrap break-words">
@@ -128,7 +320,7 @@ export function SessionTurn({
       {hasSteps && (
         <div
           className={cn(
-            "z-10 bg-background",
+            "z-[1] bg-background",
             isActive && "sticky",
             isActive && hasUserMessage ? "top-[28px]" : isActive ? "top-0" : "",
           )}
@@ -142,7 +334,7 @@ export function SessionTurn({
 
             <span className={cn("truncate", working && "animate-shimmer")}>
               {working
-                ? statusText || "Thinking"
+                ? throttledStatus || "Thinking"
                 : stepsExpanded
                   ? "Hide steps"
                   : "Show steps"}
@@ -163,53 +355,19 @@ export function SessionTurn({
         </div>
       )}
 
-      {stepsExpanded && canExpandSteps && (
-        <div className="py-2 space-y-0.5">
-          {visibleSteps.length === 0 && working && (
-            <div className="text-xs text-muted-foreground italic pl-6 py-1">
-              Waiting for agent reasoning and tool events...
-            </div>
-          )}
-          {visibleSteps.map((step) => {
-            if (step.type === "reasoning") {
-              return (
-                <div
-                  key={step.id}
-                  className="text-xs text-muted-foreground italic pl-6 py-1"
-                >
-                  <MarkdownContent content={step.text ?? ""} />
-                </div>
-              );
-            }
+      {segments.map((segment, idx) => {
+        if (segment.kind === "visible") {
+          return renderVisibleStep(segment.step);
+        }
 
-            if (step.type === "tool") {
-              const Icon = step.toolIcon ?? Wrench;
-              return (
-                <BasicTool
-                  key={step.id}
-                  icon={Icon}
-                  trigger={{
-                    title: step.title ?? step.toolName ?? "Tool",
-                    subtitle: step.subtitle,
-                    args: step.args,
-                  }}
-                >
-                  {step.content}
-                </BasicTool>
-              );
-            }
+        if (!stepsExpanded) return null;
 
-            return (
-              <div
-                key={step.id}
-                className="text-xs text-muted-foreground pl-6 py-1"
-              >
-                {step.text}
-              </div>
-            );
-          })}
-        </div>
-      )}
+        return (
+          <div key={`toggle-seg-${idx}`} className="py-1 space-y-0.5">
+            {segment.steps.map(renderToggleStep)}
+          </div>
+        );
+      })}
 
       {!stepsExpanded && permissions && permissions.length > 0 && (
         <div className="py-2 space-y-2">
@@ -229,42 +387,34 @@ export function SessionTurn({
         </div>
       )}
 
-      {hasResponse && (
+      {hasDiffs && diffs && (
         <div className="pt-4 space-y-3">
-          {response && (
-            <div className="text-sm">
-              <MarkdownContent content={response} />
-            </div>
-          )}
-
-          {diffs && diffs.length > 0 && (
-            <Accordion>
-              {diffs.map((diff) => (
-                <AccordionItem key={diff.file} value={diff.file}>
-                  <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                    <div className="flex items-center gap-2 w-full">
-                      <FileCode className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="text-sm truncate">{diff.file}</span>
-                      <span className="text-xs text-muted-foreground ml-auto tabular-nums shrink-0">
-                        +{diff.additions} &minus;{diff.deletions}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    {diff.content ?? (
-                      <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">
-                        diff content
-                      </pre>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
+          <Accordion>
+            {diffs.map((diff) => (
+              <AccordionItem key={diff.file} value={diff.file}>
+                <AccordionTrigger className="py-2 text-sm hover:no-underline">
+                  <div className="flex items-center gap-2 w-full">
+                    <FileCode className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm truncate">{diff.file}</span>
+                    <span className="text-xs text-muted-foreground ml-auto tabular-nums shrink-0">
+                      +{diff.additions} &minus;{diff.deletions}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  {diff.content ?? (
+                    <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">
+                      diff content
+                    </pre>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       )}
 
-      {error && !stepsExpanded && (
+      {error && (
         <div className="mt-3 p-3 rounded-lg border border-border bg-muted/20 text-sm text-muted-foreground">
           {error}
         </div>

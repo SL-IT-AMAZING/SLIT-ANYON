@@ -1,10 +1,12 @@
 import { useDesignSystems } from "@/hooks/useDesignSystems";
+import { useTweakcnThemes } from "@/hooks/useTweakcnThemes";
 import type { DesignSystemType } from "@/ipc/types/design_systems";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
 import { DesignSystemCard } from "./DesignSystemCard";
+import { TweakcnThemeCard } from "./TweakcnThemeCard";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Skeleton } from "./ui/skeleton";
@@ -17,6 +19,7 @@ const CATEGORIES = [
   { key: "modern", label: "Modern" },
   { key: "accessible", label: "Accessible" },
   { key: "playful", label: "Playful" },
+  { key: "themes", label: "Themes" },
 ] as const;
 
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
@@ -31,13 +34,15 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
   onUse,
 }) => {
   const { designSystems, isLoading } = useDesignSystems();
+  const { themes, isLoading: isThemesLoading } = useTweakcnThemes();
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredDesignSystems = useMemo(() => {
     return designSystems.filter((ds: DesignSystemType) => {
       const matchesCategory =
-        selectedCategory === "all" || ds.category === selectedCategory;
+        selectedCategory === "all" ||
+        (selectedCategory !== "themes" && ds.category === selectedCategory);
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
@@ -47,6 +52,21 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
       return matchesCategory && matchesSearch;
     });
   }, [designSystems, selectedCategory, searchQuery]);
+
+  const filteredThemes = useMemo(() => {
+    return themes.filter((theme) => {
+      const matchesCategory =
+        selectedCategory === "all" || selectedCategory === "themes";
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        !searchQuery || theme.name.toLowerCase().includes(query);
+      return matchesCategory && matchesSearch;
+    });
+  }, [themes, selectedCategory, searchQuery]);
+
+  const isAnyLoading = isLoading || isThemesLoading;
+  const hasAnyResults =
+    filteredDesignSystems.length > 0 || filteredThemes.length > 0;
 
   return (
     <section data-testid="design-system-gallery">
@@ -91,7 +111,7 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
       </div>
 
       {/* Grid */}
-      {isLoading ? (
+      {isAnyLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={`skeleton-${i}`} className="overflow-hidden">
@@ -109,7 +129,7 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
             </Card>
           ))}
         </div>
-      ) : filteredDesignSystems.length > 0 ? (
+      ) : hasAnyResults ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDesignSystems.map((ds) => (
             <DesignSystemCard
@@ -117,6 +137,14 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
               designSystem={ds}
               onPreview={onPreview}
               onUse={onUse}
+            />
+          ))}
+          {filteredThemes.map((theme) => (
+            <TweakcnThemeCard
+              key={theme.id}
+              theme={theme}
+              onPreview={(themeId) => onPreview(`themes:${themeId}`)}
+              onUse={(themeId) => onUse(`themes:${themeId}`)}
             />
           ))}
         </div>

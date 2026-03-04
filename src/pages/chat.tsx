@@ -35,7 +35,6 @@ export default function ChatPage() {
   // Handle plan implementation when a plan is accepted
   usePlanImplementation();
 
-
   // Auto-collapse sidebar when entering chat (run once on mount)
   const { setOpen: setSidebarOpen } = useSidebar();
   useEffect(() => {

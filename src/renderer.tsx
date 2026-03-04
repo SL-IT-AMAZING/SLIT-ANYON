@@ -21,7 +21,11 @@ import { agentTodosByChatIdAtom } from "./atoms/chatAtoms";
 import { getTelemetryUserId, isTelemetryOptedIn } from "./hooks/useSettings";
 import { ipc } from "./ipc/types";
 import { queryKeys } from "./lib/queryKeys";
-import { showError, showMcpConsentToast, showUpdateNotification } from "./lib/toast";
+import {
+  showError,
+  showMcpConsentToast,
+  showUpdateNotification,
+} from "./lib/toast";
 import { router } from "./router";
 
 // @ts-ignore
@@ -192,7 +196,6 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
-
 
   // Auto-update notification
   useEffect(() => {

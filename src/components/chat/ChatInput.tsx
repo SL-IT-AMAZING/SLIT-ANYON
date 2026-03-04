@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { useProposal } from "@/hooks/useProposal";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { ipc } from "@/ipc/types";
+import { type AgentTodo, ipc } from "@/ipc/types";
 import type {
   ActionProposal,
   FileChange,
@@ -85,6 +85,7 @@ import { QuestionnaireInput } from "./QuestionnaireInput";
 import { SelectedComponentsDisplay } from "./SelectedComponentDisplay";
 import { useSummarizeInNewChat } from "./SummarizeInNewChatButton";
 import { TodoList } from "./TodoList";
+import { extractLatestTodosFromAssistantMessage } from "./todoFallback";
 
 const showTokenBarAtom = atom(false);
 
@@ -102,6 +103,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const [isRejecting, setIsRejecting] = useState(false); // State for rejecting
   const messagesById = useAtomValue(chatMessagesByIdAtom);
   const setMessagesById = useSetAtom(chatMessagesByIdAtom);
+  const selectedChatId = useAtomValue(selectedChatIdAtom);
   const setIsPreviewOpen = useSetAtom(isPreviewOpenAtom);
   const [showTokenBar, setShowTokenBar] = useAtom(showTokenBarAtom);
   const queryClient = useQueryClient();
@@ -123,7 +125,31 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
   // Get todos for this chat
   const agentTodosByChatId = useAtomValue(agentTodosByChatIdAtom);
-  const chatTodos = chatId ? (agentTodosByChatId.get(chatId) ?? []) : [];
+  const effectiveChatId = chatId ?? selectedChatId;
+  const chatTodos = effectiveChatId
+    ? (agentTodosByChatId.get(effectiveChatId) ?? [])
+    : [];
+  const fallbackTodosFromMessages = useMemo(() => {
+    if (!effectiveChatId) {
+      return [] as AgentTodo[];
+    }
+
+    const chatMessages = messagesById.get(effectiveChatId) ?? [];
+    for (let index = chatMessages.length - 1; index >= 0; index -= 1) {
+      const message = chatMessages[index];
+      if (message.role !== "assistant" || !message.content) {
+        continue;
+      }
+      const todos = extractLatestTodosFromAssistantMessage(message.content);
+      if (todos) {
+        return todos;
+      }
+    }
+
+    return [] as AgentTodo[];
+  }, [effectiveChatId, messagesById]);
+  const displayTodos =
+    chatTodos.length > 0 ? chatTodos : fallbackTodosFromMessages;
   const { checkProblems } = useCheckProblems(appId);
   const { refreshAppIframe } = useRunApp();
   const { navigate } = useRouter();
@@ -359,7 +385,10 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           {t("ui.errorLoadingProposal")} {proposalError.message}
         </div>
       )}
-      <div className="px-3 pb-4 md:pb-6" data-testid="chat-input-container">
+      <div
+        className="px-3 pb-4 md:pb-6 max-w-3xl mx-auto w-full"
+        data-testid="chat-input-container"
+      >
         {/* Show context limit banner above chat input for visibility */}
         {showBanner && tokenCountResult && (
           <ContextLimitBanner
@@ -375,11 +404,10 @@ export function ChatInput({ chatId }: { chatId?: number }) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
+          {displayTodos.length > 0 && <TodoList todos={displayTodos} />}
+
           {/* Show active questionnaire if exists */}
           <QuestionnaireInput />
-
-          {/* Show todo list if there are todos for this chat */}
-          {chatTodos.length > 0 && <TodoList todos={chatTodos} />}
           {/* Only render ChatInputActions if proposal is loaded */}
           {proposal && proposalResult?.chatId === chatId && (
             <ChatInputActions
@@ -570,30 +598,6 @@ function RefactorFileButton({ path }: { path: string }) {
   );
 }
 
-function WriteCodeProperlyButton() {
-  const chatId = useAtomValue(selectedChatIdAtom);
-  const { streamMessage } = useStreamChat();
-  const onClick = () => {
-    if (!chatId) {
-      console.error("No chat id found");
-      return;
-    }
-    streamMessage({
-      prompt: `Write the code in the previous message in the correct format using \`<anyon-write>\` tags!`,
-      chatId,
-      redo: false,
-    });
-  };
-  return (
-    <SuggestionButton
-      onClick={onClick}
-      tooltipText="Write code properly (useful when AI generates the code in the wrong format)"
-    >
-      Write code properly
-    </SuggestionButton>
-  );
-}
-
 function RebuildButton() {
   const { t } = useTranslation("chat");
   const { restartApp } = useRunApp();
@@ -657,8 +661,6 @@ export function mapActionToButton(action: SuggestedAction) {
       return <SummarizeInNewChatButton />;
     case "refactor-file":
       return <RefactorFileButton path={action.path} />;
-    case "write-code-properly":
-      return <WriteCodeProperlyButton />;
     case "rebuild":
       return <RebuildButton />;
     case "restart":

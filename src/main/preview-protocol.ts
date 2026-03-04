@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { net, app, protocol } from "electron";
 import log from "electron-log";
-import { DESIGN_SYSTEM_IDS } from "../shared/designSystems";
+import { PREVIEW_APP_IDS } from "../shared/designSystems";
 
 const logger = log.scope("preview-protocol");
 
@@ -27,29 +27,13 @@ function getPreviewDistRoot(): string {
   }
   return path.join(process.cwd(), "preview-apps");
 }
-
-// FIX #D: Must be called BEFORE app.whenReady()
-export function registerPreviewScheme(): void {
-  protocol.registerSchemesAsPrivileged([
-    {
-      scheme: "anyon-preview",
-      privileges: {
-        standard: true,
-        secure: true,
-        supportFetchAPI: true,
-        corsEnabled: false,
-      },
-    },
-  ]);
-}
-
 // Called AFTER app.whenReady()
 export function registerPreviewProtocol(): void {
   protocol.handle("anyon-preview", (request) => {
     const url = new URL(request.url);
     const designSystemId = url.hostname;
 
-    if (!DESIGN_SYSTEM_IDS.includes(designSystemId)) {
+    if (!PREVIEW_APP_IDS.includes(designSystemId)) {
       logger.warn(`Rejected preview request for unknown ID: ${designSystemId}`);
       return new Response("Not Found", { status: 404 });
     }

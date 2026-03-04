@@ -16,7 +16,7 @@
       "title": "Creative Studio",
       "description": "Creative Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0001/thumbnail.jpg",
       "path": "0001",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -26,7 +26,7 @@
       "title": "Dark Portfolio - Dynamic Media",
       "description": "Dark Portfolio - Dynamic Media - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0002/thumbnail.jpg",
       "path": "0002",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -36,7 +36,7 @@
       "title": "Luxury Resort - Paradise Awaits",
       "description": "Luxury Resort - Paradise Awaits - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0003/thumbnail.jpg",
       "path": "0003",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -46,7 +46,7 @@
       "title": "Interactive Studio Portfolio",
       "description": "Interactive Studio Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0004/thumbnail.jpg",
       "path": "0004",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -56,7 +56,7 @@
       "title": "Interactive Portfolio - Modern Experience",
       "description": "Interactive Portfolio - Modern Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0005/thumbnail.jpg",
       "path": "0005",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -66,7 +66,7 @@
       "title": "Horizontal Gallery Experience",
       "description": "Horizontal Gallery Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0006/thumbnail.jpg",
       "path": "0006",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -76,7 +76,7 @@
       "title": "Immersive Full Screen Experience - 10 Pages",
       "description": "Immersive Full Screen Experience - 10 Pages - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0007/thumbnail.jpg",
       "path": "0007",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -86,7 +86,7 @@
       "title": "Spiral Gallery - Infinite Art Journey",
       "description": "Spiral Gallery - Infinite Art Journey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0008/thumbnail.jpg",
       "path": "0008",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -96,7 +96,7 @@
       "title": "Spiral Gallery Experience - Enhanced",
       "description": "Spiral Gallery Experience - Enhanced - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0009/thumbnail.jpg",
       "path": "0009",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -106,7 +106,7 @@
       "title": "Narrative Gallery - A Visual Journey",
       "description": "Narrative Gallery - A Visual Journey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0010/thumbnail.jpg",
       "path": "0010",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -116,7 +116,7 @@
       "title": "Circular Gallery Experience - Extended",
       "description": "Circular Gallery Experience - Extended - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0011/thumbnail.jpg",
       "path": "0011",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -126,7 +126,7 @@
       "title": "Immersive Gallery Experience",
       "description": "Immersive Gallery Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0012/thumbnail.jpg",
       "path": "0012",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -136,7 +136,7 @@
       "title": "Immersive Gallery Experience",
       "description": "Immersive Gallery Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0013/thumbnail.jpg",
       "path": "0013",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -146,7 +146,7 @@
       "title": "Immersive Gallery Experience",
       "description": "Immersive Gallery Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0014/thumbnail.jpg",
       "path": "0014",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -156,7 +156,7 @@
       "title": "3D Card Stack Gallery",
       "description": "3D Card Stack Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0015/thumbnail.jpg",
       "path": "0015",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -166,7 +166,7 @@
       "title": "Gallery Parallax Experience",
       "description": "Gallery Parallax Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0016/thumbnail.jpg",
       "path": "0016",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -176,7 +176,7 @@
       "title": "Immersive Gallery Experience",
       "description": "Immersive Gallery Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0017/thumbnail.jpg",
       "path": "0017",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -186,7 +186,7 @@
       "title": "Immersive Portfolio - Spatial Experience",
       "description": "Immersive Portfolio - Spatial Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0018/thumbnail.jpg",
       "path": "0018",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -196,7 +196,7 @@
       "title": "Liquid Dreams - Experimental Portfolio",
       "description": "Liquid Dreams - Experimental Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0019/thumbnail.jpg",
       "path": "0019",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -206,7 +206,7 @@
       "title": "Ethereal Gallery - Infinite Canvas",
       "description": "Ethereal Gallery - Infinite Canvas - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0020/thumbnail.jpg",
       "path": "0020",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -216,7 +216,7 @@
       "title": "TYPOGRAPHIC CHAOS - Experimental Portfolio",
       "description": "TYPOGRAPHIC CHAOS - Experimental Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0021/thumbnail.jpg",
       "path": "0021",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -226,7 +226,7 @@
       "title": "Typography Studio - Experimental Portfolio",
       "description": "Typography Studio - Experimental Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0022/thumbnail.jpg",
       "path": "0022",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -236,7 +236,7 @@
       "title": "Typography Portfolio - Luxury Design Experience",
       "description": "Typography Portfolio - Luxury Design Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0023/thumbnail.jpg",
       "path": "0023",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -246,7 +246,7 @@
       "title": "Typography Portfolio - Bold & Dynamic",
       "description": "Typography Portfolio - Bold & Dynamic - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0024/thumbnail.jpg",
       "path": "0024",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -256,7 +256,7 @@
       "title": "Typography Portfolio - Immersive Experience",
       "description": "Typography Portfolio - Immersive Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0025/thumbnail.jpg",
       "path": "0025",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -266,7 +266,7 @@
       "title": "Typography Portfolio - Experimental Design",
       "description": "Typography Portfolio - Experimental Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0026/thumbnail.jpg",
       "path": "0026",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -276,7 +276,7 @@
       "title": "NEXUS - Digital Art Studio",
       "description": "NEXUS - Digital Art Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0027/thumbnail.jpg",
       "path": "0027",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -286,7 +286,7 @@
       "title": "Immersive Portfolio - Reimagined",
       "description": "Immersive Portfolio - Reimagined - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0028/thumbnail.jpg",
       "path": "0028",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -296,7 +296,7 @@
       "title": "NEXUS - Digital Dimensions",
       "description": "NEXUS - Digital Dimensions - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0029/thumbnail.jpg",
       "path": "0029",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -306,7 +306,7 @@
       "title": "Orbital Studio - Beyond Boundaries",
       "description": "Orbital Studio - Beyond Boundaries - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0030/thumbnail.jpg",
       "path": "0030",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -316,7 +316,7 @@
       "title": "NEXUS - Digital Experience Studio",
       "description": "NEXUS - Digital Experience Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0031/thumbnail.jpg",
       "path": "0031",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -326,7 +326,7 @@
       "title": "FLUX - Experimental Portfolio",
       "description": "FLUX - Experimental Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0032/thumbnail.jpg",
       "path": "0032",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -336,7 +336,7 @@
       "title": "FLUX - Digital Art Studio",
       "description": "FLUX - Digital Art Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0033/thumbnail.jpg",
       "path": "0033",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -346,7 +346,7 @@
       "title": "ATELIER - Digital Art Studio",
       "description": "ATELIER - Digital Art Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0034/thumbnail.jpg",
       "path": "0034",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -356,7 +356,7 @@
       "title": "Creative Studio - Immersive Portfolio",
       "description": "Creative Studio - Immersive Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0035/thumbnail.jpg",
       "path": "0035",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -366,7 +366,7 @@
       "title": "Creative Studio - Immersive Portfolio",
       "description": "Creative Studio - Immersive Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0036/thumbnail.jpg",
       "path": "0036",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -376,7 +376,7 @@
       "title": "STUDIO — Digital Craft",
       "description": "STUDIO — Digital Craft - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0037/thumbnail.jpg",
       "path": "0037",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -386,7 +386,7 @@
       "title": "TYPOGRAPHIC STUDIO - Bold Digital Experiences",
       "description": "TYPOGRAPHIC STUDIO - Bold Digital Experiences - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0038/thumbnail.jpg",
       "path": "0038",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -396,7 +396,7 @@
       "title": "Artistic Gallery - Immersive Experience",
       "description": "Artistic Gallery - Immersive Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0039/thumbnail.jpg",
       "path": "0039",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -406,7 +406,7 @@
       "title": "ARTSCAPE - Experimental Digital Gallery",
       "description": "ARTSCAPE - Experimental Digital Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0040/thumbnail.jpg",
       "path": "0040",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -416,7 +416,7 @@
       "title": "ATELIER — Digital Art Studio",
       "description": "ATELIER — Digital Art Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0041/thumbnail.jpg",
       "path": "0041",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -426,7 +426,7 @@
       "title": "TYPOGRAPHIC ODYSSEY - An Artistic Journey",
       "description": "TYPOGRAPHIC ODYSSEY - An Artistic Journey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0042/thumbnail.jpg",
       "path": "0042",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -436,7 +436,7 @@
       "title": "Artistic Gallery - Experimental Design",
       "description": "Artistic Gallery - Experimental Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0043/thumbnail.jpg",
       "path": "0043",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -446,7 +446,7 @@
       "title": "ARTSPACE - Experimental Gallery",
       "description": "ARTSPACE - Experimental Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0044/thumbnail.jpg",
       "path": "0044",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -456,7 +456,7 @@
       "title": "VISION - Digital Art Gallery",
       "description": "VISION - Digital Art Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0045/thumbnail.jpg",
       "path": "0045",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -466,7 +466,7 @@
       "title": "BURST - Interactive Digital Gallery",
       "description": "BURST - Interactive Digital Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0046/thumbnail.jpg",
       "path": "0046",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -476,7 +476,7 @@
       "title": "NEXUS - Digital Experience Studio",
       "description": "NEXUS - Digital Experience Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0047/thumbnail.jpg",
       "path": "0047",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -486,7 +486,7 @@
       "title": "NEXUS - Digital Art Gallery",
       "description": "NEXUS - Digital Art Gallery - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0048/thumbnail.jpg",
       "path": "0048",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -496,7 +496,7 @@
       "title": "Typography & Mathematics - An Artistic Journey",
       "description": "Typography & Mathematics - An Artistic Journey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0049/thumbnail.jpg",
       "path": "0049",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -506,7 +506,7 @@
       "title": "Typographic Dimensions",
       "description": "Typographic Dimensions - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0050/thumbnail.jpg",
       "path": "0050",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -516,7 +516,7 @@
       "title": "Convergence - Where Visual Poetry Meets Digital Art",
       "description": "Convergence - Where Visual Poetry Meets Digital Art - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0051/thumbnail.jpg",
       "path": "0051",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -526,7 +526,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0052/thumbnail.jpg",
       "path": "0052",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -536,7 +536,7 @@
       "title": "TYPECRAFT - Typography Design Studio",
       "description": "TYPECRAFT - Typography Design Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0053/thumbnail.jpg",
       "path": "0053",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -546,7 +546,7 @@
       "title": "Visual Gallery - Multidimensional Experience",
       "description": "Visual Gallery - Multidimensional Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0054/thumbnail.jpg",
       "path": "0054",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -556,7 +556,7 @@
       "title": "TYPOGRAPHIC ODYSSEY",
       "description": "TYPOGRAPHIC ODYSSEY - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0055/thumbnail.jpg",
       "path": "0055",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -566,7 +566,7 @@
       "title": "TYPOGRAPHIC REVOLUTION",
       "description": "TYPOGRAPHIC REVOLUTION - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0056/thumbnail.jpg",
       "path": "0056",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -576,7 +576,7 @@
       "title": "HYPER STUDIO - Digital Experience",
       "description": "HYPER STUDIO - Digital Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0057/thumbnail.jpg",
       "path": "0057",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -586,7 +586,7 @@
       "title": "NEXUS STUDIO - Dimensional Portfolio",
       "description": "NEXUS STUDIO - Dimensional Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0058/thumbnail.jpg",
       "path": "0058",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -596,7 +596,7 @@
       "title": "HYPER STUDIO - Digital Chaos",
       "description": "HYPER STUDIO - Digital Chaos - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0059/thumbnail.jpg",
       "path": "0059",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -606,7 +606,7 @@
       "title": "HYPER STUDIO - Digital Artistry",
       "description": "HYPER STUDIO - Digital Artistry - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0060/thumbnail.jpg",
       "path": "0060",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -616,7 +616,7 @@
       "title": "RETRO STUDIO - Bold Typography Portfolio",
       "description": "RETRO STUDIO - Bold Typography Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0061/thumbnail.jpg",
       "path": "0061",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -626,7 +626,7 @@
       "title": "RETRO STUDIO - Bold Typography Portfolio",
       "description": "RETRO STUDIO - Bold Typography Portfolio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0062/thumbnail.jpg",
       "path": "0062",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -636,7 +636,7 @@
       "title": "NEON STUDIO - Digital Experience",
       "description": "NEON STUDIO - Digital Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0063/thumbnail.jpg",
       "path": "0063",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -646,7 +646,7 @@
       "title": "Immersive Portfolio - Spatial Experience",
       "description": "Immersive Portfolio - Spatial Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0064/thumbnail.jpg",
       "path": "0064",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -656,7 +656,7 @@
       "title": "NEON STUDIO - Digital Art Collective",
       "description": "NEON STUDIO - Digital Art Collective - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0065/thumbnail.jpg",
       "path": "0065",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -666,7 +666,7 @@
       "title": "NEON STUDIO - Digital Experience",
       "description": "NEON STUDIO - Digital Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0066/thumbnail.jpg",
       "path": "0066",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -676,7 +676,7 @@
       "title": "HYPERSTUDIO - Digital Experience Lab",
       "description": "HYPERSTUDIO - Digital Experience Lab - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0067/thumbnail.jpg",
       "path": "0067",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -686,7 +686,7 @@
       "title": "VOID - A Creative Odyssey",
       "description": "VOID - A Creative Odyssey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0068/thumbnail.jpg",
       "path": "0068",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -696,7 +696,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0069/thumbnail.jpg",
       "path": "0069",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -706,7 +706,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0070/thumbnail.jpg",
       "path": "0070",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -716,7 +716,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0071/thumbnail.jpg",
       "path": "0071",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -726,7 +726,7 @@
       "title": "RETRO DIMENSION - 3D Typography Experience",
       "description": "RETRO DIMENSION - 3D Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0072/thumbnail.jpg",
       "path": "0072",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -736,7 +736,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0073/thumbnail.jpg",
       "path": "0073",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -746,7 +746,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0074/thumbnail.jpg",
       "path": "0074",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -756,7 +756,7 @@
       "title": "RETRO STUDIO - Typography & Design",
       "description": "RETRO STUDIO - Typography & Design - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0075/thumbnail.jpg",
       "path": "0075",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -766,7 +766,7 @@
       "title": "TYPOSPACE - Creative Studio",
       "description": "TYPOSPACE - Creative Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0076/thumbnail.jpg",
       "path": "0076",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -776,7 +776,7 @@
       "title": "TYPE STUDIO - Typography & Motion",
       "description": "TYPE STUDIO - Typography & Motion - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0077/thumbnail.jpg",
       "path": "0077",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -786,7 +786,7 @@
       "title": "TYPECRAFT - Modern Typography Studio",
       "description": "TYPECRAFT - Modern Typography Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0078/thumbnail.jpg",
       "path": "0078",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -796,7 +796,7 @@
       "title": "AURORA - Digital Experience",
       "description": "AURORA - Digital Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0079/thumbnail.jpg",
       "path": "0079",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -806,7 +806,7 @@
       "title": "TYPOGRAPHIC DREAMS",
       "description": "TYPOGRAPHIC DREAMS - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0080/thumbnail.jpg",
       "path": "0080",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -816,7 +816,7 @@
       "title": "AVANT-GARDE STUDIO",
       "description": "AVANT-GARDE STUDIO - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0081/thumbnail.jpg",
       "path": "0081",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -826,7 +826,7 @@
       "title": "ATELIER - Typography in Motion",
       "description": "ATELIER - Typography in Motion - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0082/thumbnail.jpg",
       "path": "0082",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -836,7 +836,7 @@
       "title": "HYPETYPE - Typography Experience",
       "description": "HYPETYPE - Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0083/thumbnail.jpg",
       "path": "0083",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -846,7 +846,7 @@
       "title": "AVANT GARDE - Typography Experience",
       "description": "AVANT GARDE - Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0084/thumbnail.jpg",
       "path": "0084",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -856,7 +856,7 @@
       "title": "AVANT-GARDE STUDIO",
       "description": "AVANT-GARDE STUDIO - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0085/thumbnail.jpg",
       "path": "0085",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -866,7 +866,7 @@
       "title": "TYPOGRAPHIC ODYSSEY",
       "description": "TYPOGRAPHIC ODYSSEY - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0086/thumbnail.jpg",
       "path": "0086",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -876,7 +876,7 @@
       "title": "Cozy Typography Studio",
       "description": "Cozy Typography Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0087/thumbnail.jpg",
       "path": "0087",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -886,7 +886,7 @@
       "title": "COSMIC DREAMS - A Typography Journey",
       "description": "COSMIC DREAMS - A Typography Journey - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0088/thumbnail.jpg",
       "path": "0088",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -896,7 +896,7 @@
       "title": "STUDIO - Digital Experiences",
       "description": "STUDIO - Digital Experiences - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0089/thumbnail.jpg",
       "path": "0089",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -906,7 +906,7 @@
       "title": "NEXUS - Digital Experience Studio",
       "description": "NEXUS - Digital Experience Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0090/thumbnail.jpg",
       "path": "0090",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -916,7 +916,7 @@
       "title": "Ethereal Studio - Immersive Digital Experience",
       "description": "Ethereal Studio - Immersive Digital Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0091/thumbnail.jpg",
       "path": "0091",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -926,7 +926,7 @@
       "title": "ATELIER - Digital Craft Studio",
       "description": "ATELIER - Digital Craft Studio - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0092/thumbnail.jpg",
       "path": "0092",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -936,7 +936,7 @@
       "title": "AVANT-GARDE STUDIO",
       "description": "AVANT-GARDE STUDIO - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0093/thumbnail.jpg",
       "path": "0093",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -946,7 +946,7 @@
       "title": "AVANT-GARDE STUDIO",
       "description": "AVANT-GARDE STUDIO - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0094/thumbnail.jpg",
       "path": "0094",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -956,7 +956,7 @@
       "title": "AVANT-GARDE TYPOGRAPHY",
       "description": "AVANT-GARDE TYPOGRAPHY - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0095/thumbnail.jpg",
       "path": "0095",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -966,7 +966,7 @@
       "title": "AVANT-GARDE | Typography Experience",
       "description": "AVANT-GARDE | Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0096/thumbnail.jpg",
       "path": "0096",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -976,7 +976,7 @@
       "title": "AVANT-GARDE | Typography Experience",
       "description": "AVANT-GARDE | Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0097/thumbnail.jpg",
       "path": "0097",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -986,7 +986,7 @@
       "title": "RETRO VIBES - Typography & Motion",
       "description": "RETRO VIBES - Typography & Motion - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0098/thumbnail.jpg",
       "path": "0098",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -996,7 +996,7 @@
       "title": "RETRO FUTURE - Typography Experience",
       "description": "RETRO FUTURE - Typography Experience - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0099/thumbnail.jpg",
       "path": "0099",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -1006,7 +1006,7 @@
       "title": "RETRO WAVE '85",
       "description": "RETRO WAVE '85 - Single page landing template",
       "category": "website",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/0100/thumbnail.jpg",
       "path": "0100",
       "techStack": ["HTML", "CSS", "JavaScript"],
       "tags": ["landing-page", "single-page"]
@@ -1016,7 +1016,7 @@
       "title": "Brillance SaaS Landing Page",
       "description": "Brillance SaaS Landing Page - Next.js template with Tailwind CSS",
       "category": "app",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/brillance-saas-landing-page/thumbnail.jpg",
       "path": "brillance-saas-landing-page",
       "type": "nextjs",
       "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
@@ -1027,7 +1027,7 @@
       "title": "Brutalist AI SaaS Landing Page",
       "description": "Brutalist AI SaaS Landing Page - Next.js template with Tailwind CSS",
       "category": "app",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/brutalist-ai-saas-landing-page/thumbnail.jpg",
       "path": "brutalist-ai-saas-landing-page",
       "type": "nextjs",
       "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
@@ -1038,7 +1038,7 @@
       "title": "Pointer AI Landing Page",
       "description": "Pointer AI Landing Page - Next.js template with Tailwind CSS",
       "category": "app",
-      "imageUrl": "",
+      "imageUrl": "https://raw.githubusercontent.com/SL-IT-AMAZING/SLIT-ANYON/main/templates/pointer-ai-landing-page/thumbnail.jpg",
       "path": "pointer-ai-landing-page",
       "type": "nextjs",
       "techStack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],

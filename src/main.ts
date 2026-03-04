@@ -1,7 +1,14 @@
 import fs from "fs";
 import * as path from "node:path";
 import dotenv from "dotenv";
-import { BrowserWindow, Menu, app, autoUpdater, dialog } from "electron";
+import {
+  BrowserWindow,
+  Menu,
+  app,
+  autoUpdater,
+  dialog,
+  protocol,
+} from "electron";
 import log from "electron-log";
 // @ts-ignore
 import started from "electron-squirrel-startup";
@@ -24,10 +31,8 @@ import type { UserSettings } from "./lib/schemas";
 import { initSentryMain } from "./lib/sentry";
 import { handleAuthCallback } from "./main/auth";
 import { syncEntitlements } from "./main/entitlement";
-import {
-  registerPreviewProtocol,
-  registerPreviewScheme,
-} from "./main/preview-protocol";
+import { registerPreviewProtocol } from "./main/preview-protocol";
+import { registerThumbnailProtocol } from "./main/thumbnail-protocol";
 import { handleAnyonProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
@@ -56,8 +61,37 @@ initSentryMain();
 // Register IPC handlers before app is ready
 registerIpcHandlers();
 
-// FIX #D: Must be called BEFORE app.whenReady()
-registerPreviewScheme();
+// Must be called BEFORE app.whenReady() — can only be called ONCE
+// (second call silently overwrites the first)
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "anyon-preview",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false,
+    },
+  },
+  {
+    scheme: "anyon-thumb",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false,
+    },
+  },
+  {
+    scheme: "app-thumbnail",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false,
+    },
+  },
+]);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -90,7 +124,6 @@ if (!process.defaultApp) {
   app.setAsDefaultProtocolClient("anyon");
 }
 
-
 // ---------------------------------------------------------------------------
 // Auto-updater (Squirrel-based, GitHub Releases as static storage)
 // ---------------------------------------------------------------------------
@@ -103,9 +136,7 @@ function initAutoUpdater() {
 
   // macOS Squirrel expects a JSON feed; Windows Squirrel expects just the base URL.
   const feedUrl =
-    process.platform === "darwin"
-      ? `${feedBase}/RELEASES.json`
-      : feedBase;
+    process.platform === "darwin" ? `${feedBase}/RELEASES.json` : feedBase;
 
   logger.info("Auto-updater feed URL:", feedUrl);
   autoUpdater.setFeedURL({ url: feedUrl });
@@ -181,6 +212,7 @@ export async function onReady() {
 
   await onFirstRunMaybe(settings);
   registerPreviewProtocol();
+  registerThumbnailProtocol();
   createWindow();
   void setupOpenCodeConfig().catch((err) => {
     logger.error("OpenCode config setup failed:", err);

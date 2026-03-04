@@ -228,6 +228,9 @@ export const PreviewIframe = ({
   );
   const setPreviewIframeRef = useSetAtom(previewIframeRefAtom);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const thumbnailCapturedRef = useRef(false);
+  const thumbnailRetryCountRef = useRef(0);
+  const thumbnailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref to store the URL that the iframe should be showing - initialize with preserved URL if available
   // This is different from appUrl - it tracks the CURRENT route, not just the base URL
   const currentIframeUrlRef = useRef<string | null>(initialUrl || appUrl);
@@ -701,7 +704,24 @@ export const PreviewIframe = ({
       }
 
       if (event.data?.type === "anyon-screenshot-response") {
-        if (event.data.success && event.data.dataUrl) {
+        if (event.data.purpose === "thumbnail") {
+          // Thumbnail capture — save via IPC, don't enter annotator mode
+          if (event.data.success && event.data.dataUrl && selectedAppId) {
+            thumbnailCapturedRef.current = true;
+            if (thumbnailTimerRef.current) {
+              clearTimeout(thumbnailTimerRef.current);
+              thumbnailTimerRef.current = null;
+            }
+            ipc.app
+              .saveAppThumbnail({
+                appId: selectedAppId,
+                dataUrl: event.data.dataUrl,
+              })
+              .catch((err: unknown) =>
+                console.warn("[thumbnail] Failed to save:", err),
+              );
+          }
+        } else if (event.data.success && event.data.dataUrl) {
           setScreenshotDataUrl(event.data.dataUrl);
           setAnnotatorMode(true);
         } else {
@@ -890,8 +910,52 @@ export const PreviewIframe = ({
       setCanGoForward(false);
       // Reset iframe URL to the new app's base URL
       currentIframeUrlRef.current = appUrl;
+      // Reset thumbnail capture state for new app
+      thumbnailCapturedRef.current = false;
+      thumbnailRetryCountRef.current = 0;
+      if (thumbnailTimerRef.current) {
+        clearTimeout(thumbnailTimerRef.current);
+        thumbnailTimerRef.current = null;
+      }
     }
   }, [appUrl]);
+
+  // Auto-capture thumbnail: triggered from iframe onLoad, with retry logic
+  const captureThumbnail = useCallback(() => {
+    if (!selectedAppId || !iframeRef.current?.contentWindow) return;
+    if (thumbnailCapturedRef.current) return;
+    if (thumbnailRetryCountRef.current >= 3) return;
+
+    thumbnailRetryCountRef.current += 1;
+    const delay = thumbnailRetryCountRef.current === 1 ? 2000 : 3000;
+
+    if (thumbnailTimerRef.current) {
+      clearTimeout(thumbnailTimerRef.current);
+    }
+
+    thumbnailTimerRef.current = setTimeout(() => {
+      if (thumbnailCapturedRef.current) return;
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          { type: "anyon-take-screenshot", purpose: "thumbnail" },
+          "*",
+        );
+      }
+      // If not captured after this attempt, retry
+      if (!thumbnailCapturedRef.current && thumbnailRetryCountRef.current < 3) {
+        captureThumbnail();
+      }
+    }, delay);
+  }, [selectedAppId]);
+
+  // Clean up thumbnail timer on unmount
+  useEffect(() => {
+    return () => {
+      if (thumbnailTimerRef.current) {
+        clearTimeout(thumbnailTimerRef.current);
+      }
+    };
+  }, []);
 
   // Get current styles when component is selected for visual editing
   useEffect(() => {
@@ -1467,6 +1531,8 @@ export const PreviewIframe = ({
                     setErrorMessage(undefined);
                     // Note: We don't clear currentIframeUrlRef - it tracks the URL the iframe is showing
                     // This prevents re-renders from accidentally changing the iframe src
+                    // Trigger thumbnail capture after iframe loads
+                    captureThumbnail();
                   }}
                   ref={iframeRef}
                   key={reloadKey}

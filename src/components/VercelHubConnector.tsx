@@ -17,7 +17,6 @@ export function VercelHubConnector() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
 
-
   useEffect(() => {
     if (!deviceAuthState) {
       return;

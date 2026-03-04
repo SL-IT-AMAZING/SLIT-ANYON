@@ -287,7 +287,6 @@ export const systemContracts = {
   }),
 } as const;
 
-
 export const UpdateStatusSchema = z.object({
   status: z.enum(["available", "downloaded", "error"]),
   version: z.string().optional(),

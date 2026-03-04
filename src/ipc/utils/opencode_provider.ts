@@ -53,6 +53,13 @@ interface OpenCodePart {
 interface OpenCodeEvent {
   type: string;
   properties: {
+    id?: string;
+    questions?: Array<{
+      question: string;
+      header?: string;
+      options: Array<{ label: string; description?: string }>;
+      multiple?: boolean;
+    }>;
     part?: OpenCodePart;
     delta?: string;
     sessionID?: string;
@@ -1017,6 +1024,34 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
                   );
                   finished = true;
                   break;
+                } else if (event.type === "permission.asked") {
+                  const requestId = event.properties.id;
+                  if (requestId) {
+                    logger.debug(
+                      `Auto-allowing permission request: ${requestId}`,
+                    );
+                    this.fetchOpenCode(`/permission/${requestId}/reply`, {
+                      method: "POST",
+                      body: JSON.stringify({ reply: "allow" }),
+                    }).catch((err) =>
+                      logger.error("Failed to auto-allow permission:", err),
+                    );
+                  }
+                } else if (event.type === "question.asked") {
+                  const requestId = event.properties.id;
+                  const questions = event.properties.questions;
+                  if (requestId && questions) {
+                    logger.debug(`Question asked: ${requestId}`);
+                    closeReasoningBlock(controller);
+                    const questionData = JSON.stringify({
+                      requestId,
+                      questions,
+                    });
+                    emitDelta(
+                      controller,
+                      `\n<opencode-question requestid="${escapeXml(requestId)}">${questionData}</opencode-question>\n`,
+                    );
+                  }
                 }
               }
             }

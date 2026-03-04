@@ -6,6 +6,10 @@
         return await htmlToImage.toPng(document.body, {
           width: document.documentElement.scrollWidth,
           height: document.documentElement.scrollHeight,
+          // Provide a transparent placeholder for cross-origin images that
+          // fail to fetch, preventing tainted canvas export errors.
+          imagePlaceholder:
+            "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
         });
       }
       throw new Error("html-to-image library not found");
@@ -14,7 +18,7 @@
       throw error;
     }
   }
-  async function handleScreenshotRequest() {
+  async function handleScreenshotRequest(purpose) {
     try {
       console.debug("[anyon-screenshot] Capturing screenshot...");
 
@@ -22,12 +26,13 @@
 
       console.debug("[anyon-screenshot] Screenshot captured successfully");
 
-      // Send success response to parent
+      // Send success response to parent (pass through purpose field)
       window.parent.postMessage(
         {
           type: "anyon-screenshot-response",
           success: true,
           dataUrl: dataUrl,
+          purpose: purpose,
         },
         "*",
       );
@@ -40,6 +45,7 @@
           type: "anyon-screenshot-response",
           success: false,
           error: error.message,
+          purpose: purpose,
         },
         "*",
       );
@@ -50,7 +56,7 @@
     if (event.source !== window.parent) return;
 
     if (event.data.type === "anyon-take-screenshot") {
-      handleScreenshotRequest();
+      handleScreenshotRequest(event.data.purpose);
     }
   });
 })();

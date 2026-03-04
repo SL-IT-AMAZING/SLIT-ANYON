@@ -179,6 +179,15 @@ export const DESIGN_SYSTEMS: DesignSystem[] = [
 
 export const DESIGN_SYSTEM_IDS = DESIGN_SYSTEMS.map((ds) => ds.id);
 
+/**
+ * All valid preview app IDs — includes design system IDs plus standalone preview apps
+ * like 'themes' that don't correspond to a full DesignSystem entry.
+ */
+export const PREVIEW_APP_IDS: readonly string[] = [
+  ...DESIGN_SYSTEM_IDS,
+  "themes",
+];
+
 export function getDesignSystemById(id: string): DesignSystem | undefined {
   return DESIGN_SYSTEMS.find((ds) => ds.id === id);
 }

@@ -1,0 +1,407 @@
+================================================================================
+THEME & DESIGN SYSTEM ARCHITECTURE - COMPLETE RECONNAISSANCE REPORT
+================================================================================
+
+PROJECT: Anyon Electron App
+GOAL: Map architecture for integrating 50+ themes from tweakcn.com
+DATE: March 2, 2026
+
+================================================================================
+1. DOCUMENTS CREATED
+================================================================================
+
+✅ THEME_ARCHITECTURE_MAP.md (25 KB)
+   - Complete technical architecture breakdown
+   - Data models, IPC contracts, message flows
+   - 12 major sections with code examples
+   - File organization summary
+   - Integration points for 50+ themes
+
+✅ THEME_QUICK_REFERENCE.md (12 KB)
+   - One-page overview for quick planning
+   - 3-layer architecture diagram
+   - Data model reference
+   - Message protocol
+   - Build & deployment strategy
+   - Sizing and timeline estimates
+
+✅ THEME_FILES_INVENTORY.md (14 KB)
+   - Detailed file-by-file breakdown
+   - 11 core system files documented
+   - 10 UI integration files documented
+   - Preview app template structure
+   - Security considerations
+   - Files to modify vs. auto-validated files
+
+================================================================================
+2. CORE ARCHITECTURE (3-LAYER STACK)
+================================================================================
+
+LAYER 1: RENDERER (React/TypeScript)
+├── src/pages/themes.tsx ........................... Main UI page
+├── src/components/DesignSystemCard.tsx .......... Gallery cards with thumbnails
+├── src/components/DesignSystemPreviewDialog.tsx . Full preview modal
+├── src/hooks/useDesignSystemPreview.ts ......... Parent-iframe communication
+└── src/routes/themes.ts ......................... TanStack Router route
+
+LAYER 2: MAIN PROCESS (IPC + Node.js)
+├── src/shared/designSystems.ts ................. Data model (6 built-in systems)
+├── src/ipc/types/design_systems.ts ............ IPC contracts (Zod validated)
+├── src/ipc/handlers/design_system_handlers.ts .. Request handlers
+├── src/ipc/utils/preview_server_manager.ts .... URL generation + nonce
+└── src/main/preview-protocol.ts ............... anyon-preview:// protocol
+
+LAYER 3: PREVIEW APPS (Isolated React/Vite)
+├── preview-apps/preview-shadcn/ ............... One per design system
+├── preview-apps/preview-mui/
+├── preview-apps/preview-antd/
+├── preview-apps/preview-mantine/
+├── preview-apps/preview-chakra/
+└── preview-apps/preview-daisyui/
+
+================================================================================
+3. DATA MODEL: DesignSystem INTERFACE
+================================================================================
+
+Each design system is defined by these 20 fields:
+
+IDENTITY (4 fields)
+  id: string                    // "shadcn", "mui", etc.
+  displayName: string           // "Clean Minimalist"
+  description: string           // Marketing copy
+  libraryName: string           // "shadcn/ui", "Material UI", etc.
+
+VISUAL PRESENTATION (3 fields)
+  colorScheme: { primary, secondary, background }  // Hex colors
+  thumbnailPath: string         // Path to SVG icon
+  category: DesignSystemCategory    // "minimal" | "material" | etc.
+
+DISCOVERY (3 fields)
+  tags: string[]                // Search keywords
+  tier: 1 | 2 | 3 | 4           // Product tier
+  componentCount: number        // Total components in preview
+
+TECHNICAL (5 fields)
+  scaffoldDir: string           // e.g., "scaffold-mui"
+  previewDir: string            // e.g., "preview-mui"
+  defaultPlatform: "react"      // Currently only React
+  componentStrategy: "code-copy" | "library-import"
+  importPattern: string         // "@/components/ui/" or "@mui/material"
+
+AVAILABILITY (2 fields)
+  isBuiltin: boolean            // Always true for built-in themes
+  isAvailable: boolean          // User can enable/disable
+
+================================================================================
+4. KEY FILES TO MODIFY FOR 50+ THEMES
+================================================================================
+
+TO ADD EACH NEW THEME:
+
+1. src/shared/designSystems.ts
+   - Add 1 new DesignSystem object to DESIGN_SYSTEMS array
+   - Effort: ~5 minutes per theme
+   - Changes auto-propagate to IPC validation ✓
+
+2. preview-apps/preview-{newid}/ (entire folder)
+   - Create from template (copy preview-shadcn)
+   - Install UI framework dependencies
+   - Configure theme (CSS variables, Tailwind config, etc.)
+   - Implement 8 preview components
+   - Run "npm run build" to generate dist/
+   - Effort: ~2-3 hours per theme
+
+FILES THAT AUTO-UPDATE (no changes needed):
+  ✅ src/ipc/types/design_systems.ts
+  ✅ src/ipc/handlers/design_system_handlers.ts
+  ✅ src/ipc/utils/preview_server_manager.ts
+  ✅ src/main/preview-protocol.ts
+  ✅ src/main.ts
+  ✅ src/preload.ts (allowlist auto-derives from contracts)
+
+================================================================================
+5. COMMUNICATION FLOW
+================================================================================
+
+USER ACTION: Click "Preview" button
+  ↓
+RENDERER: setPreviewDesignSystemId("shadcn")
+  ↓
+RENDERER: useDesignSystemPreview hook calls:
+  ipc.designSystem.getPreviewUrl({ designSystemId: "shadcn" })
+  ↓
+MAIN PROCESS IPC Handler:
+  1. Validate "shadcn" in DESIGN_SYSTEM_IDS ✓
+  2. Generate UUID nonce
+  3. Return { url: "anyon-preview://shadcn/index.html?nonce=...&parentOrigin=...", nonce }
+  ↓
+RENDERER: <iframe src={url} />
+  ↓
+PROTOCOL HANDLER (anyon-preview://):
+  1. Extract hostname ("shadcn")
+  2. Validate against DESIGN_SYSTEM_IDS ✓
+  3. Serve /preview-shadcn/dist/index.html
+  ↓
+PREVIEW APP (App.tsx):
+  1. Extract nonce, parentOrigin from URL
+  2. Load componentRegistry (8 components)
+  3. Send "PREVIEW_READY" message to parent (with nonce)
+  4. Listen for "NAVIGATE_COMPONENT" messages (validate nonce)
+  ↓
+USER: Click component in sidebar
+  ↓
+RENDERER: Send postMessage("NAVIGATE_COMPONENT", nonce)
+  ↓
+PREVIEW APP: Receive message, validate nonce, render component
+
+================================================================================
+6. SECURITY MODEL
+================================================================================
+
+NONCE VALIDATION:
+  - UUID generated per preview session
+  - All parent-iframe messages include nonce
+  - Iframe validates nonce before processing
+  - Prevents cross-preview message injection
+
+ORIGIN CHECK:
+  - senderOrigin captured at URL generation
+  - Iframe validates parentOrigin in URL params
+  - CORS-like protection for postMessage
+
+PATH TRAVERSAL PROTECTION:
+  - Protocol handler normalizes paths
+  - Rejects paths with ".." or absolute paths
+  - Ensures requests stay within preview dist root
+
+ALLOWLIST VALIDATION:
+  - getPreviewUrl() validates designSystemId against DESIGN_SYSTEM_IDS
+  - Protocol handler validates hostname against DESIGN_SYSTEM_IDS
+  - Only known design systems can be previewed
+
+IFRAME SANDBOXING:
+  - sandbox="allow-scripts allow-same-origin"
+  - Restricts what preview app can access
+
+================================================================================
+7. PREVIEW APP STRUCTURE (repeats 50+ times)
+================================================================================
+
+preview-apps/preview-{id}/
+├── package.json                    # React + UI framework deps
+├── vite.config.ts                  # Standard build config
+├── tsconfig.json
+├── src/
+│   ├── main.tsx                    # React entry (boilerplate)
+│   ├── App.tsx                     # Security handshake, nav, rendering
+│   ├── globals.css                 # Theme config (CSS vars, Tailwind, JS object)
+│   └── previews/
+│       ├── index.ts                # Component registry
+│       ├── OverviewPreview.tsx     # Component showcases (8 files total)
+│       ├── ButtonPreview.tsx
+│       ├── InputPreview.tsx
+│       ├── CardPreview.tsx
+│       ├── DialogPreview.tsx
+│       ├── TablePreview.tsx
+│       ├── NavigationPreview.tsx
+│       └── FeedbackPreview.tsx
+├── dist/                           # Generated by "npm run build"
+└── node_modules/
+
+COMPONENT REGISTRY EXAMPLE:
+  export const componentRegistry = [
+    { id: "overview", name: "Overview", category: "general", component: OverviewPreview },
+    { id: "buttons", name: "Buttons", category: "actions", component: ButtonPreview },
+    { id: "inputs", name: "Inputs", category: "forms", component: InputPreview },
+    ... (8 total)
+  ]
+
+================================================================================
+8. CURRENT DESIGN SYSTEMS (6 built-in)
+================================================================================
+
+1. shadcn/ui
+   - displayName: "Clean Minimalist"
+   - strategy: code-copy (copy components into project)
+   - theme: CSS variables in globals.css
+   - framework: Tailwind + Radix UI
+
+2. Material UI (MUI)
+   - displayName: "Material Modern"
+   - strategy: library-import
+   - theme: Design tokens object
+   - framework: Material Design 3
+
+3. Ant Design (antd)
+   - displayName: "Enterprise Data"
+   - strategy: library-import
+   - theme: Theme config object
+   - framework: Ant Design system
+
+4. Mantine
+   - displayName: "Developer Friendly"
+   - strategy: library-import
+   - theme: Design tokens
+   - framework: Custom component library
+
+5. Chakra UI
+   - displayName: "Accessible Simple"
+   - strategy: library-import
+   - theme: Design tokens
+   - framework: Emotion + accessibility focus
+
+6. DaisyUI
+   - displayName: "Playful Tailwind"
+   - strategy: code-copy
+   - theme: Tailwind plugin (30+ pre-built themes)
+   - framework: Tailwind CSS
+
+================================================================================
+9. FOR 50+ THEME INTEGRATION - KEY DECISIONS
+================================================================================
+
+✓ PROVEN ARCHITECTURE:
+  - Contract-driven IPC (auto-validates)
+  - Isolated preview apps (no package conflicts)
+  - Protocol-based delivery (secure, hot-reloadable)
+  - Nonce-validated messaging (prevents cross-site issues)
+
+⚠ SCALING CHALLENGES:
+  - 50 preview apps = 50-150 MB added to app size
+  - Build time increases linearly (~100-200 seconds for 50)
+  - Each app requires 8 component preview files (~16 KB each)
+  - Testing complexity (50 apps to test)
+
+💡 RECOMMENDATIONS:
+
+  PHASE 1 (Foundation):
+    1. Create template generator script
+       Input: theme name, colors, library
+       Output: preview app folder + package.json + stub components
+    
+    2. Config-driven registry (JSON/YAML)
+       Move DESIGN_SYSTEMS to external file
+       Auto-load on app startup
+    
+    3. Parallel build system
+       Build 4-8 preview apps concurrently
+       Cache layer for unchanged themes
+
+  PHASE 2 (Scaling):
+    1. Lazy-load previews
+       Load only on-demand when user opens preview dialog
+       Keep 50 themes registered but not built
+    
+    2. Framework bundling
+       Group similar frameworks together
+       e.g., all Tailwind themes in one app with theme selector
+    
+    3. CDN delivery
+       Host preview dists separately
+       Update themes without rebuilding main app
+
+  PHASE 3 (Polish):
+    1. Component auto-mapping
+       Script that maps library exports to preview components
+    
+    2. Theme variations
+       Dark mode, custom color schemes, font variants
+    
+    3. A/B testing
+       Track which themes users actually use
+       Prioritize most-used themes in build
+
+================================================================================
+10. QUICK CHECKLIST FOR ADDING ONE THEME
+================================================================================
+
+□ Create preview app folder: cp -r preview-shadcn preview-{newid}
+□ Update package.json name and dependencies
+□ Edit src/globals.css or theme.ts with theme configuration
+□ Implement 8 preview components in src/previews/*.tsx
+□ Test locally: cd preview-{newid} && npm install && npm run build
+□ Add DesignSystem object to src/shared/designSystems.ts
+  □ Set id, displayName, description, libraryName
+  □ Set colorScheme { primary, secondary, background }
+  □ Set previewDir: "preview-{newid}" (MUST MATCH FOLDER NAME)
+  □ Set category, tags, componentCount, strategy, importPattern
+□ Run npm run build on main app
+□ Test: npm run dev
+□ Verify preview loads at /themes page
+
+================================================================================
+11. FILES YOU SHOULD READ
+================================================================================
+
+FIRST (understand the concept):
+  1. THEME_QUICK_REFERENCE.md (12 KB) — overview + architecture diagram
+
+SECOND (plan your integration):
+  2. THEME_ARCHITECTURE_MAP.md (25 KB) — complete technical details
+  3. THEME_FILES_INVENTORY.md (14 KB) — file-by-file breakdown
+
+THIRD (implement):
+  4. src/shared/designSystems.ts — see how 6 systems are defined
+  5. preview-apps/preview-shadcn/ — copy this as template
+  6. src/hooks/useDesignSystemPreview.ts — understand parent-iframe communication
+
+================================================================================
+12. TIME ESTIMATES
+================================================================================
+
+Per-theme effort:
+  - Manual setup: ~2-3 hours
+  - With template generator: ~30 minutes
+
+One-time setup:
+  - Template generator script: 2-4 hours
+  - Parallel build system: 4-6 hours
+  - Config-driven registry: 1-2 hours
+
+Total for 50 themes:
+  - Without automation: ~100-150 hours
+  - With full automation: ~25-35 hours (mostly testing)
+
+================================================================================
+13. GOTCHAS & LESSONS
+================================================================================
+
+❌ COMMON MISTAKES:
+  - Forgetting previewDir must match folder name
+  - Building main app before rebuilding preview apps
+  - Not validating nonce in preview app (security issue)
+  - Missing components in registry (preview shows incomplete list)
+  - Not running npm install in new preview app
+
+✅ BEST PRACTICES:
+  - Always use template generator for new themes
+  - Test npm run dev after each addition
+  - Keep component structure consistent across themes
+  - Document any custom theme configuration
+  - Use parallel builds to save time
+  - Create automated tests for each theme
+
+================================================================================
+14. NEXT STEPS FOR 50+ THEME INTEGRATION PROJECT
+================================================================================
+
+1. Review THEME_ARCHITECTURE_MAP.md (deep understanding)
+2. Review THEME_QUICK_REFERENCE.md (quick reference for planning)
+3. Create template generator script
+   - Input: theme config (name, colors, libs)
+   - Output: complete preview-app folder
+4. Create config-driven theme registry
+   - Move DESIGN_SYSTEMS to themes.json
+   - Add auto-load logic
+5. Add 5 themes manually as proof-of-concept
+6. Implement parallel build system
+7. Automate E2E testing for each theme
+8. Plan Phase 2 (lazy-loading, CDN delivery)
+
+================================================================================
+
+END OF REPORT
+All documentation files have been created in /ANYON-b2c root directory
+See THEME_ARCHITECTURE_MAP.md, THEME_QUICK_REFERENCE.md, and 
+THEME_FILES_INVENTORY.md for complete details.
+

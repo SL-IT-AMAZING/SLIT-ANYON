@@ -51,8 +51,13 @@ export function CreateAppDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isMarketplaceTemplate =
     template != null && template.id !== "react" && template.id !== "next";
+  const initialTweakcnThemeId =
+    initialDesignSystemId?.startsWith("themes:") === true
+      ? initialDesignSystemId.slice("themes:".length)
+      : undefined;
+  const isTweakcnThemeCreate = Boolean(initialTweakcnThemeId);
   const [selectedDesignSystem, setSelectedDesignSystem] = useState<string>(
-    initialDesignSystemId ?? "shadcn",
+    isTweakcnThemeCreate ? "shadcn" : (initialDesignSystemId ?? "shadcn"),
   );
   const { createApp } = useCreateApp();
   const { designSystems } = useDesignSystems();
@@ -61,7 +66,11 @@ export function CreateAppDialog({
 
   useEffect(() => {
     if (initialDesignSystemId) {
-      setSelectedDesignSystem(initialDesignSystemId);
+      if (initialDesignSystemId.startsWith("themes:")) {
+        setSelectedDesignSystem("shadcn");
+      } else {
+        setSelectedDesignSystem(initialDesignSystemId);
+      }
     }
   }, [initialDesignSystemId]);
 
@@ -81,6 +90,9 @@ export function CreateAppDialog({
         designSystemId: isMarketplaceTemplate
           ? undefined
           : selectedDesignSystem,
+        tweakcnThemeId: isMarketplaceTemplate
+          ? undefined
+          : initialTweakcnThemeId,
       });
       setSelectedAppId(result.app.id);
       // Navigate to the new app's first chat
@@ -121,7 +133,7 @@ export function CreateAppDialog({
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {!isMarketplaceTemplate && (
+            {!isMarketplaceTemplate && !isTweakcnThemeCreate && (
               <div className="grid gap-2">
                 <Label>Design System</Label>
                 <ScrollArea className="h-[200px]">

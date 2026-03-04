@@ -1,6 +1,7 @@
 import path from "node:path";
 import { DESIGN_SYSTEMS } from "@/shared/designSystems";
 import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
+import { TWEAKCN_THEMES } from "@/shared/tweakcnThemes";
 import { app } from "electron";
 import log from "electron-log";
 import fs from "fs-extra";
@@ -17,10 +18,12 @@ export async function createFromTemplate({
   fullAppPath,
   templateId = DEFAULT_TEMPLATE_ID,
   designSystemId,
+  tweakcnThemeId,
 }: {
   fullAppPath: string;
   templateId?: string;
   designSystemId?: string;
+  tweakcnThemeId?: string;
 }) {
   // Marketplace templates take priority over design system scaffolds.
   // These are pre-built HTML/CSS/JS templates that don't use React design systems.
@@ -62,6 +65,11 @@ export async function createFromTemplate({
       );
     }
     await copyDirectoryRecursive(scaffoldPath, fullAppPath);
+
+    if (tweakcnThemeId) {
+      await applyTweakcnThemeToScaffoldApp({ fullAppPath, tweakcnThemeId });
+    }
+
     return;
   }
 
@@ -80,6 +88,88 @@ export async function createFromTemplate({
     );
     return;
   }
+}
+
+const SCAFFOLD_VAR_NAME_MAP: Record<string, string> = {
+  sidebar: "sidebar-background",
+};
+
+function mapThemeVarNameToScaffoldVarName(themeVarName: string): string {
+  return SCAFFOLD_VAR_NAME_MAP[themeVarName] ?? themeVarName;
+}
+
+function buildCssVarLines(vars: Record<string, string>): string[] {
+  return Object.entries(vars).map(([rawName, value]) => {
+    const mappedName = mapThemeVarNameToScaffoldVarName(rawName);
+    return `    --${mappedName}: ${value};`;
+  });
+}
+
+function replaceCssBlock(
+  inputCss: string,
+  selector: string,
+  replacementLines: string[],
+): string {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const blockRegex = new RegExp(
+    `(${escapedSelector}\\s*\\{)([\\s\\S]*?)(\\n\\s*\\})`,
+    "m",
+  );
+
+  if (!blockRegex.test(inputCss)) {
+    throw new Error(`Could not find CSS block for selector: ${selector}`);
+  }
+
+  return inputCss.replace(blockRegex, (_match, open, _inner, close) => {
+    const replacementBody = `\n${replacementLines.join("\n")}`;
+    return `${open}${replacementBody}${close}`;
+  });
+}
+
+async function applyTweakcnThemeToScaffoldApp({
+  fullAppPath,
+  tweakcnThemeId,
+}: {
+  fullAppPath: string;
+  tweakcnThemeId: string;
+}): Promise<void> {
+  const theme = TWEAKCN_THEMES.find((item) => item.id === tweakcnThemeId);
+  if (!theme) {
+    throw new Error(`Unknown tweakcn theme: ${tweakcnThemeId}`);
+  }
+
+  const globalsCssPath = path.join(fullAppPath, "src", "globals.css");
+  if (!fs.existsSync(globalsCssPath)) {
+    throw new Error(
+      `globals.css not found in scaffold output: ${globalsCssPath}`,
+    );
+  }
+
+  const currentGlobalsCss = await fs.readFile(globalsCssPath, "utf8");
+  const nextGlobalsCss = replaceCssBlock(
+    replaceCssBlock(
+      currentGlobalsCss,
+      ":root",
+      buildCssVarLines(theme.cssVars.light),
+    ),
+    ".dark",
+    buildCssVarLines(theme.cssVars.dark),
+  );
+  await fs.writeFile(globalsCssPath, nextGlobalsCss, "utf8");
+
+  const tailwindConfigPath = path.join(fullAppPath, "tailwind.config.ts");
+  if (!fs.existsSync(tailwindConfigPath)) {
+    throw new Error(
+      `tailwind.config.ts not found in scaffold output: ${tailwindConfigPath}`,
+    );
+  }
+
+  const currentTailwindConfig = await fs.readFile(tailwindConfigPath, "utf8");
+  const nextTailwindConfig = currentTailwindConfig.replace(
+    /hsl\(var\(--([^)]+)\)\)/g,
+    "var(--$1)",
+  );
+  await fs.writeFile(tailwindConfigPath, nextTailwindConfig, "utf8");
 }
 
 async function cloneRepo(repoUrl: string): Promise<string> {

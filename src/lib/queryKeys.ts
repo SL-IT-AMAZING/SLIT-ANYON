@@ -266,6 +266,10 @@ export const queryKeys = {
       ["design-systems", "preview-url", designSystemId] as const,
   },
 
+  tweakcnThemes: {
+    all: ["tweakcn-themes"] as const,
+  },
+
   // ─────────────────────────────────────────────────────────────────────────────
   // System
   // ─────────────────────────────────────────────────────────────────────────────
@@ -331,4 +335,7 @@ export type AppQueryKey =
     >
   | QueryKeyOf<(typeof queryKeys.mcp)[keyof typeof queryKeys.mcp]>
   | QueryKeyOf<(typeof queryKeys.supabase)[keyof typeof queryKeys.supabase]>
+  | QueryKeyOf<
+      (typeof queryKeys.tweakcnThemes)[keyof typeof queryKeys.tweakcnThemes]
+    >
   | QueryKeyOf<(typeof queryKeys.system)[keyof typeof queryKeys.system]>;

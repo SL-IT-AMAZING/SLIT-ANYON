@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { DESIGN_SYSTEM_IDS } from "@/shared/designSystems";
+import { PREVIEW_APP_IDS } from "@/shared/designSystems";
 
 let activeDesignSystemId: string | null = null;
 
@@ -7,7 +7,7 @@ export async function getPreviewUrl(
   designSystemId: string,
   senderOrigin?: string,
 ): Promise<{ url: string; nonce: string }> {
-  if (!DESIGN_SYSTEM_IDS.includes(designSystemId)) {
+  if (!PREVIEW_APP_IDS.includes(designSystemId)) {
     throw new Error(`Unknown design system: ${designSystemId}`);
   }
 

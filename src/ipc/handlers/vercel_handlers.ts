@@ -286,7 +286,10 @@ function getFrameworkBuildSettings(
   // Detect package manager from lock files
   let installCommand: string;
   let buildPrefix: string;
-  if (fs.existsSync(path.join(appPath, "bun.lock")) || fs.existsSync(path.join(appPath, "bun.lockb"))) {
+  if (
+    fs.existsSync(path.join(appPath, "bun.lock")) ||
+    fs.existsSync(path.join(appPath, "bun.lockb"))
+  ) {
     installCommand = "bun install";
     buildPrefix = "bun run";
   } else if (fs.existsSync(path.join(appPath, "pnpm-lock.yaml"))) {
@@ -306,21 +309,53 @@ function getFrameworkBuildSettings(
     case "vue":
     case "svelte":
     case "astro":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "dist",
+        installCommand,
+      };
     case "nextjs":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: ".next", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: ".next",
+        installCommand,
+      };
     case "nuxtjs":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: ".output", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: ".output",
+        installCommand,
+      };
     case "create-react-app":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "build", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "build",
+        installCommand,
+      };
     case "gatsby":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "public", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "public",
+        installCommand,
+      };
     case "angular":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "dist",
+        installCommand,
+      };
     case "remix":
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "public", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "public",
+        installCommand,
+      };
     default:
-      return { buildCommand: `${buildPrefix} build`, outputDirectory: "dist", installCommand };
+      return {
+        buildCommand: `${buildPrefix} build`,
+        outputDirectory: "dist",
+        installCommand,
+      };
   }
 }
 
@@ -410,8 +445,11 @@ export async function syncSupabaseEnvVarsForApp(
   );
 
   // The Vercel API returns { created, failed } — check for partial failures.
-  const failed = (syncResult as { failed?: Array<{ error: { message: string; key?: string } }> })
-    ?.failed;
+  const failed = (
+    syncResult as {
+      failed?: Array<{ error: { message: string; key?: string } }>;
+    }
+  )?.failed;
   if (failed && failed.length > 0) {
     const failedKeys = failed
       .map((f) => f.error?.key ?? f.error?.message ?? "unknown")
@@ -612,7 +650,10 @@ async function handleIsProjectAvailable(
     const teamId = getVercelTeamId();
 
     // Check if project name is available by searching for projects with that name
-    const response = await getVercelProjects(accessToken, { search: name, teamId });
+    const response = await getVercelProjects(accessToken, {
+      search: name,
+      teamId,
+    });
 
     if (!response.projects) {
       return {
@@ -732,7 +773,9 @@ async function handleCreateProject(
               userDiagnostic += ", teams=empty";
             }
           } else {
-            const teamsErrBody = await teamsRes.text().catch(() => "(unreadable)");
+            const teamsErrBody = await teamsRes
+              .text()
+              .catch(() => "(unreadable)");
             userDiagnostic += `, /v2/teams returned ${teamsRes.status}: ${teamsErrBody.slice(0, 200)}`;
           }
         } catch (e) {
@@ -1100,7 +1143,6 @@ async function handleDirectDeploy(
       );
     }
 
-
     // Inject .env file with Supabase env vars so Vite has them at build time.
     // Project-level env vars set via the API are available during builds, but
     // build cache can serve stale artifacts that miss newly-added vars.
@@ -1243,7 +1285,7 @@ async function handleDirectDeploy(
       const deploymentUrl = `https://${result.url}`;
       await db
         .update(apps)
-        .set({ 
+        .set({
           vercelDeploymentUrl: deploymentUrl,
           vercelDeploymentId: deploymentResponse.id,
         })

@@ -55,6 +55,7 @@ export const CreateAppParamsSchema = z.object({
   name: z.string().min(1),
   templateId: z.string().optional(),
   designSystemId: z.string().optional(),
+  tweakcnThemeId: z.string().optional(),
 });
 
 /**
@@ -73,6 +74,14 @@ export const CreateAppResultSchema = z.object({
  */
 export const DeleteAppParamsSchema = z.object({
   appId: z.number(),
+});
+
+/**
+ * Schema for update app display name params.
+ */
+export const UpdateDisplayNameParamsSchema = z.object({
+  appId: z.number(),
+  displayName: z.string(),
 });
 
 /**
@@ -369,6 +378,21 @@ export const appContracts = {
     channel: "search-app",
     input: z.string(),
     output: z.array(AppSearchResultSchema),
+  }),
+
+  saveAppThumbnail: defineContract({
+    channel: "save-app-thumbnail",
+    input: z.object({
+      appId: z.number(),
+      dataUrl: z.string(),
+    }),
+    output: z.void(),
+  }),
+
+  updateDisplayName: defineContract({
+    channel: "update-app-display-name",
+    input: UpdateDisplayNameParamsSchema,
+    output: z.void(),
   }),
 } as const;
 

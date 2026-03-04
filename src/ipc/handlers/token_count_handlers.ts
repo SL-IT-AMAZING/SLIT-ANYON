@@ -71,6 +71,7 @@ export function registerTokenCountHandlers() {
         aiRules: await readAiRules(getAnyonAppPath(chat.app.path)),
         themePrompt,
         selectedAgent: settings.selectedAgent,
+        language: settings.language,
       });
       let supabaseContext = "";
 

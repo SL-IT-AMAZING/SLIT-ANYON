@@ -1,14 +1,14 @@
-import React, { useState } from "react";
 import type { AgentTodo } from "@/ipc/types";
+import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
-  Circle,
-  Loader2,
   ChevronDown,
   ChevronUp,
+  Circle,
   ListTodo,
+  Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface TodoListProps {
   todos: AgentTodo[];
@@ -29,7 +29,6 @@ function getStatusIcon(status: AgentTodo["status"], size: "sm" | "md" = "sm") {
           className={cn(sizeClass, "text-blue-500 animate-spin flex-shrink-0")}
         />
       );
-    case "pending":
     default:
       return (
         <Circle
@@ -47,64 +46,50 @@ export function TodoList({ todos }: TodoListProps) {
   const completed = todos.filter((t) => t.status === "completed").length;
   const total = todos.length;
   const inProgressTask = todos.find((t) => t.status === "in_progress");
+  const allCompleted = completed === total;
 
   return (
-    <div className="border-b border-border bg-muted/30">
+    <div className="border-b border-border/70 bg-background/70">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center gap-2 py-1.5 px-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
       >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          {isExpanded ? (
-            <>
-              <ListTodo className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm">
-                {completed} of {total} To-dos Completed
-              </span>
-            </>
-          ) : inProgressTask ? (
-            <>
-              {getStatusIcon("in_progress", "md")}
-              <span className="text-sm truncate">{inProgressTask.content}</span>
-              <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                ({completed}/{total})
-              </span>
-            </>
-          ) : (
-            <>
-              {completed === total ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-              ) : (
-                <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              )}
-              <span className="text-sm text-muted-foreground">
-                {completed === total
-                  ? "All tasks completed"
-                  : "No task in progress"}
-              </span>
-              <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                ({completed}/{total})
-              </span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          )}
-        </div>
+        {inProgressTask ? (
+          <Loader2 className="size-4 text-blue-500 animate-spin shrink-0" />
+        ) : allCompleted ? (
+          <CheckCircle2 className="size-4 text-green-500 shrink-0" />
+        ) : (
+          <ListTodo className="size-4 text-muted-foreground shrink-0" />
+        )}
+
+        <span className={cn("truncate", inProgressTask && "text-foreground")}>
+          {inProgressTask
+            ? inProgressTask.content
+            : allCompleted
+              ? "All tasks completed"
+              : "Task progress"}
+        </span>
+
+        <span className="text-muted-foreground/60 select-none">&middot;</span>
+        <span className="tabular-nums shrink-0">
+          {completed}/{total}
+        </span>
+
+        {isExpanded ? (
+          <ChevronUp className="size-3.5 shrink-0 ml-auto" />
+        ) : (
+          <ChevronDown className="size-3.5 shrink-0 ml-auto" />
+        )}
       </button>
 
       {isExpanded && (
-        <ul className="px-3 pb-2.5 space-y-1.5">
+        <ul className="px-2 pb-2.5 space-y-1">
           {todos.map((todo) => (
             <li
               key={todo.id}
               className={cn(
-                "flex items-center gap-2.5 text-sm py-0.5",
+                "flex items-center gap-2.5 text-sm py-0.5 pl-0.5",
                 todo.status === "completed" && "text-muted-foreground",
               )}
             >

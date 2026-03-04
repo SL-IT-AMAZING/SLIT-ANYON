@@ -430,7 +430,6 @@ export type SuggestedAction =
   | RestartAppAction
   | SummarizeInNewChatAction
   | RefactorFileAction
-  | WriteCodeProperlyAction
   | RebuildAction
   | RestartAction
   | RefreshAction
@@ -442,10 +441,6 @@ export interface RestartAppAction {
 
 export interface SummarizeInNewChatAction {
   id: "summarize-in-new-chat";
-}
-
-export interface WriteCodeProperlyAction {
-  id: "write-code-properly";
 }
 
 export interface RefactorFileAction {

@@ -77,6 +77,7 @@ const ANYON_CUSTOM_TAGS = [
   "anyon-supabase-project-info",
   "anyon-status",
   "opencode-tool",
+  "opencode-question",
   "anyon-write-plan",
   "anyon-exit-plan",
 ];
@@ -613,6 +614,9 @@ export function renderCustomTag(
           {content}
         </OpenCodeToolTool>
       );
+
+    case "opencode-question":
+      return null;
 
     default:
       return null;

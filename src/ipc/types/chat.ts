@@ -239,6 +239,15 @@ export const chatContracts = {
     input: z.number(), // chatId
     output: z.boolean(),
   }),
+
+  replyToQuestion: defineContract({
+    channel: "chat:reply-question",
+    input: z.object({
+      requestID: z.string(),
+      answers: z.array(z.array(z.string())),
+    }),
+    output: z.boolean(),
+  }),
 } as const;
 
 // =============================================================================

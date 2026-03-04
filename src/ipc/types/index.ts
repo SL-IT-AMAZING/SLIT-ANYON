@@ -332,7 +332,7 @@ export type { ChatLogsData, DeepLinkData, AppOutput } from "./misc";
 export type { FreeAgentQuotaStatus } from "./free_agent_quota";
 
 // Design system types
-export type { DesignSystemType } from "./design_systems";
+export type { DesignSystemType, TweakcnThemeType } from "./design_systems";
 
 // =============================================================================
 // Schema Exports (for validation in handlers/components)
@@ -397,9 +397,9 @@ import { securityClient } from "./security";
 import { settingsClient } from "./settings";
 import { supabaseClient } from "./supabase";
 import {
+  nodeInstallStreamClient,
   systemClient,
   systemEventClient,
-  nodeInstallStreamClient,
 } from "./system";
 import { templateClient } from "./templates";
 import { upgradeClient } from "./upgrade";

@@ -39,9 +39,6 @@ export const RestartAppActionSchema = z.object({
 export const SummarizeInNewChatActionSchema = z.object({
   id: z.literal("summarize-in-new-chat"),
 });
-export const WriteCodeProperlyActionSchema = z.object({
-  id: z.literal("write-code-properly"),
-});
 export const RefactorFileActionSchema = z.object({
   id: z.literal("refactor-file"),
   path: z.string(),
@@ -55,7 +52,6 @@ export const SuggestedActionSchema = z.union([
   RestartAppActionSchema,
   SummarizeInNewChatActionSchema,
   RefactorFileActionSchema,
-  WriteCodeProperlyActionSchema,
   RebuildActionSchema,
   RestartActionSchema,
   RefreshActionSchema,

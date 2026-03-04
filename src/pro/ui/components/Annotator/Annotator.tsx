@@ -32,6 +32,7 @@ const useImage = (url: string) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.src = url;
     img.onload = () => setImage(img);
   }, [url]);

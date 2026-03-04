@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PREVIEW_APPS_DIR="$ROOT_DIR/preview-apps"
 OUTPUT_DIR="$ROOT_DIR/preview-dists"
 
-PREVIEW_IDS=("shadcn" "mui" "antd" "mantine" "daisyui" "chakra")
+PREVIEW_IDS=("shadcn" "mui" "antd" "mantine" "daisyui" "chakra" "themes")
 
 echo "=== Building preview apps ==="
 echo "Source: $PREVIEW_APPS_DIR"

@@ -25,6 +25,17 @@ export const DesignSystemSchema = z.object({
   isAvailable: z.boolean(),
 });
 
+export const TweakcnThemeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  cssVars: z.object({
+    light: z.record(z.string(), z.string()),
+    dark: z.record(z.string(), z.string()),
+  }),
+});
+
+export type TweakcnThemeType = z.infer<typeof TweakcnThemeSchema>;
+
 export type DesignSystemType = z.infer<typeof DesignSystemSchema>;
 
 export const GetPreviewUrlParamsSchema = z.object({
@@ -53,6 +64,11 @@ export const designSystemContracts = {
     channel: "stop-active-design-system-preview",
     input: z.void(),
     output: z.void(),
+  }),
+  getTweakcnThemes: defineContract({
+    channel: "get-tweakcn-themes",
+    input: z.void(),
+    output: z.array(TweakcnThemeSchema),
   }),
 } as const;
 

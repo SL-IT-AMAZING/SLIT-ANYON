@@ -12,7 +12,6 @@ interface DemoTurn {
   id: string;
   userMessage: string;
   steps: StepItem[];
-  response?: string;
   duration?: string;
   statusText?: string;
   working?: boolean;
@@ -39,9 +38,12 @@ const DEMO_TURNS: DemoTurn[] = [
         title: "Read",
         subtitle: "src/components/chat/MessagesList.tsx",
       },
+      {
+        id: "turn-1-response",
+        type: "text" as const,
+        text: "Found the list rendering in `MessagesList.tsx`. It uses `react-virtuoso` and switches to a non-virtualized path in test mode.",
+      },
     ],
-    response:
-      "Found the list rendering in `MessagesList.tsx`. It uses `react-virtuoso` and switches to a non-virtualized path in test mode.",
     duration: "16s",
   },
   {
@@ -65,9 +67,12 @@ const DEMO_TURNS: DemoTurn[] = [
         title: "Bash",
         subtitle: "npm run ts",
       },
+      {
+        id: "turn-2-response",
+        type: "text" as const,
+        text: "Switched from index-based lookup to role-based traversal (`last user`, `previous committed assistant`) so retry/undo remains correct for grouped assistant outputs.",
+      },
     ],
-    response:
-      "Switched from index-based lookup to role-based traversal (`last user`, `previous committed assistant`) so retry/undo remains correct for grouped assistant outputs.",
     duration: "41s",
   },
   {
@@ -155,7 +160,6 @@ export const DesktopReplica: Story = {
                 <SessionTurn
                   userMessage={turn.userMessage}
                   steps={turn.steps}
-                  response={turn.response}
                   duration={turn.duration}
                   working={turn.working}
                   statusText={turn.statusText}

@@ -48,10 +48,133 @@ interface MessageTurn {
   assistantMessages: Message[];
 }
 
+type OpenCodeQuestionData = {
+  requestId: string;
+  questions: Array<{
+    question: string;
+    header?: string;
+    options: Array<{ label: string; description?: string }>;
+    multiple?: boolean;
+  }>;
+};
+
+const CONTEXT_TOOLS = new Set(["read", "grep", "glob", "list", "search"]);
+const EDIT_TOOLS = new Set(["edit", "write", "search-replace"]);
+
+type ToolGroupKind = "context" | "edit" | "verify";
+
+function getToolGroupKind(step: StepItem): ToolGroupKind | null {
+  if (step.type !== "tool") return null;
+  const names = [step.toolName, step.statusToolName].filter(
+    Boolean,
+  ) as string[];
+  if (names.some((n) => CONTEXT_TOOLS.has(n))) return "context";
+  if (names.some((n) => EDIT_TOOLS.has(n))) return "edit";
+  if (names.some((n) => n.startsWith("lsp") || n === "diagnostics"))
+    return "verify";
+  return null;
+}
+
+function groupToolSteps(steps: StepItem[]): StepItem[] {
+  const result: StepItem[] = [];
+  let currentGroup: StepItem[] = [];
+  let currentKind: ToolGroupKind | null = null;
+
+  function flushGroup() {
+    if (currentGroup.length === 0) return;
+    if (currentGroup.length === 1) {
+      result.push(currentGroup[0]);
+    } else if (currentKind === "context") {
+      const counts = new Map<string, number>();
+      for (const s of currentGroup) {
+        const name =
+          (s.statusToolName ?? s.toolName) === "glob"
+            ? "search"
+            : (s.statusToolName ?? s.toolName ?? "read");
+        counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+      const parts: string[] = [];
+      for (const [name, count] of counts) {
+        parts.push(`${count} ${name}${count > 1 ? "s" : ""}`);
+      }
+      result.push({
+        id: `context-group-${currentGroup[0].id}`,
+        type: "context-group",
+        toolIcon: getToolIcon("anyon-read"),
+        title: "Gathered context",
+        subtitle: parts.join(", "),
+        groupedSteps: [...currentGroup],
+      });
+    } else if (currentKind === "edit") {
+      const uniqueFiles = new Set<string>();
+      for (const s of currentGroup) {
+        if (s.subtitle) uniqueFiles.add(s.subtitle);
+      }
+      const fileCount = uniqueFiles.size || currentGroup.length;
+      result.push({
+        id: `edit-group-${currentGroup[0].id}`,
+        type: "context-group",
+        toolIcon: getToolIcon("anyon-edit"),
+        title: "Making edits",
+        subtitle: `${fileCount} file${fileCount > 1 ? "s" : ""}`,
+        groupedSteps: [...currentGroup],
+      });
+    } else if (currentKind === "verify") {
+      result.push({
+        id: `verify-group-${currentGroup[0].id}`,
+        type: "context-group",
+        toolIcon: getToolIcon("anyon-status"),
+        title: "Verifying code",
+        subtitle: `${currentGroup.length} check${currentGroup.length > 1 ? "s" : ""}`,
+        groupedSteps: [...currentGroup],
+      });
+    }
+    currentGroup = [];
+    currentKind = null;
+  }
+
+  for (const step of steps) {
+    const kind = getToolGroupKind(step);
+    if (kind !== null) {
+      if (currentKind !== null && currentKind !== kind) {
+        flushGroup();
+      }
+      currentKind = kind;
+      currentGroup.push(step);
+    } else {
+      flushGroup();
+      result.push(step);
+    }
+  }
+
+  flushGroup();
+  return result;
+}
+
+function keepOnlyLastTodoStep(steps: StepItem[]): StepItem[] {
+  let lastTodoIndex = -1;
+  for (let index = steps.length - 1; index >= 0; index -= 1) {
+    if (steps[index]?.type === "todo") {
+      lastTodoIndex = index;
+      break;
+    }
+  }
+
+  if (lastTodoIndex === -1) {
+    return steps;
+  }
+
+  return steps.filter(
+    (step, index) => step.type !== "todo" || index === lastTodoIndex,
+  );
+}
+
 function mapTagToStatusTool(tag: string): string {
   switch (tag) {
     case "opencode-tool":
       return "";
+    case "opencode-question":
+      return "question";
     case "anyon-read":
       return "read";
     case "anyon-list-files":
@@ -127,12 +250,10 @@ function summarizeTurn(
   nowMs: number,
 ): {
   steps: StepItem[];
-  response: string;
   statusText: string | undefined;
   duration: string | undefined;
 } {
   const steps: StepItem[] = [];
-  const responseChunks: string[] = [];
   let activeToolName: string | undefined;
 
   for (const message of turn.assistantMessages) {
@@ -141,7 +262,11 @@ function summarizeTurn(
     for (const piece of pieces) {
       if (piece.type === "markdown") {
         if (piece.content.trim()) {
-          responseChunks.push(piece.content);
+          steps.push({
+            id: `${message.id}-text-${steps.length}`,
+            type: "text",
+            text: piece.content,
+          });
         }
         continue;
       }
@@ -160,6 +285,24 @@ function summarizeTurn(
           steps.push({
             id: `${message.id}-think-${steps.length}`,
             type: "reasoning",
+            text: tagInfo.content,
+          });
+        }
+        continue;
+      }
+
+      if (tagInfo.tag === "opencode-question") {
+        let questionData: OpenCodeQuestionData | null = null;
+        try {
+          questionData = JSON.parse(tagInfo.content) as OpenCodeQuestionData;
+        } catch {}
+
+        if (questionData) {
+          steps.push({
+            id: `${message.id}-question-${steps.length}`,
+            type: "question",
+            toolName: "question",
+            title: questionData.questions[0]?.header || "Question",
             text: tagInfo.content,
           });
         }
@@ -187,6 +330,25 @@ function summarizeTurn(
               inProgress: tagInfo.inProgress,
             }) === "pending";
 
+      if (statusToolName === "todoread") {
+        continue;
+      }
+
+      if (statusToolName === "todowrite") {
+        steps.push({
+          id: `${message.id}-todo-${steps.length}`,
+          type: "todo",
+          toolName: "todowrite",
+          statusToolName,
+          toolIcon: getToolIcon("todowrite"),
+          title: "To-dos",
+        });
+        if (isRunning) {
+          activeToolName = statusToolName;
+        }
+        continue;
+      }
+
       if (isRunning) {
         activeToolName = statusToolName;
       }
@@ -200,6 +362,7 @@ function summarizeTurn(
         id: `${message.id}-${toolName}-${steps.length}`,
         type: "tool",
         toolName,
+        statusToolName,
         toolIcon: getToolIcon(iconToolName),
         title:
           tagInfo.attributes.title ||
@@ -216,6 +379,9 @@ function summarizeTurn(
       });
     }
   }
+
+  const groupedSteps = groupToolSteps(steps);
+  const dedupedSteps = keepOnlyLastTodoStep(groupedSteps);
 
   let duration: string | undefined;
   const assistantWithCreatedAt = turn.assistantMessages.filter(
@@ -239,8 +405,7 @@ function summarizeTurn(
   }
 
   return {
-    steps,
-    response: responseChunks.join("\n").trim(),
+    steps: dedupedSteps,
     statusText: activeToolName ? computeStatus(activeToolName) : undefined,
     duration,
   };
@@ -549,21 +714,20 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
         });
         const userMessageText = turn.userMessage?.content ?? "";
         const hasAssistantContent = turn.assistantMessages.length > 0;
-        // Auto-expand steps for completed turns with no response text
-        // so the user always sees something when the agent finishes
+        const hasVisibleTextSteps = turnSummary.steps.some(
+          (s) => s.type === "text" || s.type === "question",
+        );
         const shouldAutoExpand =
           !isTurnWorking &&
-          !turnSummary.response &&
+          !hasVisibleTextSteps &&
           turnSummary.steps.length > 0;
-        const stepsExpanded =
-          expandedTurnIds.has(turn.id) || shouldAutoExpand;
+        const stepsExpanded = expandedTurnIds.has(turn.id) || shouldAutoExpand;
 
         return (
-          <div className="px-4" key={turn.id}>
+          <div className="px-4 max-w-3xl mx-auto w-full" key={turn.id}>
             <SessionTurn
               userMessage={userMessageText}
               steps={turnSummary.steps}
-              response={turnSummary.response}
               working={isTurnWorking}
               isActive={isTurnWorking}
               statusText={turnSummary.statusText}
@@ -663,19 +827,20 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
               fallbackDuration,
             });
             const hasAssistantContent = turn.assistantMessages.length > 0;
-            // Auto-expand steps for completed turns with no response text
+            const hasVisibleTextSteps = turnSummary.steps.some(
+              (s) => s.type === "text" || s.type === "question",
+            );
             const shouldAutoExpand =
               !isTurnWorking &&
-              !turnSummary.response &&
+              !hasVisibleTextSteps &&
               turnSummary.steps.length > 0;
             const stepsExpanded =
               expandedTurnIds.has(turn.id) || shouldAutoExpand;
             return (
-              <div className="px-4" key={turn.id}>
+              <div className="px-4 max-w-3xl mx-auto w-full" key={turn.id}>
                 <SessionTurn
                   userMessage={turn.userMessage?.content ?? ""}
                   steps={turnSummary.steps}
-                  response={turnSummary.response}
                   working={isTurnWorking}
                   isActive={isTurnWorking}
                   statusText={turnSummary.statusText}

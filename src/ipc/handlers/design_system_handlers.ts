@@ -1,4 +1,5 @@
 import { DESIGN_SYSTEMS } from "@/shared/designSystems";
+import { TWEAKCN_THEMES } from "@/shared/tweakcnThemes";
 import { designSystemContracts } from "../types/design_systems";
 import {
   getPreviewUrl,
@@ -22,5 +23,9 @@ export function registerDesignSystemHandlers() {
 
   createTypedHandler(designSystemContracts.stopActivePreview, async () => {
     await stopActivePreview();
+  });
+
+  createTypedHandler(designSystemContracts.getTweakcnThemes, async () => {
+    return TWEAKCN_THEMES;
   });
 }

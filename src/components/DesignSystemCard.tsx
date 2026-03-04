@@ -1,10 +1,12 @@
 import type { DesignSystemType } from "@/ipc/types/design_systems";
 import { Eye, Sparkles } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
+
+const IFRAME_RENDER_WIDTH = 1280;
 
 interface DesignSystemCardProps {
   designSystem: DesignSystemType;
@@ -17,7 +19,28 @@ export const DesignSystemCard: React.FC<DesignSystemCardProps> = ({
   onPreview,
   onUse,
 }) => {
-  const [imageError, setImageError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateScale = () => {
+      const width = el.offsetWidth;
+      if (width > 0) {
+        setScale(width / IFRAME_RENDER_WIDTH);
+      }
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(() => updateScale());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const previewUrl = `anyon-preview://${designSystem.id}/index.html`;
+  const iframeHeight = scale > 0 ? Math.ceil(180 / scale) : 960;
 
   return (
     <Card
@@ -25,17 +48,26 @@ export const DesignSystemCard: React.FC<DesignSystemCardProps> = ({
       className="overflow-hidden group hover:shadow-md transition-shadow duration-200"
     >
       <div
+        ref={containerRef}
         className="relative h-[180px] w-full overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${designSystem.colorScheme.primary} 0%, ${designSystem.colorScheme.secondary} 100%)`,
         }}
       >
-        {!imageError && (
-          <img
-            src={`/${designSystem.thumbnailPath}`}
-            alt={`${designSystem.displayName} preview`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            onError={() => setImageError(true)}
+        {scale > 0 && (
+          <iframe
+            src={previewUrl}
+            sandbox="allow-scripts allow-same-origin"
+            loading="lazy"
+            tabIndex={-1}
+            title={`${designSystem.displayName} preview`}
+            className="absolute top-0 left-0 border-none pointer-events-none"
+            style={{
+              width: `${IFRAME_RENDER_WIDTH}px`,
+              height: `${iframeHeight}px`,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
           />
         )}
       </div>

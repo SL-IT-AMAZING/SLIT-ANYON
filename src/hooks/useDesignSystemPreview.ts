@@ -18,6 +18,15 @@ interface PreviewReadyMessage {
   nonce: string;
 }
 
+function getTargetOrigin(url: string | null): string {
+  if (!url) return "*";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "*";
+  }
+}
+
 function isPreviewReadyMessage(data: unknown): data is PreviewReadyMessage {
   if (typeof data !== "object" || data === null) return false;
   const msg = data as Record<string, unknown>;
@@ -92,8 +101,12 @@ export function useDesignSystemPreview(
   useEffect(() => {
     if (!nonce || !previewUrl) return;
 
+    const expectedOrigin = getTargetOrigin(previewUrl);
+
     function handleMessage(event: MessageEvent) {
       if (!isPreviewReadyMessage(event.data)) return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      if (expectedOrigin !== "*" && event.origin !== expectedOrigin) return;
       if (event.data.nonce !== nonce) return;
 
       setComponents(
@@ -107,7 +120,10 @@ export function useDesignSystemPreview(
 
       const iframe = iframeRef.current;
       if (iframe?.contentWindow) {
-        iframe.contentWindow.postMessage({ type: "HANDSHAKE_ACK", nonce }, "*");
+        iframe.contentWindow.postMessage(
+          { type: "HANDSHAKE_ACK", nonce },
+          expectedOrigin,
+        );
       }
     }
 
@@ -122,11 +138,11 @@ export function useDesignSystemPreview(
 
       iframe.contentWindow.postMessage(
         { type: "NAVIGATE_COMPONENT", componentId, nonce },
-        "*",
+        getTargetOrigin(previewUrl),
       );
       setActiveComponentId(componentId);
     },
-    [nonce],
+    [nonce, previewUrl],
   );
 
   useEffect(() => {

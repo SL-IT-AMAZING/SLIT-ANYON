@@ -123,7 +123,7 @@ export function DeployProgress({
                 <button
                   type="button"
                   onClick={() => {
-                    const baseUrl = teamSlug 
+                    const baseUrl = teamSlug
                       ? `https://vercel.com/${teamSlug}/${projectName}`
                       : `https://vercel.com/${projectName}`;
                     ipc.system.openExternalUrl(`${baseUrl}/${deploymentId}`);

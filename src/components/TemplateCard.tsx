@@ -1,9 +1,7 @@
 import type { Template } from "@/shared/templates";
 import { useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
+import { useCallback, useEffect, useState } from "react";
 
 interface TemplateCardProps {
   template: Template;
@@ -11,68 +9,59 @@ interface TemplateCardProps {
 
 export const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
   const navigate = useNavigate();
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleCardClick = () => {
+  // Reset error/loaded state when imageUrl changes
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [template.imageUrl]);
+
+  const handleCardClick = useCallback(() => {
     navigate({ to: "/hub/$templateId", params: { templateId: template.id } });
-  };
+  }, [navigate, template.id]);
+
+  const showImage = !!template.imageUrl && !hasError;
 
   return (
-    <Card
+    <button
+      type="button"
       onClick={handleCardClick}
-      className="overflow-hidden cursor-pointer group hover:shadow-md transition-shadow duration-200"
+      className="cursor-pointer group text-left w-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl"
     >
-      <div className="relative w-full h-48 overflow-hidden bg-muted">
-        {template.imageUrl ? (
+      <div
+        className="relative rounded-xl overflow-hidden bg-muted"
+        style={{ aspectRatio: "16 / 10" }}
+      >
+        {showImage && (
           <img
             src={template.imageUrl}
             alt={template.title}
-            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-200"
+            loading="lazy"
+            className={`w-full h-full object-cover object-top transition-all duration-300 ease-out group-hover:scale-[1.02] ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            onLoad={() => setIsLoaded(true)}
+            onError={() => setHasError(true)}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-muted-foreground/20 select-none">
+        )}
+        {/* Fallback: show while image is loading, on error, or when no imageUrl */}
+        {(!showImage || !isLoaded) && (
+          <div className="absolute inset-0 w-full h-full flex items-center justify-center text-4xl font-bold text-muted-foreground/20 select-none">
             {template.title.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
-      <CardContent className="p-4">
-        {template.category && (
-          <Badge variant="outline" className="text-xs capitalize">
-            {template.category}
-          </Badge>
-        )}
-        <h3 className="text-lg font-semibold text-foreground mt-2">
+
+      <div className="px-1 pt-3 pb-1">
+        <h3 className="text-sm font-semibold text-foreground truncate">
           {template.title}
         </h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+        <p className="text-sm text-muted-foreground mt-0.5 truncate">
           {template.description}
         </p>
-
-        {template.techStack && template.techStack.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {template.techStack.map((tech) => (
-              <span
-                key={tech}
-                className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 mt-4">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCardClick();
-            }}
-            size="sm"
-            className="flex-1"
-          >
-            Choose
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </button>
   );
 };

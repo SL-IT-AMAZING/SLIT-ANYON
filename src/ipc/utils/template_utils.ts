@@ -37,6 +37,39 @@ function getLocalTemplatePreviewHtmlPath(templatePath: string): string {
   );
 }
 
+function getLocalTemplateThumbnailPath(templatePath: string): string {
+  return path.join(
+    app.getAppPath(),
+    "templates",
+    templatePath,
+    "thumbnail.jpg",
+  );
+}
+
+/**
+ * Resolves thumbnail URLs for templates that have local thumbnail files.
+ * Sets imageUrl to the custom anyon-thumb:// protocol URL so the renderer
+ * can load the image via the registered protocol handler.
+ */
+function resolveTemplateThumbnails(
+  registry: TemplateRegistry,
+): TemplateRegistry {
+  const resolvedTemplates = registry.templates.map((template) => {
+    // Always prefer local thumbnails — remote imageUrls are unreliable (often 404)
+    const thumbnailPath = getLocalTemplateThumbnailPath(template.path);
+    if (fs.existsSync(thumbnailPath)) {
+      return {
+        ...template,
+        imageUrl: `anyon-thumb://template/${template.path}/thumbnail.jpg`,
+      };
+    }
+
+    return template;
+  });
+
+  return { ...registry, templates: resolvedTemplates };
+}
+
 async function fetchLocalTemplateRegistry(): Promise<TemplateRegistry> {
   const localRegistryPath = getLocalRegistryPath();
   logger.info(`Falling back to local template registry: ${localRegistryPath}`);
@@ -73,14 +106,16 @@ export async function fetchTemplateRegistry(): Promise<TemplateRegistry> {
       }
 
       const registry: TemplateRegistry = await response.json();
-      registryCache = registry;
-      return registry;
+      const resolved = resolveTemplateThumbnails(registry);
+      registryCache = resolved;
+      return resolved;
     } catch (error) {
       logger.error("Failed to fetch template registry from GitHub:", error);
       try {
         const localRegistry = await fetchLocalTemplateRegistry();
-        registryCache = localRegistry;
-        return localRegistry;
+        const resolved = resolveTemplateThumbnails(localRegistry);
+        registryCache = resolved;
+        return resolved;
       } catch (localError) {
         logger.error(
           "Failed to fetch template registry from local filesystem:",

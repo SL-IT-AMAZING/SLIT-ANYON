@@ -135,7 +135,6 @@ export function showMcpConsentToast(args: {
   return toastId;
 }
 
-
 /**
  * Show update notification toast when a new version has been downloaded
  */

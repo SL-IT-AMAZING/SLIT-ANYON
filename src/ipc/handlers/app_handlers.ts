@@ -232,7 +232,9 @@ async function executeAppLocalNode({
         env[key] = value;
       }
     } catch (error: any) {
-      logger.warn(`Failed to retrieve Supabase credentials for app ${appId}, falling back to platform env: ${error.message}`);
+      logger.warn(
+        `Failed to retrieve Supabase credentials for app ${appId}, falling back to platform env: ${error.message}`,
+      );
     }
   }
 
@@ -243,7 +245,6 @@ async function executeAppLocalNode({
     detached: false,
     env,
   });
-
 
   // Check if process spawned correctly
   if (!spawnedProcess.pid) {
@@ -532,7 +533,9 @@ RUN npm install -g pnpm
         dockerEnvArgs.push("-e", `${key}=${value}`);
       }
     } catch (error: any) {
-      logger.warn(`Failed to inject Supabase env vars for Docker app ${appId}: ${error.message}`);
+      logger.warn(
+        `Failed to inject Supabase env vars for Docker app ${appId}: ${error.message}`,
+      );
     }
   }
 
@@ -822,6 +825,7 @@ export function registerAppHandlers() {
       fullAppPath,
       templateId: params.templateId,
       designSystemId: params.designSystemId,
+      tweakcnThemeId: params.tweakcnThemeId,
     });
 
     // Initialize git repo and create first commit
@@ -990,6 +994,30 @@ export function registerAppHandlers() {
     return {
       apps: appsWithResolvedPath,
     };
+  });
+
+  createTypedHandler(appContracts.saveAppThumbnail, async (_, params) => {
+    const { appId, dataUrl } = params;
+
+    // Validate app exists
+    const appRecord = await db.query.apps.findFirst({
+      where: eq(apps.id, appId),
+    });
+    if (!appRecord) throw new Error("App not found");
+
+    // Extract base64 data from data URL
+    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
+
+    // Ensure directory exists
+    const { getAppThumbnailDir, getAppThumbnailPath } =
+      await import("../../main/thumbnail-protocol");
+    const thumbnailDir = getAppThumbnailDir();
+    await fsPromises.mkdir(thumbnailDir, { recursive: true });
+
+    // Write thumbnail file
+    const thumbnailPath = getAppThumbnailPath(appId);
+    await fsPromises.writeFile(thumbnailPath, buffer);
   });
 
   createTypedHandler(appContracts.readAppFile, async (_, params) => {
@@ -1415,6 +1443,16 @@ export function registerAppHandlers() {
           `App deleted from database, but failed to delete app files. Please delete app files from ${appPath} manually.\n\nError: ${error.message}`,
         );
       }
+
+      // Delete app thumbnail
+      try {
+        const { getAppThumbnailPath } =
+          await import("../../main/thumbnail-protocol");
+        const thumbnailPath = getAppThumbnailPath(appId);
+        await fsPromises.rm(thumbnailPath, { force: true });
+      } catch {
+        // Non-critical: thumbnail cleanup failure is not worth surfacing
+      }
     });
   });
 
@@ -1458,6 +1496,20 @@ export function registerAppHandlers() {
         throw new Error(`Failed to toggle favorite status: ${error.message}`);
       }
     });
+  });
+
+  createTypedHandler(appContracts.updateDisplayName, async (_, params) => {
+    const { appId, displayName } = params;
+    const app = await db.query.apps.findFirst({
+      where: eq(apps.id, appId),
+    });
+    if (!app) {
+      throw new Error(`App with ID ${appId} not found.`);
+    }
+    await db
+      .update(apps)
+      .set({ displayName: displayName.trim() || null })
+      .where(eq(apps.id, appId));
   });
 
   createTypedHandler(appContracts.renameApp, async (_, params) => {

@@ -1,5 +1,7 @@
 import {
+  type ImagePart,
   type ModelMessage,
+  type TextPart,
   type TextStreamPart,
   type ToolSet,
   streamText,
@@ -14,7 +16,7 @@ import fs from "node:fs";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
+import type { AgentTodo, ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { and, eq, isNull } from "drizzle-orm";
 import log from "electron-log";
 import { db } from "../../db";
@@ -51,6 +53,7 @@ import {
   gitAddAll,
   gitCommit,
 } from "../utils/git_utils";
+import { openCodeServer } from "../utils/opencode_server";
 import { replacePromptReference } from "../utils/replacePromptReference";
 import { safeSend } from "../utils/safe_sender";
 import { parsePlanFile, validatePlanId } from "./planUtils";
@@ -102,6 +105,123 @@ function parseMcpToolKey(toolKey: string): {
   const serverName = toolKey.slice(0, lastIndex);
   const toolName = toolKey.slice(lastIndex + separator.length);
   return { serverName, toolName };
+}
+
+type TodoLike = {
+  id?: unknown;
+  content?: unknown;
+  status?: unknown;
+};
+
+function isTodoStatus(
+  status: unknown,
+): status is "pending" | "in_progress" | "completed" {
+  return (
+    status === "pending" || status === "in_progress" || status === "completed"
+  );
+}
+
+function normalizeTodos(value: unknown): AgentTodo[] | null {
+  if (!Array.isArray(value)) return null;
+
+  const result: AgentTodo[] = [];
+  for (const [index, item] of value.entries()) {
+    const todo = item as TodoLike;
+    if (typeof todo.content !== "string" || todo.content.trim().length === 0) {
+      continue;
+    }
+    result.push({
+      id:
+        typeof todo.id === "string" && todo.id.length > 0
+          ? todo.id
+          : `todo-${index}-${todo.content}`,
+      content: todo.content,
+      status: isTodoStatus(todo.status) ? todo.status : "pending",
+    });
+  }
+
+  return result;
+}
+
+function parseJsonCandidate(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {}
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) {
+    try {
+      return JSON.parse(fenced[1].trim());
+    } catch {}
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const firstBracket = trimmed.indexOf("[");
+  const starts = [firstBrace, firstBracket].filter((x) => x >= 0);
+  if (starts.length === 0) return null;
+
+  const start = Math.min(...starts);
+  const end = Math.max(trimmed.lastIndexOf("}"), trimmed.lastIndexOf("]"));
+  if (end <= start) return null;
+
+  try {
+    return JSON.parse(trimmed.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+function extractTodosFromOpenCodeToolContent(
+  content: string,
+): AgentTodo[] | null {
+  const parsed = parseJsonCandidate(content);
+  if (!parsed) return null;
+
+  const direct = normalizeTodos(parsed);
+  if (direct) return direct;
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return null;
+  }
+
+  const record = parsed as Record<string, unknown>;
+  return (
+    normalizeTodos(record.todos) ??
+    normalizeTodos(
+      (record.input as Record<string, unknown> | undefined)?.todos,
+    ) ??
+    normalizeTodos(
+      (record.metadata as Record<string, unknown> | undefined)?.todos,
+    )
+  );
+}
+
+function extractLatestTodosFromAssistantMessage(
+  content: string,
+): AgentTodo[] | null {
+  const regex = /<opencode-tool\s+([^>]*)>([\s\S]*?)<\/opencode-tool>/gi;
+  const matches: Array<{ attrs: string; body: string }> = [];
+  let match: RegExpExecArray | null;
+  for (;;) {
+    match = regex.exec(content);
+    if (match === null) break;
+    matches.push({ attrs: match[1] ?? "", body: match[2] ?? "" });
+  }
+
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    const attrs = matches[index].attrs;
+    const toolName = attrs.match(/\bname="([^"]+)"/i)?.[1]?.toLowerCase();
+    if (toolName !== "todowrite" && toolName !== "todoread") {
+      continue;
+    }
+    const todos = extractTodosFromOpenCodeToolContent(matches[index].body);
+    if (todos) return todos;
+  }
+
+  return null;
 }
 
 // Ensure the temp directory exists
@@ -250,6 +370,7 @@ export function registerChatStreamHandlers() {
 
         // Process attachments if any
         let attachmentInfo = "";
+        const imageAttachments: { data: string; mediaType: string }[] = [];
 
         if (req.attachments && req.attachments.length > 0) {
           attachmentInfo = "\n\nAttachments:\n";
@@ -287,6 +408,13 @@ export function registerChatStreamHandlers() {
             } else {
               // For chat-context, use the existing logic
               attachmentInfo += `- ${attachment.name} (${attachment.type})\n`;
+              // Collect image data for multimodal AI messages
+              if (attachment.type.startsWith("image/")) {
+                imageAttachments.push({
+                  data: attachment.data,
+                  mediaType: attachment.type,
+                });
+              }
               // If it's a text-based file, try to include the content
               if (await isTextFile(filePath)) {
                 try {
@@ -504,6 +632,7 @@ ${componentSnippet}
               aiRules,
               themePrompt,
               selectedAgent: settings.selectedAgent,
+              language: settings.language,
             });
 
             // Append Supabase context so OpenCode's AI knows about
@@ -531,11 +660,28 @@ ${componentSnippet}
 
             // Send only the current user prompt — no codebase, no history.
             // OpenCode manages its own session history and reads files via tools.
+            // Build user message content – include image parts when present
+            // so the model receives them as multimodal vision input.
+            const openCodeContent: string | (TextPart | ImagePart)[] =
+              imageAttachments.length > 0
+                ? [
+                    { type: "text", text: userPrompt },
+                    ...imageAttachments.map(
+                      (img): ImagePart => ({
+                        type: "image",
+                        image: img.data,
+                        mediaType: img.mediaType,
+                      }),
+                    ),
+                  ]
+                : userPrompt;
+
             const openCodeMessages: ModelMessage[] = [
-              { role: "user", content: userPrompt },
+              { role: "user", content: openCodeContent },
             ];
 
             let lastDbSaveAt = 0;
+            let lastTodosSignature = "";
             const openCodeProcessChunkUpdate = async ({
               fullResponse,
             }: {
@@ -564,6 +710,20 @@ ${componentSnippet}
                 chatId: req.chatId,
                 messages: currentMessages,
               });
+
+              const todos =
+                extractLatestTodosFromAssistantMessage(fullResponse);
+              if (todos) {
+                const signature = JSON.stringify(todos);
+                if (signature !== lastTodosSignature) {
+                  lastTodosSignature = signature;
+                  safeSend(event.sender, "agent-tool:todos-update", {
+                    chatId: req.chatId,
+                    todos,
+                  });
+                }
+              }
+
               return fullResponse;
             };
 
@@ -773,6 +933,33 @@ ${componentSnippet}
 
     return true;
   });
+
+  createTypedHandler(
+    chatContracts.replyToQuestion,
+    async (_event, { requestID, answers }) => {
+      const serverInfo = await openCodeServer.ensureRunning();
+      const credentials = Buffer.from(
+        `opencode:${serverInfo.password}`,
+      ).toString("base64");
+      const response = await fetch(
+        `${serverInfo.url}/question/${requestID}/reply`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${credentials}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ answers }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to reply to question: ${response.status} ${response.statusText}`,
+        );
+      }
+      return true;
+    },
+  );
 }
 
 export function formatMessagesForSummary(

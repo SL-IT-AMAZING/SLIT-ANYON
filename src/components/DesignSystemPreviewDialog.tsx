@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDesignSystemPreview } from "@/hooks/useDesignSystemPreview";
+import { useTweakcnThemes } from "@/hooks/useTweakcnThemes";
 import { cn } from "@/lib/utils";
 import { DESIGN_SYSTEMS } from "@/shared/designSystems";
 import { Loader2, Sparkles, X } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 interface DesignSystemPreviewDialogProps {
   designSystemId: string | null;
@@ -44,19 +45,32 @@ export function DesignSystemPreviewDialog({
   onOpenChange,
   onUseDesignSystem,
 }: DesignSystemPreviewDialogProps) {
+  const { themes } = useTweakcnThemes();
+  const isThemePreview = Boolean(designSystemId?.startsWith("themes:"));
+  const themeId = isThemePreview
+    ? designSystemId?.slice("themes:".length)
+    : null;
+  const previewTargetId = isThemePreview ? "themes" : designSystemId;
+
   const {
     previewUrl,
+    nonce,
     isLoading,
     error,
     components,
     activeComponentId,
     navigateToComponent,
     iframeRef,
-  } = useDesignSystemPreview(open ? designSystemId : null);
+  } = useDesignSystemPreview(open ? previewTargetId : null);
 
   const designSystem = useMemo(
     () => DESIGN_SYSTEMS.find((ds) => ds.id === designSystemId),
     [designSystemId],
+  );
+
+  const theme = useMemo(
+    () => (themeId ? themes.find((item) => item.id === themeId) : undefined),
+    [themeId, themes],
   );
 
   const componentGroups = useMemo(
@@ -70,6 +84,38 @@ export function DesignSystemPreviewDialog({
     }
   }, [designSystemId, onUseDesignSystem]);
 
+  useEffect(() => {
+    if (!isThemePreview || !theme || !nonce || isLoading || !previewUrl) return;
+
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+
+    const targetOrigin = (() => {
+      try {
+        return new URL(previewUrl).origin;
+      } catch {
+        return "*";
+      }
+    })();
+
+    const payload = {
+      type: "APPLY_THEME",
+      nonce,
+      cssVars: theme.cssVars,
+    };
+
+    iframeWindow.postMessage(payload, targetOrigin);
+
+    const retryDelays = [120, 260, 420];
+    retryDelays.forEach((delayMs) => {
+      window.setTimeout(() => {
+        const win = iframeRef.current?.contentWindow;
+        if (!win) return;
+        win.postMessage(payload, targetOrigin);
+      }, delayMs);
+    });
+  }, [iframeRef, isLoading, isThemePreview, nonce, previewUrl, theme]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -77,27 +123,34 @@ export function DesignSystemPreviewDialog({
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">
-          {designSystem?.displayName ?? "Design System"} Preview
+          {isThemePreview
+            ? (theme?.name ?? "Theme")
+            : (designSystem?.displayName ?? "Design System")}{" "}
+          Preview
         </DialogTitle>
 
         <div className="flex items-center justify-between border-b px-5 py-3.5 shrink-0">
           <div className="min-w-0">
             <h2 className="text-xl font-bold tracking-tight text-foreground truncate">
-              {designSystem?.displayName ?? "Design System"}
+              {isThemePreview
+                ? (theme?.name ?? "Theme")
+                : (designSystem?.displayName ?? "Design System")}
             </h2>
             <p className="text-sm text-muted-foreground truncate">
-              {[
-                designSystem?.libraryName,
-                designSystem
-                  ? `${designSystem.componentCount} components`
-                  : null,
-                designSystem?.category
-                  ? designSystem.category.charAt(0).toUpperCase() +
-                    designSystem.category.slice(1)
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(" \u00B7 ")}
+              {isThemePreview
+                ? "tweakcn community · shadcn/ui compatible"
+                : [
+                    designSystem?.libraryName,
+                    designSystem
+                      ? `${designSystem.componentCount} components`
+                      : null,
+                    designSystem?.category
+                      ? designSystem.category.charAt(0).toUpperCase() +
+                        designSystem.category.slice(1)
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 ml-4">
@@ -107,7 +160,7 @@ export function DesignSystemPreviewDialog({
               disabled={!designSystemId}
             >
               <Sparkles className="size-4" />
-              Use This Design System
+              {isThemePreview ? "Use This Theme" : "Use This Design System"}
             </Button>
             <Button
               variant="ghost"
@@ -202,7 +255,7 @@ export function DesignSystemPreviewDialog({
                   src={previewUrl}
                   sandbox="allow-scripts allow-same-origin"
                   className="w-full h-full border-none"
-                  title={`${designSystem?.displayName ?? "Design System"} preview`}
+                  title={`${isThemePreview ? (theme?.name ?? "Theme") : (designSystem?.displayName ?? "Design System")} preview`}
                 />
               </>
             ) : null}
