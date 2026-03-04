@@ -42,9 +42,7 @@ import { getTestResponse } from "./testing_chat_handlers";
 
 import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
-import { inArray } from "drizzle-orm";
 import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
-import { prompts as promptsTable } from "../../db/schema";
 import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
 import {
@@ -54,7 +52,6 @@ import {
   gitCommit,
 } from "../utils/git_utils";
 import { openCodeServer } from "../utils/opencode_server";
-import { replacePromptReference } from "../utils/replacePromptReference";
 import { safeSend } from "../utils/safe_sender";
 import { parsePlanFile, validatePlanId } from "./planUtils";
 
@@ -431,26 +428,6 @@ export function registerChatStreamHandlers() {
 
         // Add user message to database with attachment info
         let userPrompt = req.prompt + (attachmentInfo ? attachmentInfo : "");
-        // Inline referenced prompt contents for mentions like @prompt:<id>
-        try {
-          const matches = Array.from(userPrompt.matchAll(/@prompt:(\d+)/g));
-          if (matches.length > 0) {
-            const ids = Array.from(new Set(matches.map((m) => Number(m[1]))));
-            const referenced = await db
-              .select()
-              .from(promptsTable)
-              .where(inArray(promptsTable.id, ids));
-            if (referenced.length > 0) {
-              const promptsMap: Record<number, string> = {};
-              for (const p of referenced) {
-                promptsMap[p.id] = p.content;
-              }
-              userPrompt = replacePromptReference(userPrompt, promptsMap);
-            }
-          }
-        } catch (e) {
-          logger.error("Failed to inline referenced prompts:", e);
-        }
 
         // Expand /implement-plan= into full implementation prompt
         // Keep the original short form for display in the UI; the expanded

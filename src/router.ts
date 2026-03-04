@@ -6,19 +6,15 @@ import { chatRoute } from "./routes/chat";
 import { connectRoute } from "./routes/connect";
 import { homeRoute } from "./routes/home";
 import { hubRoute } from "./routes/hub";
-import { libraryRoute } from "./routes/library";
 import { rootRoute } from "./routes/root";
 import { settingsRoute } from "./routes/settings";
 import { templateDetailRoute } from "./routes/template-detail";
-import { themesRoute } from "./routes/themes";
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
   hubRoute,
   templateDetailRoute,
   connectRoute,
-  libraryRoute,
-  themesRoute,
   chatRoute,
   appDetailsRoute,
   appsRoute,

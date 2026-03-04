@@ -4,10 +4,10 @@ import type { ThemeTag } from "@/lib/color-utils";
 import { ALL_THEME_TAGS } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Blocks, FileText, Heart, Layers, Palette, User } from "lucide-react";
+import { Blocks, Heart, Layers, Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type LibraryFilter = "all" | "my-themes" | "liked" | "design-systems";
+export type LibraryFilter = "all" | "liked" | "design-systems";
 
 interface LibraryListProps {
   selectedFilter?: LibraryFilter;
@@ -20,7 +20,6 @@ interface LibraryListProps {
 
 const FILTER_PRESETS = [
   { key: "all" as const, label: "All Themes", icon: Layers },
-  { key: "my-themes" as const, label: "My Themes", icon: User },
   { key: "liked" as const, label: "Liked", icon: Heart },
   { key: "design-systems" as const, label: "Design Systems", icon: Blocks },
 ];
@@ -43,12 +42,6 @@ export function LibraryList({
       label: t("library.sections.themes"),
       to: "/themes",
       icon: Palette,
-    },
-    {
-      id: "prompts",
-      label: t("library.sections.prompts"),
-      to: "/library",
-      icon: FileText,
     },
   ];
 

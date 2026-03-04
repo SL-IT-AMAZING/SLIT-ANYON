@@ -43,7 +43,6 @@ export {
 } from "./system";
 export { versionContracts } from "./version";
 export { languageModelContracts } from "./language-model";
-export { promptContracts } from "./prompts";
 export { templateContracts } from "./templates";
 export { proposalContracts } from "./proposals";
 export { importContracts } from "./import";
@@ -79,7 +78,6 @@ export {
 } from "./system";
 export { versionClient } from "./version";
 export { languageModelClient } from "./language-model";
-export { promptClient } from "./prompts";
 export { templateClient } from "./templates";
 export { proposalClient } from "./proposals";
 export { importClient } from "./import";
@@ -270,13 +268,6 @@ export type {
   LocalModel,
 } from "./language-model";
 
-// Prompt types
-export type {
-  PromptDto,
-  CreatePromptParamsDto,
-  UpdatePromptParamsDto,
-} from "./prompts";
-
 // Template types
 export type {
   Template,
@@ -286,20 +277,6 @@ export type {
   GetAppThemeParams,
   GetTemplateContentParams,
   GetTemplateContentResult,
-  CustomTheme,
-  CreateCustomThemeParams,
-  UpdateCustomThemeParams,
-  DeleteCustomThemeParams,
-  ThemeGenerationMode,
-  ThemeGenerationModel,
-  ThemeInputSource,
-  CrawlStatus,
-  GenerateThemePromptParams,
-  GenerateThemePromptResult,
-  GenerateThemeFromUrlParams,
-  SaveThemeImageParams,
-  SaveThemeImageResult,
-  CleanupThemeImagesParams,
 } from "./templates";
 
 // Proposal types
@@ -399,7 +376,6 @@ import { languageModelClient } from "./language-model";
 import { likedThemesClient } from "./liked_themes";
 import { mcpClient, mcpEventClient } from "./mcp";
 import { miscClient, miscEventClient } from "./misc";
-import { promptClient } from "./prompts";
 import { proposalClient } from "./proposals";
 import { securityClient } from "./security";
 import { settingsClient } from "./settings";
@@ -460,7 +436,6 @@ export const ipc = {
   system: systemClient,
   version: versionClient,
   languageModel: languageModelClient,
-  prompt: promptClient,
   template: templateClient,
   proposal: proposalClient,
   import: importClient,

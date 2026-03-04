@@ -1,4 +1,3 @@
-import { registerThemesHandlers } from "../pro/main/ipc/handlers/themes_handlers";
 import { registerVisualEditingHandlers } from "../pro/main/ipc/handlers/visual_editing_handlers";
 
 import { registerAppHandlers } from "./handlers/app_handlers";
@@ -27,7 +26,6 @@ import { registerPlanHandlers } from "./handlers/plan_handlers";
 import { registerPortalHandlers } from "./handlers/portal_handlers";
 import { registerProHandlers } from "./handlers/pro_handlers";
 import { registerProblemsHandlers } from "./handlers/problems_handlers";
-import { registerPromptHandlers } from "./handlers/prompt_handlers";
 import { registerProposalHandlers } from "./handlers/proposal_handlers";
 import { registerReleaseNoteHandlers } from "./handlers/release_note_handlers";
 import { registerSecurityHandlers } from "./handlers/security_handlers";
@@ -76,9 +74,7 @@ export function registerIpcHandlers() {
   registerCapacitorHandlers();
 
   registerTemplateHandlers();
-  registerThemesHandlers();
   registerPortalHandlers();
-  registerPromptHandlers();
   registerHelpBotHandlers();
   registerMcpHandlers();
   registerSecurityHandlers();

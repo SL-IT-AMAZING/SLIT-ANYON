@@ -30,7 +30,6 @@ import { likedThemesContracts } from "../types/liked_themes";
 import { mcpContracts, mcpEvents } from "../types/mcp";
 import { miscContracts, miscEvents } from "../types/misc";
 import { planContracts, planEvents } from "../types/plan";
-import { promptContracts } from "../types/prompts";
 import { proposalContracts } from "../types/proposals";
 import { securityContracts } from "../types/security";
 // Import all contracts
@@ -96,7 +95,6 @@ export const VALID_INVOKE_CHANNELS = [
   ...getInvokeChannels(systemContracts),
   ...getInvokeChannels(versionContracts),
   ...getInvokeChannels(languageModelContracts),
-  ...getInvokeChannels(promptContracts),
   ...getInvokeChannels(templateContracts),
   ...getInvokeChannels(proposalContracts),
   ...getInvokeChannels(importContracts),

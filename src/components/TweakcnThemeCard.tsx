@@ -3,9 +3,12 @@ import type { TweakcnThemeType } from "@/ipc/types";
 import type { ThemeTag } from "@/lib/color-utils";
 import { generateThemeTags, oklchToHex } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
-import { Heart } from "lucide-react";
+import { Eye, Heart, Sparkles } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 
 const SWATCH_KEYS = [
   "primary",
@@ -34,6 +37,7 @@ function getColorValue(cssVars: Record<string, string>, key: string): string {
 export const TweakcnThemeCard: React.FC<TweakcnThemeCardProps> = ({
   theme,
   onPreview,
+  onUse,
 }) => {
   const { isLiked, toggleLike } = useLikedThemes();
   const lightVars = theme.cssVars.light;
@@ -48,11 +52,6 @@ export const TweakcnThemeCard: React.FC<TweakcnThemeCardProps> = ({
     [lightVars],
   );
 
-  const fgHex = useMemo(
-    () => getColorValue(lightVars, "foreground"),
-    [lightVars],
-  );
-
   const swatchColors = useMemo(
     () => SWATCH_KEYS.map((key) => getColorValue(lightVars, key)),
     [lightVars],
@@ -62,91 +61,106 @@ export const TweakcnThemeCard: React.FC<TweakcnThemeCardProps> = ({
   const overflowCount = Math.max(0, tags.length - MAX_VISIBLE_TAGS);
 
   return (
-    <button
-      type="button"
+    <Card
       data-testid={`tweakcn-theme-card-${theme.id}`}
-      className="group cursor-pointer text-left w-full"
-      onClick={() => onPreview(theme.id)}
+      className="overflow-hidden group hover:shadow-md transition-shadow duration-200"
     >
       <div
-        className={cn(
-          "relative rounded-xl border border-border shadow-sm overflow-hidden h-44",
-          "transition-all duration-200",
-          "group-hover:shadow-md group-hover:border-foreground/20",
-        )}
+        className="relative h-[180px] w-full overflow-hidden flex items-center justify-center"
         style={{ backgroundColor: bgHex }}
       >
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-          {visibleTags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-background/80 backdrop-blur-sm text-foreground/80 capitalize"
-            >
-              {tag}
-            </span>
-          ))}
-          {overflowCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-background/80 backdrop-blur-sm text-foreground/60">
-              +{overflowCount}
-            </span>
-          )}
-        </div>
-
-        <div className="absolute top-3 right-3 flex items-center gap-0.5 z-10">
+        <div className="flex items-center gap-1.5">
           {swatchColors.map((color, i) => (
             <div
               key={SWATCH_KEYS[i]}
-              className="w-3 h-12 rounded-full first:rounded-l-md last:rounded-r-md"
+              className="w-5 h-16 rounded-lg"
               style={{ backgroundColor: color }}
               title={SWATCH_KEYS[i]}
             />
           ))}
         </div>
-
-        <div className="absolute bottom-3 left-4 right-4 z-10">
-          <h3
-            className="text-xl font-bold leading-tight truncate"
-            style={{ color: fgHex }}
-          >
-            {theme.name}
-          </h3>
-        </div>
       </div>
 
-      <div className="flex items-center justify-between px-1 pt-2 pb-1">
-        <span className="text-xs text-muted-foreground truncate">
-          tweakcn community
-        </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleLike(theme.id);
-          }}
-          className="p-1 rounded-md hover:bg-accent transition-colors shrink-0"
-        >
-          <Heart
-            className={cn(
-              "h-3.5 w-3.5 transition-colors",
-              isLiked(theme.id)
-                ? "fill-red-500 text-red-500"
-                : "text-muted-foreground hover:text-foreground",
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5">
+            {visibleTags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs capitalize">
+                {tag}
+              </Badge>
+            ))}
+            {overflowCount > 0 && (
+              <span className="text-xs text-muted-foreground">
+                +{overflowCount}
+              </span>
             )}
-          />
-        </button>
-      </div>
-    </button>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleLike(theme.id);
+            }}
+            className="p-1 rounded-md hover:bg-accent transition-colors shrink-0"
+          >
+            <Heart
+              className={cn(
+                "h-3.5 w-3.5 transition-colors",
+                isLiked(theme.id)
+                  ? "fill-red-500 text-red-500"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            />
+          </button>
+        </div>
+
+        <h3 className="text-lg font-semibold text-foreground leading-tight">
+          {theme.name}
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          tweakcn community
+        </p>
+
+        <div className="flex items-center gap-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => onPreview(theme.id)}
+          >
+            <Eye className="mr-1 h-4 w-4" />
+            Preview
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+            onClick={() => onUse?.(theme.id)}
+          >
+            <Sparkles className="mr-1 h-4 w-4" />
+            Use This
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
 export function TweakcnThemeCardSkeleton() {
   return (
-    <div>
-      <div className="rounded-xl h-44 bg-accent animate-pulse" />
-      <div className="px-1 pt-2 space-y-1.5">
-        <div className="h-3.5 w-2/3 rounded bg-accent animate-pulse" />
-        <div className="h-3 w-1/3 rounded bg-accent animate-pulse" />
-      </div>
-    </div>
+    <Card className="overflow-hidden">
+      <div className="h-[180px] w-full bg-accent animate-pulse" />
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-16 rounded-full bg-accent animate-pulse" />
+          <div className="h-5 w-16 rounded-full bg-accent animate-pulse" />
+        </div>
+        <div className="h-5 w-2/3 rounded bg-accent animate-pulse" />
+        <div className="h-3.5 w-1/3 rounded bg-accent animate-pulse" />
+        <div className="flex gap-2 pt-1">
+          <div className="h-8 flex-1 rounded bg-accent animate-pulse" />
+          <div className="h-8 flex-1 rounded bg-accent animate-pulse" />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

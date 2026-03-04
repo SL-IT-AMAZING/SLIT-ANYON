@@ -163,24 +163,10 @@ export const queryKeys = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Custom Themes
-  // ─────────────────────────────────────────────────────────────────────────────
-  customThemes: {
-    all: ["custom-themes"] as const,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   // Templates
   // ─────────────────────────────────────────────────────────────────────────────
   templates: {
     all: ["templates"] as const,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Prompts
-  // ─────────────────────────────────────────────────────────────────────────────
-  prompts: {
-    all: ["prompts"] as const,
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -318,11 +304,7 @@ export type AppQueryKey =
     >
   | QueryKeyOf<(typeof queryKeys.appTheme)[keyof typeof queryKeys.appTheme]>
   | QueryKeyOf<(typeof queryKeys.themes)[keyof typeof queryKeys.themes]>
-  | QueryKeyOf<
-      (typeof queryKeys.customThemes)[keyof typeof queryKeys.customThemes]
-    >
   | QueryKeyOf<(typeof queryKeys.templates)[keyof typeof queryKeys.templates]>
-  | QueryKeyOf<(typeof queryKeys.prompts)[keyof typeof queryKeys.prompts]>
   | QueryKeyOf<
       (typeof queryKeys.languageModels)[keyof typeof queryKeys.languageModels]
     >

@@ -1,7 +1,6 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useLoadApp } from "@/hooks/useLoadApp";
 import { useLoadApps } from "@/hooks/useLoadApps";
-import { usePrompts } from "@/hooks/usePrompts";
 import { MENTION_REGEX, parseAppMentions } from "@/shared/parse_mention_apps";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -179,22 +178,15 @@ function ClearEditorPlugin({
 // Plugin to sync external value prop into the editor
 function ExternalValueSyncPlugin({
   value,
-  promptsById,
 }: {
   value: string;
-  promptsById: Record<number, string>;
 }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
     // Derive the display text that should appear in the editor (@Name) from the
     // internal value representation (@app:Name)
-    let displayText = (value || "").replace(MENTION_REGEX, "@$1");
-    displayText = displayText.replace(/@prompt:(\d+)/g, (_m, idStr) => {
-      const id = Number(idStr);
-      const title = promptsById[id];
-      return title ? `@${title}` : _m;
-    });
+    const displayText = (value || "").replace(MENTION_REGEX, "@$1");
 
     const currentText = editor.getEditorState().read(() => {
       const root = $getRoot();
@@ -209,10 +201,10 @@ function ExternalValueSyncPlugin({
 
       const paragraph = $createParagraphNode();
 
-      // Build nodes from internal value, turning @app:Name and @prompt:<id> into mention nodes
+      // Build nodes from internal value, turning @app:Name and @file:path into mention nodes
       let lastIndex = 0;
       let match: RegExpExecArray | null;
-      const combined = /@app:([a-zA-Z0-9_-]+)|@prompt:(\d+)|@file:([^\s]+)/g;
+      const combined = /@app:([a-zA-Z0-9_-]+)|@file:([^\s]+)/g;
       while ((match = combined.exec(value)) !== null) {
         const start = match.index;
         const full = match[0];
@@ -224,11 +216,7 @@ function ExternalValueSyncPlugin({
           const appName = match[1];
           paragraph.append($createBeautifulMentionNode("@", appName));
         } else if (match[2]) {
-          const id = Number(match[2]);
-          const title = promptsById[id] || `prompt:${id}`;
-          paragraph.append($createBeautifulMentionNode("@", title));
-        } else if (match[3]) {
-          const filePath = match[3];
+          const filePath = match[2];
           paragraph.append($createBeautifulMentionNode("@", filePath));
         }
         lastIndex = start + full.length;
@@ -245,7 +233,7 @@ function ExternalValueSyncPlugin({
       root.append(paragraph);
       paragraph.selectEnd();
     });
-  }, [editor, value, promptsById]);
+  }, [editor, value]);
 
   return null;
 }
@@ -280,7 +268,6 @@ export function LexicalChatInput({
   const { t } = useTranslation("chat");
   const placeholder = placeholderProp ?? t("input.placeholder");
   const { apps } = useLoadApps();
-  const { prompts } = usePrompts();
   const [shouldClear, setShouldClear] = useState(false);
   const historyTriggerActiveRef = useRef(false);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
@@ -332,18 +319,12 @@ export function LexicalChatInput({
       type: "app",
     }));
 
-    const promptItems = (prompts || []).map((p) => ({
-      value: p.title,
-      type: "prompt",
-      id: p.id,
-    }));
-
     const fileItems = (appFiles || []).map((item) => ({
       value: item,
       type: "file",
     }));
 
-    result["@"] = [...appMentions, ...promptItems, ...fileItems];
+    result["@"] = [...appMentions, ...fileItems];
 
     return result;
   }, [
@@ -351,7 +332,6 @@ export function LexicalChatInput({
     selectedAppId,
     value,
     excludeCurrentApp,
-    prompts,
     appFiles,
     messageHistory,
   ]);
@@ -408,13 +388,6 @@ export function LexicalChatInput({
             );
             textContent = textContent.replace(mentionRegex, "@app:$1");
           }
-          // Convert @PromptTitle to @prompt:<id>
-          const map = new Map((prompts || []).map((p) => [p.title, p.id]));
-          for (const [title, id] of map.entries()) {
-            const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const regex = new RegExp(`@(${escapedTitle})(?![\\w-])`, "g");
-            textContent = textContent.replace(regex, `@prompt:${id}`);
-          }
 
           for (const fullPath of appFiles || []) {
             const escapedDisplay = fullPath.replace(
@@ -428,7 +401,7 @@ export function LexicalChatInput({
         onChange(textContent);
       });
     },
-    [onChange, apps, prompts, appFiles],
+    [onChange, apps, appFiles],
   );
 
   const handleSubmit = useCallback(() => {
@@ -479,12 +452,7 @@ export function LexicalChatInput({
           onSubmit={handleSubmit}
           disableSendButton={disableSendButton}
         />
-        <ExternalValueSyncPlugin
-          value={value}
-          promptsById={Object.fromEntries(
-            (prompts || []).map((p) => [p.id, p.title]),
-          )}
-        />
+        <ExternalValueSyncPlugin value={value} />
         <ClearEditorPlugin
           shouldClear={shouldClear}
           onCleared={handleCleared}

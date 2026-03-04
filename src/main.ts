@@ -17,8 +17,7 @@ import { getDatabasePath, initializeDatabase } from "./db";
 import {
   AddMcpServerConfigSchema,
   type AddMcpServerPayload,
-  AddPromptDataSchema,
-  type AddPromptPayload,
+
 } from "./ipc/deep_link_data";
 import { registerIpcHandlers } from "./ipc/ipc_host";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
@@ -32,13 +31,13 @@ import { initSentryMain } from "./lib/sentry";
 import { handleAuthCallback } from "./main/auth";
 import { syncEntitlements } from "./main/entitlement";
 import { registerPreviewProtocol } from "./main/preview-protocol";
-import { registerThumbnailProtocol } from "./main/thumbnail-protocol";
 import { handleAnyonProReturn } from "./main/pro";
 import {
   getSettingsFilePath,
   readSettings,
   writeSettings,
 } from "./main/settings";
+import { registerThumbnailProtocol } from "./main/thumbnail-protocol";
 import { getAnyonAppsBaseDirectory } from "./paths/paths";
 import { handleSupabaseOAuthReturn } from "./supabase_admin/supabase_return_handler";
 import {
@@ -660,32 +659,7 @@ async function handleDeepLinkReturn(url: string) {
     }
     return;
   }
-  // anyon://add-prompt?data=<base64-encoded-json>
-  if (parsed.hostname === "add-prompt") {
-    const data = parsed.searchParams.get("data");
-    if (!data) {
-      dialog.showErrorBox("Invalid URL", "Expected data parameter");
-      return;
-    }
 
-    try {
-      const decodedJson = atob(data);
-      const decoded = JSON.parse(decodedJson);
-      const parsedData = AddPromptDataSchema.parse(decoded);
-
-      mainWindow?.webContents.send("deep-link-received", {
-        type: parsed.hostname,
-        payload: parsedData as AddPromptPayload,
-      });
-    } catch (error) {
-      logger.error("Failed to parse add-prompt deep link:", error);
-      dialog.showErrorBox(
-        "Invalid Prompt Data",
-        "The deep link contains malformed data. Please check the URL and try again.",
-      );
-    }
-    return;
-  }
   dialog.showErrorBox("Invalid deep link URL", url);
 }
 
