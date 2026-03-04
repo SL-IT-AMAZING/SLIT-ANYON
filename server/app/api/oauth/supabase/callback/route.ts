@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
       {
         grant_type: "authorization_code",
         code,
-        client_id: process.env.SUPABASE_CLIENT_ID!,
-        client_secret: process.env.SUPABASE_CLIENT_SECRET!,
-        redirect_uri: `${process.env.OAUTH_SERVER_URL}/api/oauth/supabase/callback`,
+        client_id: process.env.SUPABASE_CLIENT_ID!.trim(),
+        client_secret: process.env.SUPABASE_CLIENT_SECRET!.trim(),
+        redirect_uri: `${process.env.OAUTH_SERVER_URL!.trim()}/api/oauth/supabase/callback`,
       },
     );
 

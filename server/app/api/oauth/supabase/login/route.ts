@@ -5,10 +5,10 @@ export async function GET() {
   const state = generateState();
 
   const authUrl = new URL("https://api.supabase.com/v1/oauth/authorize");
-  authUrl.searchParams.set("client_id", process.env.SUPABASE_CLIENT_ID!);
+  authUrl.searchParams.set("client_id", process.env.SUPABASE_CLIENT_ID!.trim());
   authUrl.searchParams.set(
     "redirect_uri",
-    `${process.env.OAUTH_SERVER_URL}/api/oauth/supabase/callback`,
+    `${process.env.OAUTH_SERVER_URL!.trim()}/api/oauth/supabase/callback`,
   );
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);

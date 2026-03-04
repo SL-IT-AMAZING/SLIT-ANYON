@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { generateState, generatePKCE } from "../../../../lib/oauth-utils";
+import { generatePKCE, generateState } from "../../../../lib/oauth-utils";
 
 export async function GET() {
   const state = generateState();
   const { codeVerifier, codeChallenge } = generatePKCE();
 
   const authUrl = new URL("https://vercel.com/oauth/authorize");
-  authUrl.searchParams.set("client_id", process.env.VERCEL_CLIENT_ID!);
+  authUrl.searchParams.set("client_id", process.env.VERCEL_CLIENT_ID!.trim());
   authUrl.searchParams.set(
     "redirect_uri",
-    `${process.env.OAUTH_SERVER_URL}/api/oauth/vercel/callback`,
+    `${process.env.OAUTH_SERVER_URL!.trim()}/api/oauth/vercel/callback`,
   );
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);

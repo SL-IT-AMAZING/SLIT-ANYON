@@ -1,3 +1,4 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -5,8 +6,8 @@ import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
 import { isSupabaseConnected } from "@/lib/schemas";
-import { ExternalLink } from "lucide-react";
-import { useEffect } from "react";
+import { AlertCircle, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ export function SupabaseHubConnector() {
   const { settings, refreshSettings, updateSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
   const { isDarkMode } = useTheme();
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleDeepLink = async () => {
@@ -80,6 +82,17 @@ export function SupabaseHubConnector() {
     );
   }
 
+  const handleConnect = async () => {
+    setOauthError(null);
+    try {
+      await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error);
+      setOauthError(message);
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-4 p-4 border bg-card max-w-100 rounded-md">
       <div className="flex flex-col items-start justify-between">
@@ -89,15 +102,35 @@ export function SupabaseHubConnector() {
         <p className="text-sm text-muted-foreground pb-3">
           {t("connect.supabase.description")}
         </p>
-        <img
-          onClick={async () => {
-            await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
-          }}
-          src={isDarkMode ? connectSupabaseDark : connectSupabaseLight}
-          alt={t("connect.supabase.connectAlt")}
-          className="h-10 cursor-pointer"
+        {oauthError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("connect.supabase.errorTitle", "Connection failed")}</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <span>{oauthError}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={handleConnect}
+              >
+                {t("connect.supabase.tryAgain", "Try Again")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        <button
+          type="button"
+          onClick={handleConnect}
+          className="h-10 cursor-pointer bg-transparent border-0 p-0"
           data-testid="connect-supabase-hub-button"
-        />
+        >
+          <img
+            src={isDarkMode ? connectSupabaseDark : connectSupabaseLight}
+            alt={t("connect.supabase.connectAlt")}
+            className="h-10"
+          />
+        </button>
       </div>
     </div>
   );

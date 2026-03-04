@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       {
         grant_type: "refresh_token",
         refresh_token: refreshToken,
-        client_id: process.env.SUPABASE_CLIENT_ID!,
-        client_secret: process.env.SUPABASE_CLIENT_SECRET!,
+        client_id: process.env.SUPABASE_CLIENT_ID!.trim(),
+        client_secret: process.env.SUPABASE_CLIENT_SECRET!.trim(),
       },
     );
 

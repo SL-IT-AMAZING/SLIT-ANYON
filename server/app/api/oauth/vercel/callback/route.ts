@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
     const tokenData = await exchangeCodeForToken(
       "https://api.vercel.com/v2/oauth/access_token",
       {
-        client_id: process.env.VERCEL_CLIENT_ID!,
-        client_secret: process.env.VERCEL_CLIENT_SECRET!,
+        client_id: process.env.VERCEL_CLIENT_ID!.trim(),
+        client_secret: process.env.VERCEL_CLIENT_SECRET!.trim(),
         code,
-        redirect_uri: `${process.env.OAUTH_SERVER_URL}/api/oauth/vercel/callback`,
+        redirect_uri: `${process.env.OAUTH_SERVER_URL!.trim()}/api/oauth/vercel/callback`,
         code_verifier: codeVerifier,
       },
     );
