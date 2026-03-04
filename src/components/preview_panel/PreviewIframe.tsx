@@ -1,5 +1,6 @@
 import {
   appConsoleEntriesAtom,
+  appLoadingStepAtom,
   appUrlAtom,
   currentAppAtom,
   previewCurrentUrlAtom,
@@ -182,6 +183,7 @@ export const PreviewIframe = ({
 }) => {
   const { t } = useTranslation(["app", "common"]);
   const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const loadingStep = useAtomValue(appLoadingStepAtom);
   const currentApp = useAtomValue(currentAppAtom);
   const { appUrl, originalUrl } = useAtomValue(appUrlAtom);
   const setConsoleEntries = useSetAtom(appConsoleEntriesAtom);
@@ -261,6 +263,14 @@ export const PreviewIframe = ({
   };
 
   const appRootPath = currentApp?.resolvedPath ?? null;
+  const loadingSteps = [
+    "Checking dependencies...",
+    "Installing packages...",
+    "Starting dev server...",
+    "Loading preview...",
+  ];
+  const currentLoadingStep = loadingStep ?? "Loading preview...";
+  const currentLoadingStepIndex = loadingSteps.indexOf(currentLoadingStep);
 
   //detect if the user is using Mac
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -1198,13 +1208,37 @@ export const PreviewIframe = ({
   if (loading) {
     return (
       <div className="flex flex-col h-full relative">
-        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
+        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-5 bg-muted">
           <div className="relative w-5 h-5 animate-spin">
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
             <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary rounded-full opacity-80" />
             <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary rounded-full opacity-60" />
           </div>
-          <p className="text-muted-foreground">Preparing app preview...</p>
+          <p className="text-muted-foreground font-medium">
+            {currentLoadingStep}
+          </p>
+          <div className="space-y-1.5">
+            {loadingSteps.map((step, index) => {
+              const isCurrent = step === currentLoadingStep;
+              const isComplete =
+                currentLoadingStepIndex >= 0 && index < currentLoadingStepIndex;
+              return (
+                <div
+                  key={step}
+                  className={cn(
+                    "text-xs",
+                    isCurrent
+                      ? "text-foreground"
+                      : isComplete
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground/60",
+                  )}
+                >
+                  {isComplete ? "✓" : isCurrent ? "●" : "○"} {step}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -1498,7 +1532,9 @@ export const PreviewIframe = ({
         {!appUrl ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-muted">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground">Starting your app server...</p>
+            <p className="text-muted-foreground">
+              {loadingStep ?? "Starting your app server..."}
+            </p>
           </div>
         ) : (
           <div

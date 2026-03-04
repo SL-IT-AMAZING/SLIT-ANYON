@@ -1,17 +1,18 @@
-import { useCallback, useEffect } from "react";
-import { atom } from "jotai";
-import { ipc, type AppOutput } from "@/ipc/types";
 import {
   appConsoleEntriesAtom,
+  appLoadingStepAtom,
   appUrlAtom,
   currentAppAtom,
-  previewPanelKeyAtom,
-  previewErrorMessageAtom,
   previewCurrentUrlAtom,
+  previewErrorMessageAtom,
+  previewPanelKeyAtom,
   selectedAppIdAtom,
 } from "@/atoms/appAtoms";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { type AppOutput, ipc } from "@/ipc/types";
 import { showInputRequest } from "@/lib/toast";
+import { atom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
 
 const useRunAppLoadingAtom = atom(false);
 
@@ -23,6 +24,8 @@ const useRunAppLoadingAtom = atom(false);
 export function useAppOutputSubscription() {
   const setConsoleEntries = useSetAtom(appConsoleEntriesAtom);
   const [, setAppUrlObj] = useAtom(appUrlAtom);
+  const setLoading = useSetAtom(useRunAppLoadingAtom);
+  const setAppLoadingStep = useSetAtom(appLoadingStepAtom);
   const setPreviewPanelKey = useSetAtom(previewPanelKeyAtom);
   const appId = useAtomValue(selectedAppIdAtom);
 
@@ -40,26 +43,56 @@ export function useAppOutputSubscription() {
         );
         const originalUrlMatch = output.message.match(/original=\[(.*?)\]/);
 
-        if (proxyUrlMatch && proxyUrlMatch[1]) {
+        if (proxyUrlMatch?.[1]) {
           const proxyUrl = proxyUrlMatch[1];
-          const originalUrl = originalUrlMatch && originalUrlMatch[1];
+          const originalUrl = originalUrlMatch?.[1] ?? proxyUrl;
+          setAppLoadingStep("Loading preview...");
           setAppUrlObj({
             appUrl: proxyUrl,
             appId: output.appId,
-            originalUrl: originalUrl!,
+            originalUrl,
           });
+          setLoading(false);
+          setAppLoadingStep(null);
         }
       }
     },
-    [setAppUrlObj],
+    [setAppLoadingStep, setAppUrlObj, setLoading],
   );
 
+  const hmrDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onHotModuleReload = useCallback(() => {
-    setPreviewPanelKey((prevKey) => prevKey + 1);
+    if (hmrDebounceRef.current) clearTimeout(hmrDebounceRef.current);
+    hmrDebounceRef.current = setTimeout(() => {
+      setPreviewPanelKey((prevKey) => prevKey + 1);
+    }, 300);
   }, [setPreviewPanelKey]);
 
   const processAppOutput = useCallback(
     (output: AppOutput) => {
+      const normalizedMessage = output.message.toLowerCase();
+      const isInstallDone =
+        /\badded\s+\d+\s+packages\b/.test(normalizedMessage) ||
+        /\bup to date\b/.test(normalizedMessage) ||
+        /\baudited\s+\d+\s+packages\b/.test(normalizedMessage);
+      const isInstallActivity =
+        /\bnpm\s+(warn|notice|http|verb|info)\b/.test(normalizedMessage) ||
+        /\badded\s+\d+\s+packages\b/.test(normalizedMessage) ||
+        /\baudited\s+\d+\s+packages\b/.test(normalizedMessage) ||
+        /\bfound\s+\d+\s+vulnerabilities\b/.test(normalizedMessage);
+      const isDevServerStart =
+        /\bvite\s+v\d/.test(normalizedMessage) ||
+        /\blocal:\s*https?:\/\//.test(normalizedMessage) ||
+        /\bready in\s+\d+\s*ms\b/.test(normalizedMessage);
+
+      if (isInstallActivity && !isInstallDone) {
+        setAppLoadingStep("Installing packages...");
+      }
+
+      if (isInstallDone || isDevServerStart) {
+        setAppLoadingStep("Starting dev server...");
+      }
+
       // Handle input requests specially
       if (output.type === "input-requested") {
         showInputRequest(output.message, async (response) => {
@@ -100,6 +133,8 @@ export function useAppOutputSubscription() {
 
       // Detect server exit to show error instead of infinite spinner
       if (output.message.includes("[anyon-server-exit]")) {
+        setLoading(false);
+        setAppLoadingStep(null);
         setPreviewErrorMessage({
           message:
             "App server failed to start. Open System Messages below to see the error details, or try Restart.",
@@ -110,7 +145,13 @@ export function useAppOutputSubscription() {
       // Process proxy server output
       processProxyServerOutput(output);
     },
-    [setConsoleEntries, processProxyServerOutput, setPreviewErrorMessage],
+    [
+      processProxyServerOutput,
+      setAppLoadingStep,
+      setConsoleEntries,
+      setLoading,
+      setPreviewErrorMessage,
+    ],
   );
 
   // Subscribe to app output events from main process
@@ -129,12 +170,16 @@ export function useAppOutputSubscription() {
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (hmrDebounceRef.current) clearTimeout(hmrDebounceRef.current);
+    };
   }, [appId, processAppOutput, onHotModuleReload]);
 }
 
 export function useRunApp() {
   const [loading, setLoading] = useAtom(useRunAppLoadingAtom);
+  const setAppLoadingStep = useSetAtom(appLoadingStepAtom);
   const [app, setApp] = useAtom(currentAppAtom);
   const setConsoleEntries = useSetAtom(appConsoleEntriesAtom);
   const [, setAppUrlObj] = useAtom(appUrlAtom);
@@ -143,75 +188,91 @@ export function useRunApp() {
   const appId = useAtomValue(selectedAppIdAtom);
   const setPreviewErrorMessage = useSetAtom(previewErrorMessageAtom);
 
-  const runApp = useCallback(async (appId: number) => {
-    setLoading(true);
-    try {
-      console.debug("Running app", appId);
+  const runApp = useCallback(
+    async (appId: number) => {
+      setLoading(true);
+      setAppLoadingStep("Checking dependencies...");
+      try {
+        console.debug("Running app", appId);
 
-      // Clear the URL and add restart message
-      setAppUrlObj((prevAppUrlObj) => {
-        if (prevAppUrlObj?.appId !== appId) {
-          return { appUrl: null, appId: null, originalUrl: null };
-        }
-        return prevAppUrlObj; // No change needed
-      });
+        // Clear the URL and add restart message
+        setAppUrlObj((prevAppUrlObj) => {
+          if (prevAppUrlObj?.appId !== appId) {
+            return { appUrl: null, appId: null, originalUrl: null };
+          }
+          return prevAppUrlObj; // No change needed
+        });
 
-      const logEntry = {
-        level: "info" as const,
-        type: "server" as const,
-        message: "Trying to restart app...",
-        appId,
-        timestamp: Date.now(),
-      };
+        const logEntry = {
+          level: "info" as const,
+          type: "server" as const,
+          message: "Trying to restart app...",
+          appId,
+          timestamp: Date.now(),
+        };
 
-      // Send to central log store
-      ipc.misc.addLog(logEntry);
+        // Send to central log store
+        ipc.misc.addLog(logEntry);
 
-      // Also update UI state
-      setConsoleEntries((prev) => [...prev, logEntry]);
-      const app = await ipc.app.getApp(appId);
-      setApp(app);
-      await ipc.app.runApp({ appId });
-      setPreviewErrorMessage(undefined);
-    } catch (error) {
-      console.error(`Error running app ${appId}:`, error);
-      setPreviewErrorMessage(
-        error instanceof Error
-          ? { message: error.message, source: "anyon-app" }
-          : {
-              message: error?.toString() || "Unknown error",
-              source: "anyon-app",
-            },
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        // Also update UI state
+        setConsoleEntries((prev) => [...prev, logEntry]);
+        const app = await ipc.app.getApp(appId);
+        setApp(app);
+        await ipc.app.runApp({ appId });
+        setAppLoadingStep("Loading preview...");
+        setPreviewErrorMessage(undefined);
+      } catch (error) {
+        console.error(`Error running app ${appId}:`, error);
+        setPreviewErrorMessage(
+          error instanceof Error
+            ? { message: error.message, source: "anyon-app" }
+            : {
+                message: error?.toString() || "Unknown error",
+                source: "anyon-app",
+              },
+        );
+        setLoading(false);
+        setAppLoadingStep(null);
+      }
+    },
+    [
+      setApp,
+      setAppLoadingStep,
+      setConsoleEntries,
+      setLoading,
+      setPreviewErrorMessage,
+      setAppUrlObj,
+    ],
+  );
 
-  const stopApp = useCallback(async (appId: number) => {
-    if (appId === null) {
-      return;
-    }
+  const stopApp = useCallback(
+    async (appId: number) => {
+      if (appId === null) {
+        return;
+      }
 
-    setLoading(true);
-    try {
-      await ipc.app.stopApp({ appId });
+      setLoading(true);
+      setAppLoadingStep(null);
+      try {
+        await ipc.app.stopApp({ appId });
 
-      setPreviewErrorMessage(undefined);
-    } catch (error) {
-      console.error(`Error stopping app ${appId}:`, error);
-      setPreviewErrorMessage(
-        error instanceof Error
-          ? { message: error.message, source: "anyon-app" }
-          : {
-              message: error?.toString() || "Unknown error",
-              source: "anyon-app",
-            },
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setPreviewErrorMessage(undefined);
+      } catch (error) {
+        console.error(`Error stopping app ${appId}:`, error);
+        setPreviewErrorMessage(
+          error instanceof Error
+            ? { message: error.message, source: "anyon-app" }
+            : {
+                message: error?.toString() || "Unknown error",
+                source: "anyon-app",
+              },
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setAppLoadingStep, setLoading, setPreviewErrorMessage],
+  );
 
   const restartApp = useCallback(
     async ({
@@ -221,6 +282,7 @@ export function useRunApp() {
         return;
       }
       setLoading(true);
+      setAppLoadingStep("Checking dependencies...");
       try {
         console.debug(
           "Restarting app",
@@ -272,14 +334,18 @@ export function useRunApp() {
       } finally {
         setPreviewPanelKey((prevKey) => prevKey + 1);
         setLoading(false);
+        setAppLoadingStep(null);
       }
     },
     [
       appId,
       setApp,
+      setLoading,
       setConsoleEntries,
       setAppUrlObj,
+      setAppLoadingStep,
       setPreviewPanelKey,
+      setPreviewErrorMessage,
       setPreservedUrls,
     ],
   );

@@ -31,3 +31,5 @@ export const previewCurrentUrlAtom = atom<Record<number, string>>({});
 export const previewErrorMessageAtom = atom<
   { message: string; source: "preview-app" | "anyon-app" } | undefined
 >(undefined);
+
+export const appLoadingStepAtom = atom<string | null>(null);

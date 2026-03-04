@@ -1,4 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { promises as fsPromises } from "node:fs";
 import path from "node:path";
@@ -32,7 +33,8 @@ import { learnAppProfile } from "@/ipc/services/profileLearning";
 import fixPath from "fix-path";
 import { getSupabasePublishableKey } from "./vercel_handlers";
 
-import util from "util";
+import util from "node:util";
+import type { Worker } from "node:worker_threads";
 import type { AppSearchResult } from "@/lib/schemas";
 import {
   deployAllSupabaseFunctions,
@@ -42,7 +44,6 @@ import {
 } from "@/supabase_admin/supabase_utils";
 import log from "electron-log";
 import killPort from "kill-port";
-import type { Worker } from "worker_threads";
 import { normalizePath } from "../../../shared/normalizePath";
 import {
   deploySupabaseFunction,
@@ -206,7 +207,24 @@ async function executeAppLocalNode({
   installCommand: string;
   startCommand: string;
 }): Promise<void> {
-  const command = getCommand({ appId, installCommand, startCommand });
+  const setupStart = performance.now();
+
+  const installOptStart = performance.now();
+  const optimizedInstallCommand = await getOptimizedInstallCommand({
+    appId,
+    appPath,
+    installCommand,
+  });
+  const installOptDuration = Math.round(performance.now() - installOptStart);
+  logger.info(
+    `App ${appId}: install optimization took ${installOptDuration}ms (install ${optimizedInstallCommand === null ? "skipped" : "will run"})`,
+  );
+
+  const command = getCommand({
+    appId,
+    installCommand: optimizedInstallCommand,
+    startCommand,
+  });
   const app = await db.query.apps.findFirst({
     where: eq(apps.id, appId),
   });
@@ -238,6 +256,7 @@ async function executeAppLocalNode({
     }
   }
 
+  const spawnStart = performance.now();
   const spawnedProcess = spawn(command, [], {
     cwd: appPath,
     shell: true,
@@ -246,15 +265,20 @@ async function executeAppLocalNode({
     env,
   });
 
+  const spawnDuration = Math.round(performance.now() - spawnStart);
+  const totalSetup = Math.round(performance.now() - setupStart);
+  logger.info(
+    `App ${appId}: process spawn took ${spawnDuration}ms, total setup ${totalSetup}ms`,
+  );
+
   // Check if process spawned correctly
   if (!spawnedProcess.pid) {
     // Attempt to capture any immediate errors if possible
     let errorOutput = "";
     let spawnErr: any | null = null;
-    spawnedProcess.stderr?.on(
-      "data",
-      (data) => (errorOutput += data.toString()),
-    );
+    spawnedProcess.stderr?.on("data", (data) => {
+      errorOutput += data.toString();
+    });
     await new Promise<void>((resolve) => {
       spawnedProcess.once("error", (err) => {
         spawnErr = err;
@@ -314,6 +338,7 @@ function listenToProcess({
   appId: number;
   event: Electron.IpcMainInvokeEvent;
 }) {
+  const listenStart = performance.now();
   // Log output
   spawnedProcess.stdout?.on("data", async (data) => {
     const message = util.stripVTControlCharacters(data.toString());
@@ -350,6 +375,10 @@ function listenToProcess({
 
       const urlMatch = message.match(/(https?:\/\/localhost:\d+\/?)/);
       if (urlMatch) {
+        const devServerReady = Math.round(performance.now() - listenStart);
+        logger.info(
+          `App ${appId}: dev server ready in ${devServerReady}ms (from process start)`,
+        );
         proxyWorker = await startProxy(urlMatch[1], {
           onStarted: (proxyUrl) => {
             safeSend(event.sender, "app:output", {
@@ -572,7 +601,9 @@ RUN npm install -g pnpm
     // Attempt to capture any immediate errors if possible
     let errorOutput = "";
     let spawnErr: any = null;
-    process.stderr?.on("data", (data) => (errorOutput += data.toString()));
+    process.stderr?.on("data", (data) => {
+      errorOutput += data.toString();
+    });
     await new Promise<void>((resolve) => {
       process.once("error", (err) => {
         spawnErr = err;
@@ -1367,7 +1398,7 @@ export function registerAppHandlers() {
           }
         } catch (error) {
           logger.error(
-            `Error redeploying Supabase functions after shared module change:`,
+            "Error redeploying Supabase functions after shared module change:",
             error,
           );
           return {
@@ -1539,8 +1570,11 @@ export function registerAppHandlers() {
       // Validate path for invalid characters when path changes (only for relative paths)
       if (pathChanged) {
         const invalidChars = /[<>:"|?*/\\]/;
-        const hasInvalidChars =
-          invalidChars.test(appPath) || /[\x00-\x1f]/.test(appPath);
+        const hasControlChars = [...appPath].some((char) => {
+          const charCode = char.charCodeAt(0);
+          return charCode >= 0 && charCode <= 31;
+        });
+        const hasInvalidChars = invalidChars.test(appPath) || hasControlChars;
 
         if (hasInvalidChars) {
           throw new Error(
@@ -1673,7 +1707,7 @@ export function registerAppHandlers() {
             await fsPromises.rm(newAppPath, { recursive: true, force: true });
           } catch (rollbackError) {
             logger.error(
-              `Failed to rollback file move during rename error:`,
+              "Failed to rollback file move during rename error:",
               rollbackError,
             );
           }
@@ -2109,12 +2143,118 @@ function getCommand({
   startCommand,
 }: {
   appId: number;
-  installCommand: string;
+  installCommand: string | null;
   startCommand: string;
 }) {
   const port = String(getAppPort(appId));
   const resolvedStart = startCommand.trim().replace("{port}", port);
-  return `${installCommand.trim()} && ${resolvedStart}`;
+  const trimmedInstallCommand = installCommand?.trim();
+  if (!trimmedInstallCommand) {
+    return resolvedStart;
+  }
+  return `${trimmedInstallCommand} && ${resolvedStart}`;
+}
+
+const PACKAGE_HASH_CACHE_DIR = ".anyon-cache";
+const PACKAGE_HASH_CACHE_FILE = "pkg-hash";
+const PACKAGE_HASH_CACHE_PATH = `${PACKAGE_HASH_CACHE_DIR}/${PACKAGE_HASH_CACHE_FILE}`;
+
+function isNpmInstallCommand(installCommand: string): boolean {
+  return /\bnpm\s+(install|i)\b/.test(installCommand);
+}
+
+function addPreferOfflineFlagToNpmInstall(installCommand: string): string {
+  if (
+    !isNpmInstallCommand(installCommand) ||
+    installCommand.includes("--prefer-offline")
+  ) {
+    return installCommand;
+  }
+  return installCommand.replace(
+    /\bnpm\s+(install|i)\b/,
+    (_, subCommand: string) => `npm ${subCommand} --prefer-offline`,
+  );
+}
+
+async function getPackageJsonHash(appPath: string): Promise<string | null> {
+  const packageJsonPath = path.join(appPath, "package.json");
+  if (!fs.existsSync(packageJsonPath)) {
+    return null;
+  }
+  const packageJsonContents = await fsPromises.readFile(
+    packageJsonPath,
+    "utf-8",
+  );
+  return createHash("sha256").update(packageJsonContents).digest("hex");
+}
+
+async function getCachedPackageJsonHash(
+  appPath: string,
+): Promise<string | null> {
+  const cachePath = path.join(
+    appPath,
+    PACKAGE_HASH_CACHE_DIR,
+    PACKAGE_HASH_CACHE_FILE,
+  );
+  try {
+    const cachedHash = await fsPromises.readFile(cachePath, "utf-8");
+    return cachedHash.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function withPackageHashCacheWrite(
+  installCommand: string,
+  packageJsonHash: string,
+): string {
+  const writeHashCommand = `node -e "require('node:fs').mkdirSync('.anyon-cache',{recursive:true});require('node:fs').writeFileSync('${PACKAGE_HASH_CACHE_PATH}','${packageJsonHash}')"`;
+  return `${installCommand.trim()} && ${writeHashCommand}`;
+}
+
+async function getOptimizedInstallCommand({
+  appId,
+  appPath,
+  installCommand,
+}: {
+  appId: number;
+  appPath: string;
+  installCommand: string;
+}): Promise<string | null> {
+  if (!isNpmInstallCommand(installCommand)) {
+    return installCommand;
+  }
+
+  const nodeModulesExists = fs.existsSync(path.join(appPath, "node_modules"));
+  const packageJsonHash = await getPackageJsonHash(appPath);
+  const installCommandWithOffline =
+    addPreferOfflineFlagToNpmInstall(installCommand);
+
+  if (!nodeModulesExists) {
+    logger.debug(
+      `App ${appId}: node_modules missing, running install with npm cache preference.`,
+    );
+    if (!packageJsonHash) {
+      return installCommandWithOffline;
+    }
+    return withPackageHashCacheWrite(
+      installCommandWithOffline,
+      packageJsonHash,
+    );
+  }
+
+  if (!packageJsonHash) {
+    return installCommandWithOffline;
+  }
+
+  const cachedHash = await getCachedPackageJsonHash(appPath);
+  if (cachedHash === packageJsonHash) {
+    logger.debug(`App ${appId}: package.json unchanged, skipping npm install.`);
+    return null;
+  }
+
+  logger.debug(`App ${appId}: package.json changed, running npm install.`);
+  return withPackageHashCacheWrite(installCommandWithOffline, packageJsonHash);
 }
 
 async function maybeUpgradeNextStartCommandToWebpack({
