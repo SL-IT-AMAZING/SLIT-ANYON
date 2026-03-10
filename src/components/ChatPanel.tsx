@@ -72,10 +72,11 @@ export function ChatPanel({
   // Scroll to bottom when a new stream starts (user sent a message)
   const streamCount = chatId ? (streamCountById.get(chatId) ?? 0) : 0;
   useEffect(() => {
+    void streamCount;
     isAtBottomRef.current = true;
     setShowScrollButton(false);
     scrollToBottom();
-  }, [chatId, streamCount, scrollToBottom]);
+  }, [scrollToBottom, streamCount]);
 
   const fetchChatMessages = useCallback(async () => {
     if (!chatId) {
@@ -129,7 +130,7 @@ export function ChatPanel({
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [settings?.isTestMode, isVersionPaneOpen, handleAtBottomChange]);
+  }, [settings?.isTestMode, handleAtBottomChange]);
 
   // Test mode: Auto-scroll during streaming when user is at the bottom.
   // In production, Virtuoso's followOutput handles this.
@@ -141,7 +142,22 @@ export function ChatPanel({
         scrollToBottom("instant");
       });
     }
-  }, [messages, isStreaming, settings?.isTestMode, scrollToBottom]);
+  }, [isStreaming, settings?.isTestMode, scrollToBottom]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || !isStreaming) return;
+
+    const observer = new ResizeObserver(() => {
+      if (!isAtBottomRef.current) return;
+      requestAnimationFrame(() => {
+        scrollToBottom("instant");
+      });
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isStreaming, scrollToBottom]);
 
   return (
     <div className="flex flex-col h-full">

@@ -5,15 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import {
   SessionTurn,
-  type StepItem,
-  computeStatus,
 } from "../chat-v2/SessionTurn";
-import { getToolIcon } from "../chat-v2/tools";
-import {
-  getState,
-  parseCustomTagsWithDedup,
-  renderCustomTag,
-} from "./AnyonMarkdownParser";
+import { type TurnVM, buildTurnVMs, summarizeTurnFromVM } from "./renderModel";
 
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
@@ -40,375 +33,6 @@ interface MessagesListProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onAtBottomChange?: (atBottom: boolean) => void;
-}
-
-interface MessageTurn {
-  id: string;
-  userMessage: Message | null;
-  assistantMessages: Message[];
-}
-
-type OpenCodeQuestionData = {
-  requestId: string;
-  questions: Array<{
-    question: string;
-    header?: string;
-    options: Array<{ label: string; description?: string }>;
-    multiple?: boolean;
-  }>;
-};
-
-const CONTEXT_TOOLS = new Set(["read", "grep", "glob", "list", "search"]);
-const EDIT_TOOLS = new Set(["edit", "write", "search-replace"]);
-
-type ToolGroupKind = "context" | "edit" | "verify";
-
-function getToolGroupKind(step: StepItem): ToolGroupKind | null {
-  if (step.type !== "tool") return null;
-  const names = [step.toolName, step.statusToolName].filter(
-    Boolean,
-  ) as string[];
-  if (names.some((n) => CONTEXT_TOOLS.has(n))) return "context";
-  if (names.some((n) => EDIT_TOOLS.has(n))) return "edit";
-  if (names.some((n) => n.startsWith("lsp") || n === "diagnostics"))
-    return "verify";
-  return null;
-}
-
-function groupToolSteps(steps: StepItem[]): StepItem[] {
-  const result: StepItem[] = [];
-  let currentGroup: StepItem[] = [];
-  let currentKind: ToolGroupKind | null = null;
-
-  function flushGroup() {
-    if (currentGroup.length === 0) return;
-    if (currentGroup.length === 1) {
-      result.push(currentGroup[0]);
-    } else if (currentKind === "context") {
-      const counts = new Map<string, number>();
-      for (const s of currentGroup) {
-        const name =
-          (s.statusToolName ?? s.toolName) === "glob"
-            ? "search"
-            : (s.statusToolName ?? s.toolName ?? "read");
-        counts.set(name, (counts.get(name) ?? 0) + 1);
-      }
-      const parts: string[] = [];
-      for (const [name, count] of counts) {
-        parts.push(`${count} ${name}${count > 1 ? "s" : ""}`);
-      }
-      result.push({
-        id: `context-group-${currentGroup[0].id}`,
-        type: "context-group",
-        toolIcon: getToolIcon("anyon-read"),
-        title: "Gathered context",
-        subtitle: parts.join(", "),
-        groupedSteps: [...currentGroup],
-      });
-    } else if (currentKind === "edit") {
-      const uniqueFiles = new Set<string>();
-      for (const s of currentGroup) {
-        if (s.subtitle) uniqueFiles.add(s.subtitle);
-      }
-      const fileCount = uniqueFiles.size || currentGroup.length;
-      result.push({
-        id: `edit-group-${currentGroup[0].id}`,
-        type: "context-group",
-        toolIcon: getToolIcon("anyon-edit"),
-        title: "Making edits",
-        subtitle: `${fileCount} file${fileCount > 1 ? "s" : ""}`,
-        groupedSteps: [...currentGroup],
-      });
-    } else if (currentKind === "verify") {
-      result.push({
-        id: `verify-group-${currentGroup[0].id}`,
-        type: "context-group",
-        toolIcon: getToolIcon("anyon-status"),
-        title: "Verifying code",
-        subtitle: `${currentGroup.length} check${currentGroup.length > 1 ? "s" : ""}`,
-        groupedSteps: [...currentGroup],
-      });
-    }
-    currentGroup = [];
-    currentKind = null;
-  }
-
-  for (const step of steps) {
-    const kind = getToolGroupKind(step);
-    if (kind !== null) {
-      if (currentKind !== null && currentKind !== kind) {
-        flushGroup();
-      }
-      currentKind = kind;
-      currentGroup.push(step);
-    } else {
-      flushGroup();
-      result.push(step);
-    }
-  }
-
-  flushGroup();
-  return result;
-}
-
-function keepOnlyLastTodoStep(steps: StepItem[]): StepItem[] {
-  let lastTodoIndex = -1;
-  for (let index = steps.length - 1; index >= 0; index -= 1) {
-    if (steps[index]?.type === "todo") {
-      lastTodoIndex = index;
-      break;
-    }
-  }
-
-  if (lastTodoIndex === -1) {
-    return steps;
-  }
-
-  return steps.filter(
-    (step, index) => step.type !== "todo" || index === lastTodoIndex,
-  );
-}
-
-function mapTagToStatusTool(tag: string): string {
-  switch (tag) {
-    case "opencode-tool":
-      return "";
-    case "opencode-question":
-      return "question";
-    case "anyon-read":
-      return "read";
-    case "anyon-list-files":
-      return "list";
-    case "anyon-grep":
-    case "anyon-code-search":
-    case "anyon-code-search-result":
-      return "grep";
-    case "anyon-web-search":
-    case "anyon-web-search-result":
-    case "anyon-web-crawl":
-      return "webfetch";
-    case "anyon-edit":
-    case "anyon-search-replace":
-      return "edit";
-    case "anyon-write":
-      return "write";
-    case "anyon-command":
-      return "bash";
-    case "anyon-write-plan":
-      return "todowrite";
-    default:
-      return tag.replace(/^anyon-/, "");
-  }
-}
-
-function groupMessagesIntoTurns(messages: Message[]): MessageTurn[] {
-  const turns: MessageTurn[] = [];
-  let currentTurn: MessageTurn | null = null;
-
-  for (const [index, message] of messages.entries()) {
-    if (message.role === "user") {
-      currentTurn = {
-        id: `turn-${message.id}`,
-        userMessage: message,
-        assistantMessages: [],
-      };
-      turns.push(currentTurn);
-      continue;
-    }
-
-    if (!currentTurn) {
-      currentTurn = {
-        id: `turn-orphan-${message.id}-${index}`,
-        userMessage: null,
-        assistantMessages: [message],
-      };
-      turns.push(currentTurn);
-      continue;
-    }
-
-    currentTurn.assistantMessages.push(message);
-  }
-
-  return turns;
-}
-
-function formatDuration(from: Date, to: Date): string {
-  const seconds = Math.max(
-    1,
-    Math.round((to.getTime() - from.getTime()) / 1000),
-  );
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  if (remaining === 0) return `${minutes}m`;
-  return `${minutes}m ${remaining}s`;
-}
-
-function summarizeTurn(
-  turn: MessageTurn,
-  isTurnWorking: boolean,
-  nowMs: number,
-): {
-  steps: StepItem[];
-  statusText: string | undefined;
-  duration: string | undefined;
-} {
-  const steps: StepItem[] = [];
-  let activeToolName: string | undefined;
-
-  for (const message of turn.assistantMessages) {
-    const pieces = parseCustomTagsWithDedup(message.content ?? "");
-
-    for (const piece of pieces) {
-      if (piece.type === "markdown") {
-        if (piece.content.trim()) {
-          steps.push({
-            id: `${message.id}-text-${steps.length}`,
-            type: "text",
-            text: piece.content,
-          });
-        }
-        continue;
-      }
-
-      const { tagInfo } = piece;
-      if (tagInfo.tag === "anyon-chat-summary") {
-        continue;
-      }
-
-      if (tagInfo.tag === "anyon-app-name") {
-        continue;
-      }
-
-      if (tagInfo.tag === "think") {
-        if (tagInfo.content.trim()) {
-          steps.push({
-            id: `${message.id}-think-${steps.length}`,
-            type: "reasoning",
-            text: tagInfo.content,
-          });
-        }
-        continue;
-      }
-
-      if (tagInfo.tag === "opencode-question") {
-        let questionData: OpenCodeQuestionData | null = null;
-        try {
-          questionData = JSON.parse(tagInfo.content) as OpenCodeQuestionData;
-        } catch {}
-
-        if (questionData) {
-          steps.push({
-            id: `${message.id}-question-${steps.length}`,
-            type: "question",
-            toolName: "question",
-            title: questionData.questions[0]?.header || "Question",
-            text: tagInfo.content,
-          });
-        }
-        continue;
-      }
-
-      const toolName =
-        tagInfo.tag === "opencode-tool"
-          ? tagInfo.attributes.name || "tool"
-          : tagInfo.tag.replace(/^anyon-/, "");
-      const statusToolName =
-        tagInfo.tag === "opencode-tool"
-          ? tagInfo.attributes.name || "tool"
-          : mapTagToStatusTool(tagInfo.tag);
-      const iconToolName =
-        tagInfo.tag === "opencode-tool"
-          ? tagInfo.attributes.name || "tool"
-          : tagInfo.tag;
-
-      const isRunning =
-        tagInfo.tag === "opencode-tool"
-          ? tagInfo.attributes.status === "running"
-          : getState({
-              isStreaming: isTurnWorking,
-              inProgress: tagInfo.inProgress,
-            }) === "pending";
-
-      if (statusToolName === "todoread") {
-        continue;
-      }
-
-      if (statusToolName === "todowrite") {
-        steps.push({
-          id: `${message.id}-todo-${steps.length}`,
-          type: "todo",
-          toolName: "todowrite",
-          statusToolName,
-          toolIcon: getToolIcon("todowrite"),
-          title: "To-dos",
-        });
-        if (isRunning) {
-          activeToolName = statusToolName;
-        }
-        continue;
-      }
-
-      if (isRunning) {
-        activeToolName = statusToolName;
-      }
-
-      const rendered = renderCustomTag(tagInfo, { isStreaming: isTurnWorking });
-      if (!rendered) {
-        continue;
-      }
-
-      steps.push({
-        id: `${message.id}-${toolName}-${steps.length}`,
-        type: "tool",
-        toolName,
-        statusToolName,
-        toolIcon: getToolIcon(iconToolName),
-        title:
-          tagInfo.attributes.title ||
-          tagInfo.attributes.name ||
-          tagInfo.attributes.tool ||
-          toolName,
-        subtitle:
-          tagInfo.attributes.path ||
-          tagInfo.attributes.query ||
-          tagInfo.attributes.description ||
-          tagInfo.attributes.provider ||
-          undefined,
-        content: rendered,
-      });
-    }
-  }
-
-  const groupedSteps = groupToolSteps(steps);
-  const dedupedSteps = keepOnlyLastTodoStep(groupedSteps);
-
-  let duration: string | undefined;
-  const assistantWithCreatedAt = turn.assistantMessages.filter(
-    (m) => m.createdAt,
-  );
-  const startCandidate =
-    assistantWithCreatedAt[0]?.createdAt ??
-    (isTurnWorking ? turn.userMessage?.createdAt : undefined);
-
-  if (startCandidate) {
-    const start = new Date(startCandidate as string | Date);
-    const endCandidate = isTurnWorking
-      ? new Date(nowMs)
-      : (assistantWithCreatedAt[assistantWithCreatedAt.length - 1]?.createdAt ??
-        startCandidate);
-    const end = new Date(endCandidate as string | Date);
-
-    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
-      duration = formatDuration(start, end);
-    }
-  }
-
-  return {
-    steps: dedupedSteps,
-    statusText: activeToolName ? computeStatus(activeToolName) : undefined,
-    duration,
-  };
 }
 
 // Context type for Virtuoso
@@ -675,7 +299,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
       setIsRetryLoading(loading);
     }, []);
 
-    const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages]);
+    const turns = useMemo(() => buildTurnVMs(messages, isStreaming), [messages, isStreaming]);
 
     useEffect(() => {
       if (!isStreaming || turns.length === 0) {
@@ -683,7 +307,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
       }
 
       const lastTurn = turns[turns.length - 1];
-      const lastTurnSummary = summarizeTurn(lastTurn, true, nowMs);
+        const lastTurnSummary = summarizeTurnFromVM(lastTurn, true, nowMs);
       const streamingDuration = lastTurnSummary.duration;
       if (!streamingDuration) {
         return;
@@ -701,11 +325,13 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
     }, [isStreaming, turns, nowMs]);
 
     // Memoized item renderer for virtualized list
-    const itemContent = useCallback(
-      (index: number, turn: MessageTurn) => {
+    const itemContent = useCallback<
+      (index: number, turn: TurnVM) => React.ReactNode
+    >(
+      (index, turn) => {
         const isLastTurn = index === turns.length - 1;
         const isTurnWorking = isStreaming && isLastTurn;
-        const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
+        const turnSummary = summarizeTurnFromVM(turn, isTurnWorking, nowMs);
         const fallbackDuration = cachedTurnDurations.get(turn.id);
         const displayDuration = resolveTurnDuration({
           isTurnWorking,
@@ -728,6 +354,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
             <SessionTurn
               userMessage={userMessageText}
               steps={turnSummary.steps}
+              parts={turn.parts}
               working={isTurnWorking}
               isActive={isTurnWorking}
               statusText={turnSummary.statusText}
@@ -819,7 +446,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
           {turns.map((turn, index) => {
             const isLastTurn = index === turns.length - 1;
             const isTurnWorking = isStreaming && isLastTurn;
-            const turnSummary = summarizeTurn(turn, isTurnWorking, nowMs);
+            const turnSummary = summarizeTurnFromVM(turn, isTurnWorking, nowMs);
             const fallbackDuration = cachedTurnDurations.get(turn.id);
             const displayDuration = resolveTurnDuration({
               isTurnWorking,
@@ -841,6 +468,7 @@ export const MessagesList = forwardRef<HTMLDivElement, MessagesListProps>(
                 <SessionTurn
                   userMessage={turn.userMessage?.content ?? ""}
                   steps={turnSummary.steps}
+                  parts={turn.parts}
                   working={isTurnWorking}
                   isActive={isTurnWorking}
                   statusText={turnSummary.statusText}

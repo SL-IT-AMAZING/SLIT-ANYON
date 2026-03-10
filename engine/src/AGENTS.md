@@ -1,16 +1,17 @@
-# src/ — Plugin Source
+# src/ — Engine Plugin Source
 
-**Generated:** 2026-03-02
+**Generated:** 2026-03-10
 
 ## OVERVIEW
 
-Root source directory. Entry point `index.ts` orchestrates 4-step initialization: config → managers → tools → hooks → plugin interface.
+Root source directory for `@anyon-cli/anyon`. Entry point `index.ts` orchestrates config → managers → tools → hooks → plugin interface, and now no-ops unless `ANYON_ACTIVE=1`.
 
 ## KEY FILES
 
 | File                  | Purpose                                                                    |
 | --------------------- | -------------------------------------------------------------------------- |
 | `index.ts`            | Plugin entry, exports `AnyonPlugin`                                        |
+| `activation-gate.ts`  | App-only activation check (`ANYON_ACTIVE`)                                 |
 | `plugin-config.ts`    | JSONC parse, multi-level merge (user → project → defaults), Zod validation |
 | `create-managers.ts`  | TmuxSessionManager, BackgroundManager, SkillMcpManager, ConfigHandler      |
 | `create-tools.ts`     | SkillContext + AvailableCategories + ToolRegistry                          |
@@ -27,6 +28,17 @@ loadPluginConfig(directory, ctx)
   4. Zod safeParse → defaults for omitted fields
   5. migrateConfigFile() → legacy key transformation
 ```
+
+## ACTIVATION MODEL
+
+Plain OpenCode should not automatically activate Anyon. App-launched sessions set:
+
+```text
+OPENCODE_CONFIG_DIR=<app-scoped-dir>
+ANYON_ACTIVE=1
+```
+
+Without `ANYON_ACTIVE=1`, `index.ts` returns a no-op plugin interface.
 
 ## HOOK COMPOSITION
 

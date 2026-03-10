@@ -11,10 +11,14 @@ import { readSettings } from "../../main/settings";
 import { ensureAppScopedOpenCodeConfig } from "./app_scoped_opencode_config";
 import {
   createOpenCodeStartupError,
+  getOpenCodeStartupErrorCode,
   isRetryableOpenCodeStartupError,
   resolveOpenCodeBinaryPath,
 } from "./opencode_startup";
-import { getOpenCodeBinaryPath } from "./vendor_binary_utils";
+import {
+  getOpenCodeBinaryPath,
+  prepareBundledOpenCodeBinaryForLaunch,
+} from "./vendor_binary_utils";
 
 const logger = log.scope("opencode-server");
 
@@ -99,7 +103,33 @@ class OpenCodeServerManager {
         return await this._doStart(options);
       } catch (err) {
         const isLastAttempt = attempt === maxRetries;
-        const retryable = isRetryableOpenCodeStartupError(err);
+        let retryable = isRetryableOpenCodeStartupError(err);
+        const errorCode = getOpenCodeStartupErrorCode(err);
+
+        if (
+          !retryable &&
+          errorCode === "OPENCODE_CODE_SIGNATURE_INVALID" &&
+          this._resolvedOpenCodePath
+        ) {
+          try {
+            const repaired = prepareBundledOpenCodeBinaryForLaunch(
+              this._resolvedOpenCodePath,
+              { force: true },
+            );
+            if (repaired) {
+              logger.warn(
+                "Re-prepared bundled OpenCode binary after macOS killed the first launch; retrying startup.",
+              );
+              retryable = true;
+            }
+          } catch (repairError) {
+            logger.warn(
+              "Failed to repair bundled OpenCode binary after code-signature startup error.",
+              repairError,
+            );
+          }
+        }
+
         if (isLastAttempt) {
           logger.error(
             `Server start failed after ${maxRetries} attempts: ${err}`,

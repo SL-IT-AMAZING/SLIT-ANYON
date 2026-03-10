@@ -1,15 +1,15 @@
-# oh-my-opencode — OpenCode Plugin
+# Anyon Engine — OpenCode Plugin Runtime
 
-**Generated:** 2026-03-02 | **Commit:** 1c2caa09 | **Branch:** dev
+**Generated:** 2026-03-10 | **Commit:** 60a52b2 | **Branch:** dev
 
 ## OVERVIEW
 
-OpenCode plugin (npm: `oh-my-opencode`) that extends Claude Code (OpenCode fork) with multi-agent orchestration, 46 lifecycle hooks, 26 tools, skill/command/MCP systems, and Claude Code compatibility. 1243 TypeScript files, 155k LOC.
+Tracked engine package (npm: `@anyon-cli/anyon`) that powers the Anyon plugin runtime, agents, hooks, tools, CLI, and platform binaries. It now lives inside the root repo as normal tracked content, not a submodule.
 
 ## STRUCTURE
 
 ```
-oh-my-opencode/
+engine/
 ├── src/
 │   ├── index.ts              # Plugin entry: loadConfig → createManagers → createTools → createHooks → createPluginInterface
 │   ├── plugin-config.ts      # JSONC multi-level config: user → project → defaults (Zod v4)
@@ -30,7 +30,7 @@ oh-my-opencode/
 ## INITIALIZATION FLOW
 
 ```
-OhMyOpenCodePlugin(ctx)
+AnyonPlugin(ctx)
   ├─→ loadPluginConfig()         # JSONC parse → project/user merge → Zod validate → migrate
   ├─→ createManagers()           # TmuxSessionManager, BackgroundManager, SkillMcpManager, ConfigHandler
   ├─→ createTools()              # SkillContext + AvailableCategories + ToolRegistry (26 tools)
@@ -64,13 +64,14 @@ OhMyOpenCodePlugin(ctx)
 | Add new command | `src/features/builtin-commands/` | Template in templates/ |
 | Add new CLI command | `src/cli/cli-program.ts` | Commander.js subcommand |
 | Add new doctor check | `src/cli/doctor/checks/` | Register in checks/index.ts |
-| Modify config schema | `src/config/schema/` + update root schema | Zod v4, add to OhMyOpenCodeConfigSchema |
+| Modify config schema | `src/config/schema/` + update root schema | Zod v4, add to Anyon config root schema |
 | Add new category | `src/tools/delegate-task/constants.ts` | DEFAULT_CATEGORIES + CATEGORY_MODEL_REQUIREMENTS |
+| Publish engine package | `../.github/workflows/engine-publish.yml` | Root-level workflow, runs in `engine/` |
 
 ## MULTI-LEVEL CONFIG
 
 ```
-Project (.opencode/oh-my-opencode.jsonc)  →  User (~/.config/opencode/oh-my-opencode.jsonc)  →  Defaults
+Project (.opencode/anyon.jsonc)  →  User (~/.config/opencode/anyon.jsonc)  →  Defaults
 ```
 
 Fields: agents (14 overridable, 21 fields each), categories (8 built-in + custom), disabled_* arrays (agents, hooks, mcps, skills, commands, tools), 19 feature-specific configs.
@@ -109,29 +110,28 @@ Fields: agents (14 overridable, 21 fields each), categories (8 built-in + custom
 ## COMMANDS
 
 ```bash
-bun test                    # Bun test suite
-bun run build              # Build plugin (ESM + declarations + schema)
-bun run typecheck           # tsc --noEmit
-bunx oh-my-opencode install # Interactive setup
-bunx oh-my-opencode doctor  # Health diagnostics
-bunx oh-my-opencode run     # Non-interactive session
+bun test
+bun run build
+bun run typecheck
+bunx anyon install
+bunx anyon doctor
+bunx anyon run
 ```
 
 ## CI/CD
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| ci.yml | push/PR | Tests (split: mock-heavy isolated + batch), typecheck, build, schema auto-commit |
-| publish.yml | manual | Version bump, npm publish, platform binaries, GitHub release, merge to dev |
-| publish-platform.yml | called | 12 platform binaries via bun compile (darwin/linux/windows) |
-| sisyphus-agent.yml | @mention | AI agent handles issues/PRs |
+| ../.github/workflows/engine-publish.yml | manual | Engine npm publish + release |
+| ../.github/workflows/engine-publish-platform.yml | called | 11 platform binaries via bun compile |
 
 ## NOTES
 
-- Logger writes to `/tmp/oh-my-opencode.log` — check there for debugging
+- Logger writes to `/tmp/anyon.log`
 - Background tasks: 5 concurrent per model/provider (configurable)
 - Plugin load timeout: 10s for Claude Code plugins
 - Model fallback priority: Claude > OpenAI > Gemini > Copilot > OpenCode Zen > Z.ai > Kimi
 - Config migration runs automatically on legacy keys (agent names, hook names, model versions)
 - Build: bun build (ESM) + tsc --emitDeclarationOnly, externals: @ast-grep/napi
 - Test setup: `test-setup.ts` preloaded via bunfig.toml, mock-heavy tests run in isolation in CI
+- App-only activation: plain OpenCode should stay user-controlled; Anyon activation for app-launched sessions is gated via `ANYON_ACTIVE` + app-scoped `OPENCODE_CONFIG_DIR`

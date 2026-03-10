@@ -1,0 +1,338 @@
+================================================================================
+ANYON-b2C: KEY ENTRY POINTS & MODULE BOUNDARIES - QUICK REFERENCE
+================================================================================
+
+GENERATED: 2025-03-10
+FILES ANALYZED: 30 contract files, 52 handler files, 84 components, 110+ E2E tests
+OUTPUT: ENTRY_POINTS_ANALYSIS.md (780 lines, comprehensive)
+
+================================================================================
+PRIMARY ENTRY POINTS (3)
+================================================================================
+
+1. ELECTRON MAIN PROCESS
+   File: src/main.ts (707 lines)
+   Role: Electron app bootstrap, IPC registration, database init
+   Key Systems: 
+     - IPC handler registration (ipc/ipc_host.ts)
+     - Database initialization (src/db/index.ts)
+     - Auth flows (src/main/auth.ts)
+     - Settings management (src/main/settings.ts)
+     - Entitlement sync (src/main/entitlement.ts)
+
+2. RENDERER/REACT ENTRY
+   Files: src/renderer.tsx + src/router.ts
+   Role: React DOM mount, TanStack Router configuration
+   Route Hierarchy: 11 routes spanning home, chat, apps, settings, themes, hub, etc.
+
+3. ENGINE PLUGIN
+   File: engine/src/index.ts
+   Role: OpenCode plugin export (AnyonPlugin)
+   Note: SEPARATE from main app, not bundled
+
+================================================================================
+IPC ARCHITECTURE: CONTRACT-DRIVEN (30 DOMAINS)
+================================================================================
+
+PATTERN:
+  src/ipc/types/<domain>.ts          ← Contract definition + client
+  src/ipc/handlers/<domain>_handlers.ts ← Handler implementation
+  src/ipc/ipc_host.ts                ← Registration point
+  src/preload.ts                     ← Security allowlist (auto-derived)
+
+DOMAINS (30 contract files):
+  - Core: app, chat, settings, auth, system
+  - Features: plan, proposals, import, help, agent
+  - Integration: github, vercel, supabase, mcp
+  - Design: design_systems, templates, liked_themes
+  - Pro: visual-editing, capacitor
+  - Other: language-model, entitlement, version, upgrade, etc.
+
+KEY CONVENTION:
+  Handlers THROW errors, not return error objects
+  Use: throw new Error("message")
+  TanStack Query catches in onError callback
+
+================================================================================
+MODULE STRUCTURE: HIGH-LEVEL BOUNDARIES
+================================================================================
+
+MAIN PROCESS LAYER          │ RENDERER LAYER
+─────────────────────────────────────────────
+src/main.ts                 │ src/renderer.tsx + src/router.ts
+  ├─ ipc/                   │   ├─ routes/ (11 route definitions)
+  │  ├─ types/ (30 domains) │   │   └─ root, chat, apps, settings, etc.
+  │  ├─ handlers/ (52 files)│   ├─ components/ (84 components)
+  │  ├─ utils/ (55+ files)  │   │   ├─ chat/, chat-v2/
+  │  └─ contracts/          │   │   ├─ auth/, settings/, ui/
+  ├─ main/                  │   │   └─ preview_panel/, subscription/
+  │  ├─ auth.ts             │   ├─ lib/ (queryKeys, schemas, utils)
+  │  ├─ entitlement.ts      │   ├─ hooks/ (useQuery/useMutation wrappers)
+  │  └─ settings.ts         │   ├─ atoms/ (Jotai global state)
+  ├─ db/                    │   ├─ store/ (context + store config)
+  ├─ backup_manager.ts      │   └─ styles/ (Tailwind + CSS)
+  ├─ supabase_admin/        │
+  └─ vercel_admin/          │ PLUGIN CONTEXT (separate)
+                            │   engine/src/index.ts
+                            │   ├─ agents/ (Euler, Tesla, Newton)
+                            │   ├─ hooks/ (50+ OpenCode hooks)
+                            │   ├─ mcp/ (MCP servers)
+                            │   └─ config/ (plugin setup)
+
+PRO MODULE (ISOLATED)        │ TESTING
+─────────────────────────────────────────────
+src/pro/                    │ src/__tests__/ (40 unit tests)
+  ├─ main/                  │ e2e-tests/ (110+ Playwright tests)
+  │  ├─ ipc/ (pro handlers) │ Rebuild required: npm run build
+  │  └─ utils/              │ before e2e: PLAYWRIGHT_HTML_OPEN=never npm run e2e
+  ├─ ui/                    │
+  └─ shared/                │
+
+================================================================================
+CONTRACT-DRIVEN IPC WORKFLOW (5-STEP PATTERN)
+================================================================================
+
+1. DEFINE CONTRACT (src/ipc/types/domain.ts)
+   export const myContract = defineContract("channel-name", {
+     input: InputSchema,
+     output: OutputSchema
+   });
+   export const myClient = createClient([myContract]);
+
+2. EXPORT & RE-EXPORT (src/ipc/types/index.ts)
+   export { myClient, myContract } from "./domain.ts";
+   // Adds to unified ipc namespace
+
+3. IMPLEMENT HANDLER (src/ipc/handlers/domain_handlers.ts)
+   export const registerMyDomainHandlers = () => {
+     ipcMain.handle("channel-name", createTypedHandler(myContract, async (input) => {
+       if (!valid) throw new Error("Invalid");  // ← THROW, not return error
+       return result;
+     }));
+   };
+
+4. REGISTER HANDLER (src/ipc/ipc_host.ts)
+   registerMyDomainHandlers();
+
+5. PRELOAD ALLOWLIST (AUTO-DERIVED)
+   src/preload.ts + src/ipc/preload/channels.ts
+   // No manual registration needed
+
+RENDERER USAGE:
+   const result = await ipc.domain.operation(params);  // TanStack Query wraps this
+
+================================================================================
+REACT QUERY INTEGRATION PATTERN
+================================================================================
+
+ALL KEYS CENTRALIZED:
+   src/lib/queryKeys.ts (hierarchical factory)
+   queryKeys.apps.all
+   queryKeys.apps.detail({ appId })
+   queryKeys.chat.messages({ appId })
+
+USAGE IN COMPONENTS:
+   useQuery({
+     queryKey: queryKeys.apps.detail({ appId }),
+     queryFn: () => appClient.getApp({ appId }),
+     enabled: appId !== null
+   })
+
+   useMutation({
+     mutationFn: (input) => appClient.update(input),
+     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.apps.all })
+   })
+
+ERROR HANDLING:
+   Handler throws → Promise rejects → TanStack Query catches → onError callback
+
+================================================================================
+TESTING STRATEGY (3-LEVEL PYRAMID)
+================================================================================
+
+UNIT TESTS (src/__tests__/)
+  - 40 test files
+  - Utility functions, schema validation, rendering
+  - Vitest + happy-dom
+  - Run: npm run test
+
+E2E TESTS (e2e-tests/)
+  - 110+ Playwright test files
+  - Full workflows, multi-step flows
+  - Build required: npm run build (CRITICAL)
+  - Run: npm run e2e
+  - Helpers: e2e-tests/helpers/test_helper.ts
+  - Fixtures: e2e-tests/fixtures/
+
+INTEGRATION:
+  Test E2E scenarios that require IPC, DB, file system
+
+================================================================================
+BUILD TARGETS & VITE CONFIGURATION
+================================================================================
+
+BUILD ENTRY: forge.config.ts (Electron Forge)
+   └─ Packages app to out/ directory
+
+VITE CONFIGS (4 targets):
+   1. vite.main.config.mts       → Main process (Node.js)
+   2. vite.preload.config.mts    → Preload script
+   3. vite.renderer.config.mts   → React app (Browser)
+   4. vite.worker.config.mts     → Web workers
+
+ARTIFACTS:
+   .vite/build/main.js           (main process)
+   .vite/build/preload.js        (preload)
+   .vite/build/renderer/         (react app)
+   out/Anyon-*.zip               (packaged app)
+
+WEB WORKERS (worker/ directory):
+   - anyon-component-selector-client.js
+   - anyon-screenshot-client.js
+   - anyon-visual-editor-client.js
+   - proxy_server.js (proxy injection)
+   - anyon-sw.js (service worker)
+
+MIGRATIONS (drizzle/ directory):
+   - AUTO-GENERATED, NEVER MANUAL
+   - Generate: npm run db:generate
+   - Structure: 0001_*.sql, 0002_*.sql, etc.
+
+================================================================================
+HIERARCHICAL AGENTS.MD PLACEMENT RECOMMENDATION
+================================================================================
+
+TIER 1 (ROOT - CREATE NOW):
+   ANYON-b2c/AGENTS.md
+   └─ Overall app architecture, IPC pattern, test strategy
+
+TIER 2 (CRITICAL BOUNDARIES - CREATE FIRST):
+   src/AGENTS.md               ← Renderer layer (React, TanStack Router, components)
+   src/main/AGENTS.md          ← Main process (Electron, IPC registration)
+   src/ipc/AGENTS.md           ← IPC overview
+   src/ipc/types/AGENTS.md     ← Contract definitions
+   src/ipc/handlers/AGENTS.md  ← Handler implementation
+
+TIER 3 (FEATURE MODULES):
+   src/routes/AGENTS.md        ← Navigation patterns
+   src/components/AGENTS.md    ← Component conventions
+   src/pro/AGENTS.md           ← Pro feature isolation
+   src/pro/main/AGENTS.md      ← Pro main logic
+   src/pro/ui/AGENTS.md        ← Pro component layer
+
+TIER 4 (UTILITIES & TESTING):
+   src/lib/AGENTS.md           ← Shared utilities, queryKeys
+   e2e-tests/AGENTS.md         ← E2E testing patterns
+   src/opencode/AGENTS.md      ← OpenCode plugin patterns
+   worker/AGENTS.md            ← Web worker conventions
+
+TIER 5 (LOW PRIORITY):
+   server/AGENTS.md            ← Backend (separate Next.js app)
+   src/store/AGENTS.md         ← State management
+   src/db/AGENTS.md            ← Database (if heavy schema work)
+   scaffold/AGENTS.md          ← Design system scaffolds
+
+================================================================================
+CRITICAL ARCHITECTURAL SEAMS (5 BOUNDARIES)
+================================================================================
+
+1. MAIN ↔ RENDERER IPC BOUNDARY
+   Preload allowlist (auto-derived from contracts)
+   Contract-driven (no manual channel registration)
+   Error propagation (throw → catch in TanStack Query)
+
+2. COMPONENT ↔ IPC INTEGRATION
+   useQuery/useMutation → IPC client methods
+   Centralized queryKeys factory
+   No direct ipcRenderer.invoke in components
+
+3. PRO MODULE ISOLATION
+   Separate IPC handlers, contracts, test files
+   Entitlement-gated
+   Cannot mix with core features
+
+4. ENGINE/PLUGIN SEPARATION
+   engine/ is OpenCode plugin (NOT bundled in main app)
+   exports AnyonPlugin
+   Separate configuration
+
+5. BUILD PROCESS SPLIT
+   Vite handles main + preload + renderer + worker
+   SQLite + drizzle migrations (auto-gen)
+   Templates/scaffolds separate targets
+   Rebuild required before E2E tests
+
+================================================================================
+HIGH-VALUE QUICK REFERENCE
+================================================================================
+
+WHERE TO LOOK FOR:
+  
+  New IPC endpoint?
+    → Define in src/ipc/types/domain.ts
+    → Implement in src/ipc/handlers/domain_handlers.ts
+    → Register in src/ipc/ipc_host.ts
+
+  New component?
+    → src/components/YourComponent.tsx
+    → Use TanStack Query hooks from src/hooks/
+    → Query keys in src/lib/queryKeys.ts
+
+  New page/route?
+    → Define in src/routes/page-name.tsx
+    → Add to routeTree in src/router.ts
+    → Optional page component in src/pages/
+
+  Pro feature?
+    → Isolated in src/pro/main/ or src/pro/ui/
+    → Own IPC contracts + handlers
+    → Own test files
+
+  E2E test?
+    → src/e2e-tests/feature.spec.ts
+    → Use helpers from e2e-tests/helpers/test_helper.ts
+    → Build first: npm run build
+
+  Database change?
+    → Modify schema in src/db/
+    → Generate migration: npm run db:generate
+    → NEVER write SQL manually
+
+================================================================================
+KEY FILES BY PURPOSE (16-FILE QUICK LOOKUP)
+================================================================================
+
+IPC CONTRACT:        src/ipc/types/domain.ts
+IPC HANDLER:         src/ipc/handlers/domain_handlers.ts
+HANDLER REGISTRATION: src/ipc/ipc_host.ts
+SECURITY ALLOWLIST:  src/preload.ts
+REACT HOOK:          src/hooks/useDomain.ts
+QUERY KEYS FACTORY:  src/lib/queryKeys.ts
+COMPONENT:           src/components/Domain.tsx
+ROUTE DEFINITION:    src/routes/page.tsx
+ROUTER CONFIG:       src/router.ts
+GLOBAL STATE:        src/atoms/domain.ts
+STORE CONFIG:        src/store/index.ts
+UNIT TEST:           src/__tests__/domain.test.ts
+E2E TEST:            e2e-tests/feature.spec.ts
+PLAYWRIGHT CONFIG:   playwright.config.ts
+BUILD CONFIG:        forge.config.ts
+MAIN PROCESS ENTRY:  src/main.ts
+
+================================================================================
+OUTPUT LOCATION
+================================================================================
+
+Comprehensive analysis saved to:
+  /Users/cosmos/Documents/an/ANYON-b2c/ENTRY_POINTS_ANALYSIS.md (780 lines)
+
+This file contains:
+  - 16 detailed sections covering all entry points
+  - 30+ diagrams and code examples
+  - Hierarchical AGENTS.md placement recommendations
+  - Critical architectural seams
+  - Tool conventions and patterns
+  - High-frequency vs. low-frequency change areas
+  - File structure insights for agent placement
+
+================================================================================

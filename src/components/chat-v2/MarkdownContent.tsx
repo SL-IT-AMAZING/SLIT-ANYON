@@ -5,6 +5,7 @@ import type React from "react";
 import { useCallback, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { CodeHighlight } from "../chat/CodeHighlight";
 
 interface MarkdownContentProps {
   content: string;
@@ -21,7 +22,7 @@ function CodeHeader({ language, code }: { language: string; code: string }) {
   }, [code]);
 
   return (
-    <div className="flex items-center justify-between rounded-t-lg border border-border/50 border-b-0 bg-muted/50 px-3 py-1.5">
+    <div className="flex items-center gap-2 rounded-md border border-border/50 bg-background/90 px-2 py-1 shadow-sm backdrop-blur-sm">
       <span className="text-xs text-muted-foreground lowercase">
         {language || "text"}
       </span>
@@ -43,26 +44,30 @@ function CodeHeader({ language, code }: { language: string; code: string }) {
 function CodeBlock({ language, code }: { language: string; code: string }) {
   return (
     <div className="my-2.5 flex flex-col">
-      <CodeHeader language={language} code={code} />
-      <pre className="rounded-t-none rounded-b-lg border border-border/50 bg-muted/30 p-3 text-xs leading-relaxed overflow-x-auto">
-        <code className="font-mono">{code}</code>
-      </pre>
+      <div className="group relative">
+        <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+          <CodeHeader language={language} code={code} />
+        </div>
+        <CodeHighlight className={language ? `language-${language}` : undefined}>
+          {code}
+        </CodeHighlight>
+      </div>
     </div>
   );
 }
 
 const customLink = (props: React.ComponentProps<"a">) => (
-  <a
-    {...props}
-    className="text-foreground underline underline-offset-2"
-    onClick={(e) => {
-      const url = props.href;
-      if (url) {
-        e.preventDefault();
-        ipc.system.openExternalUrl(url);
+  <button
+    type="button"
+    className="inline text-foreground underline underline-offset-2"
+    onClick={() => {
+      if (props.href) {
+        ipc.system.openExternalUrl(props.href);
       }
     }}
-  />
+  >
+    {props.children}
+  </button>
 );
 
 export const markdownComponents: Components = {

@@ -6,13 +6,15 @@ import {
 } from "@/components/ui/accordion";
 import { chatClient } from "@/ipc/types";
 import { cn } from "@/lib/utils";
-import { ChevronsUpDown, FileCode, Search, Wrench } from "lucide-react";
+import { Check, ChevronsUpDown, Copy, FileCode, Search, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { PartVM } from "../chat/renderModel";
 import { BasicTool } from "./BasicTool";
 import { LogoSpinner } from "./LogoSpinner";
 import { MarkdownContent } from "./MarkdownContent";
 import { type Question, QuestionPrompt } from "./QuestionPrompt";
+import { getToolIcon } from "./tools";
 
 export function computeStatus(toolName: string | undefined): string {
   switch (toolName) {
@@ -72,6 +74,7 @@ export interface PermissionItem {
 export interface SessionTurnProps {
   userMessage: string;
   steps: StepItem[];
+  parts?: PartVM[];
   diffs?: FileDiff[];
   working?: boolean;
   statusText?: string;
@@ -125,7 +128,7 @@ function renderToggleStep(step: StepItem): React.ReactNode {
     return (
       <div
         key={step.id}
-        className="text-xs text-muted-foreground italic pl-6 py-1"
+        className="ml-6 border-l border-border/50 pl-3 py-1 text-xs text-muted-foreground"
       >
         <MarkdownContent content={step.text ?? ""} />
       </div>
@@ -193,9 +196,199 @@ function renderToggleStep(step: StepItem): React.ReactNode {
   );
 }
 
+function isToggleOnlyPart(part: PartVM): boolean {
+  return part.kind === "tool" || part.kind === "reasoning" || part.kind === "todo";
+}
+
+type PartSegment =
+  | { kind: "toggle"; parts: PartVM[] }
+  | { kind: "visible"; part: PartVM };
+
+type ContextToolPartVM = Extract<PartVM, { kind: "tool" }>;
+
+type ToggleEntry =
+  | { kind: "part"; part: PartVM }
+  | {
+      kind: "context-group";
+      id: string;
+      title: string;
+      subtitle: string;
+      parts: ContextToolPartVM[];
+    };
+
+const CONTEXT_GROUP_TOOLS = new Set(["read", "grep", "glob", "list", "search"]);
+
+function useThrottledText(text: string, delay = 100) {
+  const [value, setValue] = useState(text);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setValue(text);
+    }, delay);
+    return () => window.clearTimeout(timeout);
+  }, [text, delay]);
+
+  return value;
+}
+
+function isContextToolPart(part: PartVM): part is ContextToolPartVM {
+  if (part.kind !== "tool") return false;
+  const name = part.statusToolName || part.toolName;
+  return CONTEXT_GROUP_TOOLS.has(name);
+}
+
+function summarizeContextToolParts(parts: ContextToolPartVM[]) {
+  const counts = new Map<string, number>();
+
+  for (const part of parts) {
+    const name =
+      (part.statusToolName || part.toolName) === "glob"
+        ? "search"
+        : (part.statusToolName || part.toolName || "read");
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .map(([name, count]) => `${count} ${name}${count > 1 ? "s" : ""}`)
+    .join(", ");
+}
+
+function buildToggleEntries(parts: PartVM[]): ToggleEntry[] {
+  const entries: ToggleEntry[] = [];
+  let contextBuf: ContextToolPartVM[] = [];
+
+  function flushContext() {
+    if (contextBuf.length === 0) return;
+    if (contextBuf.length === 1) {
+      entries.push({ kind: "part", part: contextBuf[0] });
+    } else {
+      entries.push({
+        kind: "context-group",
+        id: `context-group-${contextBuf[0].id}`,
+        title: "Gathered context",
+        subtitle: summarizeContextToolParts(contextBuf),
+        parts: [...contextBuf],
+      });
+    }
+    contextBuf = [];
+  }
+
+  for (const part of parts) {
+    if (isContextToolPart(part)) {
+      contextBuf.push(part);
+      continue;
+    }
+    flushContext();
+    entries.push({ kind: "part", part });
+  }
+
+  flushContext();
+  return entries;
+}
+
+function TextPartBlock({
+  content,
+  partId,
+  showCopy = false,
+  className,
+}: {
+  content: string;
+  partId: string;
+  showCopy?: boolean;
+  className?: string;
+}) {
+  const throttledText = useThrottledText(content);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!content.trim()) return;
+    await navigator.clipboard.writeText(content.trim());
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div key={partId} className={cn("group py-2", className)}>
+      <div className="text-sm">
+        <MarkdownContent content={throttledText} />
+      </div>
+      {showCopy && (
+        <div className="mt-1 flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+          <button
+            type="button"
+            aria-label={copied ? "Copied response" : "Copy response"}
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          >
+            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            <span>{copied ? "Copied" : "Copy"}</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function buildPartSegments(parts: PartVM[]): PartSegment[] {
+  const segments: PartSegment[] = [];
+  let toggleBuf: PartVM[] = [];
+
+  function flushToggle() {
+    if (toggleBuf.length > 0) {
+      segments.push({ kind: "toggle", parts: toggleBuf });
+      toggleBuf = [];
+    }
+  }
+
+  for (const part of parts) {
+    if (part.kind === "unsupported") continue;
+    if (isToggleOnlyPart(part)) {
+      toggleBuf.push(part);
+    } else {
+      flushToggle();
+      segments.push({ kind: "visible", part });
+    }
+  }
+
+  flushToggle();
+  return segments;
+}
+
+function renderTogglePart(part: PartVM): React.ReactNode {
+  if (part.kind === "reasoning") {
+    return (
+      <div
+        key={part.id}
+        className="ml-6 border-l border-border/50 pl-3 py-1 text-xs text-muted-foreground"
+      >
+        <TextPartBlock content={part.text} partId={part.id} className="py-0" />
+      </div>
+    );
+  }
+
+  if (part.kind === "tool") {
+    const Icon = getToolIcon(part.iconToolName);
+    return (
+      <BasicTool
+        key={part.id}
+        icon={Icon}
+        trigger={{
+          title: part.title,
+          subtitle: part.subtitle,
+        }}
+      >
+        {part.content}
+      </BasicTool>
+    );
+  }
+
+  return null;
+}
+
 export function SessionTurn({
   userMessage,
   steps,
+  parts,
   diffs,
   working = false,
   statusText,
@@ -212,6 +405,7 @@ export function SessionTurn({
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+  const STATUS_SWAP_MS = 1200;
 
   useEffect(() => {
     if (!working) {
@@ -222,7 +416,7 @@ export function SessionTurn({
     const now = Date.now();
     const elapsed = now - lastStatusUpdateRef.current;
 
-    if (elapsed >= 2500) {
+    if (elapsed >= STATUS_SWAP_MS) {
       setThrottledStatus(statusText);
       lastStatusUpdateRef.current = now;
     } else {
@@ -230,7 +424,7 @@ export function SessionTurn({
       statusTimerRef.current = setTimeout(() => {
         setThrottledStatus(statusText);
         lastStatusUpdateRef.current = Date.now();
-      }, 2500 - elapsed);
+      }, STATUS_SWAP_MS - elapsed);
     }
 
     return () => clearTimeout(statusTimerRef.current);
@@ -243,19 +437,56 @@ export function SessionTurn({
     await chatClient.replyToQuestion({ requestID, answers });
   };
 
-  // Reasoning steps are ephemeral: only visible while the AI is actively working.
+  const displayParts = parts?.filter((part) => part.kind !== "todo") ?? [];
+  const partSegments = parts ? buildPartSegments(displayParts) : [];
+  const lastTextPartId =
+    !working
+      ? [...displayParts]
+          .reverse()
+          .find((part) => part.kind === "text" && part.text.trim())?.id
+      : undefined;
+
   const visibleSteps = working
     ? steps
-    : steps.filter((s) => s.type !== "reasoning");
-  const displaySteps = visibleSteps.filter((s) => s.type !== "todo");
+    : steps.filter((step) => step.type !== "reasoning");
+  const displaySteps = visibleSteps.filter((step) => step.type !== "todo");
+  const stepSegments = buildSegments(displaySteps);
 
-  const segments = buildSegments(displaySteps);
-  const toggleOnlySteps = displaySteps.filter(isToggleOnlyStep);
+  const canExpandSteps = parts
+    ? displayParts.some(isToggleOnlyPart)
+    : displaySteps.some(isToggleOnlyStep);
   const hasUserMessage = userMessage.trim().length > 0;
-  const canExpandSteps = toggleOnlySteps.length > 0;
   const hasSteps = working || canExpandSteps;
 
   const hasDiffs = !working && !!(diffs && diffs.length > 0);
+
+  const renderQuestionPrompt = (text: string | undefined, key: string) => {
+    let questionData: { requestId: string; questions: Question[] } | null = null;
+
+    try {
+      questionData = text
+        ? (JSON.parse(text) as {
+            requestId: string;
+            questions: Question[];
+          })
+        : null;
+    } catch {
+      questionData = null;
+    }
+
+    if (!questionData) {
+      return null;
+    }
+
+    return (
+      <div key={key} className="py-2">
+        <QuestionPrompt
+          questions={questionData.questions}
+          onSubmit={(answers) => submitQuestionAnswer(questionData.requestId, answers)}
+        />
+      </div>
+    );
+  };
 
   const renderVisibleStep = (step: StepItem) => {
     if (step.type === "text") {
@@ -267,37 +498,89 @@ export function SessionTurn({
     }
 
     if (step.type === "question") {
-      let questionData: { requestId: string; questions: Question[] } | null =
-        null;
-
-      try {
-        questionData = step.text
-          ? (JSON.parse(step.text) as {
-              requestId: string;
-              questions: Question[];
-            })
-          : null;
-      } catch {
-        questionData = null;
-      }
-
-      if (!questionData) {
-        return null;
-      }
-
-      return (
-        <div key={step.id} className="py-2">
-          <QuestionPrompt
-            questions={questionData.questions}
-            onSubmit={(answers) =>
-              submitQuestionAnswer(questionData.requestId, answers)
-            }
-          />
-        </div>
-      );
+      return renderQuestionPrompt(step.text, step.id);
     }
 
     return null;
+  };
+
+  const renderVisiblePart = (part: PartVM) => {
+    if (part.kind === "text") {
+      return (
+        <TextPartBlock
+          key={part.id}
+          content={part.text}
+          partId={part.id}
+          showCopy={part.id === lastTextPartId}
+        />
+      );
+    }
+
+    if (part.kind === "question") {
+      return renderQuestionPrompt(part.text, part.id);
+    }
+
+    return null;
+  };
+
+  const renderPartSegment = (segment: PartSegment, idx: number) => {
+    if (segment.kind === "visible") {
+      return renderVisiblePart(segment.part);
+    }
+
+    if (!stepsExpanded) return null;
+
+    const entries = buildToggleEntries(segment.parts);
+
+    return (
+      <div key={`toggle-seg-${idx}`} className="py-1 space-y-0.5">
+        {entries.map((entry) => {
+          if (entry.kind === "part") {
+            return renderTogglePart(entry.part);
+          }
+
+          return (
+            <BasicTool
+              key={entry.id}
+              icon={Search}
+              trigger={{ title: entry.title, subtitle: entry.subtitle }}
+            >
+              <div className="space-y-0.5">
+                {entry.parts.map((part) => {
+                  const Icon = getToolIcon(part.iconToolName);
+                  return (
+                    <BasicTool
+                      key={part.id}
+                      icon={Icon}
+                      trigger={{
+                        title: part.title,
+                        subtitle: part.subtitle,
+                      }}
+                    >
+                      {part.content}
+                    </BasicTool>
+                  );
+                })}
+              </div>
+            </BasicTool>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderStepSegment = (segment: Segment, idx: number) => {
+    if (segment.kind === "visible") {
+      return renderVisibleStep(segment.step);
+    }
+
+    if (!stepsExpanded) return null;
+
+    return (
+      <div key={`toggle-seg-${idx}`} className="py-1 space-y-0.5">
+        {segment.steps.map(renderToggleStep)}
+      </div>
+    );
   };
 
   return (
@@ -330,7 +613,7 @@ export function SessionTurn({
             onClick={onToggleSteps}
             className="flex items-center gap-2 py-1.5 px-2 text-xs text-muted-foreground hover:bg-muted/30 rounded w-full transition-colors"
           >
-            {working && <LogoSpinner variant="strokeLoop" size={16} />}
+            {working && <LogoSpinner variant="pulseWave" size={14} />}
 
             <span className={cn("truncate", working && "animate-shimmer")}>
               {working
@@ -355,19 +638,7 @@ export function SessionTurn({
         </div>
       )}
 
-      {segments.map((segment, idx) => {
-        if (segment.kind === "visible") {
-          return renderVisibleStep(segment.step);
-        }
-
-        if (!stepsExpanded) return null;
-
-        return (
-          <div key={`toggle-seg-${idx}`} className="py-1 space-y-0.5">
-            {segment.steps.map(renderToggleStep)}
-          </div>
-        );
-      })}
+      {parts ? partSegments.map(renderPartSegment) : stepSegments.map(renderStepSegment)}
 
       {!stepsExpanded && permissions && permissions.length > 0 && (
         <div className="py-2 space-y-2">
