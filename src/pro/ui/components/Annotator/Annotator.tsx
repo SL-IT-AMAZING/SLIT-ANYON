@@ -1,6 +1,7 @@
 import { chatInputValueAtom } from "@/atoms/chatAtoms";
 import { AnnotatorToolbar } from "@/components/preview_panel/AnnotatorToolbar";
 import { DraggableTextInput } from "@/components/preview_panel/DraggableTextInput";
+import { showError } from "@/lib/toast";
 import { useSetAtom } from "jotai";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -56,7 +57,7 @@ export const Annotator = ({
   const [color, setColor] = useState<string>("#7f22fe");
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [history, setHistory] = useState<Shape[][]>([]);
+  const [history, setHistory] = useState<Shape[][]>([[]]);
   const [historyStep, setHistoryStep] = useState(0);
   const spanRef = useRef<HTMLSpanElement[]>([]);
   const inputRef = useRef<HTMLInputElement[]>([]);
@@ -98,13 +99,6 @@ export const Annotator = ({
     resizeObserver.observe(containerRef.current);
 
     return () => resizeObserver.disconnect();
-  }, []);
-
-  // Initialize history
-  useEffect(() => {
-    if (history.length === 0) {
-      setHistory([[]]);
-    }
   }, []);
 
   // Save history
@@ -157,6 +151,11 @@ export const Annotator = ({
       handleAnnotatorClick();
     } catch (error) {
       console.error("Failed to export annotated image:", error);
+      showError(
+        error instanceof Error
+          ? error.message
+          : "Failed to export the annotated screenshot.",
+      );
     }
   };
 
@@ -212,7 +211,7 @@ export const Annotator = ({
       if (!spanRef.current[index] || !inputRef.current[index]) return;
       spanRef.current[index].textContent = inputRef.current[index].value || "";
       const width = spanRef.current[index].offsetWidth + 8; // padding
-      inputRef.current[index].style.width = width + "px";
+      inputRef.current[index].style.width = `${width}px`;
     } else if (e.key === "Escape") {
       setTextInputs((prev) => prev.filter((i) => i.id !== inputId));
     }
@@ -311,13 +310,13 @@ export const Annotator = ({
   // Update transformer selection
   useEffect(() => {
     if (selectedId && transformerRef.current && stageRef.current) {
-      const node = stageRef.current.findOne("#" + selectedId);
+      const node = stageRef.current.findOne(`#${selectedId}`);
       if (node) {
         transformerRef.current.nodes([node]);
         transformerRef.current.getLayer().batchDraw();
       }
     }
-  }, [selectedId, shapes]);
+  }, [selectedId]);
 
   // Calculate scale to fit image in container
   const scale = useMemo(() => {
