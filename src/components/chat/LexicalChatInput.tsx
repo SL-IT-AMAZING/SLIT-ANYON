@@ -203,9 +203,13 @@ function ExternalValueSyncPlugin({
 
       // Build nodes from internal value, turning @app:Name and @file:path into mention nodes
       let lastIndex = 0;
-      let match: RegExpExecArray | null;
       const combined = /@app:([a-zA-Z0-9_-]+)|@file:([^\s]+)/g;
-      while ((match = combined.exec(value)) !== null) {
+      while (true) {
+        const match = combined.exec(value);
+        if (!match) {
+          break;
+        }
+
         const start = match.index;
         const full = match[0];
         if (start > lastIndex) {
@@ -234,6 +238,42 @@ function ExternalValueSyncPlugin({
       paragraph.selectEnd();
     });
   }, [editor, value]);
+
+  return null;
+}
+
+function EditableStateSyncPlugin({
+  disabled,
+}: {
+  disabled: boolean;
+}) {
+  const [editor] = useLexicalComposerContext();
+  const wasDisabledRef = useRef(disabled);
+
+  useEffect(() => {
+    const wasDisabled = wasDisabledRef.current;
+    editor.setEditable(!disabled);
+    wasDisabledRef.current = disabled;
+
+    if (!wasDisabled || disabled) {
+      return;
+    }
+
+    const focusEditor = () => {
+      editor.focus(undefined, { defaultSelection: "rootEnd" });
+    };
+
+    if (
+      typeof window === "undefined" ||
+      typeof window.requestAnimationFrame !== "function"
+    ) {
+      focusEditor();
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(focusEditor);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [disabled, editor]);
 
   return null;
 }
@@ -447,6 +487,7 @@ export function LexicalChatInput({
           menuItemLimit={10}
         />
         <OnChangePlugin onChange={handleEditorChange} />
+        <EditableStateSyncPlugin disabled={disabled} />
         <HistoryPlugin />
         <EnterKeyPlugin
           onSubmit={handleSubmit}
