@@ -22,6 +22,11 @@ import { useSearch } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
 import { useCallback } from "react";
+import {
+  appendOptimisticStreamMessages,
+  createOptimisticStreamMessages,
+  removeOptimisticStreamMessages,
+} from "./streamChatOptimisticUtils";
 import { useChats } from "./useChats";
 import { useCheckProblems } from "./useCheckProblems";
 import { useCountTokens } from "./useCountTokens";
@@ -128,31 +133,48 @@ export function useStreamChat({
         return next;
       });
 
-      // Convert FileAttachment[] (with File objects) to ChatAttachment[] (base64 encoded)
-      let convertedAttachments: ChatAttachment[] | undefined;
-      if (attachments && attachments.length > 0) {
-        convertedAttachments = await Promise.all(
-          attachments.map(
-            (attachment) =>
-              new Promise<ChatAttachment>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  resolve({
-                    name: attachment.file.name,
-                    type: attachment.file.type,
-                    data: reader.result as string,
-                    attachmentType: attachment.type,
-                  });
-                };
-                reader.onerror = () => reject(reader.error);
-                reader.readAsDataURL(attachment.file);
-              }),
-          ),
-        );
-      }
-
       let hasIncrementedStreamCount = false;
+      let receivedFirstChunk = false;
+      const optimisticMessages = createOptimisticStreamMessages({
+        prompt,
+        now: new Date(),
+        createId: getRandomNumberId,
+      });
+
+      setMessagesById((prev) => {
+        const next = new Map(prev);
+        const existingMessages = next.get(chatId) ?? [];
+        next.set(
+          chatId,
+          appendOptimisticStreamMessages(existingMessages, optimisticMessages),
+        );
+        return next;
+      });
+
       try {
+        // Convert FileAttachment[] (with File objects) to ChatAttachment[] (base64 encoded)
+        let convertedAttachments: ChatAttachment[] | undefined;
+        if (attachments && attachments.length > 0) {
+          convertedAttachments = await Promise.all(
+            attachments.map(
+              (attachment) =>
+                new Promise<ChatAttachment>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    resolve({
+                      name: attachment.file.name,
+                      type: attachment.file.type,
+                      data: reader.result as string,
+                      attachmentType: attachment.type,
+                    });
+                  };
+                  reader.onerror = () => reject(reader.error);
+                  reader.readAsDataURL(attachment.file);
+                }),
+            ),
+          );
+        }
+
         ipc.chatStream.start(
           {
             chatId,
@@ -163,6 +185,7 @@ export function useStreamChat({
           },
           {
             onChunk: ({ messages: updatedMessages }) => {
+              receivedFirstChunk = true;
               if (!hasIncrementedStreamCount) {
                 setStreamCountById((prev) => {
                   const next = new Map(prev);
@@ -200,11 +223,11 @@ export function useStreamChat({
                 const chat = chats?.find((c) => c.id === chatId);
                 const appName = app?.displayName ?? app?.name ?? "Anyon";
                 const rawTitle = response.chatSummary ?? chat?.title;
-                  const body = rawTitle
-                    ? rawTitle.length > 80
-                      ? `${rawTitle.slice(0, 80)}…`
-                      : rawTitle
-                    : "Chat response completed";
+                const body = rawTitle
+                  ? rawTitle.length > 80
+                    ? `${rawTitle.slice(0, 80)}…`
+                    : rawTitle
+                  : "Chat response completed";
                 new Notification(appName, {
                   body,
                 });
@@ -259,6 +282,21 @@ export function useStreamChat({
               // Remove from pending set now that stream ended with error
               pendingStreamChatIds.delete(chatId);
 
+              if (!receivedFirstChunk) {
+                setMessagesById((prev) => {
+                  const next = new Map(prev);
+                  const existingMessages = next.get(chatId) ?? [];
+                  next.set(
+                    chatId,
+                    removeOptimisticStreamMessages(
+                      existingMessages,
+                      optimisticMessages,
+                    ),
+                  );
+                  return next;
+                });
+              }
+
               console.error(`[CHAT] Stream error for ${chatId}:`, errorMessage);
               setErrorById((prev) => {
                 const next = new Map(prev);
@@ -290,6 +328,21 @@ export function useStreamChat({
         // Remove from pending set on exception
         pendingStreamChatIds.delete(chatId);
 
+        if (!receivedFirstChunk) {
+          setMessagesById((prev) => {
+            const next = new Map(prev);
+            const existingMessages = next.get(chatId) ?? [];
+            next.set(
+              chatId,
+              removeOptimisticStreamMessages(
+                existingMessages,
+                optimisticMessages,
+              ),
+            );
+            return next;
+          });
+        }
+
         console.error("[CHAT] Exception during streaming setup:", error);
         setIsStreamingById((prev) => {
           const next = new Map(prev);
@@ -311,9 +364,9 @@ export function useStreamChat({
     [
       setMessagesById,
       setIsStreamingById,
+      setRecentStreamChatIds,
       setErrorById,
       setStreamCountById,
-      setRecentStreamChatIds,
       setIsPreviewOpen,
       refreshApp,
       refreshAppIframe,
@@ -321,11 +374,11 @@ export function useStreamChat({
       refreshVersions,
       invalidateTokenCount,
       checkProblems,
-      posthog,
       selectedAppId,
       refetchUserBudget,
       settings,
       queryClient,
+      posthog,
     ],
   );
 
