@@ -45,11 +45,12 @@ export function ModelPicker() {
   const queryClient = useQueryClient();
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const { app } = useLoadApp(selectedAppId);
+  const appPath = app?.resolvedPath ?? app?.path;
 
   const { data: modelsByProviders, isLoading: modelsLoading } =
-    useLanguageModelsByProviders(app?.path);
+    useLanguageModelsByProviders(appPath);
   const { data: providers, isLoading: providersLoading } =
-    useLanguageModelProviders(app?.path);
+    useLanguageModelProviders(appPath);
 
   const isLoading = modelsLoading || providersLoading;
 

@@ -75,12 +75,12 @@ export function AgentPicker() {
 
   const selectedAppId = useAtomValue(selectedAppIdAtom);
   const { app } = useLoadApp(selectedAppId);
+  const appPath = app?.resolvedPath ?? app?.path;
 
   const { data: serverAgents } = useQuery({
-    queryKey: queryKeys.openCodeAgents.byAppPath({ appPath: app?.path }),
-    queryFn: () =>
-      languageModelClient.getOpenCodeAgents({ appPath: app?.path }),
-    enabled: !!app?.path,
+    queryKey: queryKeys.openCodeAgents.byAppPath({ appPath }),
+    queryFn: () => languageModelClient.getOpenCodeAgents({ appPath }),
+    enabled: !!appPath,
   });
 
   const agents = useMemo(() => {

@@ -1,4 +1,5 @@
 import log from "electron-log";
+import { getAnyonAppPath } from "../../paths/paths";
 import { openCodeServer } from "./opencode_server";
 
 const logger = log.scope("opencode-api");
@@ -35,7 +36,10 @@ async function fetchOpenCodeAPI<T>(
   options?: RequestInit,
   cwd?: string,
 ): Promise<T> {
-  const serverInfo = await openCodeServer.ensureRunning(cwd ? { cwd } : {});
+  const normalizedCwd = cwd ? getAnyonAppPath(cwd) : undefined;
+  const serverInfo = await openCodeServer.ensureRunning(
+    normalizedCwd ? { cwd: normalizedCwd } : {},
+  );
   const url = `${serverInfo.url}${path}`;
   const credentials = Buffer.from(`opencode:${serverInfo.password}`).toString(
     "base64",
