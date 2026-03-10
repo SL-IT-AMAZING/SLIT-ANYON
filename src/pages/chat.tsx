@@ -1,9 +1,10 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { isChatPanelHiddenAtom, isPreviewOpenAtom } from "@/atoms/viewAtoms";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useChats } from "@/hooks/useChats";
 import { usePlanImplementation } from "@/hooks/usePlanImplementation";
+import { usePlanningArtifactImplementation } from "@/hooks/usePlanningArtifactImplementation";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/ui/sidebar";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
@@ -34,13 +35,13 @@ export default function ChatPage() {
 
   // Handle plan implementation when a plan is accepted
   usePlanImplementation();
+  usePlanningArtifactImplementation();
 
   // Auto-collapse sidebar when entering chat (run once on mount)
   const { setOpen: setSidebarOpen } = useSidebar();
   useEffect(() => {
     setSidebarOpen(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setSidebarOpen]);
   useEffect(() => {
     if (!chatId && chats.length && !loading) {
       // Not a real navigation, just a redirect, when the user navigates to /chat
@@ -48,7 +49,7 @@ export default function ChatPage() {
       setSelectedAppId(chats[0].appId);
       navigate({ to: "/chat", search: { id: chats[0].id }, replace: true });
     }
-  }, [chatId, chats, loading, navigate]);
+  }, [chatId, chats, loading, navigate, setSelectedAppId]);
 
   useEffect(() => {
     if (isPreviewOpen) {

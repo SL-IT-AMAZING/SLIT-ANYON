@@ -1,3 +1,4 @@
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { pendingQuestionnaireAtom } from "@/atoms/planAtoms";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useStreamChat } from "@/hooks/useStreamChat";
+import { ipc } from "@/ipc/types";
 import { useAtom, useAtomValue } from "jotai";
 import {
   ArrowLeft,
@@ -26,6 +28,7 @@ export function QuestionnaireInput() {
   const { t } = useTranslation("common");
   const [questionnaire, setQuestionnaire] = useAtom(pendingQuestionnaireAtom);
   const chatId = useAtomValue(selectedChatIdAtom);
+  const appId = useAtomValue(selectedAppIdAtom);
   const { streamMessage, isStreaming } = useStreamChat();
 
   // Track current question index
@@ -58,11 +61,61 @@ export function QuestionnaireInput() {
     });
     setAdditionalTexts({});
     setIsExpanded(true);
-  }, [
-    questionnaire?.chatId,
-    questionnaire?.title,
-    questionnaire?.questions?.length,
-  ]);
+  }, [questionnaire]);
+
+  useEffect(() => {
+    if (!questionnaire || !chatId || !appId) return;
+
+    let cancelled = false;
+
+    const ensureDraftArtifact = async () => {
+      const existing = await ipc.planningArtifact.getPlanningArtifactForChat({
+        appId,
+        chatId,
+        artifactType: "draft",
+      });
+
+      if (cancelled) return;
+
+      const draftContent = `# Draft: ${questionnaire.title}\n\n${questionnaire.description ? `## Description\n${questionnaire.description}\n\n` : ""}## Questions\n${questionnaire.questions.map((question) => `- ${question.question}`).join("\n")}`;
+
+      if (!existing) {
+        await ipc.planningArtifact.createPlanningArtifact({
+          appId,
+          chatId,
+          artifactType: "draft",
+          title: questionnaire.title,
+          summary: questionnaire.description,
+          content: draftContent,
+          metadata: {
+            status: "draft",
+            source: "planning-questionnaire",
+          },
+        });
+        return;
+      }
+
+      await ipc.planningArtifact.updatePlanningArtifact({
+        appId,
+        id: existing.id,
+        artifactType: "draft",
+        title: questionnaire.title,
+        summary: questionnaire.description,
+        content: draftContent,
+        metadata: {
+          ...existing.metadata,
+          status: existing.metadata.status ?? "draft",
+          source: "planning-questionnaire",
+        },
+      });
+    };
+
+    void ensureDraftArtifact();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appId, chatId, questionnaire]);
 
   if (!questionnaire || questionnaire.chatId !== chatId) return null;
 
@@ -138,7 +191,7 @@ export function QuestionnaireInput() {
   };
 
   const handleSubmit = () => {
-    if (!chatId) return;
+    if (!chatId || !appId) return;
 
     const formattedResponses = questionnaire.questions
       .map((q) => {
@@ -146,6 +199,27 @@ export function QuestionnaireInput() {
         return `**${q.question}**\n${answer}`;
       })
       .join("\n\n");
+
+    void (async () => {
+      const draftArtifact = await ipc.planningArtifact.getPlanningArtifactForChat({
+        appId,
+        chatId,
+        artifactType: "draft",
+      });
+      if (draftArtifact) {
+        await ipc.planningArtifact.updatePlanningArtifact({
+          appId,
+          id: draftArtifact.id,
+          artifactType: "draft",
+          content: `# Draft: ${questionnaire.title}\n\n## Questionnaire Responses\n\n${formattedResponses}`,
+          metadata: {
+            ...draftArtifact.metadata,
+            status: "draft",
+            source: "planning-questionnaire",
+          },
+        });
+      }
+    })();
 
     streamMessage({
       chatId,

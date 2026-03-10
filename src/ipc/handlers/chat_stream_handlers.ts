@@ -43,6 +43,7 @@ import { getTestResponse } from "./testing_chat_handlers";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
+import { getAnyonWritePlanTags } from "../utils/anyon_tag_parser";
 import { cleanFullResponse } from "../utils/cleanFullResponse";
 import { FileUploadsState } from "../utils/file_uploads_state";
 import {
@@ -53,7 +54,9 @@ import {
 } from "../utils/git_utils";
 import { openCodeServer } from "../utils/opencode_server";
 import { safeSend } from "../utils/safe_sender";
+import { writeWavePlanFile } from "./builder_wave_plan";
 import { parsePlanFile, validatePlanId } from "./planUtils";
+import { writePlanningArtifactFile } from "./planning_artifact_storage";
 
 type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 
@@ -465,6 +468,77 @@ You may update the plan at \`${planPath}\` to mark your progress.`;
           }
         }
 
+        let implementArtifactDisplayPrompt: string | undefined;
+        const implementArtifactMatch = userPrompt.match(
+          /^\/(implement-brief|implement-spec)=(.+)$/,
+        );
+        if (implementArtifactMatch) {
+          try {
+            implementArtifactDisplayPrompt = userPrompt;
+            const command = implementArtifactMatch[1];
+            const artifactSlug = implementArtifactMatch[2];
+            validatePlanId(artifactSlug);
+
+            const appPath = getAnyonAppPath(chat.app.path);
+            const directoryName =
+              command === "implement-brief" ? "briefs" : "specs";
+            const artifactFilePath = path.join(
+              appPath,
+              ".anyon",
+              directoryName,
+              `${artifactSlug}.md`,
+            );
+            const rawArtifact = await fs.promises.readFile(artifactFilePath, "utf-8");
+            const { meta: artifactMeta, content: artifactContent } =
+              parsePlanFile(rawArtifact);
+
+            const linkedChatId = artifactMeta.chatId;
+            let internalSpecBlock = "";
+            let internalSpecContent = "";
+            if (linkedChatId) {
+              const specsDir = path.join(appPath, ".anyon", "specs");
+              try {
+                const specFiles = (await fs.promises.readdir(specsDir))
+                  .filter((file) => file.endsWith(".md"))
+                  .filter((file) => file.startsWith(`chat-${linkedChatId}-`))
+                  .sort();
+                const latestSpec = specFiles.at(-1);
+                if (latestSpec) {
+                  const rawSpec = await fs.promises.readFile(
+                    path.join(specsDir, latestSpec),
+                    "utf-8",
+                  );
+                  const { content: specContent } = parsePlanFile(rawSpec);
+                  internalSpecContent = specContent;
+                  internalSpecBlock = `\n\n## Internal Build Spec\n\n${specContent}`;
+                }
+              } catch (e) {
+                logger.warn("Failed to read linked internal build spec:", e);
+              }
+            }
+
+            const wavePlan = await writeWavePlanFile({
+              appPath,
+              chatId: linkedChatId || req.chatId,
+              title: artifactMeta.title || "Approved Builder Artifact",
+              summary: artifactMeta.summary,
+              artifactType:
+                command === "implement-brief"
+                  ? "founder_brief"
+                  : "internal_build_spec",
+              artifactId: artifactSlug,
+              artifactContent,
+              internalSpecContent,
+            });
+
+            userPrompt = `Please turn the approved planning artifacts into an executable first build wave and begin implementation.\n\n## Approved Artifact\n\n## ${artifactMeta.title || "Approved Builder Artifact"}\n\n${artifactContent}${internalSpecBlock}\n\nCreate or update a wave 1 execution plan in \`.anyon/plans/\` that is traceable to the documented user flows, then start implementing it now. Keep the founder-facing intent intact while using the execution plan to track progress.`;
+            userPrompt = `Please implement the approved Builder wave plan now.\n\n## Approved Artifact\n\n## ${artifactMeta.title || "Approved Builder Artifact"}\n\n${artifactContent}${internalSpecBlock}\n\n## Execution Plan\n\nThe executable wave plan has been created at \`${wavePlan.relativePath}\`.\n\nFollow that wave plan as the implementation source of truth, keep it updated as you progress, and preserve the founder-approved user flows while building the first wave now.`;
+          } catch (e) {
+            implementArtifactDisplayPrompt = undefined;
+            logger.error("Failed to expand Builder implementation prompt:", e);
+          }
+        }
+
         const componentsToProcess = req.selectedComponents || [];
 
         if (componentsToProcess.length > 0) {
@@ -517,7 +591,10 @@ ${componentSnippet}
           .values({
             chatId: req.chatId,
             role: "user",
-            content: implementPlanDisplayPrompt ?? userPrompt,
+            content:
+              implementPlanDisplayPrompt ??
+              implementArtifactDisplayPrompt ??
+              userPrompt,
           })
           .returning();
         const settings = readSettings();
@@ -806,6 +883,57 @@ ${componentSnippet}
                   .update(messages)
                   .set({ content: fullResponse })
                   .where(eq(messages.id, placeholderAssistantMessage.id));
+
+                const writePlanTags = getAnyonWritePlanTags(fullResponse).filter(
+                  (tag) => tag.complete !== "false",
+                );
+
+                for (const tag of writePlanTags) {
+                  const artifactType = tag.artifactType ?? "founder_brief";
+
+                  await writePlanningArtifactFile({
+                    appPath: chatAppPath,
+                    chatId: req.chatId,
+                    artifactType,
+                    title: tag.title,
+                    summary: tag.summary,
+                    content: tag.content,
+                    metadata: {
+                      status: "draft",
+                      source: "builder-stream",
+                    },
+                  });
+
+                  if (!tag.artifactType) {
+                    await writePlanningArtifactFile({
+                      appPath: chatAppPath,
+                      chatId: req.chatId,
+                      artifactType: "user_flow_spec",
+                      title: `${tag.title} User Flows`,
+                      summary: tag.summary,
+                      content: tag.content,
+                      metadata: {
+                        status: "draft",
+                        source: "builder-stream-derived",
+                        sourceArtifactType: "founder_brief",
+                      },
+                    });
+
+                    await writePlanningArtifactFile({
+                      appPath: chatAppPath,
+                      chatId: req.chatId,
+                      artifactType: "internal_build_spec",
+                      title: `${tag.title} Internal Build Spec`,
+                      summary: tag.summary,
+                      content: tag.content,
+                      metadata: {
+                        status: "draft",
+                        source: "builder-stream-derived",
+                        sourceArtifactType: "founder_brief",
+                      },
+                    });
+                  }
+                }
 
                 try {
                   const uncommittedFiles = await getGitUncommittedFiles({

@@ -568,6 +568,14 @@
     "successAutoRules": "보안 규칙이 자동 적용되었습니다"
   },
   "agents": {
+    "Builder": {
+      "name": "Builder",
+      "description": "기획과 빌드를 맡는 메인 에이전트"
+    },
+    "Craftsman": {
+      "name": "Craftsman",
+      "description": "구현과 에러 수정을 맡는 전문 에이전트"
+    },
     "Sisyphus": {
       "name": "만능 빌더",
       "description": "앱을 만들어주는 강력한 AI 빌더"

@@ -23,6 +23,7 @@ import { registerMcpHandlers } from "./handlers/mcp_handlers";
 import { registerNodeHandlers } from "./handlers/node_handlers";
 import { registerNodeInstallHandlers } from "./handlers/node_install_handlers";
 import { registerPlanHandlers } from "./handlers/plan_handlers";
+import { registerPlanningArtifactHandlers } from "./handlers/planning_artifacts_handlers";
 import { registerPortalHandlers } from "./handlers/portal_handlers";
 import { registerProHandlers } from "./handlers/pro_handlers";
 import { registerProblemsHandlers } from "./handlers/problems_handlers";
@@ -81,6 +82,7 @@ export function registerIpcHandlers() {
   registerVisualEditingHandlers();
   registerFreeAgentQuotaHandlers();
   registerPlanHandlers();
+  registerPlanningArtifactHandlers();
   registerAuthHandlers();
   registerEntitlementHandlers();
   registerUpdateHandlers();

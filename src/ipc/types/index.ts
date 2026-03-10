@@ -45,6 +45,7 @@ export { versionContracts } from "./version";
 export { languageModelContracts } from "./language-model";
 export { templateContracts } from "./templates";
 export { proposalContracts } from "./proposals";
+export { planningArtifactContracts } from "./planning_artifacts";
 export { importContracts } from "./import";
 export { helpContracts, helpStreamContract } from "./help";
 export { capacitorContracts } from "./capacitor";
@@ -80,6 +81,7 @@ export { versionClient } from "./version";
 export { languageModelClient } from "./language-model";
 export { templateClient } from "./templates";
 export { proposalClient } from "./proposals";
+export { planningArtifactClient } from "./planning_artifacts";
 export { importClient } from "./import";
 export { helpClient, helpStreamClient } from "./help";
 export { capacitorClient } from "./capacitor";
@@ -281,6 +283,12 @@ export type {
 
 // Proposal types
 export type { ProposalResult, ApproveProposalResult } from "./proposals";
+export type {
+  PlanningArtifact,
+  PlanningArtifactType,
+  CreatePlanningArtifactParams,
+  UpdatePlanningArtifactParams,
+} from "./planning_artifacts";
 
 // Import types
 export type { ImportAppParams, ImportAppResult } from "./import";
@@ -376,6 +384,7 @@ import { languageModelClient } from "./language-model";
 import { likedThemesClient } from "./liked_themes";
 import { mcpClient, mcpEventClient } from "./mcp";
 import { miscClient, miscEventClient } from "./misc";
+import { planningArtifactClient } from "./planning_artifacts";
 import { proposalClient } from "./proposals";
 import { securityClient } from "./security";
 import { settingsClient } from "./settings";
@@ -438,6 +447,7 @@ export const ipc = {
   languageModel: languageModelClient,
   template: templateClient,
   proposal: proposalClient,
+  planningArtifact: planningArtifactClient,
   import: importClient,
   help: helpClient,
   capacitor: capacitorClient,

@@ -1,36 +1,19 @@
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
-import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useLoadApp } from "@/hooks/useLoadApp";
 import { useSettings } from "@/hooks/useSettings";
 import { languageModelClient } from "@/ipc/types/language-model";
-import { cn } from "@/lib/utils";
+import { queryKeys } from "@/lib/queryKeys";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import expertIcon from "../../assets/expert.svg";
-import mainBuilderIcon from "../../assets/main-builder.svg";
-import plannerIcon from "../../assets/planner.svg";
-
-const AGENT_ICONS: Record<string, string> = {
-  Sisyphus: mainBuilderIcon,
-  Hephaestus: expertIcon,
-  Atlas: plannerIcon,
-};
 
 const FALLBACK_AGENTS: {
   name: string;
@@ -38,10 +21,20 @@ const FALLBACK_AGENTS: {
   mode: "primary" | "subagent" | "all";
   native: boolean;
   color?: string;
+  hidden?: boolean;
 }[] = [
-  { name: "Sisyphus", description: "", mode: "primary", native: false },
-  { name: "Hephaestus", description: "", mode: "primary", native: false },
-  { name: "Atlas", description: "", mode: "primary", native: false },
+  {
+    name: "Builder",
+    description: "Main agent for planning and building your product",
+    mode: "primary",
+    native: false,
+  },
+  {
+    name: "Craftsman",
+    description: "Implementation and error-fixing specialist",
+    mode: "primary",
+    native: false,
+  },
 ];
 
 function getBaseAgentName(name: string): string {
@@ -76,8 +69,6 @@ function useAgentDescription() {
 }
 
 export function AgentPicker() {
-  const { t } = useTranslation("common");
-  const [open, setOpen] = useState(false);
   const { settings, updateSettings } = useSettings();
   const getDisplayName = useAgentDisplayName();
   const getDescription = useAgentDescription();
@@ -86,13 +77,16 @@ export function AgentPicker() {
   const { app } = useLoadApp(selectedAppId);
 
   const { data: serverAgents } = useQuery({
-    queryKey: ["opencode-agents", app?.path] as const,
+    queryKey: queryKeys.openCodeAgents.byAppPath({ appPath: app?.path }),
     queryFn: () =>
       languageModelClient.getOpenCodeAgents({ appPath: app?.path }),
-    enabled: open && !!app?.path,
+    enabled: !!app?.path,
   });
 
-  const agents = serverAgents?.length ? serverAgents : FALLBACK_AGENTS;
+  const agents = useMemo(() => {
+    const source = serverAgents?.length ? serverAgents : FALLBACK_AGENTS;
+    return source.filter((agent) => !agent.hidden);
+  }, [serverAgents]);
 
   const selectedAgent = useMemo(() => {
     const agentName = settings?.selectedAgent;
@@ -108,84 +102,45 @@ export function AgentPicker() {
 
   const handleSelect = (agent: (typeof agents)[number]) => {
     updateSettings({ selectedAgent: agent.name });
-    setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 max-w-[140px] justify-between gap-1 px-2 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
-            data-testid="agent-picker"
-          />
+    <Select
+      value={selectedAgent?.name}
+      onValueChange={(value) => {
+        const agent = agents.find((item) => item.name === value);
+        if (agent) {
+          handleSelect(agent);
         }
+      }}
+    >
+      <SelectTrigger
+        size="sm"
+        className="h-8 w-auto max-w-[110px] border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
+        data-testid="agent-picker"
       >
-        <span className="truncate">
+        <SelectValue placeholder="Agent">
           {selectedAgent ? getDisplayName(selectedAgent.name) : "Agent"}
-        </span>
-        <ChevronsUpDownIcon className="h-3 w-3 shrink-0 opacity-50" />
-      </PopoverTrigger>
-      <PopoverContent className="w-[360px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={t("placeholders.searchAgents")} />
-          <CommandList>
-            <CommandEmpty>No agents found.</CommandEmpty>
-            <CommandGroup>
-              {agents.map((agent) => {
-                const displayName = getDisplayName(agent.name);
-                const description = getDescription(
-                  agent.name,
-                  agent.description,
-                );
-                return (
-                  <CommandItem
-                    key={agent.name}
-                    value={displayName}
-                    onSelect={() => handleSelect(agent)}
-                    className="flex items-center gap-3 py-2.5 px-3"
-                  >
-                    {AGENT_ICONS[getBaseAgentName(agent.name)] ? (
-                      <img
-                        src={AGENT_ICONS[getBaseAgentName(agent.name)]}
-                        alt=""
-                        className="h-9 w-9 shrink-0 dark:invert"
-                      />
-                    ) : (
-                      agent.color && (
-                        <span
-                          className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: agent.color }}
-                        />
-                      )
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-medium">
-                        {displayName}
-                      </span>
-                      {description && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          {description}
-                        </span>
-                      )}
-                    </div>
-                    <CheckIcon
-                      className={cn(
-                        "ml-auto h-4 w-4 shrink-0",
-                        selectedAgent?.name === agent.name
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent align="start" className="min-w-[240px]">
+        {agents.map((agent) => {
+          const displayName = getDisplayName(agent.name);
+          const description = getDescription(agent.name, agent.description);
+          return (
+            <SelectItem key={agent.name} value={agent.name}>
+              <div className="flex min-w-0 flex-col items-start">
+                <span className="truncate font-medium">{displayName}</span>
+                {description && (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {description}
+                  </span>
+                )}
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 }

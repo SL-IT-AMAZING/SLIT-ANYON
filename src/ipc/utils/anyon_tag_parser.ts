@@ -198,3 +198,81 @@ export function getAnyonSearchReplaceTags(fullResponse: string): {
   }
   return tags;
 }
+
+export function getAnyonWritePlanTags(fullResponse: string): {
+  title: string;
+  summary?: string;
+  content: string;
+  complete?: string;
+  artifactType?: "founder_brief" | "internal_build_spec";
+  artifactId?: string;
+}[] {
+  const anyonWritePlanRegex =
+    /<anyon-write-plan([^>]*)>([\s\S]*?)<\/anyon-write-plan>/gi;
+  const titleRegex = /title="([^"]+)"/;
+  const summaryRegex = /summary="([^"]+)"/;
+  const completeRegex = /complete="([^"]+)"/;
+  const artifactTypeRegex = /artifactType="([^"]+)"/;
+  const artifactIdRegex = /artifactId="([^"]+)"/;
+
+  let match;
+  const tags: {
+    title: string;
+    summary?: string;
+    content: string;
+    complete?: string;
+    artifactType?: "founder_brief" | "internal_build_spec";
+    artifactId?: string;
+  }[] = [];
+
+  while ((match = anyonWritePlanRegex.exec(fullResponse)) !== null) {
+    const attributesString = match[1] || "";
+    let content = unescapeXmlContent(match[2].trim());
+
+    const titleMatch = titleRegex.exec(attributesString);
+    if (!titleMatch?.[1]) {
+      logger.warn(
+        "Found <anyon-write-plan> tag without a valid 'title' attribute:",
+        match[0],
+      );
+      continue;
+    }
+
+    const summaryMatch = summaryRegex.exec(attributesString);
+    const completeMatch = completeRegex.exec(attributesString);
+    const artifactTypeMatch = artifactTypeRegex.exec(attributesString);
+    const artifactIdMatch = artifactIdRegex.exec(attributesString);
+
+    const contentLines = content.split("\n");
+    if (contentLines[0]?.startsWith("```")) {
+      contentLines.shift();
+    }
+    if (contentLines[contentLines.length - 1]?.startsWith("```")) {
+      contentLines.pop();
+    }
+    content = contentLines.join("\n");
+
+    const artifactType = artifactTypeMatch?.[1]
+      ? (unescapeXmlAttr(artifactTypeMatch[1]) as
+          | "founder_brief"
+          | "internal_build_spec")
+      : undefined;
+
+    tags.push({
+      title: unescapeXmlAttr(titleMatch[1]),
+      summary: summaryMatch?.[1]
+        ? unescapeXmlAttr(summaryMatch[1])
+        : undefined,
+      content,
+      complete: completeMatch?.[1]
+        ? unescapeXmlAttr(completeMatch[1])
+        : undefined,
+      artifactType,
+      artifactId: artifactIdMatch?.[1]
+        ? unescapeXmlAttr(artifactIdMatch[1])
+        : undefined,
+    });
+  }
+
+  return tags;
+}

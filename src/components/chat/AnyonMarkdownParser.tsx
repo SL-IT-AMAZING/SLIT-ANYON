@@ -595,6 +595,11 @@ export function renderCustomTag(
           title={attributes.title || "Implementation Plan"}
           summary={attributes.summary}
           complete={attributes.complete}
+          artifactId={attributes.artifactId}
+          artifactType={attributes.artifactType as
+            | "founder_brief"
+            | "internal_build_spec"
+            | undefined}
           status={status}
         >
           {content}

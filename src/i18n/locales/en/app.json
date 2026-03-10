@@ -567,6 +567,14 @@
     "successAutoRules": "Auto-generated security rules applied"
   },
   "agents": {
+    "Builder": {
+      "name": "Builder",
+      "description": "Main agent for planning and building your product"
+    },
+    "Craftsman": {
+      "name": "Craftsman",
+      "description": "Implementation and error-fixing specialist"
+    },
     "Sisyphus": {
       "name": "Builder",
       "description": "Powerful all-around AI builder for your apps"

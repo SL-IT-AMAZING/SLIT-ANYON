@@ -66,6 +66,7 @@ import { useChats } from "@/hooks/useChats";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
 import { useCountTokens } from "@/hooks/useCountTokens";
 import { useVersions } from "@/hooks/useVersions";
+import { getErrorMessage } from "@/lib/error";
 import { queryKeys } from "@/lib/queryKeys";
 import { showExtraFilesToast } from "@/lib/toast";
 import { showError as showErrorToast } from "@/lib/toast";
@@ -81,6 +82,7 @@ import {
 } from "./ContextLimitBanner";
 import { DragDropOverlay } from "./DragDropOverlay";
 import { LexicalChatInput } from "./LexicalChatInput";
+import { PlanningArtifactPanel } from "./PlanningArtifactPanel";
 import { QuestionnaireInput } from "./QuestionnaireInput";
 import { SelectedComponentsDisplay } from "./SelectedComponentDisplay";
 import { useSummarizeInNewChat } from "./SummarizeInNewChatButton";
@@ -98,7 +100,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const { refreshVersions } = useVersions(appId);
   const { streamMessage, isStreaming, setIsStreaming, error, setError } =
     useStreamChat();
-  const [showError, setShowError] = useState(true);
+  const [isErrorVisible, setIsErrorVisible] = useState(true);
   const [isApproving, setIsApproving] = useState(false); // State for approving
   const [isRejecting, setIsRejecting] = useState(false); // State for rejecting
   const messagesById = useAtomValue(chatMessagesByIdAtom);
@@ -106,11 +108,19 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const selectedChatId = useAtomValue(selectedChatIdAtom);
   const setIsPreviewOpen = useSetAtom(isPreviewOpenAtom);
   const [showTokenBar, setShowTokenBar] = useAtom(showTokenBarAtom);
+  const effectiveChatId = chatId ?? selectedChatId;
   const queryClient = useQueryClient();
   const toggleShowTokenBar = useCallback(() => {
-    setShowTokenBar((prev) => !prev);
-    queryClient.invalidateQueries({ queryKey: queryKeys.tokenCount.all });
-  }, [setShowTokenBar, queryClient]);
+    setShowTokenBar((prev) => {
+      const next = !prev;
+      if (next) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.tokenCount.byChat({ chatId: effectiveChatId }),
+        });
+      }
+      return next;
+    });
+  }, [setShowTokenBar, queryClient, effectiveChatId]);
   const [selectedComponents, setSelectedComponents] = useAtom(
     selectedComponentsPreviewAtom,
   );
@@ -125,7 +135,6 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
   // Get todos for this chat
   const agentTodosByChatId = useAtomValue(agentTodosByChatIdAtom);
-  const effectiveChatId = chatId ?? selectedChatId;
   const chatTodos = effectiveChatId
     ? (agentTodosByChatId.get(effectiveChatId) ?? [])
     : [];
@@ -179,6 +188,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
   const lastMessage = (chatId ? (messagesById.get(chatId) ?? []) : []).at(-1);
   const disableSendButton =
+    proposalResult?.chatId === chatId &&
     lastMessage?.role === "assistant" &&
     !lastMessage.approvalState &&
     !!proposal &&
@@ -211,21 +221,21 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
   useEffect(() => {
     if (error) {
-      setShowError(true);
+      setIsErrorVisible(true);
     }
   }, [error]);
 
-  const fetchChatMessages = useCallback(async () => {
-    if (!chatId) {
+  const fetchChatMessages = useCallback(async (targetChatId: number) => {
+    if (!targetChatId) {
       return;
     }
-    const chat = await ipc.chat.getChat(chatId);
+    const chat = await ipc.chat.getChat(targetChatId);
     setMessagesById((prev) => {
       const next = new Map(prev);
-      next.set(chatId, chat.messages);
+      next.set(targetChatId, chat.messages);
       return next;
     });
-  }, [chatId, setMessagesById]);
+  }, [setMessagesById]);
 
   const handleSubmit = async () => {
     if (
@@ -274,7 +284,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   };
 
   const dismissError = () => {
-    setShowError(false);
+    setIsErrorVisible(false);
   };
 
   const handleNewChat = async () => {
@@ -288,9 +298,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
         });
         invalidateChats();
       } catch (err) {
-        showErrorToast(
-          `Failed to create new chat: ${(err as Error).toString()}`,
-        );
+        showErrorToast(`Failed to create new chat: ${getErrorMessage(err)}`);
       }
     } else {
       navigate({ to: "/" });
@@ -300,15 +308,17 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const handleApprove = async () => {
     if (!chatId || !messageId || isApproving || isRejecting || isStreaming)
       return;
+    const targetChatId = chatId;
+    const targetMessageId = messageId;
     console.log(
-      `Approving proposal for chatId: ${chatId}, messageId: ${messageId}`,
+      `Approving proposal for chatId: ${targetChatId}, messageId: ${targetMessageId}`,
     );
     setIsApproving(true);
     posthog.capture("chat:approve");
     try {
       const result = await ipc.proposal.approveProposal({
-        chatId,
-        messageId,
+        chatId: targetChatId,
+        messageId: targetMessageId,
       });
       if (result.extraFiles) {
         showExtraFilesToast({
@@ -319,7 +329,9 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       }
     } catch (err) {
       console.error("Error approving proposal:", err);
-      setError((err as Error)?.message || "An error occurred while approving");
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      showErrorToast(`Failed to approve proposal: ${errorMessage}`);
     } finally {
       setIsApproving(false);
       if (settings?.autoExpandPreviewPanel) {
@@ -332,31 +344,35 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
       // Keep same as handleReject
       refreshProposal();
-      fetchChatMessages();
+      void fetchChatMessages(targetChatId);
     }
   };
 
   const handleReject = async () => {
     if (!chatId || !messageId || isApproving || isRejecting || isStreaming)
       return;
+    const targetChatId = chatId;
+    const targetMessageId = messageId;
     console.log(
-      `Rejecting proposal for chatId: ${chatId}, messageId: ${messageId}`,
+      `Rejecting proposal for chatId: ${targetChatId}, messageId: ${targetMessageId}`,
     );
     setIsRejecting(true);
     posthog.capture("chat:reject");
     try {
       await ipc.proposal.rejectProposal({
-        chatId,
-        messageId,
+        chatId: targetChatId,
+        messageId: targetMessageId,
       });
     } catch (err) {
       console.error("Error rejecting proposal:", err);
-      setError((err as Error)?.message || "An error occurred while rejecting");
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      showErrorToast(`Failed to reject proposal: ${errorMessage}`);
     } finally {
       setIsRejecting(false);
       // Keep same as handleApprove
       refreshProposal();
-      fetchChatMessages();
+      void fetchChatMessages(targetChatId);
     }
   };
 
@@ -366,7 +382,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
   return (
     <>
-      {error && showError && (
+      {error && isErrorVisible && (
         <ChatErrorBox
           onDismiss={dismissError}
           error={error}
@@ -382,7 +398,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       )}
       {proposalError && (
         <div className="p-4 text-sm text-red-600">
-          {t("ui.errorLoadingProposal")} {proposalError.message}
+          {t("ui.errorLoadingProposal")} {getErrorMessage(proposalError)}
         </div>
       )}
       <div
@@ -408,6 +424,8 @@ export function ChatInput({ chatId }: { chatId?: number }) {
 
           {/* Show active questionnaire if exists */}
           <QuestionnaireInput />
+
+          <PlanningArtifactPanel />
           {/* Only render ChatInputActions if proposal is loaded */}
           {proposal && proposalResult?.chatId === chatId && (
             <ChatInputActions
@@ -470,7 +488,8 @@ export function ChatInput({ chatId }: { chatId?: number }) {
               onPaste={handlePaste}
               placeholder={t("input.placeholder")}
               excludeCurrentApp={true}
-              disableSendButton={disableSendButton}
+              disabled={isStreaming}
+              disableSendButton={disableSendButton || isStreaming}
               messageHistory={userMessageHistory}
             />
 
@@ -715,7 +734,7 @@ function ChatInputActions({
     return <div>Tip proposal</div>;
   }
   if (proposal.type === "action-proposal") {
-    return <ActionProposalActions proposal={proposal}></ActionProposalActions>;
+    return <ActionProposalActions proposal={proposal} />;
   }
 
   // Split files into server functions and other files - only for CodeProposal
@@ -734,7 +753,7 @@ function ChatInputActions({
     if (isDetailsVisible) {
       return title;
     }
-    return title.slice(0, 60) + "...";
+    return `${title.slice(0, 60)}...`;
   }
 
   return (
@@ -856,22 +875,24 @@ function ChatInputActions({
                 <h4 className="font-semibold mb-1">Packages Added</h4>
                 <ul className="space-y-1">
                   {proposal.packagesAdded.map((pkg, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center space-x-2"
-                      onClick={() => {
-                        ipc.system.openExternalUrl(
-                          `https://www.npmjs.com/package/${pkg}`,
-                        );
-                      }}
-                    >
-                      <Package
-                        size={16}
-                        className="text-muted-foreground flex-shrink-0"
-                      />
-                      <span className="cursor-pointer text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                        {pkg}
-                      </span>
+                    <li key={index}>
+                      <button
+                        type="button"
+                        className="flex items-center space-x-2"
+                        onClick={() => {
+                          ipc.system.openExternalUrl(
+                            `https://www.npmjs.com/package/${pkg}`,
+                          );
+                        }}
+                      >
+                        <Package
+                          size={16}
+                          className="text-muted-foreground flex-shrink-0"
+                        />
+                        <span className="cursor-pointer text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                          {pkg}
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -1006,25 +1027,28 @@ function SqlQueryItem({ query }: { query: SqlQuery }) {
   const queryDescription = query.description;
 
   return (
-    <li
-      className="bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-3 py-2 border border-border cursor-pointer"
-      onClick={() => setIsExpanded(!isExpanded)}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Database size={16} className="text-muted-foreground flex-shrink-0" />
-          <span className="text-sm font-medium">
-            {queryDescription || "SQL Query"}
-          </span>
+    <li className="bg-(--background-lightest) hover:bg-(--background-lighter) rounded-lg px-3 py-2 border border-border">
+      <button
+        type="button"
+        className="w-full text-left"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Database size={16} className="text-muted-foreground flex-shrink-0" />
+            <span className="text-sm font-medium">
+              {queryDescription || "SQL Query"}
+            </span>
+          </div>
+          <div>
+            {isExpanded ? (
+              <ChevronsDownUp size={18} className="text-muted-foreground" />
+            ) : (
+              <ChevronsUpDown size={18} className="text-muted-foreground" />
+            )}
+          </div>
         </div>
-        <div>
-          {isExpanded ? (
-            <ChevronsDownUp size={18} className="text-muted-foreground" />
-          ) : (
-            <ChevronsUpDown size={18} className="text-muted-foreground" />
-          )}
-        </div>
-      </div>
+      </button>
       {isExpanded && (
         <div className="mt-2 text-xs max-h-[200px] overflow-auto">
           <CodeHighlight className="language-sql ">

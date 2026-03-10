@@ -66,6 +66,31 @@ export const queryKeys = {
     }) => ["plans", "forChat", appId, chatId] as const,
   },
 
+  planningArtifacts: {
+    all: ["planning-artifacts"] as const,
+    forChat: ({
+      appId,
+      chatId,
+      artifactType,
+    }: {
+      appId: number | null;
+      chatId: number | null;
+      artifactType:
+        | "draft"
+        | "founder_brief"
+        | "internal_build_spec"
+        | "user_flow_spec";
+    }) =>
+      ["planning-artifacts", "forChat", appId, chatId, artifactType] as const,
+    listForChat: ({
+      appId,
+      chatId,
+    }: {
+      appId: number | null;
+      chatId: number | null;
+    }) => ["planning-artifacts", "listForChat", appId, chatId] as const,
+  },
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Proposals
   // ─────────────────────────────────────────────────────────────────────────────
@@ -118,6 +143,8 @@ export const queryKeys = {
   // ─────────────────────────────────────────────────────────────────────────────
   tokenCount: {
     all: ["tokenCount"] as const,
+    byChat: ({ chatId }: { chatId: number | null }) =>
+      ["tokenCount", chatId] as const,
     forChat: ({ chatId, input }: { chatId: number | null; input: string }) =>
       ["tokenCount", chatId, input] as const,
   },
@@ -179,6 +206,12 @@ export const queryKeys = {
       ["language-models-by-providers", appPath ?? null] as const,
     forProvider: ({ providerId }: { providerId: string }) =>
       ["language-models", providerId] as const,
+  },
+
+  openCodeAgents: {
+    all: ["opencode-agents"] as const,
+    byAppPath: ({ appPath }: { appPath?: string }) =>
+      ["opencode-agents", appPath ?? null] as const,
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -286,6 +319,9 @@ export type AppQueryKey =
   | QueryKeyOf<(typeof queryKeys.apps)[keyof typeof queryKeys.apps]>
   | QueryKeyOf<(typeof queryKeys.chats)[keyof typeof queryKeys.chats]>
   | QueryKeyOf<(typeof queryKeys.plans)[keyof typeof queryKeys.plans]>
+  | QueryKeyOf<
+      (typeof queryKeys.planningArtifacts)[keyof typeof queryKeys.planningArtifacts]
+    >
   | QueryKeyOf<(typeof queryKeys.proposals)[keyof typeof queryKeys.proposals]>
   | QueryKeyOf<(typeof queryKeys.versions)[keyof typeof queryKeys.versions]>
   | QueryKeyOf<(typeof queryKeys.branches)[keyof typeof queryKeys.branches]>
@@ -307,6 +343,9 @@ export type AppQueryKey =
   | QueryKeyOf<(typeof queryKeys.templates)[keyof typeof queryKeys.templates]>
   | QueryKeyOf<
       (typeof queryKeys.languageModels)[keyof typeof queryKeys.languageModels]
+    >
+  | QueryKeyOf<
+      (typeof queryKeys.openCodeAgents)[keyof typeof queryKeys.openCodeAgents]
     >
   | QueryKeyOf<(typeof queryKeys.userBudget)[keyof typeof queryKeys.userBudget]>
   | QueryKeyOf<

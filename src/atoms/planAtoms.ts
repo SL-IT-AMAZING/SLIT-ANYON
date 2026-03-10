@@ -1,5 +1,5 @@
-import { atom } from "jotai";
 import type { PlanQuestionnairePayload } from "@/ipc/types/plan";
+import { atom } from "jotai";
 
 export interface PlanData {
   content: string;
@@ -27,6 +27,17 @@ export interface PendingPlanImplementation {
 
 export const pendingPlanImplementationAtom =
   atom<PendingPlanImplementation | null>(null);
+
+export interface PendingPlanningArtifactImplementation {
+  chatId: number;
+  title: string;
+  artifactId: string;
+  artifactType: "founder_brief" | "internal_build_spec";
+}
+
+export const pendingPlanningArtifactImplementationAtom = atom<
+  PendingPlanningArtifactImplementation | null
+>(null);
 
 export const pendingQuestionnaireAtom = atom<PlanQuestionnairePayload | null>(
   null,
