@@ -1,0 +1,25 @@
+{
+  "name": "@anyon-cli/anyon-linux-x64-musl-baseline",
+  "version": "0.2.3",
+  "description": "Platform-specific binary for anyon (linux-x64-musl-baseline, no AVX2)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SL-IT-AMAZING/anyon-cli"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "musl"
+  ],
+  "files": [
+    "bin"
+  ],
+  "bin": {
+    "anyon": "./bin/anyon"
+  }
+}

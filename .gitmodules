@@ -1,4 +1,0 @@
-[submodule "engine"]
-	path = engine
-	url = https://github.com/SL-IT-AMAZING/anyon-cli.git
-	branch = dev

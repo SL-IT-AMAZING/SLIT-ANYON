@@ -1,0 +1,22 @@
+{
+  "name": "@anyon-cli/anyon-windows-x64-baseline",
+  "version": "0.2.3",
+  "description": "Platform-specific binary for anyon (windows-x64-baseline, no AVX2)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SL-IT-AMAZING/anyon-cli"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin"
+  ],
+  "bin": {
+    "anyon": "./bin/anyon.exe"
+  }
+}
