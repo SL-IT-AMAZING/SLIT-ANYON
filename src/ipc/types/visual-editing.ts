@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineContract, createClient } from "../contracts/core";
+import { createClient, defineContract } from "../contracts/core";
 
 // =============================================================================
 // Visual Editing Schemas
@@ -8,6 +8,7 @@ import { defineContract, createClient } from "../contracts/core";
 export const VisualEditingChangeSchema = z.object({
   componentId: z.string(),
   componentName: z.string(),
+  runtimeId: z.string().optional(),
   relativePath: z.string(),
   lineNumber: z.number(),
   styles: z.object({

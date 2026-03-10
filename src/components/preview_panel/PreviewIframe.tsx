@@ -75,6 +75,7 @@ import { cn } from "@/lib/utils";
 import { Annotator } from "@/pro/ui/components/Annotator/Annotator";
 import { normalizePath } from "../../../shared/normalizePath";
 import { VisualEditingToolbar } from "./VisualEditingToolbar";
+import { reconcileVisualEditingTextChange } from "./visualEditingSaveUtils";
 
 interface ErrorBannerProps {
   error: { message: string; source: "preview-app" | "anyon-app" } | undefined;
@@ -311,7 +312,7 @@ export const PreviewIframe = ({
 
   const handleTextUpdated = useCallback(
     async (data: any) => {
-      const { componentId, text } = data;
+      const { componentId, text, runtimeId, originalText } = data;
       if (!componentId || !selectedAppId) return;
 
       // Parse componentId to extract file path and line number
@@ -356,18 +357,28 @@ export const PreviewIframe = ({
       setPendingChanges((prev) => {
         const updated = new Map(prev);
         const existing = updated.get(componentId);
-
-        updated.set(componentId, {
-          componentId: componentId,
-          componentName:
-            existing?.componentName ||
-            visualEditingSelectedComponent?.name ||
-            "",
+        const resolvedRuntimeId =
+          runtimeId ??
+          existing?.runtimeId ??
+          (visualEditingSelectedComponent?.id === componentId
+            ? visualEditingSelectedComponent?.runtimeId
+            : undefined);
+        const nextChange = reconcileVisualEditingTextChange({
+          existingChange: existing,
+          componentId,
+          componentName: visualEditingSelectedComponent?.name || "",
+          runtimeId: resolvedRuntimeId,
           relativePath: resolvedRelativePath,
-          lineNumber: lineNumber,
-          styles: existing?.styles || {},
-          textContent: text,
+          lineNumber,
+          text,
+          originalText,
         });
+
+        if (nextChange) {
+          updated.set(componentId, nextChange);
+        } else {
+          updated.delete(componentId);
+        }
 
         return updated;
       });
@@ -376,7 +387,9 @@ export const PreviewIframe = ({
       currentApp?.files,
       selectedAppId,
       setPendingChanges,
+      visualEditingSelectedComponent?.id,
       visualEditingSelectedComponent?.name,
+      visualEditingSelectedComponent?.runtimeId,
     ],
   );
 

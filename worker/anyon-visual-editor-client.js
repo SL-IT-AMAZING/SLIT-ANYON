@@ -2,7 +2,7 @@
   /* ---------- helpers --------------------------------------------------- */
 
   // Track text editing state globally
-  let textEditingState = new Map(); // componentId -> { originalText, currentText, cleanup }
+  const textEditingState = new Map(); // componentId -> { originalText, currentText, cleanup }
 
   function findElementByAnyonId(anyonId, runtimeId) {
     // If runtimeId is provided, try to find element by runtime ID first
@@ -24,7 +24,7 @@
     if (!element || !styles) return;
 
     console.debug(
-      `[Anyon Visual Editor] Applying styles:`,
+      "[Anyon Visual Editor] Applying styles:",
       styles,
       "to element:",
       element,
@@ -179,6 +179,8 @@
           {
             type: "anyon-text-updated",
             componentId,
+            runtimeId,
+            originalText,
             text: currentText,
           },
           "*",
@@ -203,6 +205,8 @@
           {
             type: "anyon-text-finalized",
             componentId,
+            runtimeId,
+            originalText,
             text: finalText,
           },
           "*",
@@ -237,6 +241,7 @@
       {
         type: "anyon-text-content-response",
         componentId,
+        runtimeId,
         text: state ? state.currentText : element ? element.innerText : null,
         isEditing: !!state,
       },

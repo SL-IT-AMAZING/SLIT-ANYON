@@ -16,7 +16,7 @@ import type { ComponentSelection } from "@/ipc/types";
 import { processNumericValue, rgbToHex } from "@/utils/style-utils";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Move, Palette, Square, Type, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StylePopover } from "./StylePopover";
 
@@ -166,16 +166,17 @@ export function VisualEditingToolbar({
       updated.set(selectedComponent.id, {
         componentId: selectedComponent.id,
         componentName: selectedComponent.name,
+        runtimeId: selectedComponent.runtimeId,
         relativePath: selectedComponent.relativePath,
         lineNumber: selectedComponent.lineNumber,
         styles: newStyles,
-        textContent: existing?.textContent || "",
+        textContent: existing?.textContent,
       });
       return updated;
     });
   };
 
-  const getCurrentElementStyles = () => {
+  const getCurrentElementStyles = useCallback(() => {
     if (!iframeRef.current?.contentWindow || !selectedComponent) return;
 
     try {
@@ -192,13 +193,13 @@ export function VisualEditingToolbar({
     } catch (error) {
       console.error("Failed to get element styles:", error);
     }
-  };
+  }, [iframeRef, selectedComponent]);
 
   useEffect(() => {
     if (selectedComponent) {
       getCurrentElementStyles();
     }
-  }, [selectedComponent]);
+  }, [getCurrentElementStyles, selectedComponent]);
 
   useEffect(() => {
     if (coordinates && iframeRef.current?.contentWindow) {

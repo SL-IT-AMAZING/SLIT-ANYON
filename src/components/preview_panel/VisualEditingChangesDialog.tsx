@@ -5,8 +5,14 @@ import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
 import { useAtom, useAtomValue } from "jotai";
 import { Check, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  VISUAL_EDITING_RESPONSE_TIMEOUT_MS,
+  getVisualEditingResponseKey,
+  mergeVisualEditingTextContent,
+  shouldRefreshLiveTextContent,
+} from "./visualEditingSaveUtils";
 
 interface VisualEditingChangesDialogProps {
   onReset?: () => void;
@@ -25,32 +31,47 @@ export function VisualEditingChangesDialog({
   const [allResponsesReceived, setAllResponsesReceived] = useState(false);
   const expectedResponsesRef = useRef<Set<string>>(new Set());
   const isWaitingForResponses = useRef(false);
+  const responseTimeoutRef = useRef<number | null>(null);
+  const usedTextFallbackRef = useRef(false);
+
+  const clearResponseTimeout = useCallback(() => {
+    if (responseTimeoutRef.current !== null) {
+      window.clearTimeout(responseTimeoutRef.current);
+      responseTimeoutRef.current = null;
+    }
+  }, []);
 
   // Listen for text content responses
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "anyon-text-content-response") {
-        const { componentId, text } = event.data;
+        const responseKey = getVisualEditingResponseKey({
+          componentId: event.data.componentId,
+          runtimeId: event.data.runtimeId,
+        });
+        const { text } = event.data;
         if (text !== null) {
-          textContentCache.current.set(componentId, text);
+          textContentCache.current.set(responseKey, text);
         }
 
-        // Mark this response as received
-        expectedResponsesRef.current.delete(componentId);
+        expectedResponsesRef.current.delete(responseKey);
 
-        // Check if all responses received (only if we're actually waiting)
         if (
           isWaitingForResponses.current &&
           expectedResponsesRef.current.size === 0
         ) {
+          clearResponseTimeout();
           setAllResponsesReceived(true);
         }
       }
     };
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      clearResponseTimeout();
+    };
+  }, [clearResponseTimeout]);
 
   // Execute when all responses are received
   useEffect(() => {
@@ -58,15 +79,10 @@ export function VisualEditingChangesDialog({
       const applyChanges = async () => {
         try {
           const changesToSave = Array.from(pendingChanges.values());
-
-          // Update changes with cached text content
-          const updatedChanges = changesToSave.map((change) => {
-            const cachedText = textContentCache.current.get(change.componentId);
-            if (cachedText !== undefined) {
-              return { ...change, textContent: cachedText };
-            }
-            return change;
-          });
+          const updatedChanges = mergeVisualEditingTextContent(
+            changesToSave,
+            textContentCache.current,
+          );
 
           await ipc.visualEditing.applyChanges({
             appId: selectedAppId!,
@@ -76,6 +92,11 @@ export function VisualEditingChangesDialog({
           setPendingChanges(new Map());
           textContentCache.current.clear();
           showSuccess(t("preview.visualChangesSaved", { ns: "app" }));
+          if (usedTextFallbackRef.current) {
+            console.warn(
+              "Timed out waiting for preview text sync; saved using the last captured text.",
+            );
+          }
           onReset?.();
         } catch (error) {
           console.error("Failed to save visual editing changes:", error);
@@ -86,9 +107,11 @@ export function VisualEditingChangesDialog({
             }),
           );
         } finally {
+          clearResponseTimeout();
           setIsSaving(false);
           setAllResponsesReceived(false);
           isWaitingForResponses.current = false;
+          usedTextFallbackRef.current = false;
         }
       };
 
@@ -102,6 +125,7 @@ export function VisualEditingChangesDialog({
     onReset,
     setPendingChanges,
     t,
+    clearResponseTimeout,
   ]);
 
   if (pendingChanges.size === 0) return null;
@@ -110,32 +134,54 @@ export function VisualEditingChangesDialog({
     setIsSaving(true);
     try {
       const changesToSave = Array.from(pendingChanges.values());
+      const textChangesToRefresh = changesToSave.filter(
+        shouldRefreshLiveTextContent,
+      );
 
-      if (iframeRef?.current?.contentWindow) {
-        // Reset state for new request
+      if (
+        iframeRef?.current?.contentWindow &&
+        textChangesToRefresh.length > 0
+      ) {
         setAllResponsesReceived(false);
+        clearResponseTimeout();
+        textContentCache.current.clear();
         expectedResponsesRef.current.clear();
         isWaitingForResponses.current = true;
+        usedTextFallbackRef.current = false;
 
-        // Track which components we're expecting responses from
-        for (const change of changesToSave) {
-          expectedResponsesRef.current.add(change.componentId);
+        for (const change of textChangesToRefresh) {
+          expectedResponsesRef.current.add(getVisualEditingResponseKey(change));
         }
 
-        // Request text content for each component
-        for (const change of changesToSave) {
+        for (const change of textChangesToRefresh) {
           iframeRef.current.contentWindow.postMessage(
             {
               type: "get-anyon-text-content",
-              data: { componentId: change.componentId },
+              data: {
+                componentId: change.componentId,
+                runtimeId: change.runtimeId,
+              },
             },
             "*",
           );
         }
 
-        // If no responses are expected, trigger immediately
         if (expectedResponsesRef.current.size === 0) {
           setAllResponsesReceived(true);
+        } else {
+          responseTimeoutRef.current = window.setTimeout(() => {
+            if (!isWaitingForResponses.current) {
+              return;
+            }
+
+            if (expectedResponsesRef.current.size > 0) {
+              usedTextFallbackRef.current = true;
+            }
+
+            expectedResponsesRef.current.clear();
+            isWaitingForResponses.current = false;
+            setAllResponsesReceived(true);
+          }, VISUAL_EDITING_RESPONSE_TIMEOUT_MS);
         }
       } else {
         await ipc.visualEditing.applyChanges({
@@ -153,8 +199,10 @@ export function VisualEditingChangesDialog({
       showError(
         t("preview.visualChangesFailed", { message: String(error), ns: "app" }),
       );
+      clearResponseTimeout();
       setIsSaving(false);
       isWaitingForResponses.current = false;
+      usedTextFallbackRef.current = false;
     }
   };
 
