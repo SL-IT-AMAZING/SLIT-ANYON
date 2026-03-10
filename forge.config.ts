@@ -97,9 +97,6 @@ const config: ForgeConfig = {
       "node_modules/dugite/git",
       "node_modules/@vscode",
       ...(fs.existsSync("vendor/opencode") ? ["vendor/opencode"] : []),
-      ...(fs.existsSync("vendor/oh-my-opencode")
-        ? ["vendor/oh-my-opencode"]
-        : []),
       ...(fs.existsSync("preview-dists") ? ["preview-dists"] : []),
     ],
     // ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],

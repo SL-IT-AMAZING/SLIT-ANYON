@@ -1,11 +1,15 @@
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import log from "electron-log";
-import { getOmocBinaryPath } from "./vendor_binary_utils";
 
 const logger = log.scope("opencode-config-setup");
+const ANYON_PLUGIN_PACKAGE = "@anyon-cli/anyon";
+
+type OpenCodeConfig = {
+  plugin?: string[];
+  [key: string]: unknown;
+};
 
 export function getOpenCodeConfigDir(): string {
   if (os.platform() === "win32") {
@@ -20,100 +24,99 @@ export function getOpenCodeConfigDir(): string {
   );
 }
 
-function isOmocConfigured(): boolean {
-  const omocConfigPath = path.join(
-    getOpenCodeConfigDir(),
-    "oh-my-opencode.json",
+function getOpenCodeConfigPaths() {
+  const configDir = getOpenCodeConfigDir();
+  return {
+    configDir,
+    opencodeJson: path.join(configDir, "opencode.json"),
+    opencodeJsonc: path.join(configDir, "opencode.jsonc"),
+    anyonConfig: path.join(configDir, "anyon.jsonc"),
+  };
+}
+
+function detectConfigFormat(): { format: "json" | "jsonc" | "none"; path: string } {
+  const { opencodeJson, opencodeJsonc } = getOpenCodeConfigPaths();
+  if (fs.existsSync(opencodeJsonc)) return { format: "jsonc", path: opencodeJsonc };
+  if (fs.existsSync(opencodeJson)) return { format: "json", path: opencodeJson };
+  return { format: "none", path: opencodeJson };
+}
+
+function stripJsonComments(content: string): string {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1")
+    .replace(/,\s*([}\]])/g, "$1");
+}
+
+function parseConfig(content: string): OpenCodeConfig {
+  try {
+    return JSON.parse(stripJsonComments(content)) as OpenCodeConfig;
+  } catch {
+    return {};
+  }
+}
+
+function removeAnyonPluginEntries(plugins: string[]): string[] {
+  return plugins.filter(
+    (entry) =>
+      !entry.startsWith(`${ANYON_PLUGIN_PACKAGE}@`) &&
+      entry !== ANYON_PLUGIN_PACKAGE,
   );
-  return fs.existsSync(omocConfigPath);
 }
 
-const OMOC_INSTALL_TIMEOUT_MS = 30_000;
+function ensureDefaultConfigDoesNotActivateAnyon(): void {
+  const { format, path: configPath } = detectConfigFormat();
 
-function runOmocInstall(omocBinaryPath: string): Promise<void> {
-  return new Promise((resolve) => {
+  if (format === "none") {
     logger.info(
-      `Running OMOC install: ${omocBinaryPath} install --no-tui --claude=yes`,
+      `No default OpenCode config found; leaving plugin registration untouched: ${configPath}`,
     );
+    return;
+  }
 
-    const child = spawn(
-      omocBinaryPath,
-      ["install", "--no-tui", "--claude=yes"],
-      {
-        stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env },
-        detached: false,
-      },
-    );
+  const raw = fs.readFileSync(configPath, "utf-8");
+  const parsed = parseConfig(raw);
+  const plugins = removeAnyonPluginEntries(parsed.plugin ?? []);
+  parsed.plugin = plugins;
 
-    let stderr = "";
-    let settled = false;
+  if (format === "jsonc") {
+    const pluginArrayRegex = /"plugin"\s*:\s*\[([\s\S]*?)\]/;
+    if (pluginArrayRegex.test(raw)) {
+      const formattedPlugins = plugins.map((entry) => `"${entry}"`).join(",\n    ");
+      const nextContent = raw.replace(
+        pluginArrayRegex,
+        `"plugin": [\n    ${formattedPlugins}\n  ]`,
+      );
+      fs.writeFileSync(configPath, nextContent, "utf-8");
+    } else {
+      const nextContent = raw.replace(
+        /(\{)/,
+        `$1\n  "plugin": [],`,
+      );
+      fs.writeFileSync(configPath, nextContent, "utf-8");
+    }
+  } else {
+    fs.writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`, "utf-8");
+  }
 
-    const finish = (success: boolean, reason: string) => {
-      if (settled) return;
-      settled = true;
-      if (success) {
-        logger.info(`OMOC install completed: ${reason}`);
-      } else {
-        logger.warn(`OMOC install did not complete: ${reason}`);
-      }
-      resolve();
-    };
-
-    const timer = setTimeout(() => {
-      try {
-        child.kill("SIGTERM");
-      } catch {
-        void 0;
-      }
-      finish(false, `timed out after ${OMOC_INSTALL_TIMEOUT_MS}ms`);
-    }, OMOC_INSTALL_TIMEOUT_MS);
-
-    child.stdout?.on("data", (data: Buffer) => {
-      logger.debug(`[omoc-install stdout] ${data.toString().trim()}`);
-    });
-
-    child.stderr?.on("data", (data: Buffer) => {
-      stderr += data.toString();
-      logger.debug(`[omoc-install stderr] ${data.toString().trim()}`);
-    });
-
-    child.on("error", (err) => {
-      clearTimeout(timer);
-      finish(false, `spawn error: ${err.message}`);
-    });
-
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      if (code === 0) {
-        finish(true, "exit code 0");
-      } else {
-        finish(false, `exit code ${code}${stderr ? `: ${stderr.trim()}` : ""}`);
-      }
-    });
-  });
+  logger.info(
+    `Ensured default OpenCode config does not activate Anyon: ${configPath}`,
+  );
 }
 
-/**
- * Deep-merges a model preset (agents + categories) into the existing
- * oh-my-opencode.json config. Preserves all other settings (MCPs, hooks, etc).
- */
-export function updateOmocConfig(preset: {
+export function updateAnyonConfig(preset: {
   agents: Record<string, { model: string; variant?: string }>;
   categories: Record<string, { model: string; variant?: string }>;
 }): void {
-  const configPath = path.join(getOpenCodeConfigDir(), "oh-my-opencode.json");
+  const { anyonConfig } = getOpenCodeConfigPaths();
 
   let existing: Record<string, unknown> = {};
   try {
-    if (fs.existsSync(configPath)) {
-      existing = JSON.parse(fs.readFileSync(configPath, "utf-8")) as Record<
-        string,
-        unknown
-      >;
+    if (fs.existsSync(anyonConfig)) {
+      existing = parseConfig(fs.readFileSync(anyonConfig, "utf-8"));
     }
   } catch (err) {
-    logger.warn("Failed to read existing OMOC config, starting fresh:", err);
+    logger.warn("Failed to read existing Anyon config, starting fresh:", err);
   }
 
   const merged = {
@@ -128,41 +131,22 @@ export function updateOmocConfig(preset: {
     },
   };
 
-  fs.writeFileSync(configPath, JSON.stringify(merged, null, 2), "utf-8");
-  logger.info("Updated OMOC config with model preset");
+  fs.writeFileSync(anyonConfig, `${JSON.stringify(merged, null, 2)}\n`, "utf-8");
+  logger.info("Updated Anyon config with model preset");
 }
 
-/**
- * Idempotent OpenCode config setup. Ensures config directory exists and runs
- * OMOC install if not yet configured. Non-blocking with 30s timeout.
- */
 export async function setupOpenCodeConfig(): Promise<void> {
   try {
-    const configDir = getOpenCodeConfigDir();
+    const { configDir } = getOpenCodeConfigPaths();
     if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
       logger.info(`Created OpenCode config directory: ${configDir}`);
     }
 
-    if (isOmocConfigured()) {
-      logger.debug("OMOC already configured, skipping install");
-      return;
-    }
+    ensureDefaultConfigDoesNotActivateAnyon();
 
-    const omocPath = getOmocBinaryPath();
-    if (!omocPath) {
-      logger.info(
-        "OMOC binary not available, skipping config setup. OpenCode will still work without OMOC customizations.",
-      );
-      return;
-    }
-
-    await runOmocInstall(omocPath);
-
-    // Apply Light preset as default for fresh installs.
-    // This ensures non-paying users get the standard model configuration.
     try {
-      updateOmocConfig({
+      updateAnyonConfig({
         agents: {
           Sisyphus: { model: "anthropic/claude-sonnet-4-5" },
           oracle: { model: "openai/gpt-5.2", variant: "high" },
@@ -188,10 +172,7 @@ export async function setupOpenCodeConfig(): Promise<void> {
         },
       });
     } catch (presetErr) {
-      logger.warn(
-        "Failed to apply default model preset after install:",
-        presetErr,
-      );
+      logger.warn("Failed to apply default Anyon model preset:", presetErr);
     }
   } catch (err) {
     logger.error("Error during OpenCode config setup:", err);

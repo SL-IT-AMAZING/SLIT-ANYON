@@ -241,68 +241,6 @@ async function fetchOpenCode(): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
-// Oh-My-OpenCode download
-// ---------------------------------------------------------------------------
-
-async function fetchOmoc(): Promise<string> {
-  const packageName = `oh-my-opencode-${platform}-${arch}`;
-  let version = process.env.OMOC_VERSION;
-
-  if (!version) {
-    console.log(`📦 Fetching latest Oh-My-OpenCode version...`);
-    const metaUrl = `https://registry.npmjs.org/${packageName}/latest`;
-    const res = await fetchWithRetry(metaUrl);
-    const meta = (await res.json()) as { version: string };
-    version = meta.version;
-    console.log(`  ↳ Latest version: ${version}`);
-  } else {
-    console.log(`📦 Using specified Oh-My-OpenCode version: ${version}`);
-  }
-
-  const tarballUrl = `https://registry.npmjs.org/${packageName}/-/${packageName}-${version}.tgz`;
-
-  const outDir = join(VENDOR_DIR, "oh-my-opencode", "bin");
-  ensureDir(outDir);
-
-  const tmpDir = join(tmpdir(), `omoc-dl-${Date.now()}`);
-  ensureDir(tmpDir);
-
-  const tarballPath = join(tmpDir, `${packageName}-${version}.tgz`);
-
-  try {
-    console.log(`📦 Downloading Oh-My-OpenCode ${version}...`);
-    await downloadToFile(tarballUrl, tarballPath);
-
-    console.log(`  ↳ Extracting...`);
-    await tar.extract({ file: tarballPath, cwd: tmpDir });
-
-    const binaryName = `oh-my-opencode${exeExt}`;
-    const srcBin = join(tmpDir, "package", "bin", binaryName);
-
-    if (!existsSync(srcBin)) {
-      const contents = findFiles(tmpDir).join("\n");
-      throw new Error(
-        `Could not find ${binaryName} at expected path: ${srcBin}\nExtracted files:\n${contents}`,
-      );
-    }
-
-    const destBin = join(outDir, binaryName);
-    copyFileSync(srcBin, destBin);
-
-    if (!isWindows) {
-      await chmod(destBin, 0o755);
-    }
-
-    await adHocSignIfDarwin(destBin);
-
-    console.log(`  ✅ Oh-My-OpenCode → ${destBin}`);
-    return version;
-  } finally {
-    cleanupOnError(tmpDir);
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -312,7 +250,6 @@ async function main(): Promise<void> {
   ensureDir(VENDOR_DIR);
 
   let opencodeVersion: string;
-  let omocVersion: string;
 
   try {
     opencodeVersion = await fetchOpenCode();
@@ -323,19 +260,9 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  try {
-    omocVersion = await fetchOmoc();
-  } catch (err) {
-    console.error(
-      `\n❌ Failed to fetch Oh-My-OpenCode: ${err instanceof Error ? err.message : err}`,
-    );
-    process.exit(1);
-  }
-
   const versionsPath = join(VENDOR_DIR, "versions.json");
   const versions = {
     opencode: opencodeVersion,
-    "oh-my-opencode": omocVersion,
     platform,
     arch,
     fetchedAt: new Date().toISOString(),

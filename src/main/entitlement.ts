@@ -1,6 +1,6 @@
 import { shell } from "electron";
 import log from "electron-log";
-import { updateOmocConfig } from "../ipc/utils/opencode_config_setup";
+import { updateAnyonConfig } from "../ipc/utils/opencode_config_setup";
 import { oauthEndpoints } from "../lib/oauthConfig";
 import { refreshSession } from "./auth";
 import { readSettings, writeSettings } from "./settings";
@@ -53,14 +53,14 @@ const LIGHT_MODEL_PATTERNS = [
   "glm",
 ] as const;
 
-/** Model preset type for oh-my-opencode config */
+/** Model preset type for Anyon plugin config */
 export type ModelPreset = {
   agents: Record<string, { model: string; variant?: string }>;
   categories: Record<string, { model: string; variant?: string }>;
 };
 
 /**
- * Pro preset: best-case oh-my-opencode config (max20 equivalent).
+ * Pro preset: best-case Anyon plugin config (max20 equivalent).
  * Used for pro and power plan subscribers.
  */
 export const PRO_PRESET: ModelPreset = {
@@ -87,7 +87,7 @@ export const PRO_PRESET: ModelPreset = {
 } as const;
 
 /**
- * Light preset: standard oh-my-opencode config.
+ * Light preset: standard Anyon plugin config.
  * Used for free and starter plan subscribers.
  * Only unspecified-high category agents are downgraded (Opus → Sonnet).
  */
@@ -392,7 +392,7 @@ export async function syncEntitlements(): Promise<EntitlementState> {
 }
 
 /**
- * Applies the appropriate model preset to the oh-my-opencode config
+ * Applies the appropriate model preset to the Anyon plugin config
  * based on the user's subscription plan.
  */
 export async function applyModelPreset(
@@ -400,7 +400,7 @@ export async function applyModelPreset(
 ): Promise<void> {
   const preset = plan === "pro" || plan === "power" ? PRO_PRESET : LIGHT_PRESET;
   try {
-    updateOmocConfig(preset);
+    updateAnyonConfig(preset);
     logger.info(
       `Applied ${plan === "pro" || plan === "power" ? "Pro" : "Light"} model preset for plan: ${plan}`,
     );

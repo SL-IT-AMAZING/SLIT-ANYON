@@ -8,6 +8,7 @@ import { toolGateway } from "@/opencode/tool_gateway";
 import { app } from "electron";
 import log from "electron-log";
 import { readSettings } from "../../main/settings";
+import { ensureAppScopedOpenCodeConfig } from "./app_scoped_opencode_config";
 import {
   createOpenCodeStartupError,
   isRetryableOpenCodeStartupError,
@@ -189,6 +190,9 @@ class OpenCodeServerManager {
     const anyonApiKey = settings.providerSettings?.auto?.apiKey?.value || "";
 
     const opencodeEnv: Record<string, string> = {};
+    const appScopedConfigDir = ensureAppScopedOpenCodeConfig();
+    opencodeEnv.OPENCODE_CONFIG_DIR = appScopedConfigDir;
+    opencodeEnv.ANYON_ACTIVE = "1";
 
     const mcpServerPath = this._ensureMcpServerScript();
 
