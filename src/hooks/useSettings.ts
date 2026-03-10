@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import { useAtom } from "jotai";
-import { userSettingsAtom, envVarsAtom } from "@/atoms/appAtoms";
+import { envVarsAtom, userSettingsAtom } from "@/atoms/appAtoms";
 import { ipc } from "@/ipc/types";
 import { type UserSettings, hasAnyonProKey } from "@/lib/schemas";
+import { useAtom } from "jotai";
 import { usePostHog } from "posthog-js/react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppVersion } from "./useAppVersion";
 
 const TELEMETRY_CONSENT_KEY = "anyonTelemetryConsent";
@@ -18,22 +18,77 @@ export function getTelemetryUserId(): string | null {
 }
 
 let isInitialLoad = false;
+let settingsDataVersion = 0;
+
+type InitialSettingsData = {
+  userSettings: UserSettings;
+  envVars: Record<string, string | undefined>;
+};
+
+let cachedInitialSettingsData: InitialSettingsData | null = null;
+let initialSettingsPromise: Promise<InitialSettingsData> | null = null;
+
+async function loadSharedInitialSettings(
+  force = false,
+): Promise<InitialSettingsData> {
+  if (!force) {
+    if (cachedInitialSettingsData) {
+      return cachedInitialSettingsData;
+    }
+
+    if (initialSettingsPromise) {
+      return initialSettingsPromise;
+    }
+  }
+
+  const requestBase = Promise.all([
+    ipc.settings.getUserSettings(),
+    ipc.misc.getEnvVars(),
+  ]);
+
+  const requestVersion = ++settingsDataVersion;
+  let request!: Promise<InitialSettingsData>;
+  request = requestBase.then(([userSettings, envVars]) => {
+    const loaded = { userSettings, envVars };
+
+    if (requestVersion === settingsDataVersion) {
+      cachedInitialSettingsData = loaded;
+      return loaded;
+    }
+
+    if (initialSettingsPromise && initialSettingsPromise !== request) {
+      return initialSettingsPromise;
+    }
+
+    return cachedInitialSettingsData ?? loaded;
+  });
+
+  initialSettingsPromise = request;
+
+  try {
+    return await request;
+  } finally {
+    if (initialSettingsPromise === request) {
+      initialSettingsPromise = null;
+    }
+  }
+}
 
 export function useSettings() {
   const posthog = usePostHog();
   const [settings, setSettingsAtom] = useAtom(userSettingsAtom);
   const [envVars, setEnvVarsAtom] = useAtom(envVarsAtom);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(cachedInitialSettingsData === null);
   const [error, setError] = useState<Error | null>(null);
   const appVersion = useAppVersion();
-  const loadInitialData = useCallback(async () => {
-    setLoading(true);
+  const loadInitialData = useCallback(async (force = false) => {
+    if (force || cachedInitialSettingsData === null) {
+      setLoading(true);
+    }
+
     try {
-      // Fetch settings and env vars concurrently
-      const [userSettings, fetchedEnvVars] = await Promise.all([
-        ipc.settings.getUserSettings(),
-        ipc.misc.getEnvVars(),
-      ]);
+      const { userSettings, envVars: fetchedEnvVars } =
+        await loadSharedInitialSettings(force);
       processSettingsForTelemetry(userSettings);
       const isPro = hasAnyonProKey(userSettings);
       posthog.people.set({ isPro });
@@ -53,7 +108,7 @@ export function useSettings() {
     } finally {
       setLoading(false);
     }
-  }, [setSettingsAtom, setEnvVarsAtom, appVersion]);
+  }, [appVersion, posthog, setEnvVarsAtom, setSettingsAtom]);
 
   useEffect(() => {
     // Only run once on mount, dependencies are stable getters/setters
@@ -64,7 +119,14 @@ export function useSettings() {
     setLoading(true);
     try {
       const updatedSettings = await ipc.settings.setUserSettings(newSettings);
+      settingsDataVersion += 1;
       setSettingsAtom(updatedSettings);
+      cachedInitialSettingsData = {
+        userSettings: updatedSettings,
+        envVars:
+          cachedInitialSettingsData?.envVars ??
+          (Object.keys(envVars).length > 0 ? envVars : {}),
+      };
       processSettingsForTelemetry(updatedSettings);
       posthog.people.set({ isPro: hasAnyonProKey(updatedSettings) });
 
@@ -87,7 +149,7 @@ export function useSettings() {
     updateSettings,
 
     refreshSettings: () => {
-      return loadInitialData();
+      return loadInitialData(true);
     },
   };
 }
@@ -109,4 +171,11 @@ function processSettingsForTelemetry(settings: UserSettings) {
   } else {
     window.localStorage.removeItem(TELEMETRY_USER_ID_KEY);
   }
+}
+
+export function resetSettingsCacheForTests() {
+  cachedInitialSettingsData = null;
+  initialSettingsPromise = null;
+  isInitialLoad = false;
+  settingsDataVersion = 0;
 }
