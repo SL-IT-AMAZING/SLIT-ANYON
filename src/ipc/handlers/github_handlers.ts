@@ -253,9 +253,7 @@ export async function prepareLocalBranch({
                 });
               } catch (innerErr: any) {
                 throw new Error(
-                  `Failed to resolve remote branch 'origin/${targetBranch}' to a commit. ` +
-                    "Ensure 'git fetch' succeeded and the remote branch exists. " +
-                    `${innerErr?.message || String(innerErr)}`,
+                  `Failed to resolve remote branch 'origin/${targetBranch}' to a commit. Ensure 'git fetch' succeeded and the remote branch exists. ${innerErr?.message || String(innerErr)}`,
                 );
               }
             }
@@ -279,8 +277,7 @@ export async function prepareLocalBranch({
                 }
               } else {
                 logger.warn(
-                  "[GitHub Handler] Previous branch unknown; repository may remain in detached HEAD at " +
-                    `${commitSha}.`,
+                  `[GitHub Handler] Previous branch unknown; repository may remain in detached HEAD at ${commitSha}.`,
                 );
               }
               throw error;
@@ -312,8 +309,7 @@ export async function prepareLocalBranch({
       lowerMessage.includes("please commit or stash")
     ) {
       throw new Error(
-        `Failed to prepare local branch: uncommitted changes detected. ` +
-          "Unable to automatically handle uncommitted changes. Please commit or stash your changes manually and try again.",
+        "Failed to prepare local branch: uncommitted changes detected. Unable to automatically handle uncommitted changes. Please commit or stash your changes manually and try again.",
       );
     }
     throw new Error(errorMessage);
@@ -367,7 +363,9 @@ async function pollForAccessToken(event: IpcMainInvokeEvent) {
 
       stopPolling();
       return;
-    } else if (data.error) {
+    }
+
+    if (data.error) {
       switch (data.error) {
         case "authorization_pending":
           logger.debug("Authorization pending...");
@@ -380,7 +378,7 @@ async function pollForAccessToken(event: IpcMainInvokeEvent) {
             interval * 1000,
           );
           break;
-        case "slow_down":
+        case "slow_down": {
           const newInterval = interval + 5;
           logger.debug(`Slow down requested. New interval: ${newInterval}s`);
           currentFlowState.interval = newInterval; // Update interval
@@ -392,6 +390,7 @@ async function pollForAccessToken(event: IpcMainInvokeEvent) {
             newInterval * 1000,
           );
           break;
+        }
         case "expired_token":
           logger.error("Device code expired.");
           event.sender.send("github:flow-error", {
@@ -416,9 +415,10 @@ async function pollForAccessToken(event: IpcMainInvokeEvent) {
           stopPolling();
           break;
       }
-    } else {
-      throw new Error(`Unknown response structure: ${JSON.stringify(data)}`);
+      return;
     }
+
+    throw new Error(`Unknown response structure: ${JSON.stringify(data)}`);
   } catch (error) {
     logger.error("Error polling for GitHub access token:", error);
     event.sender.send("github:flow-error", {
@@ -451,7 +451,7 @@ function handleStartGithubFlow(
   logger.debug(`Received github:start-flow for appId: ${args.appId}`);
 
   // If a flow is already in progress, maybe cancel it or send an error
-  if (currentFlowState && currentFlowState.isPolling) {
+  if (currentFlowState?.isPolling) {
     logger.warn("Another GitHub flow is already in progress.");
     event.sender.send("github:flow-error", {
       error: "Another connection process is already active.",
@@ -644,12 +644,14 @@ async function handleIsRepoAvailable(
     });
     if (res.status === 404) {
       return { available: true };
-    } else if (res.ok) {
-      return { available: false, error: "Repository already exists." };
-    } else {
-      const data = await res.json();
-      return { available: false, error: data.message || "Unknown error" };
     }
+
+    if (res.ok) {
+      return { available: false, error: "Repository already exists." };
+    }
+
+    const data = await res.json();
+    return { available: false, error: data.message || "Unknown error" };
   } catch (err: any) {
     return { available: false, error: err.message || "Unknown error" };
   }
@@ -901,12 +903,12 @@ async function handlePushToGithub(
       // If it's just that remote doesn't have the branch yet, we can ignore and push
       if (!isMissingRemoteBranch) {
         throw pullError;
-      } else {
-        logger.debug(
-          "[GitHub Handler] Remote branch missing during pull, continuing with push",
-          errorMessage,
-        );
       }
+
+      logger.debug(
+        "[GitHub Handler] Remote branch missing during pull, continuing with push",
+        errorMessage,
+      );
     }
   }
 
@@ -996,8 +998,7 @@ export async function ensureCleanWorkspace(
   const isClean = await isGitStatusClean({ path: appPath });
   if (isClean) return;
   throw new Error(
-    `Workspace is not clean before ${operationDescription}. ` +
-      "Please commit or stash your changes manually and try again.",
+    `Workspace is not clean before ${operationDescription}. Please commit or stash your changes manually and try again.`,
   );
 }
 
@@ -1216,10 +1217,9 @@ async function handleCloneRepoFromUrl(
     const urlPattern = /github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\/?$/;
     const match = url.match(urlPattern);
     if (!match) {
-      return {
-        error:
-          "Invalid GitHub URL. Expected format: https://github.com/owner/repo.git",
-      };
+      throw new Error(
+        "Invalid GitHub URL. Expected format: https://github.com/owner/repo.git",
+      );
     }
     const [, owner, repoName] = match;
     if (accessToken) {
@@ -1233,86 +1233,82 @@ async function handleCloneRepoFromUrl(
         },
       );
       if (!repoResponse.ok) {
-        return {
-          error: "Repository not found or you do not have access to it.",
-        };
+        throw new Error("Repository not found or you do not have access to it.");
       }
     }
-    const finalAppName = appName && appName.trim() ? appName.trim() : repoName;
-    const existingApp = await db.query.apps.findFirst({
-      where: eq(apps.name, finalAppName),
-    });
-
-    if (existingApp) {
-      return { error: `An app named "${finalAppName}" already exists.` };
-    }
-
-    const appPath = getAnyonAppPath(finalAppName);
-    // Ensure the app directory exists if native git is disabled
-    if (!settings.enableNativeGit) {
-      if (!fs.existsSync(appPath)) {
-        fs.mkdirSync(appPath, { recursive: true });
-      }
-    }
-    // Use authenticated URL if token exists, otherwise use public HTTPS URL
-    const cloneUrl = accessToken
-      ? IS_TEST_BUILD
-        ? `${GITHUB_GIT_BASE}/${owner}/${repoName}.git`
-        : `https://${accessToken}:x-oauth-basic@github.com/${owner}/${repoName}.git`
-      : `https://github.com/${owner}/${repoName}.git`; // Changed: use public HTTPS URL instead of original url
-    try {
-      await gitClone({
-        path: appPath,
-        url: cloneUrl,
-        accessToken,
-        singleBranch: false,
+    const finalAppName = appName?.trim() ? appName.trim() : repoName;
+    return withLock(`app:${finalAppName}`, async () => {
+      const existingApp = await db.query.apps.findFirst({
+        where: eq(apps.name, finalAppName),
       });
-    } catch (cloneErr) {
-      logger.error("[GitHub Handler] Clone failed:", cloneErr);
-      return {
-        error:
+
+      if (existingApp) {
+        throw new Error(`An app named "${finalAppName}" already exists.`);
+      }
+
+      const appPath = getAnyonAppPath(finalAppName);
+      // Ensure the app directory exists if native git is disabled
+      if (!settings.enableNativeGit) {
+        if (!fs.existsSync(appPath)) {
+          fs.mkdirSync(appPath, { recursive: true });
+        }
+      }
+      // Use authenticated URL if token exists, otherwise use public HTTPS URL
+      const cloneUrl = accessToken
+        ? IS_TEST_BUILD
+          ? `${GITHUB_GIT_BASE}/${owner}/${repoName}.git`
+          : `https://${accessToken}:x-oauth-basic@github.com/${owner}/${repoName}.git`
+        : `https://github.com/${owner}/${repoName}.git`; // Changed: use public HTTPS URL instead of original url
+      try {
+        await gitClone({
+          path: appPath,
+          url: cloneUrl,
+          accessToken,
+          singleBranch: false,
+        });
+      } catch (cloneErr) {
+        logger.error("[GitHub Handler] Clone failed:", cloneErr);
+        throw new Error(
           "Failed to clone repository. Please check the URL and try again.",
+        );
+      }
+      const aiRulesPath = path.join(appPath, "AI_RULES.md");
+      const hasAiRules = fs.existsSync(aiRulesPath);
+      const hasCustomCommands =
+        !!installCommand?.trim() && !!startCommand?.trim();
+      const [newApp] = await db
+        .insert(schema.apps)
+        .values({
+          name: finalAppName,
+          path: finalAppName,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          githubOrg: owner,
+          githubRepo: repoName,
+          githubBranch: "main",
+          installCommand: installCommand || null,
+          startCommand: startCommand || null,
+          ...(hasCustomCommands
+            ? { profileLearned: true, profileSource: "user" as const }
+            : {}),
+        })
+        .returning();
+      logger.log(`Successfully cloned repo ${owner}/${repoName} to ${appPath}`);
+      // Return success object
+      return {
+        app: {
+          ...newApp,
+          files: [],
+          supabaseProjectName: null,
+          supabaseOrganizationSlug: null,
+          vercelTeamSlug: null,
+        },
+        hasAiRules,
       };
-    }
-    const aiRulesPath = path.join(appPath, "AI_RULES.md");
-    const hasAiRules = fs.existsSync(aiRulesPath);
-    const hasCustomCommands =
-      !!installCommand?.trim() && !!startCommand?.trim();
-    const [newApp] = await db
-      .insert(schema.apps)
-      .values({
-        name: finalAppName,
-        path: finalAppName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        githubOrg: owner,
-        githubRepo: repoName,
-        githubBranch: "main",
-        installCommand: installCommand || null,
-        startCommand: startCommand || null,
-        ...(hasCustomCommands
-          ? { profileLearned: true, profileSource: "user" as const }
-          : {}),
-      })
-      .returning();
-    logger.log(`Successfully cloned repo ${owner}/${repoName} to ${appPath}`);
-    // Return success object
-    return {
-      app: {
-        ...newApp,
-        files: [],
-        supabaseProjectName: null,
-        supabaseOrganizationSlug: null,
-        vercelTeamSlug: null,
-      },
-      hasAiRules,
-    };
+    });
   } catch (err: any) {
-    // Catch any remaining unexpected errors and return an error object
     logger.error("[GitHub Handler] Unexpected error in clone flow:", err);
-    return {
-      error: err.message || "An unexpected error occurred during cloning.",
-    };
+    throw new Error(err.message || "An unexpected error occurred during cloning.");
   }
 }
 

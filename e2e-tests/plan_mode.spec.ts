@@ -8,8 +8,10 @@ test("plan mode - accept plan redirects to new chat and saves to disk", async ({
 }) => {
   test.setTimeout(180000);
   await po.setUpAnyonPro({ localAgent: true });
+  await expect(po.page.getByTestId("home-import-app-button")).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
   await po.importApp("minimal");
-  await po.selectChatMode("plan");
 
   // Get app path before accepting (needed to check saved plan)
   const appPath = await po.getCurrentAppPath();
@@ -55,8 +57,10 @@ test("plan mode - accept plan redirects to new chat and saves to disk", async ({
 test("plan mode - questionnaire flow", async ({ po }) => {
   test.setTimeout(180000);
   await po.setUpAnyonPro({ localAgent: true });
+  await expect(po.page.getByTestId("home-import-app-button")).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
   await po.importApp("minimal");
-  await po.selectChatMode("plan");
 
   // Trigger questionnaire fixture
   await po.sendPrompt("tc=local-agent/questionnaire");
@@ -77,4 +81,60 @@ test("plan mode - questionnaire flow", async ({ po }) => {
 
   // Snapshot the messages
   await po.snapshotMessages();
+});
+
+test("builder founder journey persists draft, brief, flows, spec, and wave plan", async ({
+  po,
+}) => {
+  test.setTimeout(180000);
+  await po.setUpAnyonPro({ localAgent: true });
+  await expect(po.page.getByTestId("home-import-app-button")).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
+  await po.importApp("minimal");
+
+  const appPath = await po.getCurrentAppPath();
+
+  await po.sendPrompt("tc=local-agent/questionnaire");
+  await expect(po.page.getByText("Project Requirements")).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
+  await po.page.getByText("Vue", { exact: true }).click();
+  await po.page.getByRole("button", { name: /Submit/ }).click();
+  await po.waitForChatCompletion();
+
+  const draftDir = path.join(appPath!, ".anyon", "drafts");
+  await expect(async () => {
+    const files = fs.readdirSync(draftDir).filter((f) => f.endsWith(".md"));
+    expect(files.length).toBeGreaterThan(0);
+  }).toPass({ timeout: Timeout.MEDIUM });
+
+  await po.sendPrompt("tc=local-agent/accept-plan");
+  await expect(po.page.getByText("Builder Artifacts")).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
+  await expect(po.page.getByRole("button", { name: "Founder Brief" })).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
+  await expect(po.page.getByRole("button", { name: "User Flows" })).toBeVisible({
+    timeout: Timeout.MEDIUM,
+  });
+
+  const briefDir = path.join(appPath!, ".anyon", "briefs");
+  const flowDir = path.join(appPath!, ".anyon", "flows");
+  const specDir = path.join(appPath!, ".anyon", "specs");
+
+  await expect(async () => {
+    expect(fs.readdirSync(briefDir).some((f) => f.endsWith(".md"))).toBe(true);
+    expect(fs.readdirSync(flowDir).some((f) => f.endsWith(".md"))).toBe(true);
+    expect(fs.readdirSync(specDir).some((f) => f.endsWith(".md"))).toBe(true);
+  }).toPass({ timeout: Timeout.MEDIUM });
+
+  await po.page.getByRole("button", { name: "Accept Plan" }).click();
+
+  const planDir = path.join(appPath!, ".anyon", "plans");
+  await expect(async () => {
+    const files = fs.readdirSync(planDir).filter((f) => f.includes("wave-1"));
+    expect(files.length).toBeGreaterThan(0);
+  }).toPass({ timeout: Timeout.MEDIUM });
 });

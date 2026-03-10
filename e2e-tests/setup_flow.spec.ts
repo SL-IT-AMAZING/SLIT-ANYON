@@ -1,5 +1,5 @@
-import { testWithConfig } from "./helpers/test_helper";
 import { expect } from "@playwright/test";
+import { testWithConfig } from "./helpers/test_helper";
 
 const testSetup = testWithConfig({
   showSetupScreen: true,
@@ -115,7 +115,9 @@ testSetup.describe("Setup Flow", () => {
     await po.page
       .getByRole("heading", { name: "Setup other AI providers" })
       .click();
-    await expect(po.page.getByRole("link", { name: "Settings" })).toBeVisible();
+    await expect(
+      po.page.getByRole("button", { name: "Settings" }),
+    ).toBeVisible();
 
     // Now configure the test provider
     await po.setUpTestProvider();

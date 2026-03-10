@@ -1,9 +1,11 @@
 import { useDesignSystems } from "@/hooks/useDesignSystems";
+import { useLikedThemes } from "@/hooks/useLikedThemes";
 import { useTweakcnThemes } from "@/hooks/useTweakcnThemes";
 import type { TweakcnThemeType } from "@/ipc/types";
 import type { DesignSystemType } from "@/ipc/types/design_systems";
 import type { ThemeTag } from "@/lib/color-utils";
 import { generateThemeTags } from "@/lib/color-utils";
+import { shouldIncludeTheme } from "@/lib/themeFiltering";
 import { cn } from "@/lib/utils";
 import { Loader2, PackageOpen, Search } from "lucide-react";
 import type React from "react";
@@ -40,10 +42,15 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
 }) => {
   const { designSystems, isLoading } = useDesignSystems();
   const { themes, isLoading: isThemesLoading } = useTweakcnThemes();
+  const { likedThemeIds } = useLikedThemes();
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const filterFingerprint = `${searchQuery}|${selectedFilter}|${selectedTags.join(",")}|${sortOption}`;
   const lastFingerprintRef = useRef(filterFingerprint);
+  const likedThemeIdSet = useMemo(
+    () => new Set(likedThemeIds),
+    [likedThemeIds],
+  );
 
   const themeTagsMap = useMemo(() => {
     const map = new Map<string, ThemeTag[]>();
@@ -54,36 +61,41 @@ export const DesignSystemGallery: React.FC<DesignSystemGalleryProps> = ({
   }, [themes]);
 
   const filteredDesignSystems = useMemo(() => {
-    if (selectedFilter === "design-systems" || selectedFilter === "all") {
-      return designSystems.filter((ds: DesignSystemType) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          !searchQuery ||
-          ds.displayName.toLowerCase().includes(query) ||
-          ds.description.toLowerCase().includes(query) ||
-          ds.tags.some((tag) => tag.toLowerCase().includes(query))
-        );
-      });
+    if (selectedFilter !== "all") {
+      return [];
     }
-    return [];
+
+    return designSystems.filter((ds: DesignSystemType) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        !searchQuery ||
+        ds.displayName.toLowerCase().includes(query) ||
+        ds.description.toLowerCase().includes(query) ||
+        ds.tags.some((tag) => tag.toLowerCase().includes(query))
+      );
+    });
   }, [designSystems, selectedFilter, searchQuery]);
 
   const filteredThemes = useMemo(() => {
-    if (selectedFilter === "design-systems") return [];
-
     return themes.filter((theme: TweakcnThemeType) => {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        !searchQuery || theme.name.toLowerCase().includes(query);
-
       const themeTags = themeTagsMap.get(theme.id) ?? [];
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.some((tag) => themeTags.includes(tag));
-
-      return matchesSearch && matchesTags;
+      return shouldIncludeTheme({
+        theme,
+        themeTags,
+        selectedFilter,
+        selectedTags,
+        searchQuery,
+        likedThemeIds: likedThemeIdSet,
+      });
     });
-  }, [themes, searchQuery, selectedTags, themeTagsMap, selectedFilter]);
+  }, [
+    themes,
+    searchQuery,
+    selectedTags,
+    themeTagsMap,
+    selectedFilter,
+    likedThemeIdSet,
+  ]);
 
   const sortedThemes = useMemo(() => {
     const sorted = [...filteredThemes];

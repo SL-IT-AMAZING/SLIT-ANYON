@@ -1,0 +1,273 @@
+================================================================================
+ASYNC VALIDATION & STATE-GUARD PATTERNS - INVENTORY COMPLETE
+================================================================================
+
+SCOPE: Renderer codebase (/src) - 589 TypeScript files exhaustively scanned
+GOAL: Systematically harden race-prone user flows across async boundaries
+DATE: 2025-03-05
+
+================================================================================
+KEY FINDINGS
+================================================================================
+
+✓ IDENTIFIED 10 DISTINCT PATTERNS used in best practices across repo:
+
+  1. Module-level Set tracking          → Prevent duplicate concurrent streams
+  2. Zod-validated IPC contracts        → Type-safe input/output validation
+  3. Lock mechanisms (withLock)         → Per-resource serialization
+  4. Stale closure avoidance            → Capture variables before async
+  5. Mounted/cancelled flags            → Skip updates after unmount
+  6. TanStack Query integration         → Dedup & cache management
+  7. Ref-based timing                   → Cleanup timeouts properly
+  8. Jotai Map atoms                    → Scalable per-entity state
+  9. Abort controllers                  → Cancel long-running streams
+  10. Settings/entitlement guards       → Conditional query execution
+
+================================================================================
+BEST-IN-REPO PATTERNS (COPY THESE)
+================================================================================
+
+HIGH CONFIDENCE TEMPLATES:
+
+• src/hooks/useStreamChat.ts (lines 38-112)
+  → Module-level Set tracking for duplicate stream prevention
+  → Pattern: Check set, add, cleanup on end/error/catch
+
+• src/ipc/handlers/base.ts (lines 17-57)
+  → Zod validation at IPC boundary
+  → Pattern: createTypedHandler with safeParse + error handling
+
+• src/ipc/utils/lock_utils.ts (lines 1-50)
+  → Promise-based lock mechanism
+  → Pattern: withLock(id, fn) for serialized operations
+
+• src/hooks/usePlanImplementation.ts (lines 59-140)
+  → Capture before async + mounted ref guards
+  → Pattern: const capturedValue + isMountedRef checks
+
+• src/hooks/useDesignSystemPreview.ts (lines 64-99)
+  → Cancelled flag for unmount safety
+  → Pattern: let cancelled = false; check before state update
+
+• src/lib/queryKeys.ts (lines 1-150)
+  → Hierarchical query key factory
+  → Pattern: Namespace → all/detail/search for invalidation
+
+• src/hooks/useRunApp.ts (lines 63-69)
+  → Ref-based debouncing with cleanup
+  → Pattern: Store timeout ref, clear before setting new one
+
+• src/atoms/chatAtoms.ts (lines 1-25)
+  → Map-based per-entity state
+  → Pattern: atom<Map<entityId, value>>(new Map())
+
+• src/ipc/handlers/chat_stream_handlers.ts (lines 60-66)
+  → Active streams tracking for cancellation
+  → Pattern: Map<id, AbortController>() for signal management
+
+• src/hooks/useFreeAgentQuota.ts (lines 19-40)
+  → Conditional query with stale/retry config
+  → Pattern: enabled: condition && settings
+
+================================================================================
+CRITICAL GUARD POINTS (IMPLEMENT EVERYWHERE)
+================================================================================
+
+□ DUPLICATE PREVENTION
+  File: useStreamChat.ts
+  Code: const pendingStreamChatIds = new Set<number>();
+        if (pendingStreamChatIds.has(chatId)) return;
+  Risk: Double-submission, duplicate state updates
+
+□ INPUT VALIDATION
+  File: base.ts
+  Code: const parsed = contract.input.safeParse(rawInput);
+        if (!parsed.success) throw new Error(...);
+  Risk: Type mismatch, crashes, invalid data propagation
+
+□ RESOURCE LOCKING
+  File: lock_utils.ts
+  Code: return withLock(appId, async () => { ... });
+  Risk: Concurrent mutations, orphaned state, file corruption
+
+□ CLOSURE SAFETY
+  File: usePlanImplementation.ts
+  Code: const capturedChatId = chatId; // before setTimeout
+        setTimeout(() => { use capturedChatId; }, 100);
+  Risk: Stale variable reference, race with dependency update
+
+□ UNMOUNT SAFETY
+  File: useDesignSystemPreview.ts
+  Code: let cancelled = false;
+        .then(() => { if (cancelled) return; ... });
+        return () => { cancelled = true; };
+  Risk: "Cannot update unmounted component" warnings
+
+□ DEDUPLICATION & CACHING
+  File: queryKeys.ts + useAuth.ts
+  Code: useQuery({ queryKey: queryKeys.auth.state, ... });
+        onSuccess: () => queryClient.invalidateQueries(...);
+  Risk: Duplicate requests, cache invalidation bugs
+
+□ TIMEOUT CLEANUP
+  File: useCopyToClipboard.ts
+  Code: const timeoutRef = useRef(null);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        return () => { if (timeoutRef.current) clearTimeout(...); };
+  Risk: Multiple timeouts, memory leaks
+
+□ STATE IMMUTABILITY
+  File: chatAtoms.ts usage
+  Code: setDataById((prev) => {
+          const next = new Map(prev);
+          next.set(id, value);
+          return next;
+        });
+  Risk: Shared mutations, missed updates
+
+□ CANCELLATION SUPPORT
+  File: chat_stream_handlers.ts
+  Code: const activeStreams = new Map<number, AbortController>();
+        controller.signal passed to stream;
+        onCancel: controller.abort();
+  Risk: Resource leaks, hung operations
+
+□ CONDITIONAL EXECUTION
+  File: useFreeAgentQuota.ts
+  Code: useQuery({ ..., enabled: !isPro && !!settings });
+  Risk: Wasted API calls, unnecessary computation
+
+================================================================================
+ANTI-PATTERNS TO AVOID
+================================================================================
+
+✗ Fire-and-forget async (no tracking):
+  ipc.app.runApp({ appId });  // Can't track completion
+
+✗ Stale closure variables:
+  setTimeout(() => { use chatId; }, 100);  // chatId may have changed
+
+✗ Forgotten cleanup:
+  useEffect(() => { setTimeout(...); });  // No return cleanup
+
+✗ Forgetting enabled guard:
+  useQuery({ queryFn: () => ipc.get(null) });  // Runs with null!
+
+✗ Shared Map mutations:
+  prev.set(id, value); return prev;  // Mutated original!
+
+================================================================================
+HARDENING CHECKLIST
+================================================================================
+
+For each async operation in your code:
+
+□ Duplicate Prevention
+  - Use Set<operationId> to track in-flight operations
+  - Check has() before start, add() on entry, delete() on exit (all paths)
+
+□ Input Validation
+  - All IPC input validated with Zod at handler boundary
+  - Use createTypedHandler(contract, handler)
+
+□ Resource Locking
+  - Shared mutations wrapped in withLock(resourceId, fn)
+  - Lock per app/chat/file to prevent concurrent modification
+
+□ Closure Safety
+  - Capture mutable dependencies to const before async boundary
+  - Never access outer function state from callback
+
+□ Unmount Safety
+  - Effect cleanup prevents state updates after unmount
+  - Use cancelled flag or isMountedRef
+
+□ Query Deduplication
+  - useQuery with hierarchical queryKeys
+  - Proper invalidation on mutation success
+
+□ Timeout Cleanup
+  - All setTimeout/setInterval cleared in effect return
+  - Store ref, clear before setting new timeout
+
+□ State Immutability
+  - Create new Map on atom/state update
+  - Never mutate prev in updater function
+
+□ Cancellation
+  - Long-running streams support AbortController signal
+  - Cancel on user action, component unmount
+
+□ Conditional Execution
+  - useQuery enabled: condition && settings
+  - Don't fetch if operation not safe/needed
+
+================================================================================
+FILES GENERATED
+================================================================================
+
+1. ASYNC_VALIDATION_PATTERNS.md (7000+ words)
+   → Exhaustive inventory with code examples
+   → 10 patterns + usage guidelines
+   → Anti-patterns to avoid
+   → Recommendations for hardening
+
+2. ASYNC_PATTERNS_QUICK_REF.md (2000+ words)
+   → Copy/paste templates for each pattern
+   → Checklist for async safety
+   → Debugging guide for common issues
+
+3. ASYNC_PATTERNS_SUMMARY.txt (this file)
+   → Quick overview of findings
+   → Guard points checklist
+   → File references for patterns
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Review ASYNC_VALIDATION_PATTERNS.md for comprehensive reference
+2. Use ASYNC_PATTERNS_QUICK_REF.md when building new async features
+3. Apply HARDENING CHECKLIST to all user-facing async operations
+4. Consider adding ESLint rules:
+   - Warn on mutable variable access in callbacks
+   - Require explicit cleanup in useEffect
+   - Warn on missing enabled guard in useQuery
+
+5. Code review focus:
+   - All streams use pending Set pattern
+   - All IPC uses Zod validation
+   - All shared mutations use locks
+   - All effects have cleanup functions
+   - All queries have hierarchical keys
+
+================================================================================
+RISK PROFILE
+================================================================================
+
+HIGH RISK AREAS (review first):
+• Chat streaming (rapid clicks trigger duplicates)
+• App operations (concurrent modifications)
+• File uploads (unmount race conditions)
+• Settings mutations (race with invalidation)
+
+MEDIUM RISK AREAS:
+• Design system preview (async data loading)
+• Theme loading (dependency changes mid-load)
+• Token counting (closure stale values)
+
+LOW RISK AREAS (patterns well-established):
+• Authentication (TanStack Query + IPC validation)
+• Entitlements (settings guards + conditional fetch)
+• Free quota (enabled + staleTime + retry: false)
+
+================================================================================
+QUESTIONS? REFER TO:
+================================================================================
+
+• Pattern examples: ASYNC_VALIDATION_PATTERNS.md
+• Quick templates: ASYNC_PATTERNS_QUICK_REF.md
+• Implementation: Best-in-repo files listed above
+• Debug symptoms: ASYNC_PATTERNS_QUICK_REF.md "🆘 DEBUGGING" section
+
+================================================================================

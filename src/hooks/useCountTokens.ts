@@ -1,13 +1,13 @@
+import { type TokenCountResult, ipc } from "@/ipc/types";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   keepPreviousData,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ipc, type TokenCountResult } from "@/ipc/types";
 import { useCallback, useEffect, useState } from "react";
-import { queryKeys } from "@/lib/queryKeys";
 
-export function useCountTokens(chatId: number | null, input: string = "") {
+export function useCountTokens(chatId: number | null, input = "") {
   const queryClient = useQueryClient();
 
   // Debounce input so we don't call the token counting IPC on every keystroke.
@@ -46,9 +46,19 @@ export function useCountTokens(chatId: number | null, input: string = "") {
   });
 
   // For imperative invalidation (e.g., after streaming completes)
-  const invalidateTokenCount = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.tokenCount.all });
-  }, [queryClient]);
+  const invalidateTokenCount = useCallback(
+    (targetChatId: number | null = chatId) => {
+      if (targetChatId !== null) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.tokenCount.byChat({ chatId: targetChatId }),
+        });
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.tokenCount.all });
+    },
+    [chatId, queryClient],
+  );
 
   return {
     result,

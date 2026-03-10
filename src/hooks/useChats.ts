@@ -1,6 +1,6 @@
 import { ipc } from "@/ipc/types";
-import type { ChatSummary } from "@/lib/schemas";
 import { queryKeys } from "@/lib/queryKeys";
+import type { ChatSummary } from "@/lib/schemas";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useChats(appId: number | null) {
@@ -14,9 +14,10 @@ export function useChats(appId: number | null) {
   });
 
   const invalidateChats = () => {
-    // Invalidate all chat queries (any appId) since mutations affect both
-    // app-specific lists and the global list (appId=null)
-    queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.chats.list({ appId }) });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.chats.list({ appId: null }),
+    });
   };
 
   return {

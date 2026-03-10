@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/lib/error";
 import type { PostHog } from "posthog-js";
 import { toast } from "sonner";
 import { CustomErrorToast } from "../components/CustomErrorToast";
@@ -21,8 +22,8 @@ export const showSuccess = (message: string) => {
  * Show an error toast
  * @param message The error message to display
  */
-export const showError = (message: any) => {
-  const errorMessage = message.toString();
+export const showError = (message: unknown) => {
+  const errorMessage = getErrorMessage(message);
   console.error(message);
 
   const onCopy = (toastId: string | number) => {

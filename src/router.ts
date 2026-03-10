@@ -9,9 +9,11 @@ import { hubRoute } from "./routes/hub";
 import { rootRoute } from "./routes/root";
 import { settingsRoute } from "./routes/settings";
 import { templateDetailRoute } from "./routes/template-detail";
+import { themesRoute } from "./routes/themes";
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  themesRoute,
   hubRoute,
   templateDetailRoute,
   connectRoute,

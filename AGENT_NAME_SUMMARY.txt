@@ -1,0 +1,139 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║         AGENT NAME COLLISION RISK ANALYSIS - EXECUTIVE SUMMARY             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROPOSED AGENT NAMES COLLISION CHECK (11 names analyzed)
+
+┌─────────────────┬────────┬────────────┬─────────┬─────────────────────────┐
+│ Term            │ Matches│ Non-Agent  │  Risk   │ Status                  │
+├─────────────────┼────────┼────────────┼─────────┼─────────────────────────┤
+│ builder         │   50   │     39     │  HIGH   │ ❌ DO NOT USE           │
+│ worker          │   23   │      7     │ MEDIUM  │ ⚠️  CAUTION             │
+│ executor        │  112   │     57     │  HIGH   │ ❌ DO NOT USE           │
+│ orchestrator    │   64   │     25     │  HIGH   │ ❌ ALREADY IN USE       │
+│ planner         │   55   │     17     │  HIGH   │ ❌ ALREADY IN USE       │
+│ scout           │    0   │      0     │  SAFE   │ ✅ SAFE TO USE          │
+│ advisor         │    8   │      7     │ MEDIUM  │ ⚠️  CAUTION             │
+│ researcher      │   10   │      1     │   LOW   │ ✅ SAFE TO USE          │
+│ inspector       │    0   │      0     │  SAFE   │ ✅ SAFE TO USE          │
+│ analyst         │    0   │      0     │  SAFE   │ ✅ SAFE TO USE          │
+│ critic          │   57   │     29     │   LOW   │ ✅ SAFE TO USE          │
+└─────────────────┴────────┴────────────┴─────────┴─────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 AVOID (4 names)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. builder (50 matches in 39 files)
+   - REASON: Core architectural pattern
+   - USAGE: buildAgent(), prompt builders, config builder
+   - IMPACT: Would require changes to 39+ files
+   - EXAMPLES: agent-builder.ts, message-builder.ts, prompt-section-builder.ts
+
+2. executor (112 matches in 57 files)
+   - REASON: Core execution pattern used throughout codebase
+   - USAGE: executeSync, executeBackgroundAgent, executeAction
+   - IMPACT: Massive refactoring needed (57 files, 112 matches)
+   - EXAMPLES: sync-executor.ts, action-executor.ts, ExecutorContext type
+
+3. orchestrator (64 matches in 25 files)
+   - REASON: ALREADY USED - Turing and Euler described as "orchestrators"
+   - USAGE: orchestrator mode, orchestrator override, orchestrator agents
+   - IMPACT: Would create confusion (which orchestrator?)
+   - EXAMPLES: Turing = "Todo-list orchestrator", Euler = "Main orchestrator"
+
+4. planner (55 matches in 17 files)
+   - REASON: ALREADY USED - Newton is the "strategic planner"
+   - USAGE: planner_enabled config flag, isPlanAgent() detection logic
+   - IMPACT: Breaking config schema and feature detection
+   - EXAMPLES: planner_enabled: true/false, "planner" in agent names detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  USE WITH CAUTION (2 names)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. worker (23 matches in 7 files)
+   - REASON: Node.js Worker threads infrastructure
+   - USAGE: worker_threads module, skill loader workers
+   - IMPACT: Minor (only 7 files, mostly in threading context)
+   - NOTES: Tesla already describes itself as "worker" in prompts (not a conflict)
+
+2. advisor (8 matches in 7 files)
+   - REASON: Already used as agent category type
+   - USAGE: category: "advisor" in Socrates, Nietzsche
+   - IMPACT: Would need category rename (moderate effort)
+   - NOTES: Could work with careful refactoring
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SAFE TO USE (5 names)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. scout ............ 0 matches - PERFECT
+2. inspector ........ 0 matches - PERFECT
+3. analyst .......... 0 matches - PERFECT
+4. critic ........... 57 matches (all adjectival form) - SAFE
+5. researcher ....... 10 matches (test-only example) - VERY SAFE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 ALTERNATIVE NAMING STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If your goal is to rename existing agents to new profession names:
+
+Tesla (autonomous worker)    → Use "scout" ✅ (0 conflicts)
+Euler (main orchestrator)    → Use "analyzer" or "architect" ✅ (0 conflicts)
+Turing (todo orchestrator)   → Use "coordinator" ✅ (0 conflicts)
+Newton (strategic planner)   → Use "strategist" ✅ (0 conflicts)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 COLLISION SEVERITY BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HIGH RISK (Avoid - would need 100+ file changes):
+  - builder: 50 matches (core pattern)
+  - executor: 112 matches (architectural infrastructure)
+  - orchestrator: 64 matches (semantic role conflict)
+  - planner: 55 matches (config schema + semantic role)
+
+MEDIUM RISK (Use with refactoring):
+  - worker: 23 matches (threading context only)
+  - advisor: 8 matches (category type conflict)
+
+LOW/ZERO RISK (Safe to use):
+  - scout, inspector, analyst, critic, researcher
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 MOST IMPACTED FILES (if forced to rename)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If renaming "executor" (worst case):
+  - tools/delegate-task/*.ts (category resolver, sync session, background task)
+  - tools/call-anyon-agent/*.ts (sync/background executors)
+  - features/tmux-subagent/ (action executor)
+  - hooks/auto-slash-command/ (command executor)
+
+If renaming "builder":
+  - agents/agent-builder.ts, dynamic-agent-prompt-builder.ts
+  - All import statements across 39 files
+  - Configuration flags: default_builder_enabled, planner_enabled
+
+If renaming "orchestrator" or "planner":
+  - Migrations and semantic role detection breaks
+  - Config schema changes required
+  - Tests and documentation updates
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                          FINAL RECOMMENDATION                             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Use the SAFE names: scout, inspector, analyst, critic, researcher
+Avoid the HIGH RISK names entirely: builder, executor, orchestrator, planner
+
+A full detailed analysis is available in: AGENT_NAME_COLLISION_RISK.md
+

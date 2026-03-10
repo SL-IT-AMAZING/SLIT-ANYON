@@ -28,6 +28,7 @@ import { useAtom } from "jotai";
 import { Edit3, MoreVertical, PlusCircle, Search, Trash2 } from "lucide-react";
 
 import { useSelectChat } from "@/hooks/useSelectChat";
+import { getErrorMessage } from "@/lib/error";
 import { useTranslation } from "react-i18next";
 import { ChatSearchDialog } from "./ChatSearchDialog";
 
@@ -108,7 +109,7 @@ export function ChatList() {
       } catch (error) {
         // DO A TOAST
         showError(
-          t("actions.chatCreateFailed", { message: (error as any).toString() }),
+          t("actions.chatCreateFailed", { message: getErrorMessage(error) }),
         );
       }
     } else {
@@ -117,7 +118,7 @@ export function ChatList() {
     }
   };
 
-  const handleDeleteChat = async (chatId: number) => {
+  const handleDeleteChat = async (chatId: number): Promise<boolean> => {
     try {
       await ipc.chat.deleteChat(chatId);
       showSuccess(t("actions.chatDeleted"));
@@ -130,10 +131,12 @@ export function ChatList() {
 
       // Refresh the chat list
       await invalidateChats();
+      return true;
     } catch (error) {
       showError(
-        t("actions.chatDeleteFailed", { message: (error as any).toString() }),
+        t("actions.chatDeleteFailed", { message: getErrorMessage(error) }),
       );
+      return false;
     }
   };
 
@@ -145,10 +148,12 @@ export function ChatList() {
 
   const handleConfirmDelete = async () => {
     if (deleteChatId !== null) {
-      await handleDeleteChat(deleteChatId);
-      setIsDeleteDialogOpen(false);
-      setDeleteChatId(null);
-      setDeleteChatTitle("");
+      const deleted = await handleDeleteChat(deleteChatId);
+      if (deleted) {
+        setIsDeleteDialogOpen(false);
+        setDeleteChatId(null);
+        setDeleteChatTitle("");
+      }
     }
   };
 

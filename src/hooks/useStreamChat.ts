@@ -200,11 +200,11 @@ export function useStreamChat({
                 const chat = chats?.find((c) => c.id === chatId);
                 const appName = app?.displayName ?? app?.name ?? "Anyon";
                 const rawTitle = response.chatSummary ?? chat?.title;
-                const body = rawTitle
-                  ? rawTitle.length > 80
-                    ? rawTitle.slice(0, 80) + "…"
-                    : rawTitle
-                  : "Chat response completed";
+                  const body = rawTitle
+                    ? rawTitle.length > 80
+                      ? `${rawTitle.slice(0, 80)}…`
+                      : rawTitle
+                    : "Chat response completed";
                 new Notification(appName, {
                   body,
                 });
@@ -228,15 +228,13 @@ export function useStreamChat({
               }
               if (response.appDisplayName && selectedAppId) {
                 queryClient.invalidateQueries({
-                  queryKey: queryKeys.apps.detail({ appId: selectedAppId }),
-                });
-                queryClient.invalidateQueries({
                   queryKey: queryKeys.apps.all,
                 });
               }
 
-              // Use queryClient directly with the chatId parameter to avoid stale closure issues
-              queryClient.invalidateQueries({ queryKey: ["proposal", chatId] });
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.proposals.detail({ chatId }),
+              });
 
               refetchUserBudget();
 
@@ -251,14 +249,10 @@ export function useStreamChat({
                 next.set(chatId, false);
                 return next;
               });
-              // Use queryClient directly with the chatId parameter to avoid stale closure issues
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.proposals.detail({ chatId }),
-              });
               invalidateChats();
               refreshApp();
               refreshVersions();
-              invalidateTokenCount();
+              invalidateTokenCount(chatId);
               onSettled?.();
             },
             onError: ({ error: errorMessage }) => {
@@ -287,7 +281,7 @@ export function useStreamChat({
               invalidateChats();
               refreshApp();
               refreshVersions();
-              invalidateTokenCount();
+              invalidateTokenCount(chatId);
               onSettled?.();
             },
           },
@@ -317,8 +311,17 @@ export function useStreamChat({
     [
       setMessagesById,
       setIsStreamingById,
+      setErrorById,
+      setStreamCountById,
+      setRecentStreamChatIds,
       setIsPreviewOpen,
+      refreshApp,
+      refreshAppIframe,
+      invalidateChats,
+      refreshVersions,
+      invalidateTokenCount,
       checkProblems,
+      posthog,
       selectedAppId,
       refetchUserBudget,
       settings,

@@ -216,7 +216,7 @@ export default function HomePage() {
   // Main Home Page Content
   return (
     <div className="relative min-h-full">
-      <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[8vh] relative">
+      <div className="flex flex-col items-center max-w-3xl w-full m-auto px-8 pb-8 pt-[12vh] relative">
         <ForceCloseDialog
           isOpen={forceCloseDialogOpen}
           onClose={() => setForceCloseDialogOpen(false)}
@@ -224,7 +224,7 @@ export default function HomePage() {
         />
 
         <div className="w-full">
-          <div className="text-center mb-[18vh]">
+          <div className="text-center mb-[14vh]">
             <h1
               className="text-7xl font-bold tracking-tight mb-5 flex items-center justify-center gap-4 flex-wrap"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
@@ -248,6 +248,7 @@ export default function HomePage() {
             </p>
             <button
               type="button"
+              data-testid="home-import-app-button"
               onClick={() => setIsImportDialogOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border
                        bg-card/50 backdrop-blur-sm

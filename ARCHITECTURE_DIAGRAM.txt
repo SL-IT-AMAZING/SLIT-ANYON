@@ -1,0 +1,368 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ANYON-B2C ARCHITECTURE OVERVIEW                           ║
+║                  Founder-First Flow vs. Current System                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+LAYER 1: DESKTOP APPLICATION (Electron + React)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         CHAT INTERFACE                                   │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  User Input:  /plan "build a dashboard"                                 │
+│       ↓                                                                  │
+│  [Plan Mode] Dropdown Select (Plan | Normal | Code Mode)                │
+│       ↓                                                                  │
+│  IPC Call: planClient.createPlan({                                      │
+│              appId, chatId, title, content                             │
+│            })                                                            │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+IPC Boundary: src/ipc/types/plan.ts defines contract
+
+═══════════════════════════════════════════════════════════════════════════════
+LAYER 2: MAIN PROCESS (Electron Main Thread)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│              IPC HANDLER: src/ipc/handlers/plan_handlers.ts              │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Handler Registration:                                                  │
+│    createTypedHandler(planContracts.createPlan, async (_, params) => {  │
+│      1. Get app path from appId                                         │
+│      2. Create plan filename: chat-{id}-{title}-{timestamp}             │
+│      3. Build YAML frontmatter (title, summary, chatId, dates)          │
+│      4. Write to: .anyon/plans/{filename}.md                            │
+│      5. Return slug (filename without .md)                              │
+│    })                                                                    │
+│                                                                           │
+│  CURRENT:  Plan written immediately (no drafts)                         │
+│  PROPOSED: Check status parameter:                                      │
+│            if (status === "draft") → .anyon/plans.draft/               │
+│            else → .anyon/plans/                                         │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+LAYER 3: ENGINE (oh-my-opencode Plugin - Separate Process)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│              STRATEGIST AGENT: engine/src/agents/strategist/              │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  PHASE 1: INTERVIEW                                                      │
+│    Strategist asks: "What are you building?"                            │
+│    User: Answers (requirements, tech stack, scope)                      │
+│                                                                           │
+│  PHASE 2: PLAN GENERATION                                               │
+│    Trigger: Auto or "/plan {request}"                                   │
+│    Action:  Generate markdown using template (plan-template.ts)         │
+│    Consultant: Call Analyst task (gap analysis)                         │
+│    Output: Markdown with:                                               │
+│      - TL;DR (summary + deliverables)                                   │
+│      - Context (interview + research findings)                          │
+│      - Work Objectives (definition of done)                             │
+│      - Verification Strategy (QA scenarios)                             │
+│      - Execution Strategy (parallel waves + deps)                       │
+│      - TODOs (checkboxes: - [ ] Task + acceptance criteria)             │
+│                                                                           │
+│  PHASE 2b: SELF-REVIEW                                                  │
+│    Gap Classification:                                                   │
+│      CRITICAL: Requires user decision                                    │
+│      MINOR: Auto-resolve                                                │
+│      AMBIGUOUS: Apply default                                           │
+│                                                                           │
+│  PHASE 2c: CRITIC REVIEW (Optional)                                     │
+│    User choice: "High Accuracy Mode?" → Call Critic agent               │
+│    Critic reviews plan, suggests improvements                           │
+│    Loop until approval                                                   │
+│                                                                           │
+│  CURRENT:   Sends finished plan to renderer via IPC                     │
+│  PROPOSED:  Save as DRAFT first → allow /edit-spec → finalize           │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│         START-WORK HOOK: engine/src/hooks/start-work-hook.ts            │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Trigger: Message contains "<session-context>" (injected by plugin)     │
+│  Action:  1. Parse user request for plan name or --worktree flag       │
+│           2. Call findStrategistPlans() → search .anyon/plans/          │
+│           3. Auto-select (1 plan) or ask user (multiple plans)          │
+│           4. Create .anyon/thesis.json:                                 │
+│              {                                                            │
+│                active_plan: "/abs/path/plan-name.md",                  │
+│                started_at: "ISO-timestamp",                             │
+│                session_ids: ["current-session"],                        │
+│                plan_name: "Plan Name",                                  │
+│                worktree_path: "/abs/path/to/git/worktree"              │
+│              }                                                            │
+│           5. Inject context (plan progress, session ID) into output    │
+│                                                                           │
+│  CURRENT:   Plans always executable (status check missing)              │
+│  PROPOSED:  Reject if plan.status === "draft"                          │
+│             Only accept frozen plans                                     │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+LAYER 4: FILE SYSTEM (Project Root)
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT DIRECTORY STRUCTURE:
+───────────────────────────
+
+.anyon/
+├─ plans/                    ← Frozen, executable plans
+│  ├─ chat-42-dashboard-1709874600000.md
+│  │  ├─ YAML frontmatter:
+│  │  │  ├─ title: "Build Dashboard"
+│  │  │  ├─ summary: "..."
+│  │  │  ├─ chatId: 42
+│  │  │  ├─ createdAt: "2026-03-08T14:30:00Z"
+│  │  │  └─ updatedAt: "2026-03-08T14:30:00Z"
+│  │  │
+│  │  └─ Markdown content:
+│  │     ├─ # {title}
+│  │     ├─ ## TL;DR
+│  │     ├─ ## Context
+│  │     ├─ ## Work Objectives
+│  │     ├─ ## Verification Strategy
+│  │     ├─ ## Execution Strategy
+│  │     ├─ ## TODOs
+│  │     │  └─ - [ ] 1. Task Name
+│  │     │     **What to do**: [...]
+│  │     │     **Acceptance Criteria**: [...]
+│  │     │     **QA Scenarios**: [...]
+│  │     └─ ## Success Criteria
+│  │
+│  └─ [Other plan files...]
+│
+├─ thesis.json               ← Active work session state
+│  {
+│    "active_plan": "/absolute/path/.../plan-dashboard.md",
+│    "started_at": "2026-03-08T15:00:00Z",
+│    "session_ids": ["session-123"],
+│    "plan_name": "dashboard",
+│    "agent": "taskmaster",
+│    "worktree_path": "/absolute/path/to/git/worktree"
+│  }
+│
+└─ evidence/                 ← Task execution artifacts
+   ├─ task-1-happy-path.txt
+   ├─ task-2-error-case.png
+   └─ ...
+
+PROPOSED ADDITIONS:
+───────────────────
+
+.anyon/
+├─ plans/
+│  ├─ plan-dashboard-v1.md         ← status: "accepted", immutable
+│  │  └─ YAML frontmatter:
+│  │     ├─ title, summary, etc.
+│  │     ├─ status: "accepted"     ← NEW
+│  │     ├─ frozen: true           ← NEW
+│  │     └─ version: 1             ← NEW
+│  │
+│  └─ plan-dashboard-v1.execution  ← Checkpoint file (NEW)
+│     └─ - [x] Task 1
+│        - [ ] Task 2              (Only checkboxes)
+│        - [x] Task 3
+│
+├─ plans.draft/                    ← NEW: Iterative specs
+│  ├─ spec-dashboard-v1.md         ← status: "draft", editable
+│  │  └─ YAML frontmatter:
+│  │     ├─ title, summary, etc.
+│  │     ├─ status: "draft"        ← NEW
+│  │     └─ version: 1             ← NEW
+│  │
+│  ├─ spec-dashboard-v2.md         ← status: "draft", newer version
+│  │  └─ YAML frontmatter:
+│  │     ├─ ... (same)
+│  │     └─ version: 2             ← Incremented on each edit
+│  │
+│  └─ spec-dashboard-v3.md         ← status: "draft", current working spec
+│     └─ ... (user can continue editing)
+│
+└─ thesis.json                     ← Enhanced to track both
+   {
+     "active_plan": ".../plan-dashboard-v1.md",    ← Executing
+     "draft_plan": ".../spec-dashboard-v3.md",     ← NEW: being edited
+     "status": "executing"                          ← NEW: state tracking
+   }
+
+═══════════════════════════════════════════════════════════════════════════════
+LAYER 5: EXECUTION FLOW (Taskmaster Agent)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│       TASKMASTER: engine/src/agents/taskmaster/agent.ts                  │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  When: User types /start-work {plan-name}                               │
+│  Workflow:                                                               │
+│                                                                           │
+│    1. Read plan from disk (.anyon/plans/plan-{name}.md)                 │
+│                                                                           │
+│    2. Parse markdown:                                                    │
+│       - Extract checklist: - [ ] Task N. Description                    │
+│       - Count total/completed checkboxes                                │
+│       - Extract task spec: "What to do", "Acceptance Criteria", "QA"   │
+│                                                                           │
+│    3. For each unchecked task:                                          │
+│       a) Determine category (visual, ultrabrain, quick, etc.)           │
+│       b) Delegate to appropriate agent                                  │
+│       c) Execute implementation                                          │
+│       d) Run QA scenarios from task spec                                │
+│       e) Save evidence to .anyon/evidence/task-{N}-{scenario}.ext      │
+│       f) MARK DONE: Edit plan file                                      │
+│          - [ ] → - [x]                                                   │
+│                                                                           │
+│    CURRENT:   Edits plan.md directly                                    │
+│    PROPOSED:  Edits plan.{name}.execution checkpoint file               │
+│               (Separates spec from checkpoints)                          │
+│                                                                           │
+│    4. Run final verification wave (4 parallel agents):                  │
+│       ├─ Advisor: Plan compliance audit                                │
+│       ├─ Critic: Code quality review                                   │
+│       ├─ Agent: Real manual QA                                         │
+│       └─ Deep: Scope fidelity check                                    │
+│                                                                           │
+│    5. Mark complete: thesis.json status = "complete"                    │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+STATE MACHINE: CURRENT vs. PROPOSED
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT:
+────────
+    [Chat Started]
+         ↓
+    [User types /plan "request"]
+         ↓
+    [Strategist generates & saves plan to .anyon/plans/]
+         ↓
+    [User clicks "Accept Plan"]
+         ↓
+    [Redirects to new chat]
+         ↓
+    [User types /start-work]
+         ↓
+    [Taskmaster executes, modifies plan.md checkboxes]
+         ↓
+    [All tasks done]
+         ↓
+    [COMPLETE]
+
+
+PROPOSED (Draft-Aware):
+──────────────────────
+    [Chat Started]
+         ↓
+    [User types /plan "request"]
+         ↓
+    [Strategist generates & saves DRAFT to .anyon/plans.draft/]
+         ↓
+    [User reads spec]
+         ↓
+    [User types /edit-spec {section}]
+         ↓
+    [Strategist regenerates section, updates draft]
+    [Loop until user satisfied]
+         ↓
+    [User types /finalize-spec]
+         ↓
+    [Analyst consults, user answers critical Qs]
+         ↓
+    [Strategist COPIES draft → .anyon/plans/ (frozen)]
+         ↓
+    [Redirects to new chat]
+         ↓
+    [User types /start-work]
+         ↓
+    [Taskmaster: 
+      - Reads spec from plan.md (immutable)
+      - Writes checkpoints to plan.{name}.execution]
+         ↓
+    [All tasks done]
+         ↓
+    [COMPLETE]
+
+═══════════════════════════════════════════════════════════════════════════════
+KEY INTEGRATION POINTS
+═══════════════════════════════════════════════════════════════════════════════
+
+File                                  Current Role       Proposed Changes
+─────────────────────────────────────────────────────────────────────────
+src/ipc/types/plan.ts                 IPC contracts      + DraftPlanSchema
+                                                         + PlanStatusEnum
+                                                         + draft handlers
+
+src/ipc/handlers/plan_handlers.ts     Plan CRUD ops      + createDraft()
+                                                         + getDraft()
+                                                         + updateDraft()
+                                                         + finalizeDraft()
+
+src/ipc/handlers/planUtils.ts         File utilities     + parseStatus()
+                                                         + getVersion()
+                                                         + parseCheckpoint()
+
+engine/src/agents/strategist/         Plan generation    + Save as draft mode
+plan-generation.ts                                       + /finalize command
+
+engine/src/features/thesis-state/     State tracking      + draft_plan_path
+types.ts                                                  + status field
+
+engine/src/features/thesis-state/     State persistence  + Draft I/O
+storage.ts                                                + Checkpoint reads
+
+engine/src/hooks/start-work/          Execution trigger  + Validate not draft
+start-work-hook.ts                                       + Lock plan during
+                                                         + execution
+
+src/atoms/planAtoms.ts                React state        + draftPlanAtom
+                                                         + specVersionAtom
+
+src/hooks/usePlan.ts                  React query        + useDraftPlan()
+                                                         + useSpecVersion()
+
+[NEW] plan-execution/checkpoint.ts    —                  + Checkpoint mgmt
+                                                         + .execution file ops
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL CONSTRAINT: Plan File Mutability
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+  Taskmaster WRITES to plan file during execution
+  User READS spec during ideation phase
+  If user edits spec WHILE execution is live → DATA CORRUPTION
+
+SOLUTION: Separate checkpoint file
+
+  .anyon/plans/plan-dashboard.md        ← SPEC (read-only during execution)
+  .anyon/plans/plan-dashboard.execution ← CHECKPOINT (write-only by Taskmaster)
+
+  Taskmaster:
+    1. Read spec from plan.md
+    2. Read current progress from plan.{name}.execution
+    3. Update checkboxes in .execution only
+    4. Plan.md never touched during execution
+
+  User cannot edit plan.md while .execution exists (execution in progress)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Legend:
+  ✅ Already exists
+  ⚠️  Needs modification
+  🆕 Needs to be created

@@ -387,17 +387,14 @@ export class PageObject {
       await this.toggleAutoApprove();
     }
     await this.setUpAnyonProvider();
+
+    if (localAgent) {
+      return;
+    }
+
     await this.goToAppsTab();
     if (!localAgent) {
       await this.selectChatMode("build");
-    }
-    // Select a non-openAI model for local agent mode,
-    // since openAI models go to the responses API.
-    if (localAgent && !localAgentUseAutoModel) {
-      await this.selectModel({
-        provider: "Anthropic",
-        model: "Claude Opus 4.5",
-      });
     }
   }
 
@@ -451,20 +448,35 @@ export class PageObject {
   }
 
   async setUpAnyonProvider() {
+    await this.page.getByRole("button", { name: /^AI$/ }).click();
+    const apiKeyInput = this.page
+      .locator('input[type="password"]')
+      .filter({ hasNot: this.page.locator("[disabled]") })
+      .first();
+
+    await apiKeyInput.click();
     await this.page
-      .locator("div")
-      .filter({ hasText: /^AnyonNeeds Setup$/ })
-      .nth(1)
-      .click();
-    await this.page.getByRole("textbox", { name: "Set Anyon API Key" }).click();
-    await this.page
-      .getByRole("textbox", { name: "Set Anyon API Key" })
+      .locator('input[type="password"]')
+      .first()
       .fill("testanyonkey");
-    await this.page.getByRole("button", { name: "Save Key" }).click();
+    await this.page.getByRole("button", { name: /^Save$/ }).click();
+    await this.page.keyboard.press("Escape");
   }
 
   async importApp(appDir: string) {
-    await this.page.getByRole("button", { name: "Import App" }).click();
+    const homeImportButton = this.page.getByTestId("home-import-app-button");
+    if (!(await homeImportButton.isVisible().catch(() => false))) {
+      const homeNav = this.page
+        .locator('a, button, [role="link"], [role="button"]')
+        .filter({ hasText: /^Home$/ })
+        .first();
+      if (await homeNav.isVisible().catch(() => false)) {
+        await homeNav.click();
+      }
+    }
+
+    await expect(homeImportButton).toBeVisible();
+    await this.page.getByTestId("home-import-app-button").click();
     await eph.stubDialog(this.electronApp, "showOpenDialog", {
       filePaths: [path.join(__dirname, "..", "fixtures", "import-app", appDir)],
     });
@@ -1058,16 +1070,16 @@ export class PageObject {
   }
 
   async setUpTestProvider() {
-    await this.page.getByText("Add custom providerConnect to").click();
+    await this.page
+      .getByRole("button", { name: /Add Custom Provider/i })
+      .click();
     // Fill out provider dialog
     await this.page
       .getByRole("textbox", { name: "Provider ID" })
       .fill("testing");
-    await this.page.getByRole("textbox", { name: "Display Name" }).click();
     await this.page
       .getByRole("textbox", { name: "Display Name" })
       .fill("test-provider");
-    await this.page.getByText("API Base URLThe base URL for").click();
     await this.page
       .getByRole("textbox", { name: "API Base URL" })
       .fill("http://localhost:3500/v1");
@@ -1114,7 +1126,13 @@ export class PageObject {
   }
 
   async goToSettingsTab() {
-    await this.page.getByRole("link", { name: "Settings" }).click();
+    await expect(async () => {
+      const settingsButton = this.page.getByRole("button", {
+        name: "Settings",
+      });
+      await expect(settingsButton).toBeVisible({ timeout: Timeout.MEDIUM });
+      await settingsButton.click();
+    }).toPass({ timeout: Timeout.MEDIUM });
   }
 
   async goToLibraryTab() {
@@ -1358,7 +1376,11 @@ export class PageObject {
   }
 
   async goToAppsTab() {
-    await this.page.getByRole("link", { name: "Apps" }).click();
+    await this.page
+      .locator('a, button, [role="link"], [role="button"]')
+      .filter({ hasText: /^Apps$/ })
+      .first()
+      .click();
     await expect(
       this.page
         .getByText("Build a new app")
@@ -1623,7 +1645,39 @@ export const test = base.extend<{
           );
         }
       } else {
-        await electronApp.close();
+        const closeTimeoutMs = 15_000;
+        try {
+          await Promise.race([
+            electronApp.close(),
+            new Promise<never>((_, reject) => {
+              setTimeout(() => {
+                reject(
+                  new Error(
+                    `electronApp.close() timed out after ${closeTimeoutMs}ms`,
+                  ),
+                );
+              }, closeTimeoutMs);
+            }),
+          ]);
+        } catch (error) {
+          console.warn(
+            "electronApp.close() timed out, forcing process termination",
+            error,
+          );
+          const electronProcess = electronApp.process();
+          const pid = electronProcess?.pid;
+          if (pid) {
+            try {
+              process.kill(pid, "SIGKILL");
+              console.log(`[cleanup:force-kill] Killed Electron process ${pid}`);
+            } catch (killError) {
+              console.warn(
+                `[cleanup:force-kill] Failed to kill Electron process ${pid}`,
+                killError,
+              );
+            }
+          }
+        }
       }
     },
     { auto: true },

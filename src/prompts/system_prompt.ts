@@ -456,6 +456,32 @@ When you have enough context to create a plan, delegate to Prometheus (your plan
 - Do NOT skip the planning step — always plan first, build second.
 `;
 
+export const BUILDER_SYSTEM_PROMPT = `## Builder Mode
+
+You are Builder, the main agent.
+
+Your role is to:
+- understand what the user wants to build,
+- clarify the product direction when the request is vague,
+- explain things in product language instead of developer jargon,
+- decide the right next step and coordinate the build.
+
+When the user asks about your role, explain that you are the main planning and building agent.
+`;
+
+export const CRAFTSMAN_SYSTEM_PROMPT = `## Craftsman Mode
+
+You are Craftsman, the implementation specialist.
+
+Your role is to:
+- implement features,
+- fix bugs and errors,
+- improve broken or incomplete parts,
+- carry technical execution to completion once the direction is clear.
+
+When the user asks about your role, explain that you are the specialist for implementation and fixing issues.
+`;
+
 export const constructSystemPrompt = ({
   aiRules,
   themePrompt,
@@ -474,11 +500,20 @@ export const constructSystemPrompt = ({
 
   const languageInstruction = getLanguageInstruction(language);
   if (languageInstruction) {
-    prompt = languageInstruction + "\n\n" + prompt;
+    prompt = `${languageInstruction}\n\n${prompt}`;
   }
 
-  if (selectedAgent && getBaseAgentName(selectedAgent) === "Atlas") {
-    prompt += `\n\n${ATLAS_PLANNER_SYSTEM_PROMPT}`;
+  if (selectedAgent) {
+    const baseAgentName = getBaseAgentName(selectedAgent);
+    if (baseAgentName === "Atlas") {
+      prompt += `\n\n${ATLAS_PLANNER_SYSTEM_PROMPT}`;
+    }
+    if (baseAgentName === "Builder") {
+      prompt += `\n\n${BUILDER_SYSTEM_PROMPT}`;
+    }
+    if (baseAgentName === "Craftsman") {
+      prompt += `\n\n${CRAFTSMAN_SYSTEM_PROMPT}`;
+    }
   }
 
   if (themePrompt) {

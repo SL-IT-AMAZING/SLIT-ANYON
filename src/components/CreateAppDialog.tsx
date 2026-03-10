@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCheckName } from "@/hooks/useCheckName";
 import { useCreateApp } from "@/hooks/useCreateApp";
 import { useDesignSystems } from "@/hooks/useDesignSystems";
+import { getErrorMessage } from "@/lib/error";
 import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { Template } from "@/shared/templates";
@@ -103,7 +104,7 @@ export function CreateAppDialog({
       setAppName("");
       onOpenChange(false);
     } catch (error) {
-      showError(error as any);
+      showError(getErrorMessage(error));
       // Error is already handled by createApp hook or shown above
       console.error("Error creating app:", error);
     } finally {

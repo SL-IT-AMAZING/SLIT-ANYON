@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════════════════════
+oh-my-opencode CALL CHAINS & DEPENDENCIES
+═══════════════════════════════════════════════════════════════════════════════
+
+CHAIN 1: RUNTIME INITIALIZATION (App Startup)
+═════════════════════════════════════════════
+
+src/main.ts:116
+  ├─ resolveVendorBinaries() [vendor_binary_utils.ts:62]
+  │   └─ getOmocBinaryPath() → logs binary path (no side effects)
+  │
+src/main.ts:237
+  └─ setupOpenCodeConfig() [opencode_config_setup.ts:139]  ← ASYNC, FIRE-AND-FORGET
+      ├─ getOpenCodeConfigDir() → ~/.config/opencode/
+      ├─ isOmocConfigured() → checks for oh-my-opencode.json
+      ├─ getOmocBinaryPath() [vendor_binary_utils.ts:35]
+      │   └─ Returns null if not found (no error, just warn)
+      │
+      └─ runOmocInstall(omocPath) [opencode_config_setup.ts:33]
+          ├─ spawn("oh-my-opencode", ["install", "--no-tui", "--claude=yes"])
+          │   └─ WRITES to ~/.config/opencode/oh-my-opencode.json
+          │
+          └─ updateOmocConfig(LIGHT_PRESET) [opencode_config_setup.ts:101]
+              └─ WRITES MODEL DEFAULTS to ~/.config/opencode/oh-my-opencode.json
+
+DELETION IMPACT: None (async, non-blocking, non-critical)
+
+
+CHAIN 2: ENTITLEMENT SYNC (Plan-based Model Configuration)
+═══════════════════════════════════════════════════════════
+
+src/main/entitlement.ts:383
+  └─ applyModelPreset(plan) [entitlement.ts:398]
+      ├─ Selects PRO_PRESET or LIGHT_PRESET based on plan
+      └─ updateOmocConfig(preset) [opencode_config_setup.ts:101]
+          └─ WRITES to ~/.config/opencode/oh-my-opencode.json
+
+TRIGGERED BY: syncEntitlements() called after user logs in or plan syncs
+
+DELETION IMPACT: None (configures OMOC only; can be removed entirely)
+
+
+CHAIN 3: VENDOR BINARY FETCHING (Build Setup)
+═════════════════════════════════════════════
+
+npm run fetch-vendor
+  └─ scripts/fetch-vendor-binaries.ts:309
+      ├─ fetchOpenCode() [fetch-vendor-binaries.ts:172]
+      │   └─ Downloads opencode binary from GitHub
+      │
+      └─ fetchOmoc() [fetch-vendor-binaries.ts:247]  ← DELETE THIS
+          ├─ Queries NPM registry for oh-my-opencode latest
+          ├─ Downloads tarball from registry
+          └─ Extracts to vendor/oh-my-opencode/bin/
+
+DELETION IMPACT: Build will not download OMOC binary; no other impact
+
+
+CHAIN 4: BUILD BUNDLING (App Packaging)
+═══════════════════════════════════════
+
+npm run build
+  └─ npm run pre:e2e
+      └─ electron-forge package
+          └─ forge.config.ts [conditional includes]
+              ├─ vendor/opencode/ ✓ KEEP
+              └─ vendor/oh-my-opencode/ ← REMOVE CONDITIONAL
+                  └─ Bundles into app resources if exists
+
+DELETION IMPACT: OMOC binary won't be included in packaged app
+
+
+CHAIN 5: ENTITLEMENTS -> MODEL PRESETS
+═══════════════════════════════════════
+
+entitlement.ts exports:
+  ├─ PRO_PRESET = { agents: {...}, categories: {...} }
+  ├─ LIGHT_PRESET = { agents: {...}, categories: {...} }
+  └─ applyModelPreset(plan) → updateOmocConfig(preset)
+
+USED BY: syncEntitlements() [line 383]
+
+DELETION IMPACT: None (these presets only affect OMOC config)
+
+
+CHAIN 6: VENDOR BINARY RESOLUTION
+═════════════════════════════════
+
+getOmocBinaryPath() [vendor_binary_utils.ts:35]
+  ├─ Called from setupOpenCodeConfig() → conditionally spawns install
+  └─ Called from resolveVendorBinaries() → logs if found
+
+Dependencies:
+  ├─ app.isPackaged (Electron)
+  ├─ app.getAppPath() (Electron)
+  ├─ process.resourcesPath (Electron)
+  └─ fs.existsSync(), fs.accessSync()
+
+DELETION IMPACT: setupOpenCodeConfig() won't work; also logs won't appear
+
+
+═════════════════════════════════════════════════════════════════════════════
+DEPENDENCY GRAPH (What depends on what)
+═════════════════════════════════════════════════════════════════════════════
+
+updateOmocConfig() (opencode_config_setup.ts:101)
+  ↑
+  ├─ setupOpenCodeConfig() (opencode_config_setup.ts:139)
+  │   └─ Called from src/main.ts:237
+  │
+  ├─ applyModelPreset() (entitlement.ts:398)
+  │   └─ Called from syncEntitlements() (entitlement.ts:383)
+  │
+  └─ (Can be called independently by user code)
+
+getOmocBinaryPath() (vendor_binary_utils.ts:35)
+  ↑
+  ├─ setupOpenCodeConfig() → checks if binary exists
+  └─ resolveVendorBinaries() → logs if found
+
+getOpenCodeConfigDir() (opencode_config_setup.ts:10)
+  ↑
+  └─ setupOpenCodeConfig() → resolves config directory
+
+isOmocConfigured() (opencode_config_setup.ts:23)
+  ↑
+  └─ setupOpenCodeConfig() → checks if config exists
+
+runOmocInstall() (opencode_config_setup.ts:33)
+  ↑
+  └─ setupOpenCodeConfig() → spawns install process
+
+═════════════════════════════════════════════════════════════════════════════
+SAFE DELETION SUMMARY
+═════════════════════════════════════════════════════════════════════════════
+
+SAFE TO DELETE (no other code depends):
+  1. setupOpenCodeConfig() entire function
+  2. getOmocBinaryPath() entire function
+  3. fetchOmoc() entire function
+  4. PRO_PRESET and LIGHT_PRESET constants
+  5. applyModelPreset() entire function
+  6. opencode_config_setup.ts entire file
+  7. forge.config.ts: vendor/oh-my-opencode conditional
+
+MUST HANDLE DELETIONS:
+  1. Remove import from src/main.ts
+  2. Remove call from src/main.ts:237
+  3. Remove import from src/main/entitlement.ts
+  4. Remove call from syncEntitlements() if exists
+  5. Remove call from resolveVendorBinaries() if logging still desired
+  6. Update scripts/fetch-vendor-binaries.ts main() logic
+  7. Update engine/src/cli/ references if present
+
+═════════════════════════════════════════════════════════════════════════════

@@ -7,21 +7,19 @@ const ConnectPage: React.FC = () => {
   const { t } = useTranslation(["app", "common"]);
 
   return (
-    <div className="min-h-screen px-8 py-4">
-      <div className="max-w-5xl mx-auto pb-12">
-        <header className="mb-8 text-left">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            {t("connect.title")}
-          </h1>
-          <p className="text-md text-muted-foreground">
-            {t("connect.description")}
-          </p>
-        </header>
+    <div className="flex-1 min-w-0 px-8 py-6 overflow-y-auto">
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("connect.title")}
+        </h1>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">
+        {t("connect.description")}
+      </p>
 
-        <div className="grid grid-cols-1 gap-6">
-          <SupabaseHubConnector />
-          <VercelHubConnector />
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <SupabaseHubConnector />
+        <VercelHubConnector />
       </div>
     </div>
   );

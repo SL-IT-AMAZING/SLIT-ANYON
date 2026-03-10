@@ -1,350 +1,387 @@
-# Exhaustive Input/Composer Styling Patterns - Executive Summary
+# FOUNDER-FIRST FLOW: MAPPING SUMMARY
 
-## 🎯 Mission Accomplished
+## What Was Requested
 
-Completed exhaustive mapping of all input/composer styling patterns across the ANYON codebase to inform consistent ChatInput restyle.
+Map the current internal flow for:
+1. **Drafts** (iterative spec refinement)
+2. **Plans** (frozen, executable todo lists)
+3. **Thesis state** (session management)
+4. **Start-work execution** (orchestration)
 
----
-
-## 📊 Scope Covered
-
-### Components Analyzed (5 Primary + UI System)
-
-✅ **HomeChatInput** (`src/components/chat/HomeChatInput.tsx`)  
-✅ **ChatInput** (`src/components/chat/ChatInput.tsx`)  
-✅ **LexicalChatInput** (`src/components/chat/LexicalChatInput.tsx`)  
-✅ **Composer** (`src/components/chat-v2/Composer.tsx`)  
-✅ **Thread** (`src/components/chat-v2/Thread.tsx`)  
-✅ **UI System** (Button, Input, Card components + design tokens)
-
-### Documentation Generated
-
-1. **INPUT_STYLING_PATTERNS.md** - Exhaustive 12-section reference (1000+ lines)
-2. **STYLING_QUICK_REFERENCE.md** - Fast-lookup guide with checklists
-3. **STYLING_COMPARATIVE_ANALYSIS.md** - Side-by-side visual/structural comparisons
-4. **MAPPING_SUMMARY.md** - This document
+Then evaluate where the proposed **founder-first flow** (long ideation → comprehensive spec → todos → execution) fits against the current engine architecture.
 
 ---
 
-## 🎨 Key Findings
+## What We Found
 
-### 1. TWO DISTINCT DESIGN ERAS IDENTIFIED
+### The System Today
 
-**Legacy Era (HomeChatInput)**
-
-- `rounded-xi` (12px) - smaller radius
-- `border-border` - basic border
-- No shadow
-- `px-4` spacing - generous
-- `bg-primary` buttons - semantic color
-- Minimal visual weight
-
-**Modern Era (ChatInput, Composer v2)** ⭐ **USE THIS**
-
-- `rounded-2xl` (16px) - modern standard radius
-- `border-input` - refined border
-- `shadow-sm` - subtle elevation
-- `px-3` spacing - compact, refined
-- `bg-foreground` buttons - maximum contrast
-- Sophisticated visual weight
-
-### 2. CONTAINER STYLING STANDARDS
-
-| Aspect         | Modern Standard       | Notes                                |
-| -------------- | --------------------- | ------------------------------------ |
-| **Radius**     | `rounded-2xl`         | 16px, consistent with Composer v2    |
-| **Border**     | `border border-input` | Slightly warmer than `border-border` |
-| **Shadow**     | `shadow-sm`           | Subtle elevation for depth           |
-| **Background** | `bg-background`       | Semantic color token                 |
-| **Layout**     | `flex flex-col`       | Column layout for stacking           |
-
-### 3. BUTTON STYLING STANDARDS
-
-| Button Type          | Pattern                                             | Contrast                 |
-| -------------------- | --------------------------------------------------- | ------------------------ |
-| **Send (Active)**    | `bg-foreground text-background`                     | Maximum ✅               |
-| **Stop (Streaming)** | `border border-border bg-background hover:bg-muted` | Secondary outline        |
-| **Icon Size**        | `size-8` (32px)                                     | Consistent across all    |
-| **Radius**           | `rounded-full`                                      | Circular for all buttons |
-
-### 4. SPACING TIERS IDENTIFIED
-
-**Horizontal Padding (px)**
-
-- `px-2` = 8px (tight)
-- `px-3` = 12px (standard) ⭐
-- `px-4` = 16px (relaxed)
-
-**Vertical Padding (py/pb/pt)**
-
-- Input row: `px-3 pb-2 pt-1` (asymmetric, refined)
-- Control row: `px-3 pb-2` (consistent tightness)
-- Textarea: `px-4 pt-3 pb-2` (balanced)
-
-**Gap/Spacing**
-
-- `gap-2` = 8px (standard for flex items)
-- `gap-4` = 16px (between sections)
-
-### 5. COLOR/SEMANTIC SYSTEM
-
-**Backgrounds**
-
-- `bg-background` (primary fill)
-- `bg-muted` (hover/secondary)
-- `bg-accent` (accent state)
-- `bg-popover` (dropdown menus)
-- `bg-transparent` (no fill)
-
-**Text**
-
-- `text-foreground` (primary)
-- `text-muted-foreground` (secondary)
-- `text-accent-foreground` (on accent bg)
-- `text-popover-foreground` (on popover bg)
-
-**Borders**
-
-- `border-border` (primary - currently in HomeChatInput)
-- `border-input` (modern standard - currently in ChatInput)
-- `border-ring` (focus/drag state)
-
-### 6. SHADOW SCALE
-
+**Current flow is NOT draft-oriented:**
 ```
-shadow-sm = 0 1px 2px rgba(0,0,0,0.05)   [Input boxes, Composer]
-shadow-lg = 0 10px 15px -3px rgba(...)  [Dropdown menus]
+Interview (AI questions) 
+  → Plan generation (instant, single-pass) 
+  → Plan saved to `.anyon/plans/{slug}.md` 
+  → User clicks "Accept" → Redirects to new chat 
+  → `/start-work` command loads plan 
+  → Taskmaster executes (reads plan, updates checkboxes)
 ```
 
-### 7. BORDER RADIUS TIERS
+**Key insight:** Plans are both **readable** (by Taskmaster) AND **writable** (by Taskmaster during execution). This creates a constraint for draft-aware systems.
 
-| Utility        | Size | Current Usage                                |
-| -------------- | ---- | -------------------------------------------- |
-| `rounded-md`   | 6px  | Small buttons (secondary)                    |
-| `rounded-lg`   | 8px  | Dropdown menus (Lexical)                     |
-| `rounded-xl`   | 12px | Legacy containers (HomeChatInput)            |
-| `rounded-2xl`  | 16px | **Modern standard** (ChatInput, Composer) ✅ |
-| `rounded-3xl`  | 24px | Large footers (Thread)                       |
-| `rounded-full` | 50%  | Icon buttons (all)                           |
+### Core Files & Their Roles
+
+| Component | Files | Responsibility |
+|-----------|-------|-----------------|
+| **Plan Storage** | `src/ipc/types/plan.ts`<br>`src/ipc/handlers/plan_handlers.ts`<br>`src/ipc/handlers/planUtils.ts` | CRUD operations, markdown parsing, frontmatter extraction |
+| **Thesis State** | `engine/src/features/thesis-state/*` | Active plan tracking, session management, checkpoint file |
+| **Plan Generation** | `engine/src/agents/strategist/plan-generation.ts`<br>`engine/src/agents/strategist/plan-template.ts` | Interview → gap classification → self-review → summary |
+| **Start-Work** | `engine/src/hooks/start-work/start-work-hook.ts`<br>`engine/src/features/builtin-commands/templates/start-work.ts` | Hook injection, plan discovery, thesis.json creation |
+| **Execution** | `engine/src/agents/taskmaster/agent.ts`<br>`engine/src/hooks/thesis-continuation-injector.ts` | Task delegation, checkpoint updates |
+| **React UI** | `src/atoms/planAtoms.ts`<br>`src/hooks/usePlan.ts` | In-memory state, plan loading from disk |
 
 ---
 
-## 🎯 Concrete Recommendations for ChatInput Restyle
-
-### Use ChatInput (v1) as Primary Reference
-
-- Already shipping in production
-- Proven accessibility
-- Modern design language
-- Matches Composer v2
-
-### Copy These Exact Patterns
-
-**Container**
-
-```tsx
-className = "border border-input rounded-2xl bg-background shadow-sm";
-```
-
-**Input Row**
-
-```tsx
-className = "flex items-end gap-2 px-3 pb-2 pt-1";
-```
-
-**Send Button**
-
-```tsx
-className =
-  "flex items-center justify-center size-8 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:pointer-events-none";
-```
-
-**Stop Button**
-
-```tsx
-className =
-  "flex items-center justify-center size-8 shrink-0 rounded-full border border-border bg-background hover:bg-muted";
-```
-
-### DO NOT
-
-- ❌ Use `rounded-xl` (legacy)
-- ❌ Use `border-border` on main container (HomeChatInput style)
-- ❌ Use `bg-primary` for send button (lower contrast)
-- ❌ Omit `shadow-sm` (looks flat)
-- ❌ Use `px-4` spacing (too loose)
-
----
-
-## 📁 Files to Consult
-
-| Purpose               | File                                       | Lines           |
-| --------------------- | ------------------------------------------ | --------------- |
-| **Primary Reference** | `src/components/chat/ChatInput.tsx`        | 416-531         |
-| **Modern Minimal**    | `src/components/chat-v2/Composer.tsx`      | 56-100          |
-| **Rich Text Details** | `src/components/chat/LexicalChatInput.tsx` | 97-110, 449-501 |
-| **Layout System**     | `src/components/chat-v2/Thread.tsx`        | All             |
-| **Theme/Colors**      | `src/styles/globals.css`                   | 90-176          |
-| **Button System**     | `src/components/ui/button.tsx`             | 1-67            |
-
----
-
-## 🔍 Side-by-Side Comparison Quick Reference
-
-### Container Radius Evolution
+## End-to-End Flow (Current)
 
 ```
-HomeChatInput:  rounded-xl        (12px)  ← Legacy
-ChatInput:      rounded-2xl       (16px)  ← Current Standard ✅
-Composer v2:    rounded-2xl       (16px)  ← Aligned ✅
-Thread:         rounded-t-3xl     (24px)  ← For footers only
-```
-
-### Button Send Color Evolution
-
-```
-HomeChatInput:  bg-primary                      ← Semantic but low contrast
-ChatInput:      bg-foreground text-background   ← Maximum contrast ✅
-Composer v2:    bg-foreground text-background   ← Aligned ✅
-```
-
-### Input Row Spacing Evolution
-
-```
-HomeChatInput:  px-4 pb-3 pt-2   ← Generous, loose
-ChatInput:      px-3 pb-2 pt-1   ← Compact, refined ✅
-Composer:       px-4 pt-3 pb-2   ← Balanced
+┌─────────────────────────────────────────────────────────────────────┐
+│ DESKTOP APP (Electron + React)                                      │
+│                                                                     │
+│  User selects "Plan Mode" chat mode                                │
+│  User types: "/plan {request}"                                     │
+│      ↓                                                              │
+│  Sends to Engine: planClient.createPlan() via IPC                  │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ ENGINE (oh-my-opencode Plugin)                                      │
+│                                                                     │
+│  [Strategist Agent]                                                 │
+│    Phase 1: Interview (asks clarifying questions)                  │
+│    Phase 2: Generate plan (markdown template)                      │
+│    Phase 2b: Self-review (classify gaps: CRITICAL/MINOR/AMBIGUOUS) │
+│    Phase 2c: Optional Critic review                                │
+│      ↓                                                              │
+│  planClient.createPlan() → Saves to .anyon/plans/{slug}.md         │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ PLAN PERSISTENCE LAYER                                              │
+│                                                                     │
+│  File: .anyon/plans/chat-{id}-{title}-{timestamp}.md               │
+│  Structure:                                                         │
+│    ---                                                              │
+│    title: "Plan Title"                                              │
+│    summary: "Description"                                           │
+│    chatId: 42                                                       │
+│    createdAt: "2026-03-08T14:30:00Z"                               │
+│    updatedAt: "2026-03-08T14:30:00Z"                               │
+│    ---                                                              │
+│                                                                     │
+│    # Plan Title                                                     │
+│    ## TL;DR                                                         │
+│    ## Context                                                       │
+│    ## Work Objectives                                               │
+│    ## Verification Strategy                                         │
+│    ## Execution Strategy                                            │
+│    ## TODOs                                                         │
+│    - [ ] 1. Task with acceptance criteria + QA scenarios            │
+│    - [ ] 2. Task...                                                 │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ USER ACCEPTS PLAN (Desktop UI)                                     │
+│                                                                     │
+│  Clicks "Accept Plan" button → Redirects to NEW chat               │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ START-WORK PHASE                                                    │
+│                                                                     │
+│  User types: /start-work {plan-name}                               │
+│      ↓                                                              │
+│  [start-work-hook.ts triggers]                                     │
+│    1. Detects /start-work in message                               │
+│    2. Searches .anyon/plans/ for matching plan file                │
+│    3. If multiple plans: asks user to select                       │
+│    4. Creates .anyon/thesis.json:                                  │
+│       {                                                             │
+│         "active_plan": "/absolute/path/plan.md",                  │
+│         "started_at": "ISO-timestamp",                             │
+│         "session_ids": ["session-123"],                            │
+│         "plan_name": "Plan Name",                                  │
+│         "worktree_path": "/path/to/git/worktree"                  │
+│       }                                                             │
+│    5. Injects context into next chat message                       │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ EXECUTION PHASE (Taskmaster Agent)                                  │
+│                                                                     │
+│  1. Reads plan file from disk                                      │
+│  2. Parses markdown:                                               │
+│     - Counts checkboxes: - [ ] (unchecked), - [x] (checked)       │
+│     - Extracts tasks with acceptance criteria                      │
+│     - Extracts QA scenarios                                         │
+│  3. Delegates tasks by category (visual, ultrabrain, quick, etc)   │
+│  4. For each task:                                                 │
+│     - Executes implementation                                      │
+│     - Runs QA scenarios from spec                                  │
+│     - Saves evidence to .anyon/evidence/task-{N}-{scenario}.ext    │
+│  5. MARKS TASK DONE by editing plan file IN-PLACE:                │
+│     - [ ] → - [x]   (checkbox updated in plan file)               │
+│  6. Final verification wave (4 parallel reviews):                  │
+│     - Plan compliance audit (advisor agent)                        │
+│     - Code quality review (linter)                                 │
+│     - Real QA execution (playwright)                               │
+│     - Scope fidelity check (deep agent)                            │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✅ Pre-Implementation Checklist
+## Current State Architecture
 
-Before applying restyle:
+### Thesis State (`.anyon/thesis.json`)
 
-- [ ] Use `rounded-2xl` for main container
-- [ ] Add `shadow-sm` for elevation
-- [ ] Use `border-input` (not `border-border`)
-- [ ] Use ChatInput spacing: `px-3 pb-2 pt-1`
-- [ ] Use `bg-foreground` for send button (high contrast)
-- [ ] Use outline style for stop button
-- [ ] Test light AND dark mode
-- [ ] Test hover/focus/disabled states
-- [ ] Verify keyboard accessibility
-- [ ] Preserve all existing behavior
-- [ ] Validate with design system tokens
+```json
+{
+  "active_plan": "/absolute/path/.anyon/plans/plan-name.md",
+  "started_at": "2026-03-08T14:30:00Z",
+  "session_ids": ["session-123", "session-456"],
+  "plan_name": "Plan Name",
+  "agent": "taskmaster",
+  "worktree_path": "/absolute/path/to/git/worktree"
+}
+```
 
----
+**Key invariants:**
+- Single active plan per project
+- Thesis.json created on `/start-work`, tracks session history
+- Worktree_path NOT session-specific (shared across sessions)
 
-## 📚 Documentation Structure
+### Plan Progress Tracking
 
-### Detailed Reference
-
-**→ INPUT_STYLING_PATTERNS.md**
-
-- 12 comprehensive sections
-- Line-by-line code references
-- Design system deep dive
-- File reference guide
-
-### Fast Lookup
-
-**→ STYLING_QUICK_REFERENCE.md**
-
-- TL;DR standards
-- Color palette map
-- Spacing tiers
-- Implementation checklist
-
-### Visual Analysis
-
-**→ STYLING_COMPARATIVE_ANALYSIS.md**
-
-- Side-by-side comparisons
-- Button pattern analysis
-- Color usage patterns
-- Evolution timeline
-- Migration paths
+Plans are markdown with checkboxes:
+- Unchecked: `- [ ]` or `- [ ]`
+- Checked: `- [x]` or `- [X]`
+- Progress: `completed / total = (count of [x]) / (count of [ ] + [x])`
+- Complete: `(total === 0) || (completed === total)`
 
 ---
 
-## 🎓 Key Learnings
+## Proposed Founder-First Flow
 
-### 1. Coherent Design Evolution
+The user wants:
+1. **Long ideation session** (specify requirements, tech stack, architecture)
+2. **Iterative spec refinement** (user reads plan, asks for edits)
+3. **Frozen spec** (when ready, convert to executable plan)
+4. **One-run execution** (Taskmaster executes to completion)
 
-The codebase shows intentional evolution:
+### Proposed End-to-End
 
-- HomeChatInput → ChatInput (refinement)
-- ChatInput ↔ Composer v2 (alignment)
-- Creates modern standard now visible
-
-### 2. Accessibility First
-
-Modern pattern uses `bg-foreground text-background` for maximum contrast:
-
-- Works in light mode: dark button
-- Works in dark mode: light button
-- No color dependency
-
-### 3. Shadow as Feature
-
-`shadow-sm` is not decoration:
-
-- Provides subtle elevation
-- Creates visual hierarchy
-- Separates input from background
-- Essential for modern UI
-
-### 4. Spacing as Refinement
-
-Tighter spacing `px-3 pb-2 pt-1` vs loose `px-4 pb-3 pt-2`:
-
-- More sophisticated appearance
-- Better mobile usability
-- Cleaner visual balance
-
-### 5. Consistent Ecosystem
-
-Composer v2 validates ChatInput patterns:
-
-- Both use `rounded-2xl`
-- Both use `shadow-sm`
-- Both use `border-input`
-- Both use `bg-foreground` buttons
-- This is intentional design consistency
-
----
-
-## 🚀 Next Steps
-
-1. **Review** INPUT_STYLING_PATTERNS.md for comprehensive reference
-2. **Use** STYLING_QUICK_REFERENCE.md during implementation
-3. **Consult** STYLING_COMPARATIVE_ANALYSIS.md for design rationale
-4. **Reference** ChatInput.tsx (lines 416-531) as working example
-5. **Test** with light/dark themes and all states
+```
+User: "I want to build a dashboard"
+  ↓
+[PHASE 1: Interview]
+  Strategist asks questions
+  User answers
+  ↓
+[PHASE 2: Draft Spec Generation]
+  Strategist generates markdown spec
+  SAVES TO: .anyon/plans.draft/spec-{slug}.md   ← NEW
+  Metadata:
+    - status: "draft"      ← NEW
+    - version: 1          ← NEW
+  ↓
+[PHASE 2.5: Iterative Refinement]  ← NEW
+  User reads spec in chat
+  User: "/edit-spec work-objectives"
+  Strategist regenerates section
+  User sees updated spec
+  User: "good, keep going"
+  Loop until "/finalize-spec"
+  ↓
+[PHASE 3: Finalization]  ← NEW
+  User: "/finalize-spec"
+  Analyst consults for gaps
+  Strategist asks critical Qs
+  Strategist: Copies spec → .anyon/plans/plan-{slug}.md
+    - status: "accepted"
+    - frozen: true
+  ↓
+[PHASE 4: Execute]
+  User: "/start-work dashboard"
+  Taskmaster executes
+  (Same as current system)
+```
 
 ---
 
-## 📝 Notes
+## Natural Fit: What Already Exists
 
-- **NO EDITS MADE**: All files remain unchanged. This is read-only analysis.
-- **BEHAVIOR PRESERVED**: Restyle is UI-only. No functionality changes required.
-- **VERIFIED PATTERNS**: All recommendations based on shipping code in production.
-- **DESIGN CONSISTENT**: Patterns align with Composer v2 and modern design system.
-
----
-
-## 📞 Questions?
-
-Refer to specific documentation:
-
-- **"What should I use?"** → STYLING_QUICK_REFERENCE.md
-- **"Why this pattern?"** → STYLING_COMPARATIVE_ANALYSIS.md
-- **"Where exactly?"** → INPUT_STYLING_PATTERNS.md + file references
+✅ **Can reuse immediately:**
+1. Analyst consultation (plan-generation.ts lines 57-87)
+2. Gap classification (CRITICAL/MINOR/AMBIGUOUS)
+3. Self-review checklist
+4. Markdown format (extensible with metadata)
+5. Plan update handlers (`planClient.updatePlan()`)
+6. Thesis state infrastructure
 
 ---
 
-**Status**: ✅ Mapping Complete  
-**Coverage**: 100% of input/composer components + UI system  
-**Confidence**: High (verified against production code)  
-**Ready for**: Implementation with full design confidence
+## Conflicts & Constraints
+
+### 🔴 Biggest Issue: Plans Are Self-Modifying
+
+```
+Problem:
+  Taskmaster READS plan.md
+  Taskmaster UPDATES plan.md (marks [x])
+  If user edits draft WHILE executing → CORRUPTION
+```
+
+**Solution:**
+- Use separate `.execution` checkpoint file
+- Taskmaster reads from `plan.md` (spec)
+- Taskmaster writes to `plan.{name}.execution` (checkpoints only)
+- No user edits allowed during execution
+
+### ⚠️ Other Constraints
+
+| Constraint | Impact | Solution |
+|-----------|--------|----------|
+| Single active plan per thesis.json | Can't have multiple drafts + 1 executing | Allow 1 draft active + 1 executing (separate fields in thesis.json) |
+| No plan versioning | Can't compare "spec v1" to "spec v2" | Use git commits with diffs, or manual version file |
+| Plan format includes execution data | Spec mixed with checkboxes | Separate: spec in .md, checkpoints in .execution |
+
+---
+
+## Most Relevant Files for Implementation
+
+### Tier 1: IPC Contracts (Must Modify)
+- `src/ipc/types/plan.ts` — Add `DraftPlanSchema`, `PlanStatusEnum`
+- `src/ipc/handlers/plan_handlers.ts` — Add `getDraft()`, `updateDraft()`, `finalizeDraft()`
+
+### Tier 2: Strategist Integration (Must Modify)
+- `engine/src/agents/strategist/plan-generation.ts` — Save as draft by default
+- `engine/src/agents/strategist/plan-template.ts` — Add draft instructions
+
+### Tier 3: Thesis State (Should Modify)
+- `engine/src/features/thesis-state/types.ts` — Add `draft_plan_path`, `status`
+- `engine/src/features/thesis-state/storage.ts` — Read/write draft metadata
+
+### Tier 4: Start-Work Validation (Should Modify)
+- `engine/src/hooks/start-work/start-work-hook.ts` — Reject draft plans
+
+### Tier 5: Execution Safeguards (Must Add)
+- New file: `engine/src/features/plan-execution/checkpoint.ts` — `.execution` file handling
+
+### Tier 6: React UI (Optional but Good UX)
+- `src/atoms/planAtoms.ts` — Add `draftPlanAtom`
+- `src/hooks/usePlan.ts` — Add `useDraftPlan()` hook
+
+---
+
+## Data Layout: Current vs. Proposed
+
+### Current
+```
+.anyon/
+├─ plans/
+│  └─ chat-42-dashboard-1709874600000.md   ← Immediately saved
+└─ thesis.json   ← Created on /start-work
+```
+
+### Proposed
+```
+.anyon/
+├─ plans/
+│  ├─ plan-dashboard-v1.md   ← status: "accepted", immutable
+│  └─ plan-dashboard-v1.execution   ← Checkpoint file (checkboxes only)
+├─ plans.draft/   ← NEW
+│  ├─ spec-dashboard-v1.md   ← status: "draft", editable, version 1
+│  ├─ spec-dashboard-v2.md   ← status: "draft", editable, version 2
+│  └─ spec-dashboard-v3.md   ← status: "draft", editable, version 3
+└─ thesis.json
+   {
+     "active_plan": ".../plan-dashboard-v1.md",
+     "draft_plan": ".../spec-dashboard-v3.md",   ← NEW
+     "status": "executing"   ← NEW
+   }
+```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Foundation (1-2 weeks)
+- [ ] Add `DraftPlanSchema` to IPC types
+- [ ] Create `getDraft()`, `createDraft()`, `updateDraft()` handlers
+- [ ] Create `.anyon/plans.draft/` directory logic
+- [ ] Add draft metadata (status, version) to YAML frontmatter
+
+### Phase 2: Strategist Integration (2-3 weeks)
+- [ ] Modify `NEWTON_PLAN_GENERATION` to save drafts by default
+- [ ] Add `/finalize-spec` command
+- [ ] Add `/edit-spec {section}` command (section-level regen)
+- [ ] Build spec editor UI (inline or panel)
+
+### Phase 3: Execution Safety (1-2 weeks)
+- [ ] Create `.execution` checkpoint file mechanism
+- [ ] Prevent `/start-work` on draft plans
+- [ ] Lock plan during execution (block user edits)
+
+### Phase 4: Validation & Polish (1 week)
+- [ ] E2E tests: draft → edit → finalize → execute
+- [ ] Version history / diff display
+- [ ] Error recovery on interruption
+
+**Total estimate: 4-5 weeks**
+
+---
+
+## Risk Assessment
+
+### High Risk
+- **Plan corruption** (user edits during execution)
+  - Mitigation: Separate `.execution` checkpoint file
+
+### Medium Risk
+- **User confusion** (2 plan types instead of 1)
+  - Mitigation: Clear UI labels (DRAFT / READY / EXECUTING)
+- **Draft proliferation** (accumulating old specs)
+  - Mitigation: Show only 3-5 recent drafts in UI
+
+### Low Risk
+- **Analyst consultation missing** — Already exists
+- **Markdown extensibility** — Format already flexible
+- **IPC handler complexity** — Pattern already established
+
+---
+
+## Bottom Line
+
+### ✅ The proposed flow maps cleanly onto the existing architecture
+
+1. **Strategist** already does interview + gap classification
+2. **Plan format** already supports metadata (YAML frontmatter)
+3. **IPC handlers** already support create/update/delete
+4. **Thesis state** already tracks sessions
+
+### ⚠️ Main new complexity: managing plan mutability
+
+- Current: Plan file is read + written during execution
+- Proposed: Need to separate spec (immutable) from checkpoints (mutable)
+- Solution: Simple `.execution` checkpoint file (low risk)
+
+### 🎯 Recommendation
+
+Implement the proposed flow in 4-5 weeks:
+1. Add draft infrastructure (1 week)
+2. Integrate with Strategist (2 weeks)
+3. Add execution safeguards (1 week)
+4. Test + polish (1 week)
+
+The architecture **already supports** the founder-first ideal — just needs the UI/UX layer on top.
+

@@ -1,17 +1,18 @@
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { db } from "@/db";
 import { apps } from "@/db/schema";
 import { chats } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { dialog } from "electron";
 import log from "electron-log";
-import fs from "fs/promises";
 import { getAnyonAppPath } from "../../paths/paths";
 import { createLoggedHandler } from "./safe_handle";
 
 import type { ImportAppParams, ImportAppResult } from "@/ipc/types";
 import { copyDirectoryRecursive } from "../utils/file_utils";
 import { gitAdd, gitCommit, gitInit } from "../utils/git_utils";
+import { withLock } from "../utils/lock_utils";
 
 const logger = log.scope("import-handlers");
 const handle = createLoggedHandler(logger);
@@ -51,9 +52,14 @@ export function registerImportHandlers() {
       _,
       { appName, skipCopy }: { appName: string; skipCopy?: boolean },
     ) => {
+      const normalizedAppName = appName.trim();
+      if (!normalizedAppName) {
+        return { exists: true };
+      }
+
       // Only check filesystem if we're copying to anyon-apps
       if (!skipCopy) {
-        const appPath = getAnyonAppPath(appName);
+        const appPath = getAnyonAppPath(normalizedAppName);
         try {
           await fs.access(appPath);
           return { exists: true };
@@ -64,7 +70,7 @@ export function registerImportHandlers() {
 
       // Check database
       const existingApp = await db.query.apps.findFirst({
-        where: eq(apps.name, appName),
+        where: eq(apps.name, normalizedAppName),
       });
 
       return { exists: !!existingApp };
@@ -84,6 +90,11 @@ export function registerImportHandlers() {
         skipCopy,
       }: ImportAppParams,
     ): Promise<ImportAppResult> => {
+      const normalizedAppName = appName.trim();
+      if (!normalizedAppName) {
+        throw new Error("App name is required");
+      }
+
       // Validate the source path exists
       try {
         await fs.access(sourcePath);
@@ -91,70 +102,74 @@ export function registerImportHandlers() {
         throw new Error("Source folder does not exist");
       }
 
-      // Determine the app path based on skipCopy
-      const appPath = skipCopy ? sourcePath : getAnyonAppPath(appName);
+      return withLock(`import-app:${normalizedAppName}`, async () => {
+        // Determine the app path based on skipCopy
+        const appPath = skipCopy
+          ? sourcePath
+          : getAnyonAppPath(normalizedAppName);
 
-      if (!skipCopy) {
-        // Check if the app already exists in anyon-apps
-        const errorMessage = "An app with this name already exists";
-        try {
-          await fs.access(appPath);
-          throw new Error(errorMessage);
-        } catch (error: any) {
-          if (error.message === errorMessage) {
-            throw error;
+        if (!skipCopy) {
+          // Check if the app already exists in anyon-apps
+          const errorMessage = "An app with this name already exists";
+          try {
+            await fs.access(appPath);
+            throw new Error(errorMessage);
+          } catch (error: any) {
+            if (error.message === errorMessage) {
+              throw error;
+            }
           }
+          // Copy the app folder to the Anyon apps directory.
+          // Why not use fs.cp? Because we want stable ordering for
+          // tests.
+          await copyDirectoryRecursive(sourcePath, appPath);
         }
-        // Copy the app folder to the Anyon apps directory.
-        // Why not use fs.cp? Because we want stable ordering for
-        // tests.
-        await copyDirectoryRecursive(sourcePath, appPath);
-      }
 
-      const isGitRepo = await fs
-        .access(path.join(appPath, ".git"))
-        .then(() => true)
-        .catch(() => false);
-      if (!isGitRepo) {
-        // Initialize git repo and create first commit
-        await gitInit({ path: appPath, ref: "main" });
+        const isGitRepo = await fs
+          .access(path.join(appPath, ".git"))
+          .then(() => true)
+          .catch(() => false);
+        if (!isGitRepo) {
+          // Initialize git repo and create first commit
+          await gitInit({ path: appPath, ref: "main" });
 
-        // Stage all files
+          // Stage all files
 
-        await gitAdd({ path: appPath, filepath: "." });
+          await gitAdd({ path: appPath, filepath: "." });
 
-        // Create initial commit
-        await gitCommit({
-          path: appPath,
-          message: "Init Anyon app",
+          // Create initial commit
+          await gitCommit({
+            path: appPath,
+            message: "Init Anyon app",
+          });
+        }
+
+        // Create a new app
+        // Store the full absolute path when skipCopy is true, otherwise store appName
+        const hasCustomCommands =
+          !!installCommand?.trim() && !!startCommand?.trim();
+        const [app] = await db
+          .insert(apps)
+          .values({
+            name: normalizedAppName,
+            path: skipCopy ? sourcePath : normalizedAppName,
+            installCommand: installCommand ?? null,
+            startCommand: startCommand ?? null,
+            ...(hasCustomCommands
+              ? { profileLearned: true, profileSource: "user" as const }
+              : {}),
+          })
+          .returning();
+
+        // Create an initial chat for this app
+        const [chat] = await db
+          .insert(chats)
+          .values({
+            appId: app.id,
+          })
+          .returning();
+        return { appId: app.id, chatId: chat.id };
         });
-      }
-
-      // Create a new app
-      // Store the full absolute path when skipCopy is true, otherwise store appName
-      const hasCustomCommands =
-        !!installCommand?.trim() && !!startCommand?.trim();
-      const [app] = await db
-        .insert(apps)
-        .values({
-          name: appName,
-          path: skipCopy ? sourcePath : appName,
-          installCommand: installCommand ?? null,
-          startCommand: startCommand ?? null,
-          ...(hasCustomCommands
-            ? { profileLearned: true, profileSource: "user" as const }
-            : {}),
-        })
-        .returning();
-
-      // Create an initial chat for this app
-      const [chat] = await db
-        .insert(chats)
-        .values({
-          appId: app.id,
-        })
-        .returning();
-      return { appId: app.id, chatId: chat.id };
     },
   );
 

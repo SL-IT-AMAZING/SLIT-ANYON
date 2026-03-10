@@ -9,6 +9,7 @@ import { useRenameBranch } from "@/hooks/useRenameBranch";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useVersions } from "@/hooks/useVersions";
 import { ipc } from "@/ipc/types";
+import { getErrorMessage } from "@/lib/error";
 import { showError, showSuccess } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { isAnyCheckoutVersionInProgressAtom } from "@/store/appAtoms";
@@ -80,10 +81,12 @@ export function ChatHeader({
 
   const handleRenameMasterToMain = async () => {
     if (!appId) return;
-    // If this throws, it will automatically show an error toast
-    await renameBranch({ oldBranchName: "master", newBranchName: "main" });
-
-    showSuccess(t("actions.masterRenamed"));
+    try {
+      await renameBranch({ oldBranchName: "master", newBranchName: "main" });
+      showSuccess(t("actions.masterRenamed"));
+    } catch (error) {
+      showError(`Failed to rename branch: ${getErrorMessage(error)}`);
+    }
   };
 
   const handleNewChat = async () => {
@@ -98,7 +101,7 @@ export function ChatHeader({
         await invalidateChats();
       } catch (error) {
         showError(
-          t("actions.chatCreateFailed", { message: (error as any).toString() }),
+          t("actions.chatCreateFailed", { message: getErrorMessage(error) }),
         );
       }
     } else {

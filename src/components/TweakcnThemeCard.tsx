@@ -1,11 +1,12 @@
 import { useLikedThemes } from "@/hooks/useLikedThemes";
+import { ipc } from "@/ipc/types";
 import type { TweakcnThemeType } from "@/ipc/types";
 import type { ThemeTag } from "@/lib/color-utils";
 import { generateThemeTags, oklchToHex } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import { Eye, Heart, Sparkles } from "lucide-react";
 import type React from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -20,6 +21,25 @@ const SWATCH_KEYS = [
 ] as const;
 
 const MAX_VISIBLE_TAGS = 2;
+const IFRAME_RENDER_WIDTH = 1280;
+const THEMES_PREVIEW_COMPONENT_ID = "dashboard";
+
+type ThemePreviewSession = {
+  url: string;
+  nonce: string;
+};
+
+let themesPreviewSessionPromise: Promise<ThemePreviewSession> | null = null;
+
+function getThemePreviewSession() {
+  if (!themesPreviewSessionPromise) {
+    themesPreviewSessionPromise = ipc.designSystem.getPreviewUrl({
+      designSystemId: "themes",
+    });
+  }
+
+  return themesPreviewSessionPromise;
+}
 
 interface TweakcnThemeCardProps {
   theme: TweakcnThemeType;
@@ -52,6 +72,13 @@ export const TweakcnThemeCard: React.FC<TweakcnThemeCardProps> = ({
     [lightVars],
   );
 
+  const [previewSession, setPreviewSession] = useState<ThemePreviewSession | null>(
+    null,
+  );
+  const [scale, setScale] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
   const swatchColors = useMemo(
     () => SWATCH_KEYS.map((key) => getColorValue(lightVars, key)),
     [lightVars],
@@ -60,25 +87,124 @@ export const TweakcnThemeCard: React.FC<TweakcnThemeCardProps> = ({
   const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
   const overflowCount = Math.max(0, tags.length - MAX_VISIBLE_TAGS);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateScale = () => {
+      const width = el.offsetWidth;
+      if (width > 0) {
+        setScale(width / IFRAME_RENDER_WIDTH);
+      }
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(() => updateScale());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getThemePreviewSession()
+      .then((session) => {
+        if (cancelled) return;
+        setPreviewSession(session);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPreviewSession(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!previewSession) return;
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+
+    const targetOrigin = (() => {
+      try {
+        return new URL(previewSession.url).origin;
+      } catch {
+        return "*";
+      }
+    })();
+
+    const payload = {
+      type: "APPLY_THEME",
+      nonce: previewSession.nonce,
+      cssVars: theme.cssVars,
+    };
+
+    const navigatePayload = {
+      type: "NAVIGATE_COMPONENT",
+      nonce: previewSession.nonce,
+      componentId: THEMES_PREVIEW_COMPONENT_ID,
+    };
+
+    iframeWindow.postMessage(payload, targetOrigin);
+    iframeWindow.postMessage(navigatePayload, targetOrigin);
+
+    const retryDelays = [120, 260, 420];
+    const timeoutIds = retryDelays.map((delayMs) => {
+      return window.setTimeout(() => {
+        const win = iframeRef.current?.contentWindow;
+        if (!win) return;
+        win.postMessage(payload, targetOrigin);
+        win.postMessage(navigatePayload, targetOrigin);
+      }, delayMs);
+    });
+
+    return () => {
+      timeoutIds.forEach((id) => window.clearTimeout(id));
+    };
+  }, [previewSession, theme.cssVars]);
+
+  const iframeHeight = scale > 0 ? Math.ceil(180 / scale) : 960;
+
   return (
     <Card
       data-testid={`tweakcn-theme-card-${theme.id}`}
       className="overflow-hidden group hover:shadow-md transition-shadow duration-200"
     >
       <div
+        ref={containerRef}
         className="relative h-[180px] w-full overflow-hidden flex items-center justify-center"
         style={{ backgroundColor: bgHex }}
       >
-        <div className="flex items-center gap-1.5">
-          {swatchColors.map((color, i) => (
-            <div
-              key={SWATCH_KEYS[i]}
-              className="w-5 h-16 rounded-lg"
-              style={{ backgroundColor: color }}
-              title={SWATCH_KEYS[i]}
-            />
-          ))}
-        </div>
+        {previewSession && scale > 0 ? (
+          <iframe
+            ref={iframeRef}
+            src={previewSession.url}
+            sandbox="allow-scripts allow-same-origin"
+            loading="lazy"
+            tabIndex={-1}
+            title={`${theme.name} preview`}
+            className="absolute top-0 left-0 border-none pointer-events-none"
+            style={{
+              width: `${IFRAME_RENDER_WIDTH}px`,
+              height: `${iframeHeight}px`,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+          />
+        ) : (
+          <div className="flex items-center gap-1.5">
+            {swatchColors.map((color, i) => (
+              <div
+                key={SWATCH_KEYS[i]}
+                className="w-5 h-16 rounded-lg"
+                style={{ backgroundColor: color }}
+                title={SWATCH_KEYS[i]}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <CardContent className="p-4">

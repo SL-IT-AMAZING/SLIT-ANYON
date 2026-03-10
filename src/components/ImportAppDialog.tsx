@@ -12,7 +12,7 @@ import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
 import { useMutation } from "@tanstack/react-query";
 import { Folder, Info, Loader2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,6 +27,11 @@ import { UnconnectedGitHubConnector } from "@/components/GitHubConnector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSettings } from "@/hooks/useSettings";
+import { getErrorMessage } from "@/lib/error";
+import {
+  areImportCommandsValid,
+  extractRepoNameFromUrl,
+} from "@/lib/importValidation";
 import { useSetAtom } from "jotai";
 import {
   Accordion,
@@ -66,76 +71,120 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
   const [githubAppName, setGithubAppName] = useState("");
   const [githubNameExists, setGithubNameExists] = useState(false);
   const [isCheckingGithubName, setIsCheckingGithubName] = useState(false);
+  const localNameCheckSeqRef = useRef(0);
+  const githubNameCheckSeqRef = useRef(0);
+  const fetchReposSeqRef = useRef(0);
+  const selectFolderSeqRef = useRef(0);
+  const importFromUrlSeqRef = useRef(0);
+  const selectRepoSeqRef = useRef(0);
   useEffect(() => {
     if (isOpen) {
+      setSelectedPath(null);
+      setHasAiRules(null);
+      setCustomAppName("");
+      setNameExists(false);
+      setInstallCommand("");
+      setStartCommand("");
+      setCopyToAnyonApps(true);
+      setUrl("");
       setGithubAppName("");
       setGithubNameExists(false);
+      setIsCheckingGithubName(false);
+      setIsCheckingName(false);
+      localNameCheckSeqRef.current = 0;
+      githubNameCheckSeqRef.current = 0;
+      selectFolderSeqRef.current = 0;
+      importFromUrlSeqRef.current = 0;
+      selectRepoSeqRef.current = 0;
       // Fetch GitHub repos if authenticated
       if (isAuthenticated) {
         fetchRepos();
       }
+    } else {
+      fetchReposSeqRef.current += 1;
+      localNameCheckSeqRef.current = 0;
+      githubNameCheckSeqRef.current = 0;
+      selectFolderSeqRef.current += 1;
+      importFromUrlSeqRef.current += 1;
+      selectRepoSeqRef.current += 1;
     }
   }, [isOpen, isAuthenticated]);
 
-  // Re-check app name when copyToAnyonApps changes
-  useEffect(() => {
-    if (customAppName.trim() && selectedPath) {
-      checkAppName({ name: customAppName, skipCopy: !copyToAnyonApps });
-    }
-  }, [copyToAnyonApps]);
-
   const fetchRepos = async () => {
+    const fetchSeq = ++fetchReposSeqRef.current;
     setLoading(true);
     try {
       const fetchedRepos = await ipc.github.listRepos();
-      setRepos(fetchedRepos);
+      if (fetchSeq === fetchReposSeqRef.current) {
+        setRepos(fetchedRepos);
+      }
     } catch (err: unknown) {
-      showError(
-        t("import.fetchReposFailed", { message: (err as any).toString() }),
-      );
+      if (fetchSeq === fetchReposSeqRef.current) {
+        showError(
+          t("import.fetchReposFailed", { message: getErrorMessage(err) }),
+        );
+      }
     } finally {
-      setLoading(false);
+      if (fetchSeq === fetchReposSeqRef.current) {
+        setLoading(false);
+      }
     }
   };
   const handleUrlBlur = async () => {
-    if (!url.trim()) return;
+    if (!url.trim()) {
+      githubNameCheckSeqRef.current += 1;
+      setGithubAppName("");
+      setGithubNameExists(false);
+      setIsCheckingGithubName(false);
+      return;
+    }
     const repoName = extractRepoNameFromUrl(url);
     if (repoName) {
+      const checkSeq = ++githubNameCheckSeqRef.current;
       setGithubAppName(repoName);
       setIsCheckingGithubName(true);
       try {
         const result = await ipc.import.checkAppName({
           appName: repoName,
         });
-        setGithubNameExists(result.exists);
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          setGithubNameExists(result.exists);
+        }
       } catch (error: unknown) {
-        showError(
-          t("import.checkNameFailed", { message: (error as any).toString() }),
-        );
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          showError(
+            t("import.checkNameFailed", { message: getErrorMessage(error) }),
+          );
+        }
       } finally {
-        setIsCheckingGithubName(false);
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          setIsCheckingGithubName(false);
+        }
       }
+    } else {
+      githubNameCheckSeqRef.current += 1;
+      setGithubAppName("");
+      setGithubNameExists(false);
+      setIsCheckingGithubName(false);
     }
   };
-  const extractRepoNameFromUrl = (url: string): string | null => {
-    const match = url.match(/github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
-    return match ? match[2] : null;
-  };
   const handleImportFromUrl = async () => {
+    if (importing || isCheckingGithubName || githubNameExists) {
+      return;
+    }
+    const importSeq = ++importFromUrlSeqRef.current;
     setImporting(true);
     try {
-      const match = extractRepoNameFromUrl(url);
-      const repoName = match ? match[2] : "";
+      const normalizedUrl = url.trim();
+      const repoName = extractRepoNameFromUrl(normalizedUrl) ?? "";
       const appName = githubAppName.trim() || repoName;
       const result = await ipc.github.cloneRepoFromUrl({
-        url,
+        url: normalizedUrl,
         installCommand: installCommand.trim() || undefined,
         startCommand: startCommand.trim() || undefined,
         appName,
       });
-      if ("error" in result) {
-        showError(result.error);
-        setImporting(false);
+      if (importSeq !== importFromUrlSeqRef.current) {
         return;
       }
       setSelectedAppId(result.app.id);
@@ -151,7 +200,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       onClose();
     } catch (error: unknown) {
       showError(
-        t("import.importFailed", { message: (error as any).toString() }),
+        t("import.importFailed", { message: getErrorMessage(error) }),
       );
     } finally {
       setImporting(false);
@@ -159,6 +208,10 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
   };
 
   const handleSelectRepo = async (repo: GithubRepository) => {
+    if (importing || isCheckingGithubName || githubNameExists) {
+      return;
+    }
+    const selectSeq = ++selectRepoSeqRef.current;
     setImporting(true);
 
     try {
@@ -169,9 +222,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
         startCommand: startCommand.trim() || undefined,
         appName,
       });
-      if ("error" in result) {
-        showError(result.error);
-        setImporting(false);
+      if (selectSeq !== selectRepoSeqRef.current) {
         return;
       }
       setSelectedAppId(result.app.id);
@@ -187,7 +238,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       onClose();
     } catch (error: unknown) {
       showError(
-        t("import.importFailed", { message: (error as any).toString() }),
+        t("import.importFailed", { message: getErrorMessage(error) }),
       );
     } finally {
       setImporting(false);
@@ -199,20 +250,32 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
   ) => {
     const newName = e.target.value;
     setGithubAppName(newName);
-    if (newName.trim()) {
+    const trimmedName = newName.trim();
+    if (trimmedName) {
+      const checkSeq = ++githubNameCheckSeqRef.current;
       setIsCheckingGithubName(true);
       try {
         const result = await ipc.import.checkAppName({
-          appName: newName,
+          appName: trimmedName,
         });
-        setGithubNameExists(result.exists);
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          setGithubNameExists(result.exists);
+        }
       } catch (error: unknown) {
-        showError(
-          t("import.checkNameFailed", { message: (error as any).toString() }),
-        );
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          showError(
+            t("import.checkNameFailed", { message: getErrorMessage(error) }),
+          );
+        }
       } finally {
-        setIsCheckingGithubName(false);
+        if (checkSeq === githubNameCheckSeqRef.current) {
+          setIsCheckingGithubName(false);
+        }
       }
+    } else {
+      githubNameCheckSeqRef.current += 1;
+      setIsCheckingGithubName(false);
+      setGithubNameExists(false);
     }
   };
 
@@ -223,24 +286,35 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     name: string;
     skipCopy?: boolean;
   }): Promise<void> => {
+    const checkSeq = ++localNameCheckSeqRef.current;
     setIsCheckingName(true);
     try {
       const result = await ipc.import.checkAppName({
         appName: name,
         skipCopy,
       });
-      setNameExists(result.exists);
+      if (checkSeq === localNameCheckSeqRef.current) {
+        setNameExists(result.exists);
+      }
     } catch (error: unknown) {
-      showError(
-        t("import.checkNameFailed", { message: (error as any).toString() }),
-      );
+      if (checkSeq === localNameCheckSeqRef.current) {
+        showError(
+          t("import.checkNameFailed", { message: getErrorMessage(error) }),
+        );
+      }
     } finally {
-      setIsCheckingName(false);
+      if (checkSeq === localNameCheckSeqRef.current) {
+        setIsCheckingName(false);
+      }
     }
   };
   const selectFolderMutation = useMutation({
     mutationFn: async () => {
+      const selectSeq = ++selectFolderSeqRef.current;
       const result = await ipc.system.selectAppFolder();
+      if (selectSeq !== selectFolderSeqRef.current) {
+        return null;
+      }
       if (!result.path || !result.name) {
         // User cancelled the folder selection dialog
         return null;
@@ -248,6 +322,9 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       const aiRulesCheck = await ipc.import.checkAiRules({
         path: result.path,
       });
+      if (selectSeq !== selectFolderSeqRef.current) {
+        return null;
+      }
       setHasAiRules(aiRulesCheck.exists);
       setSelectedPath(result.path);
       // Use the folder name from the IPC response
@@ -256,8 +333,8 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       await checkAppName({ name: result.name, skipCopy: !copyToAnyonApps });
       return result;
     },
-    onError: (error: Error) => {
-      showError(error.message);
+    onError: (error: unknown) => {
+      showError(getErrorMessage(error));
     },
   });
 
@@ -290,8 +367,8 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       setSelectedAppId(result.appId);
       await refreshApps();
     },
-    onError: (error: Error) => {
-      showError(error.message);
+    onError: (error: unknown) => {
+      showError(getErrorMessage(error));
     },
   });
 
@@ -320,12 +397,14 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     setCustomAppName(newName);
     if (newName.trim()) {
       await checkAppName({ name: newName, skipCopy: !copyToAnyonApps });
+    } else {
+      localNameCheckSeqRef.current += 1;
+      setIsCheckingName(false);
+      setNameExists(false);
     }
   };
 
-  const hasInstallCommand = installCommand.trim().length > 0;
-  const hasStartCommand = startCommand.trim().length > 0;
-  const commandsValid = hasInstallCommand === hasStartCommand;
+  const commandsValid = areImportCommandsValid(installCommand, startCommand);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -413,9 +492,16 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                         id="copy-to-anyon-apps"
                         aria-label="Copy to the anyon-apps folder"
                         checked={copyToAnyonApps}
-                        onCheckedChange={(checked) =>
-                          setCopyToAnyonApps(checked === true)
-                        }
+                        onCheckedChange={(checked) => {
+                          const shouldCopy = checked === true;
+                          setCopyToAnyonApps(shouldCopy);
+                          if (customAppName.trim() && selectedPath) {
+                            void checkAppName({
+                              name: customAppName,
+                              skipCopy: !shouldCopy,
+                            });
+                          }
+                        }}
                         disabled={importAppMutation.isPending}
                       />
                       <label
@@ -446,7 +532,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                           onChange={handleAppNameChange}
                           placeholder="Enter new app name"
                           className="w-full pr-8 text-sm"
-                          disabled={importAppMutation.isPending}
+                          disabled={importAppMutation.isPending || isCheckingName}
                         />
                         {isCheckingName && (
                           <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -536,6 +622,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                   disabled={
                     !selectedPath ||
                     importAppMutation.isPending ||
+                    isCheckingName ||
                     nameExists ||
                     !commandsValid
                   }
@@ -572,7 +659,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                       onChange={handleGithubAppNameChange}
                       placeholder="Leave empty to use repository name"
                       className="w-full pr-8 text-sm"
-                      disabled={importing}
+                            disabled={importing || isCheckingGithubName}
                     />
                     {isCheckingGithubName && (
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -606,13 +693,15 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                             {repo.full_name}
                           </p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSelectRepo(repo)}
-                          disabled={importing}
-                          className="flex-shrink-0 text-xs"
-                        >
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleSelectRepo(repo)}
+                           disabled={
+                             importing || isCheckingGithubName || githubNameExists
+                           }
+                           className="flex-shrink-0 text-xs"
+                         >
                           {importing ? (
                             <Loader2 className="animate-spin h-4 w-4" />
                           ) : (
@@ -624,50 +713,44 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                   </div>
 
                   {repos.length > 0 && (
-                    <>
-                      <Accordion>
-                        <AccordionItem value="advanced-options">
-                          <AccordionTrigger className="text-xs sm:text-sm hover:no-underline">
-                            Advanced options
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-4">
-                            <div className="grid gap-2">
-                              <Label className="text-xs sm:text-sm">
-                                Install command
-                              </Label>
-                              <Input
-                                value={installCommand}
-                                onChange={(e) =>
-                                  setInstallCommand(e.target.value)
-                                }
-                                placeholder="pnpm install"
-                                className="text-sm"
-                                disabled={importing}
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label className="text-xs sm:text-sm">
-                                Start command
-                              </Label>
-                              <Input
-                                value={startCommand}
-                                onChange={(e) =>
-                                  setStartCommand(e.target.value)
-                                }
-                                placeholder="pnpm dev"
-                                className="text-sm"
-                                disabled={importing}
-                              />
-                            </div>
-                            {!commandsValid && (
-                              <p className="text-xs sm:text-sm text-red-500">
-                                Both commands are required when customizing.
-                              </p>
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </>
+                    <Accordion>
+                      <AccordionItem value="advanced-options">
+                        <AccordionTrigger className="text-xs sm:text-sm hover:no-underline">
+                          Advanced options
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4">
+                          <div className="grid gap-2">
+                            <Label className="text-xs sm:text-sm">
+                              Install command
+                            </Label>
+                            <Input
+                              value={installCommand}
+                              onChange={(e) => setInstallCommand(e.target.value)}
+                              placeholder="pnpm install"
+                              className="text-sm"
+                              disabled={importing}
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label className="text-xs sm:text-sm">
+                              Start command
+                            </Label>
+                            <Input
+                              value={startCommand}
+                              onChange={(e) => setStartCommand(e.target.value)}
+                              placeholder="pnpm dev"
+                              className="text-sm"
+                              disabled={importing}
+                            />
+                          </div>
+                          {!commandsValid && (
+                            <p className="text-xs sm:text-sm text-red-500">
+                              Both commands are required when customizing.
+                            </p>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   )}
                 </>
               )}
@@ -723,7 +806,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
                         onChange={(e) => setInstallCommand(e.target.value)}
                         placeholder="pnpm install"
                         className="text-sm"
-                        disabled={importing}
+                        disabled={importing || isCheckingGithubName}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -749,7 +832,13 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
 
               <Button
                 onClick={handleImportFromUrl}
-                disabled={importing || !url.trim() || !commandsValid}
+                disabled={
+                  importing ||
+                  isCheckingGithubName ||
+                  githubNameExists ||
+                  !url.trim() ||
+                  !commandsValid
+                }
                 className="w-full"
               >
                 {importing ? (

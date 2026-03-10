@@ -1,0 +1,270 @@
+═══════════════════════════════════════════════════════════════════════════════
+  ANYON-B2C FOUNDER FLOW ANALYSIS — QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT SYSTEM: Interview → Generate Plan → Save → Accept → Execute
+PROPOSED FLOW:  Interview → Draft Spec → Edit → Finalize → Execute
+
+═══════════════════════════════════════════════════════════════════════════════
+  1. END-TO-END: WHERE PLANS LIVE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│  Interview   │ ───────→ │  Plan Gen    │ ───────→ │   Execute    │
+│  (AI Asks)   │         │  (Markdown)  │         │  (Tasks)     │
+└──────────────┘         └──────────────┘         └──────────────┘
+  Chat Screen          .anyon/plans/             .anyon/thesis.json
+                        {slug}.md                .anyon/evidence/
+
+KEY FILES (in order):
+  1. start-work-hook.ts        ← Detects /start-work command
+  2. plan.ts (IPC contract)    ← Defines what gets saved
+  3. plan_handlers.ts          ← Saves plan to disk
+  4. plan-template.ts          ← Markdown structure
+  5. start-work-hook.ts        ← Creates thesis.json
+  6. taskmaster/agent.ts       ← Executes plan
+
+═══════════════════════════════════════════════════════════════════════════════
+  2. CRITICAL CONSTRAINT: Plans Are Self-Modifying
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+  - Taskmaster READS plan file from disk
+  - Taskmaster UPDATES checkboxes in-place (marks tasks done)
+  - If user edits plan WHILE executing, corruption happens
+
+IMPLICATION FOR FOUNDER FLOW:
+  - Can't allow user to edit spec while execution is live
+  - Need to separate "spec document" from "execution checkpoint"
+  - Solution: Use .anyon/plans.{plan-name}.execution checkpoint file
+
+═══════════════════════════════════════════════════════════════════════════════
+  3. WHERE PROPOSED FLOW NATURALLY FITS
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ ALREADY EXISTS (Can Reuse):
+  [1] Analyst consultation (plan-generation.ts, line 57-87)
+  [2] Gap classification (CRITICAL/MINOR/AMBIGUOUS)
+  [3] Self-review checklist (plan-generation.ts, line 116-140)
+  [4] Markdown format (plan-template.ts) — can add metadata
+  [5] Plan update handlers (plan_handlers.ts updatePlan)
+  [6] Thesis state tracking (thesis-state/)
+
+⚠️  NEEDS NEW INFRASTRUCTURE:
+  [1] Draft storage directory (.anyon/plans.draft/)
+  [2] Draft lifecycle (versions, editable flag)
+  [3] Spec editor UI (React component)
+  [4] Spec freezing mechanism (copy draft → plans/)
+  [5] Version/diff tracking
+  [6] Edit commands (/edit-spec, /finalize-spec)
+
+🔴 ARCHITECTURAL CONFLICTS:
+  [1] Plan file is BOTH readable + WRITABLE during execution
+      → Solution: Lock plan during execution or use .execution file
+  
+  [2] Single active plan per thesis.json
+      → Solution: Allow 1 draft active + 1 execution active
+  
+  [3] No plan versioning
+      → Solution: Git-commit plans with diffs
+
+═══════════════════════════════════════════════════════════════════════════════
+  4. MOST CRITICAL FILES TO MODIFY
+═══════════════════════════════════════════════════════════════════════════════
+
+Layer           File                          Change
+────────────────────────────────────────────────────────────────────────────
+IPC Contracts   src/ipc/types/plan.ts        + DraftPlanSchema, PlanStatus
+                                             + getDraft, createDraft, 
+                                               updateDraft, finalizeDraft
+
+IPC Handlers    src/ipc/handlers/            + getDraft() handler
+                plan_handlers.ts             + createDraft() handler
+                                             + finalizeDraft() → moves to 
+                                               .anyon/plans/
+
+Plan Utils      src/ipc/handlers/            + parseStatus() 
+                planUtils.ts                 + getVersion()
+
+Strategist      engine/src/agents/           Modify NEWTON_PLAN_GENERATION
+                strategist/                  to save drafts by default
+                plan-generation.ts           
+
+Thesis State    engine/src/features/         + draft_plan_path field
+                thesis-state/                + status: "ideation"|"ready"
+                types.ts
+
+Start-Work      engine/src/hooks/            + Validation: reject draft plans
+                start-work/                  + Auto-finalize on /start-work?
+                start-work-hook.ts
+
+React State     src/atoms/planAtoms.ts       + draftPlanAtom
+                                             + specVersionAtom
+
+React Hooks     src/hooks/usePlan.ts         + useDraftPlan()
+
+═══════════════════════════════════════════════════════════════════════════════
+  5. PROPOSED DATA FLOW (DETAILED)
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE 1: INTERVIEW & IDEATION
+  User: "I want to build a dashboard"
+    ↓
+  Strategist: Asks clarifying questions
+    ↓
+  User: Answers (tech stack, features, etc)
+
+PHASE 2: SPEC GENERATION (DRAFT)
+  Strategist generates markdown spec → SAVED TO: .anyon/plans.draft/spec-{slug}.md
+    ↓
+  Metadata in YAML frontmatter:
+    ├─ title: "Dashboard"
+    ├─ status: "draft"           ← NEW
+    ├─ version: 1                ← NEW
+    ├─ chatId: 42
+    ├─ createdAt: ISO
+    └─ updatedAt: ISO
+
+PHASE 2.5: SPEC REFINEMENT (USER EDITS)
+  User reads spec in chat
+    ↓
+  User: "/edit-spec {section}" or "/edit-spec all"
+    ↓
+  Strategist: Regenerates section(s) → UPDATES draft file
+    ↓
+  User: Reads updated spec
+    ↓
+  Loop: Repeat until "let's go" or "/finalize-spec"
+
+PHASE 3: FINALIZATION
+  User: "/finalize-spec"
+    ↓
+  Analyst: Consults (gap analysis, guardrails)
+    ↓
+  Strategist: Prompts for critical decisions (if any)
+    ↓
+  User: Answers (or system applies defaults)
+    ↓
+  Strategist: Finalizes → COPIES draft → .anyon/plans/plan-{slug}.md
+    ├─ status: "accepted"        ← CHANGED
+    ├─ frozen: true              ← NEW
+    ├─ version: 1 (locked)       ← NEW
+    └─ checksummed              ← NEW (for integrity)
+
+PHASE 4: START-WORK
+  User: "/start-work dashboard"
+    ↓
+  start-work-hook.ts:
+    ├─ Find .anyon/plans/plan-dashboard.md
+    ├─ Check status != "draft" (GUARD)
+    ├─ Create thesis.json:
+    │   {
+    │     active_plan: ".../plan-dashboard.md",
+    │     status: "executing"
+    │   }
+    └─ Switch to Taskmaster agent
+
+PHASE 5: EXECUTION
+  Taskmaster:
+    ├─ Read plan
+    ├─ Create .anyon/plans/plan-dashboard.execution (checkpoint file)
+    │   └─ Only THIS file gets checkbox updates
+    ├─ Execute tasks
+    ├─ Update .execution checkboxes
+    └─ On complete: mark thesis.json status = "complete"
+
+═══════════════════════════════════════════════════════════════════════════════
+  6. FILE LAYOUT COMPARISON
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT:
+  .anyon/
+  ├─ plans/
+  │  └─ dashboard-1234567890.md    ← Single file, always saved
+  └─ thesis.json                  ← Created on /start-work
+
+PROPOSED:
+  .anyon/
+  ├─ plans/                       ← Frozen, execution-ready
+  │  └─ plan-dashboard-v1.md      ← status: "accepted", immutable
+  │
+  ├─ plans.draft/                 ← Iterative, editable
+  │  ├─ spec-dashboard-v1.md      ← status: "draft", editable
+  │  └─ spec-dashboard-v2.md      ← status: "draft", newer version
+  │
+  ├─ plans/plan-dashboard-v1.execution ← Checkpoint during execution
+  │  └─ - [x] Task 1
+  │     - [ ] Task 2
+  │
+  └─ thesis.json                  ← Tracks both draft and execution
+
+═══════════════════════════════════════════════════════════════════════════════
+  7. INTEGRATION PRIORITIES
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE A (FOUNDATION): 1-2 weeks
+  [1] Add DraftPlanSchema to src/ipc/types/plan.ts
+  [2] Add getDraft/createDraft/updateDraft handlers
+  [3] Create .anyon/plans.draft/ directory logic
+  [4] Add draft metadata (status, version) to thesis.json
+
+PHASE B (STRATEGIST INTEGRATION): 2-3 weeks
+  [5] Modify Strategist to save drafts by default
+  [6] Add /finalize-spec command
+  [7] Implement spec editor UI (inline or panel)
+  [8] Add /edit-spec command (section-level regen)
+
+PHASE C (EXECUTION SAFETY): 1-2 weeks
+  [9] Create .execution checkpoint file mechanism
+  [10] Prevent /start-work on draft plans
+  [11] Lock plan during execution
+
+PHASE D (VALIDATION): 1 week
+  [12] E2E test: draft → edit → finalize → execute
+  [13] Version history / diff display
+  [14] Error recovery on interruption
+
+═══════════════════════════════════════════════════════════════════════════════
+  8. RISK SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+BIGGEST RISKS:
+  1. Plan file corruption (user edits while executing)
+     → Mitigated by: .execution checkpoint file
+  
+  2. User confusion (2 plan types)
+     → Mitigated by: Clear UI labels (DRAFT / READY / EXECUTING)
+  
+  3. Draft proliferation (user creates too many)
+     → Mitigated by: UI limit (show only 3-5 recent drafts)
+  
+  4. Lost work if user closes chat
+     → Mitigated by: Auto-save on every edit
+
+LOWEST RISK:
+  - Analyst consultation already exists
+  - Markdown format already extensible
+  - IPC handlers already flexible
+
+═══════════════════════════════════════════════════════════════════════════════
+  9. WHAT HAPPENS IF YOU DON'T IMPLEMENT DRAFTS
+═══════════════════════════════════════════════════════════════════════════════
+
+User spends 2 hours ideating, Strategist generates plan, user realizes
+the spec is wrong → MUST START OVER.
+
+With drafts:
+  User spends 2 hours → Draft saved
+  User: "/edit-spec work-objective"
+  Strategist: Regenerates that section only → Draft updated
+  User: Happy → "/finalize-spec"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+BOTTOM LINE:
+  ✅ Proposed flow maps cleanly onto existing architecture
+  ⚠️  Needs careful handling of plan file mutability during execution
+  🎯 Recommend separate .execution checkpoint file (simple, low-risk)
+  📅 4-5 weeks effort for full implementation + testing
+
+═══════════════════════════════════════════════════════════════════════════════

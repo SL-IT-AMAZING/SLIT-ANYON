@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ipc } from "@/ipc/types";
+import { getErrorMessage } from "@/lib/error";
 import { showError, showSuccess } from "@/lib/toast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,7 @@ export function RenameChatDialog({
 }: RenameChatDialogProps) {
   const { t } = useTranslation(["chat", "common"]);
   const [newTitle, setNewTitle] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Reset title when dialog opens
   const handleOpenChange = (open: boolean) => {
@@ -43,10 +45,11 @@ export function RenameChatDialog({
   };
 
   const handleSave = async () => {
-    if (!newTitle.trim()) {
+    if (!newTitle.trim() || isSaving) {
       return;
     }
 
+    setIsSaving(true);
     try {
       await ipc.chat.updateChat({
         chatId,
@@ -55,14 +58,16 @@ export function RenameChatDialog({
       showSuccess(t("actions.chatRenamed"));
 
       // Call the parent's onRename callback to refresh the chat list
-      onRename();
+      await Promise.resolve(onRename());
 
       // Close the dialog
       handleOpenChange(false);
     } catch (error) {
       showError(
-        t("actions.chatRenameFailed", { message: (error as any).toString() }),
+        t("actions.chatRenameFailed", { message: getErrorMessage(error) }),
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -90,6 +95,7 @@ export function RenameChatDialog({
               placeholder={t("actions.enterChatTitle")}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  e.preventDefault();
                   handleSave();
                 }
               }}
@@ -97,11 +103,11 @@ export function RenameChatDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={isSaving}>
             {t("common:buttons.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={!newTitle.trim()}>
-            {t("common:buttons.save")}
+          <Button onClick={handleSave} disabled={!newTitle.trim() || isSaving}>
+            {isSaving ? t("common:buttons.saving") : t("common:buttons.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

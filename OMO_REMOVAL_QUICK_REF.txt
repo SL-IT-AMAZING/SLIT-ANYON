@@ -1,0 +1,64 @@
+═══════════════════════════════════════════════════════════════════════════════
+QUICK REFERENCE: oh-my-opencode Removal Patches
+═══════════════════════════════════════════════════════════════════════════════
+
+CRITICAL FILES TO PATCH (Executable Code Paths):
+
+1. src/main.ts
+   └─ Line 24: Remove import
+   └─ Line 237: Remove call to setupOpenCodeConfig()
+
+2. src/ipc/utils/opencode_config_setup.ts
+   └─ DELETE ENTIRE FILE (199 lines)
+   
+3. src/main/entitlement.ts
+   └─ Lines 65-87: Delete PRO_PRESET constant
+   └─ Lines 94-115: Delete LIGHT_PRESET constant
+   └─ Lines 383-385: Delete call to applyModelPreset()
+   └─ Lines 398-410: Delete applyModelPreset() function
+   └─ Line 3: Remove import of updateOmocConfig
+
+4. src/ipc/utils/vendor_binary_utils.ts
+   └─ Lines 35-60: Delete getOmocBinaryPath() function
+   └─ Lines 85-88: Remove call to getOmocBinaryPath() from resolveVendorBinaries()
+
+5. scripts/fetch-vendor-binaries.ts
+   └─ Lines 247-303: Delete fetchOmoc() function
+   └─ Lines 327-333: Remove try/catch call to fetchOmoc() from main()
+   └─ Lines 338: Remove "oh-my-opencode" from versions object
+
+6. forge.config.ts
+   └─ Remove conditional block:
+      ...(fs.existsSync("vendor/oh-my-opencode")
+        ? ["vendor/oh-my-opencode"]
+        : []),
+
+7. engine/src/cli/config-manager/detect-current-config.ts
+   └─ Update filter to remove "oh-my-opencode" exclusion
+
+DOCUMENTATION (Optional - can be left as-is or deleted):
+   - OMO_QUICK_REFERENCE.md
+   - OMO_ONBOARDING_MAP.md
+   - README_OMO_RESEARCH.md
+   - PLAN_TIER_BRANCHING_LOGIC.md
+   - OH_MY_OPENCODE_CURRENT_STATE.md
+   - Plus other *OMO* or oh-my-opencode analysis docs
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTING AFTER PATCHES:
+
+npm run ts       # Type-check
+npm run lint     # Lint
+npm run build    # Build (runs pre:e2e)
+npm test         # Unit tests
+
+═══════════════════════════════════════════════════════════════════════════════
+SEARCH & VERIFY:
+
+After patching, verify no OMOC references remain:
+
+  grep -r "oh-my-opencode\|omoc\|OMOC" src/ --include="*.ts" --include="*.tsx"
+  
+Should return: No matches (except in comments/strings)
+
+═══════════════════════════════════════════════════════════════════════════════

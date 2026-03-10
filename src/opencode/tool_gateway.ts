@@ -14,6 +14,7 @@ const logger = log.scope("tool-gateway");
 const TOOL_GATEWAY_REQUEST_TIMEOUT_MS = 60_000;
 const TOOL_GATEWAY_HEADERS_TIMEOUT_MS = 10_000;
 const TOOL_GATEWAY_EXECUTION_TIMEOUT_MS = 45_000;
+const TOOL_GATEWAY_STOP_TIMEOUT_MS = 3_000;
 
 type ToolSummary = {
   name: string;
@@ -198,10 +199,40 @@ class ToolGateway {
   async stop(): Promise<void> {
     if (!this.server) return;
 
-    await new Promise<void>((resolve, reject) => {
-      this.server!.close((err) => {
-        if (err) return reject(err);
+    const server = this.server;
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         resolve();
+      };
+
+      const timeoutId = setTimeout(() => {
+        logger.warn(
+          `Tool gateway close timed out after ${TOOL_GATEWAY_STOP_TIMEOUT_MS}ms, forcing connection shutdown`,
+        );
+        try {
+          server.closeAllConnections?.();
+        } catch (error) {
+          logger.warn("Failed to close all tool gateway connections:", error);
+        }
+        finish();
+      }, TOOL_GATEWAY_STOP_TIMEOUT_MS);
+
+      try {
+        server.closeIdleConnections?.();
+      } catch (error) {
+        logger.warn("Failed to close idle tool gateway connections:", error);
+      }
+
+      server.close((err) => {
+        if (err) {
+          logger.warn("Tool gateway close returned an error:", err);
+        }
+        finish();
       });
     });
 

@@ -1,0 +1,213 @@
+═══════════════════════════════════════════════════════════════════════════════
+EXHAUSTIVE oh-my-opencode REMOVAL AUDIT - FINAL SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+PROJECT: /Users/cosmos/Documents/an/ANYON-b2c
+DATE: March 9, 2026
+SCOPE: Complete enumeration of all oh-my-opencode references
+STATUS: READY FOR EXECUTION
+
+═══════════════════════════════════════════════════════════════════════════════
+FINDINGS AT A GLANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ EXECUTABLE CODE PATHS: 7
+  - 1 app startup initialization
+  - 1 entitlement-driven config
+  - 1 vendor binary fetching
+  - 1 binary resolution utility
+  - 1 build configuration
+  - 2 engine integration references
+
+✓ DOCUMENTATION REFERENCES: 8+ (docs-only, non-critical)
+
+✓ BUILD CONFIGURATION: 1 (Electron Forge bundling)
+
+✓ TOTAL FILES WITH OMOC REFERENCES: 38 files
+  - Source code (executable): 5 files
+  - Scripts: 1 file
+  - Build config: 1 file
+  - Engine: 2 files
+  - Docs/markdown: 28+ files
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL FILES TO PATCH (In Order)
+═══════════════════════════════════════════════════════════════════════════════
+
+PATCH 1: src/main.ts
+  Type: Runtime initialization
+  Impact: APP STARTUP
+  Changes:
+    - Line 24: Remove import statement
+    - Line 237: Remove call to setupOpenCodeConfig()
+  Result: Stops automatic OMOC installation on app launch
+  
+PATCH 2: src/ipc/utils/opencode_config_setup.ts
+  Type: Implementation module
+  Impact: DELETES ENTIRE FILE
+  Size: 199 lines
+  Functions to delete:
+    - getOpenCodeConfigDir()
+    - isOmocConfigured()
+    - runOmocInstall()
+    - updateOmocConfig()
+    - setupOpenCodeConfig()
+  Result: Removes all OMOC config logic
+
+PATCH 3: src/main/entitlement.ts
+  Type: Model preset logic
+  Impact: ENTITLEMENT-TRIGGERED CONFIG
+  Changes:
+    - Line 3: Remove import of updateOmocConfig
+    - Lines 65-87: Delete PRO_PRESET constant
+    - Lines 94-115: Delete LIGHT_PRESET constant
+    - Line 383: Remove call to applyModelPreset()
+    - Lines 398-410: Delete applyModelPreset() function
+  Result: Removes plan-based OMOC configuration
+
+PATCH 4: src/ipc/utils/vendor_binary_utils.ts
+  Type: Binary resolution utility
+  Impact: BINARY LOOKUP (RUNTIME)
+  Changes:
+    - Lines 35-60: Delete getOmocBinaryPath() function
+    - Lines 85-88: Remove call from resolveVendorBinaries()
+  Result: Removes OMOC binary path resolution
+  Note: Keep resolveVendorBinaries() if opencode binary still needed
+
+PATCH 5: scripts/fetch-vendor-binaries.ts
+  Type: Build setup script
+  Impact: BUILD-TIME VENDOR FETCHING
+  Changes:
+    - Lines 247-303: Delete fetchOmoc() function completely
+    - Lines 327-333: Remove try/catch for fetchOmoc() call
+    - Line 338: Remove "oh-my-opencode" from versions object
+  Result: Prevents npm package fetch during build setup
+  
+PATCH 6: forge.config.ts
+  Type: Electron build configuration
+  Impact: APP BUNDLING
+  Changes:
+    - Remove conditional block for vendor/oh-my-opencode:
+      ...(fs.existsSync("vendor/oh-my-opencode")
+        ? ["vendor/oh-my-opencode"]
+        : []),
+  Result: OMOC binary won't be bundled in packaged app
+  
+PATCH 7: engine/src/cli/config-manager/detect-current-config.ts
+  Type: Plugin detection (separate repo)
+  Impact: INSTALLER LOGIC (engine only)
+  Changes:
+    - Update filter to exclude "oh-my-opencode" when detecting plugins
+  Note: This is in a separate repo; coordinate changes with engine maintainers
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTIONAL DOCUMENTATION CLEANUP
+═══════════════════════════════════════════════════════════════════════════════
+
+These files are documentation/analysis and can be left or deleted:
+  - OMO_QUICK_REFERENCE.md
+  - OMO_ONBOARDING_MAP.md
+  - README_OMO_RESEARCH.md
+  - PLAN_TIER_BRANCHING_LOGIC.md
+  - OH_MY_OPENCODE_CURRENT_STATE.md
+  - oh-my-opencode-plan-tier-analysis.md
+  - And 20+ other analysis/mapping docs
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION PROCEDURE
+═══════════════════════════════════════════════════════════════════════════════
+
+After applying all patches, run:
+
+1. TYPE-CHECK
+   $ npm run ts
+   Expected: PASS (no new type errors)
+
+2. LINT
+   $ npm run lint
+   Expected: PASS (no new lint issues)
+
+3. VERIFY NO OMOC REFERENCES
+   $ grep -r "oh-my-opencode\|omoc\|OMOC" src/ --include="*.ts" --include="*.tsx"
+   Expected: No matches in src/
+
+4. BUILD
+   $ npm run build
+   Expected: PASS (app builds without errors)
+
+5. UNIT TESTS
+   $ npm run test
+   Expected: All tests pass
+
+═══════════════════════════════════════════════════════════════════════════════
+SAFE DELETION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Safe to delete (no other code depends):
+  ✓ setupOpenCodeConfig() function
+  ✓ getOmocBinaryPath() function
+  ✓ fetchOmoc() function
+  ✓ PRO_PRESET constant
+  ✓ LIGHT_PRESET constant
+  ✓ applyModelPreset() function
+  ✓ opencode_config_setup.ts file
+  ✓ vendor/oh-my-opencode conditional in forge.config.ts
+
+Must handle deletions:
+  ✓ Remove import in src/main.ts
+  ✓ Remove call in src/main.ts
+  ✓ Remove import in src/main/entitlement.ts
+  ✓ Remove call in syncEntitlements()
+  ✓ Remove call in resolveVendorBinaries() call
+  ✓ Update scripts/fetch-vendor-binaries.ts
+  ✓ Update engine installer
+
+═══════════════════════════════════════════════════════════════════════════════
+DETAILED AUDIT DOCUMENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Three comprehensive reference documents have been created:
+
+1. OMO_REMOVAL_AUDIT.md
+   └─ Complete enumeration of all references with exact code snippets
+   └─ 400+ lines of detailed context
+   └─ Recommended reading for comprehensive understanding
+
+2. OMO_REMOVAL_QUICK_REF.txt
+   └─ Fast lookup for exact line numbers and files
+   └─ Best for quick reference during patching
+
+3. OMO_REMOVAL_CALL_CHAINS.txt
+   └─ Call chain graphs and dependency analysis
+   └─ Shows what depends on what, safe deletions
+   └─ Useful for understanding impact
+
+═══════════════════════════════════════════════════════════════════════════════
+EXECUTION NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+All patches are EXECUTABLE changes:
+  - No hidden dependencies found
+  - No test-only references
+  - No doc-only config
+
+Every identified reference is:
+  ✓ Real executable code path
+  ✓ Has been traced to source
+  ✓ Has exact line numbers provided
+  ✓ Has deletion impact documented
+
+No changes required outside these 7 files (+ optional engine repo updates)
+
+═══════════════════════════════════════════════════════════════════════════════
+NEXT STEPS FOR PATCHING
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Read OMO_REMOVAL_AUDIT.md for complete context
+2. Review OMO_REMOVAL_CALL_CHAINS.txt to understand dependencies
+3. Apply patches in order (1-7 as listed above)
+4. Run verification procedure after each file
+5. Commit changes to git
+6. Run full build and test suite
+
+═══════════════════════════════════════════════════════════════════════════════

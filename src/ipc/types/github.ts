@@ -1,9 +1,9 @@
 import { z } from "zod";
 import {
-  defineContract,
-  defineEvent,
   createClient,
   createEventClient,
+  defineContract,
+  defineEvent,
 } from "../contracts/core";
 import { AppSchema } from "./app";
 
@@ -94,15 +94,10 @@ export const CloneRepoParamsSchema = z.object({
   startCommand: z.string().optional(),
 });
 
-export const CloneRepoResultSchema = z.union([
-  z.object({
-    app: AppSchema,
-    hasAiRules: z.boolean(),
-  }),
-  z.object({
-    error: z.string(),
-  }),
-]);
+export const CloneRepoResultSchema = z.object({
+  app: AppSchema,
+  hasAiRules: z.boolean(),
+});
 
 // GitHub Device Flow schemas
 export const GitHubDeviceFlowUpdateSchema = z.object({

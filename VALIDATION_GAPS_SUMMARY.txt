@@ -1,0 +1,129 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          IMPORT/GITHUB HANDLERS - VALIDATION GAPS EXECUTIVE SUMMARY          ║
+║                         SECURITY & UX ANALYSIS                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📋 ANALYSIS SCOPE:
+   • src/ipc/handlers/import_handlers.ts (162 lines)
+   • src/ipc/handlers/github_handlers.ts (1424 lines)
+   • src/ipc/types/import.ts (70 lines)
+   • src/ipc/types/github.ts (364 lines)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 CRITICAL VULNERABILITIES (2)
+
+[1] PATH TRAVERSAL IN CHECK-AI-RULES (import_handlers.ts:38-44)
+    ❌ Schema accepts: z.string() with NO validation
+    🎯 Attack: appPath="../../../etc/passwd"
+    💥 Impact: Read arbitrary files, filesystem reconnaissance
+    
+[2] PATH TRAVERSAL IN IMPORT-APP (import_handlers.ts:75-95)
+    ❌ Schema: sourcePath is unchecked
+    ❌ When skipCopy=true: stores arbitrary path in database
+    🎯 Attack: sourcePath="/etc/passwd" + skipCopy=true
+    💥 Impact: Database corruption, unsafe app paths, file access violations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟠 HIGH PRIORITY ISSUES (6)
+
+[3] APPNAME NOT TRIMMED/NORMALIZED
+    ❌ Schemas: appName: z.string() (no trim, no length limits)
+    ❌ Inconsistent: clone handler DOES trim (line 1241), import handler DOESN'T
+    🎯 Attack: appName="  myapp  " or appName="myapp\n"
+    💥 Impact: Database duplicates, collision detection fails, weird filesystem paths
+
+[4] APPNAME/SOURCEPATH - NO LENGTH CONSTRAINTS
+    ❌ Missing: minLength/maxLength on all string fields
+    ❌ Fields: appName, path, repo, owner, branch, url
+    🎯 Attack: appName=[2000+ chars]
+    💥 Impact: Database overflow, filesystem path too long errors
+
+[5] RACE CONDITION IN IMPORT
+    ❌ check-app-name returns "exists: false" but no lock held
+    ❌ Multiple concurrent imports with same appName can proceed
+    ❌ First wins filesystem, second gets partial/corrupted copy
+    🎯 Attack: Launch 2 imports simultaneously with appName="myapp"
+    💥 Impact: Filesystem corruption, database inconsistency
+
+[6] GITHUB URL EXTRACTION - NO VALIDATION
+    ❌ Regex extracts owner/repo but doesn't validate format
+    ❌ No check: GitHub username rules, character restrictions
+    🎯 Attack: owner="`whoami`", repo with special chars
+    💥 Impact: Invalid GitHub API calls, database corruption
+
+[7] BRANCH NAME NOT VALIDATED
+    ❌ Schema: branch: z.string() (no validation)
+    🎯 Attack: branch="../refs/heads/main" or branch="@"
+    💥 Impact: Unexpected git operations, remote branch confusion
+
+[8] SKIPCOPY DOESN'T VALIDATE PATH SAFETY
+    ❌ No check: skipCopy=true with unsafe/absolute paths
+    ❌ Two users can skipCopy to same sourcePath → DB clash
+    🎯 Attack: skipCopy=true + sourcePath="/shared/folder"
+    💥 Impact: Multiple apps point to same location → write conflicts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟡 MEDIUM PRIORITY ISSUES (3)
+
+[9] INCONSISTENT ERROR MESSAGES
+    ❌ "App not found" - generic, no context
+    ❌ Some handlers throw Error, some return error objects
+    💥 Impact: Poor user experience, inconsistent error handling in UI
+
+[10] VALIDATION ASYMMETRY
+    ✓ inviteCollaborator: trim() + length check + regex validation
+    ❌ appName: no trim, no length check, no format validation
+    💥 Impact: Inconsistent security posture
+
+[11] INCONSISTENT ERROR CONTRACT
+    ❌ import-app: throws Error("...")
+    ❌ clone-repo-from-url: returns { error: "..." }
+    💥 Impact: Different error handling patterns in UI, confusing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 IMPACT MATRIX
+
+                     SECURITY    UX      DB INTEGRITY    PERFORMANCE
+[1] Path traversal     ⚠️🔴       🟡         🟡               ✓
+[2] Path traversal     ⚠️🔴       🟡         🔴               🟡
+[3] AppName trim       🟠         🔴         🟠               ✓
+[4] No length limit    🟠         🟡         🟠               🟡
+[5] Race condition     🟠         🔴         🔴               ✓
+[6] URL injection      🟠         🟠         🟠               ✓
+[7] Branch validate    🟠         🟡         ✓                ✓
+[8] SkipCopy unsafe    🟠         🟡         🔴               ✓
+[9] Error messages     ✓          🔴         ✓                ✓
+[10] Asymmetry         🟠         🟠         🟠               ✓
+[11] Error contract    ✓          🔴         ✓                ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ RECOMMENDATIONS BY PRIORITY
+
+IMMEDIATE (Do Now):
+  1. Add path traversal guards to schemas (refine: no "..", no "/", no "\\")
+  2. Implement appName.trim().min(1).max(255).regex(/^[a-zA-Z0-9-_]+$/)
+  3. Add withLock() to import-app handler for appName collision prevention
+  4. Validate extracted GitHub owner/repo patterns
+
+SHORT-TERM (This Sprint):
+  1. Branch validation: trim().min(1).max(255).regex() + no ".." or "-" prefix
+  2. GitHub handle validation: owner (1-39 chars, alphanumeric+hyphen rules)
+  3. Standardize error handling: all throw or all return objects
+  4. Improve error messages with context
+
+LONGER-TERM (Next Quarter):
+  1. Centralized validateAppPath() utility
+  2. Input sanitization test suite
+  3. E2E tests for race conditions
+  4. Zod superRefine for cross-field validation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 FULL ANALYSIS: See IMPORT_VALIDATION_ANALYSIS.md for detailed findings
+
+Generated: 2026-03-05 | Scope: Contract-driven IPC architecture analysis
