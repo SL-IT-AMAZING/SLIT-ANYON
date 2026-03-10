@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { useProposal } from "@/hooks/useProposal";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { type AgentTodo, ipc } from "@/ipc/types";
+import { type AgentTodo, type App, ipc } from "@/ipc/types";
 import type {
   ActionProposal,
   FileChange,
@@ -67,6 +67,7 @@ import { useCheckProblems } from "@/hooks/useCheckProblems";
 import { useCountTokens } from "@/hooks/useCountTokens";
 import { useVersions } from "@/hooks/useVersions";
 import { getErrorMessage } from "@/lib/error";
+import { prewarmOpenCodeForAppPath } from "@/lib/opencodePrewarm";
 import { queryKeys } from "@/lib/queryKeys";
 import { showExtraFilesToast } from "@/lib/toast";
 import { showError as showErrorToast } from "@/lib/toast";
@@ -263,6 +264,14 @@ export function ChatInput({ chatId }: { chatId?: number }) {
         "*",
       );
     }
+
+    const app = appId
+      ? queryClient.getQueryData<App | null>(
+          queryKeys.apps.detail({ appId }),
+        )
+      : null;
+
+    prewarmOpenCodeForAppPath(app?.resolvedPath ?? app?.path);
 
     // Send message with attachments and clear them after sending
     await streamMessage({

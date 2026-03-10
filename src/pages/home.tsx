@@ -10,6 +10,7 @@ import { useNodeStatus } from "@/hooks/useNodeStatus";
 import { useSettings } from "@/hooks/useSettings";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { ipc } from "@/ipc/types";
+import { prewarmOpenCodeForAppPath } from "@/lib/opencodePrewarm";
 import { generateCuteAppName, getAppDisplayName } from "@/lib/utils";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtom, useSetAtom } from "jotai";
@@ -162,15 +163,17 @@ export default function HomePage() {
       });
 
       // Apply selected theme to the new app (if one is set)
-      if (settings?.selectedThemeId) {
-        await ipc.template.setAppTheme({
-          appId: result.app.id,
-          themeId: settings.selectedThemeId || null,
-        });
-      }
+        if (settings?.selectedThemeId) {
+          await ipc.template.setAppTheme({
+            appId: result.app.id,
+            themeId: settings.selectedThemeId || null,
+          });
+        }
 
-      // Stream the message with attachments
-      streamMessage({
+        prewarmOpenCodeForAppPath(result.app.resolvedPath);
+
+        // Stream the message with attachments
+        streamMessage({
         prompt: inputValue,
         chatId: result.chatId,
         attachments,

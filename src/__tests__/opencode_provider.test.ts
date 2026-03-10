@@ -2,6 +2,7 @@ import type { LanguageModelV2CallOptions } from "@ai-sdk/provider";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createOpenCodeProvider,
+  resetOpenCodeAgentCache,
   resetOpenCodeSessionCache,
 } from "../ipc/utils/opencode_provider";
 import { openCodeServer } from "../ipc/utils/opencode_server";
@@ -51,6 +52,7 @@ function createSseResponse(events: unknown[]): Response {
 
 describe("OpenCode provider session caching", () => {
   beforeEach(() => {
+    resetOpenCodeAgentCache();
     resetOpenCodeSessionCache();
     vi.mocked(openCodeServer.ensureRunning).mockResolvedValue({
       url: "http://127.0.0.1:51962",
@@ -348,5 +350,127 @@ describe("OpenCode provider session caching", () => {
     await expect(model.doGenerate(options)).rejects.toThrow(
       "Provider is overloaded",
     );
+  });
+
+  it("reuses cached agent lists across provider instances", async () => {
+    const sessionId = "sess-agent-cache";
+
+    const fetchMock = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (url.endsWith("/session") && init?.method === "POST") {
+          return createJsonResponse({ id: sessionId });
+        }
+
+        if (url.endsWith("/agent")) {
+          return createJsonResponse([
+            {
+              name: "Sisyphus",
+              description: "",
+              mode: "primary",
+              native: true,
+            },
+          ]);
+        }
+
+        if (url.endsWith("/event")) {
+          return createSseResponse([
+            { type: "server.connected", properties: {} },
+            {
+              type: "message.part.updated",
+              properties: {
+                part: {
+                  id: "part-1",
+                  type: "text",
+                  sessionID: sessionId,
+                  messageID: "msg-1",
+                },
+              },
+            },
+            {
+              type: "message.part.delta",
+              properties: {
+                sessionID: sessionId,
+                partID: "part-1",
+                delta: "Hello",
+              },
+            },
+            {
+              type: "message.updated",
+              properties: {
+                info: {
+                  role: "assistant",
+                  sessionID: sessionId,
+                  tokens: { input: 1, output: 1 },
+                },
+              },
+            },
+            {
+              type: "session.status",
+              properties: {
+                sessionID: sessionId,
+                status: { type: "idle" },
+              },
+            },
+          ]);
+        }
+
+        if (
+          url.endsWith(`/session/${sessionId}/message`) &&
+          init?.method === "POST"
+        ) {
+          return createJsonResponse({ ok: true });
+        }
+
+        throw new Error(
+          `Unexpected fetch call: ${url} ${init?.method ?? "GET"}`,
+        );
+      },
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const options = {
+      prompt: [
+        {
+          role: "user",
+          content: [{ type: "text", text: "hello" }],
+        },
+      ],
+    } as unknown as LanguageModelV2CallOptions;
+
+    const firstModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-agent-cache-1",
+      agentName: "Sisyphus",
+      appPath: "/tmp/app-one",
+    })("dummy-model") as unknown as GenerateModel;
+
+    const secondModel = createOpenCodeProvider({
+      conversationId: "anyon-chat-agent-cache-2",
+      agentName: "Sisyphus",
+      appPath: "/tmp/app-one",
+    })("dummy-model") as unknown as GenerateModel;
+
+    await firstModel.doGenerate(options);
+    await secondModel.doGenerate(options);
+
+    const agentCalls = fetchMock.mock.calls.filter(([input]) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+
+      return url.endsWith("/agent");
+    });
+
+    expect(agentCalls).toHaveLength(1);
   });
 });

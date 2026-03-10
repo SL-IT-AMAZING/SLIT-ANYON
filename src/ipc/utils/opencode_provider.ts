@@ -14,11 +14,20 @@ const logger = log.scope("opencode-provider");
 const OPENCODE_API_TIMEOUT_MS = 15000;
 const OPENCODE_SSE_CONNECT_TIMEOUT_MS = 15000;
 const OPENCODE_STREAM_IDLE_TIMEOUT_MS = 300000;
+const AGENT_CACHE_TTL_MS = 30_000;
 
 const conversationSessionMap = new Map<string, string>();
+const availableAgentsCache = new Map<
+  string,
+  { expiresAt: number; agents: Array<{ name: string }> }
+>();
 
 export function resetOpenCodeSessionCache(): void {
   conversationSessionMap.clear();
+}
+
+export function resetOpenCodeAgentCache(): void {
+  availableAgentsCache.clear();
 }
 
 interface OpenCodeSession {
@@ -113,6 +122,10 @@ export type OpenCodeProvider = (
 function getBaseAgentName(name: string): string {
   const idx = name.indexOf(" (");
   return idx === -1 ? name : name.slice(0, idx);
+}
+
+function getAgentCacheKey(serverUrl: string, appPath?: string): string {
+  return `${serverUrl}::${appPath ?? ""}`;
 }
 
 export function resolveSelectedAgentName(
@@ -293,6 +306,21 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
       return undefined;
     }
 
+    const cacheKey = getAgentCacheKey(serverInfo.url, this.settings.appPath);
+    const now = Date.now();
+    const cachedAgents = availableAgentsCache.get(cacheKey);
+
+    if (cachedAgents && cachedAgents.expiresAt > now) {
+      const cachedResolved = resolveSelectedAgentName(
+        this.settings.agentName,
+        cachedAgents.agents,
+      );
+
+      if (cachedResolved) {
+        return cachedResolved;
+      }
+    }
+
     try {
       const response = await fetch(`${serverInfo.url}/agent`, {
         headers: this.getAuthHeaders(serverInfo.password),
@@ -325,6 +353,11 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
             .filter((agent): agent is { name: string } => agent !== null)
         : [];
 
+      availableAgentsCache.set(cacheKey, {
+        agents: availableAgents,
+        expiresAt: now + AGENT_CACHE_TTL_MS,
+      });
+
       const resolved = resolveSelectedAgentName(
         this.settings.agentName,
         availableAgents,
@@ -345,6 +378,23 @@ class OpenCodeLanguageModel implements LanguageModelV2 {
 
       return resolved;
     } catch (error) {
+      if (cachedAgents) {
+        const cachedResolved = resolveSelectedAgentName(
+          this.settings.agentName,
+          cachedAgents.agents,
+        );
+
+        if (!cachedResolved) {
+          throw error;
+        }
+
+        logger.warn(
+          `Failed to refresh agent list for '${this.settings.agentName}'. Falling back to cached agents.`,
+          error,
+        );
+        return cachedResolved;
+      }
+
       logger.warn(
         `Failed to validate selected agent '${this.settings.agentName}'. Falling back to default agent.`,
         error,
