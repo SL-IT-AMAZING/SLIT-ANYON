@@ -35,6 +35,9 @@ export function DeepLinkProvider({ children }: { children: React.ReactNode }) {
       } else if (data.type === "auth-return") {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.state });
         queryClient.invalidateQueries({ queryKey: queryKeys.entitlement.all });
+      } else if (data.type === "supabase-oauth-return") {
+        queryClient.invalidateQueries({ queryKey: queryKeys.supabase.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.apps.all });
       } else if (data.type === "checkout-success") {
         queryClient.invalidateQueries({ queryKey: queryKeys.entitlement.all });
       }

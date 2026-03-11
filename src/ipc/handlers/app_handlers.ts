@@ -35,7 +35,10 @@ import { getSupabasePublishableKey } from "./vercel_handlers";
 
 import util from "node:util";
 import type { Worker } from "node:worker_threads";
-import type { AppSearchResult } from "@/lib/schemas";
+import {
+  hasSupabaseOrganizationCredential,
+  type AppSearchResult,
+} from "@/lib/schemas";
 import {
   deployAllSupabaseFunctions,
   extractFunctionNameFromPath,
@@ -987,12 +990,10 @@ export function registerAppHandlers() {
 
     let supabaseProjectName: string | null = null;
     const settings = readSettings();
-    // Check for multi-organization credentials or legacy single account
-    const hasSupabaseCredentials =
-      (app.supabaseOrganizationSlug &&
-        settings.supabase?.organizations?.[app.supabaseOrganizationSlug]
-          ?.accessToken?.value) ||
-      settings.supabase?.accessToken?.value;
+    const hasSupabaseCredentials = hasSupabaseOrganizationCredential(
+      settings,
+      app.supabaseOrganizationSlug,
+    );
     if (app.supabaseProjectId && hasSupabaseCredentials) {
       supabaseProjectName = await getSupabaseProjectName(
         app.supabaseParentProjectId || app.supabaseProjectId,
@@ -1389,7 +1390,7 @@ export function registerAppHandlers() {
             appPath,
             supabaseProjectId: app.supabaseProjectId,
             supabaseOrganizationSlug: app.supabaseOrganizationSlug ?? null,
-            skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? false,
+            skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? true,
           });
           if (deployErrors.length > 0) {
             return {

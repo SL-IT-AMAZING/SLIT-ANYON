@@ -2,6 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useDeepLink } from "@/contexts/DeepLinkContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useSupabase } from "@/hooks/useSupabase";
 import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
 import { oauthEndpoints } from "@/lib/oauthConfig";
@@ -21,6 +22,8 @@ export function SupabaseHubConnector() {
   const { settings, refreshSettings, updateSettings } = useSettings();
   const { lastDeepLink, clearLastDeepLink } = useDeepLink();
   const { isDarkMode } = useTheme();
+  const { disconnectAllOrganizations, isDisconnectingAllOrganizations } =
+    useSupabase();
   const [oauthError, setOauthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,12 +71,13 @@ export function SupabaseHubConnector() {
             variant="destructive"
             size="sm"
             onClick={async () => {
+              await disconnectAllOrganizations();
               await updateSettings({
-                supabase: undefined,
                 enableSupabaseWriteSqlMigration: false,
               });
               toast.success(t("connect.supabase.disconnected"));
             }}
+            disabled={isDisconnectingAllOrganizations}
           >
             {t("connect.common.disconnect")}
           </Button>
@@ -87,8 +91,7 @@ export function SupabaseHubConnector() {
     try {
       await ipc.system.openExternalUrl(oauthEndpoints.supabase.login);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
       setOauthError(message);
     }
   };
@@ -105,7 +108,9 @@ export function SupabaseHubConnector() {
         {oauthError && (
           <Alert variant="destructive" className="mb-3">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t("connect.supabase.errorTitle", "Connection failed")}</AlertTitle>
+            <AlertTitle>
+              {t("connect.supabase.errorTitle", "Connection failed")}
+            </AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
               <span>{oauthError}</span>
               <Button

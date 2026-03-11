@@ -19,6 +19,7 @@ export async function GET() {
     maxAge: 600,
     sameSite: "lax",
     path: "/api/oauth/supabase/callback",
+    secure: process.env.OAUTH_SERVER_URL?.trim().startsWith("https://") ?? true,
   });
 
   return response;

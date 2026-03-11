@@ -86,6 +86,67 @@ export interface SupabaseProjectBranch {
 // Caches for shared files to avoid re-reading unchanged files
 const sharedFilesCache = new Map<string, CachedSharedFiles>();
 
+function getLegacySupabaseAccessTokenFromSettings(): string {
+  const accessToken = readSettings().supabase?.accessToken?.value;
+  if (!accessToken) {
+    throw new Error(
+      "Supabase access token not found. Please authenticate first.",
+    );
+  }
+  return accessToken;
+}
+
+function getOrganizationSupabaseAccessTokenFromSettings(
+  organizationSlug: string,
+): string {
+  const accessToken =
+    readSettings().supabase?.organizations?.[organizationSlug]?.accessToken
+      ?.value;
+  if (!accessToken) {
+    throw new Error(
+      `Supabase access token not found for organization ${organizationSlug}. Please authenticate first.`,
+    );
+  }
+  return accessToken;
+}
+
+async function getSupabaseAccessToken({
+  organizationSlug,
+}: {
+  organizationSlug?: string | null;
+} = {}): Promise<string> {
+  if (organizationSlug) {
+    const org = readSettings().supabase?.organizations?.[organizationSlug];
+
+    if (!org) {
+      throw new Error(
+        `Supabase organization ${organizationSlug} not found. Please authenticate first.`,
+      );
+    }
+
+    if (isOrganizationTokenExpired(org)) {
+      await withLock(`refresh-supabase-token-${organizationSlug}`, () =>
+        refreshSupabaseTokenForOrganization(organizationSlug),
+      );
+    }
+
+    return getOrganizationSupabaseAccessTokenFromSettings(organizationSlug);
+  }
+
+  const settings = readSettings();
+  if (!settings.supabase?.accessToken?.value) {
+    throw new Error(
+      "Supabase access token not found. Please authenticate first.",
+    );
+  }
+
+  if (isTokenExpired(settings.supabase?.expiresIn)) {
+    await withLock("refresh-supabase-token", refreshSupabaseToken);
+  }
+
+  return getLegacySupabaseAccessTokenFromSettings();
+}
+
 /**
  * Checks if the Supabase access token is expired or about to expire
  * Returns true if token needs to be refreshed
@@ -165,42 +226,9 @@ export async function refreshSupabaseToken(): Promise<void> {
 export async function getSupabaseClient({
   organizationSlug,
 }: { organizationSlug?: string | null } = {}): Promise<SupabaseManagementAPI> {
-  // If organizationSlug provided, use organization-specific credentials
-  if (organizationSlug) {
-    return getSupabaseClientForOrganization(organizationSlug);
-  }
-
-  // Otherwise fall back to legacy single-account credentials
-  const settings = readSettings();
-
-  // Check if Supabase token exists in settings
-  const supabaseAccessToken = settings.supabase?.accessToken?.value;
-  const expiresIn = settings.supabase?.expiresIn;
-
-  if (!supabaseAccessToken) {
-    throw new Error(
-      "Supabase access token not found. Please authenticate first.",
-    );
-  }
-
-  // Check if token needs refreshing
-  if (isTokenExpired(expiresIn)) {
-    await withLock("refresh-supabase-token", refreshSupabaseToken);
-    // Get updated settings after refresh
-    const updatedSettings = readSettings();
-    const newAccessToken = updatedSettings.supabase?.accessToken?.value;
-
-    if (!newAccessToken) {
-      throw new Error("Failed to refresh Supabase access token");
-    }
-
-    return new SupabaseManagementAPI({
-      accessToken: newAccessToken,
-    });
-  }
-
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
   return new SupabaseManagementAPI({
-    accessToken: supabaseAccessToken,
+    accessToken,
   });
 }
 
@@ -304,44 +332,7 @@ async function refreshSupabaseTokenForOrganization(
 export async function getSupabaseClientForOrganization(
   organizationSlug: string,
 ): Promise<SupabaseManagementAPI> {
-  const settings = readSettings();
-  const org = settings.supabase?.organizations?.[organizationSlug];
-
-  if (!org) {
-    throw new Error(
-      `Supabase organization ${organizationSlug} not found. Please authenticate first.`,
-    );
-  }
-
-  const accessToken = org.accessToken?.value;
-  if (!accessToken) {
-    throw new Error(
-      `Supabase access token not found for organization ${organizationSlug}. Please authenticate first.`,
-    );
-  }
-
-  // Check if token needs refreshing
-  if (isOrganizationTokenExpired(org)) {
-    await withLock(`refresh-supabase-token-${organizationSlug}`, () =>
-      refreshSupabaseTokenForOrganization(organizationSlug),
-    );
-    // Get updated settings after refresh
-    const updatedSettings = readSettings();
-    const updatedOrg =
-      updatedSettings.supabase?.organizations?.[organizationSlug];
-    const newAccessToken = updatedOrg?.accessToken?.value;
-
-    if (!newAccessToken) {
-      throw new Error(
-        `Failed to refresh Supabase access token for organization ${organizationSlug}`,
-      );
-    }
-
-    return new SupabaseManagementAPI({
-      accessToken: newAccessToken,
-    });
-  }
-
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
   return new SupabaseManagementAPI({
     accessToken,
   });
@@ -411,8 +402,7 @@ export async function getOrganizationMembers(
     ];
   }
 
-  const client = await getSupabaseClientForOrganization(organizationSlug);
-  const accessToken = (client as any).options.accessToken;
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   const response = await fetchWithRetry(
     `https://api.supabase.com/v1/organizations/${organizationSlug}/members`,
@@ -465,8 +455,7 @@ export async function getOrganizationDetails(
     };
   }
 
-  const client = await getSupabaseClientForOrganization(organizationSlug);
-  const accessToken = (client as any).options.accessToken;
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   const response = await fetchWithRetry(
     `https://api.supabase.com/v1/organizations/${organizationSlug}`,
@@ -520,7 +509,7 @@ export async function getSupabaseProjectLogs(
   timestampStart?: number,
   organizationSlug?: string,
 ): Promise<SupabaseProjectLogsResponse> {
-  const supabase = await getSupabaseClient({ organizationSlug });
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   // Build SQL query with optional timestamp filter
   let sqlQuery = `
@@ -558,7 +547,7 @@ LIMIT 1000`;
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${(supabase as any).options.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     },
     `Get Supabase project logs for ${projectId}`,
@@ -634,14 +623,14 @@ export async function listSupabaseFunctions({
   }
 
   logger.info(`Listing Supabase functions for project: ${supabaseProjectId}`);
-  const supabase = await getSupabaseClient({ organizationSlug });
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   const response = await fetchWithRetry(
     `https://api.supabase.com/v1/projects/${supabaseProjectId}/functions`,
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${(supabase as any).options.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     },
     `List Supabase functions for ${supabaseProjectId}`,
@@ -686,14 +675,14 @@ export async function listSupabaseBranches({
   }
 
   logger.info(`Listing Supabase branches for project: ${supabaseProjectId}`);
-  const supabase = await getSupabaseClient({ organizationSlug });
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   const response = await fetchWithRetry(
     `https://api.supabase.com/v1/projects/${supabaseProjectId}/branches`,
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${(supabase as any).options.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     },
     `List Supabase branches for ${supabaseProjectId}`,
@@ -765,7 +754,7 @@ export async function deploySupabaseFunction({
   });
 
   // 5) Prepare multipart form-data
-  const supabase = await getSupabaseClient({ organizationSlug });
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
   function buildFormData() {
     const formData = new FormData();
 
@@ -797,7 +786,7 @@ export async function deploySupabaseFunction({
     const res = await fetch(deployUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${(supabase as any).options.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       // Safer to rebuild form data each time.
       body: buildFormData(),
@@ -834,14 +823,14 @@ export async function bulkUpdateFunctions({
     `Bulk updating ${functions.length} functions for project: ${supabaseProjectId}`,
   );
 
-  const supabase = await getSupabaseClient({ organizationSlug });
+  const accessToken = await getSupabaseAccessToken({ organizationSlug });
 
   const response = await fetchWithRetry(
     `https://api.supabase.com/v1/projects/${encodeURIComponent(supabaseProjectId)}/functions`,
     {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${(supabase as any).options.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(functions),

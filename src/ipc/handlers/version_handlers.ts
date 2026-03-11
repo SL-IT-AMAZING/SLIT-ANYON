@@ -176,7 +176,7 @@ export function registerVersionHandlers() {
             appPath,
             supabaseProjectId: app.supabaseProjectId,
             supabaseOrganizationSlug: app.supabaseOrganizationSlug ?? null,
-            skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? false,
+            skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? true,
           });
 
           if (deployErrors.length > 0) {

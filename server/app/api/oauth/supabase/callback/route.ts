@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { exchangeCodeForToken } from "../../../../lib/oauth-utils";
+
+function buildSupabaseDeepLink(code: string): URL {
+  const deepLinkUrl = new URL("anyon://supabase-oauth-return");
+  deepLinkUrl.searchParams.set("code", code);
+  return deepLinkUrl;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -16,26 +21,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tokenData = await exchangeCodeForToken(
-      "https://api.supabase.com/v1/oauth/token",
-      {
-        grant_type: "authorization_code",
-        code,
-        client_id: process.env.SUPABASE_CLIENT_ID!.trim(),
-        client_secret: process.env.SUPABASE_CLIENT_SECRET!.trim(),
-        redirect_uri: `${process.env.OAUTH_SERVER_URL!.trim()}/api/oauth/supabase/callback`,
-      },
+    const response = NextResponse.redirect(
+      buildSupabaseDeepLink(code).toString(),
     );
-
-    const deepLinkUrl = new URL("anyon://supabase-oauth-return");
-    deepLinkUrl.searchParams.set("token", tokenData.access_token);
-    deepLinkUrl.searchParams.set("refreshToken", tokenData.refresh_token);
-    deepLinkUrl.searchParams.set("expiresIn", String(tokenData.expires_in));
-
-    const response = NextResponse.redirect(deepLinkUrl.toString());
     response.cookies.delete("supabase_oauth_state");
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Supabase OAuth callback redirect failed", error);
     return new NextResponse("Token exchange failed", { status: 500 });
   }
 }

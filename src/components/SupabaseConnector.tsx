@@ -70,7 +70,6 @@ export function SupabaseConnector({ appId }: { appId: number }) {
     projectsError,
     isLoadingBranches,
     isSettingAppProject,
-    refetchOrganizations,
     refetchProjects,
     deleteOrganization,
     setAppProject,
@@ -84,9 +83,6 @@ export function SupabaseConnector({ appId }: { appId: number }) {
     const handleDeepLink = async () => {
       if (lastDeepLink?.type === "supabase-oauth-return") {
         await refreshSettings();
-        await refetchOrganizations();
-        await refetchProjects();
-        await refreshApp();
         clearLastDeepLink();
       }
     };
