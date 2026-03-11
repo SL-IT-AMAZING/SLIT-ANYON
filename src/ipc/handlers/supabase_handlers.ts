@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import log from "electron-log";
+import { normalizeLegacySupabaseCredentialsIfNeeded } from "../../supabase_admin/supabase_return_handler";
 import { db } from "../../db";
 import { apps } from "../../db/schema";
 import { oauthEndpoints } from "../../lib/oauthConfig";
@@ -25,6 +26,8 @@ const testOnlyHandle = createTestOnlyLoggedHandler(logger);
 export function registerSupabaseHandlers() {
   // List all connected Supabase organizations with details
   createTypedHandler(supabaseContracts.listOrganizations, async () => {
+    await normalizeLegacySupabaseCredentialsIfNeeded();
+
     const settings = readSettings();
     const organizations = settings.supabase?.organizations ?? {};
 
@@ -77,16 +80,42 @@ export function registerSupabaseHandlers() {
 
       delete organizations[organizationSlug];
 
+      await db
+        .update(apps)
+        .set({
+          supabaseProjectId: null,
+          supabaseParentProjectId: null,
+          supabaseOrganizationSlug: null,
+        })
+        .where(eq(apps.supabaseOrganizationSlug, organizationSlug));
+
       writeSettings({
-        supabase: {
-          ...settings.supabase,
-          organizations,
-        },
+        supabase:
+          Object.keys(organizations).length > 0
+            ? {
+                ...settings.supabase,
+                organizations,
+              }
+            : undefined,
       });
 
       logger.info(`Deleted Supabase organization ${organizationSlug}`);
     },
   );
+
+  createTypedHandler(supabaseContracts.disconnectAllOrganizations, async () => {
+    await db.update(apps).set({
+      supabaseProjectId: null,
+      supabaseParentProjectId: null,
+      supabaseOrganizationSlug: null,
+    });
+
+    writeSettings({
+      supabase: undefined,
+    });
+
+    logger.info("Disconnected all Supabase organizations");
+  });
 
   // List all projects from all connected organizations
   createTypedHandler(supabaseContracts.listAllProjects, async () => {
@@ -110,12 +139,7 @@ export function registerSupabaseHandlers() {
               id: project.id,
               name: project.name,
               region: project.region,
-              organizationSlug:
-                // The supabase management API typedef is out of date and there's
-                // actually an organization_slug field.
-                // Just in case it's not there, we fallback to organization_id
-                // which in practice is the same value as the slug.
-                (project as any).organization_slug || project.organization_id,
+              organizationSlug,
             });
           }
         }

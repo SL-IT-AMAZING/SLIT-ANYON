@@ -17,6 +17,7 @@ export { OAUTH_SERVER_URL };
 export const oauthEndpoints = {
   supabase: {
     login: `${OAUTH_SERVER_URL}/api/oauth/supabase/login`,
+    exchange: `${OAUTH_SERVER_URL}/api/oauth/supabase/exchange`,
     refresh: `${OAUTH_SERVER_URL}/api/oauth/supabase/refresh`,
   },
   vercel: {

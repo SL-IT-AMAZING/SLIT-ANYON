@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasSupabaseOrganizations } from "@/lib/schemas";
 import { readSettings } from "@/main/settings";
 import type { ToolSpec } from "./spec";
 type GetConnectionStatusInput = Record<string, never>;
@@ -39,11 +40,7 @@ export const getConnectionStatusTool: ToolSpec<
     const settings = readSettings();
     const supabaseOrganizations = settings.supabase?.organizations ?? {};
     const orgSlugs = Object.keys(supabaseOrganizations);
-    const supabaseOrgTokens = Object.values(supabaseOrganizations).some(
-      (org) => !!org.accessToken?.value,
-    );
-    const supabaseConnected =
-      !!settings.supabase?.accessToken?.value || supabaseOrgTokens;
+    const supabaseConnected = hasSupabaseOrganizations(settings);
     // Return the first available organization slug so the AI agent can use it
     // when creating Supabase projects (organizationId param).
     const organizationSlug = orgSlugs.length > 0 ? orgSlugs[0] : undefined;

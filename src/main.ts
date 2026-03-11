@@ -17,7 +17,6 @@ import { getDatabasePath, initializeDatabase } from "./db";
 import {
   AddMcpServerConfigSchema,
   type AddMcpServerPayload,
-
 } from "./ipc/deep_link_data";
 import { registerIpcHandlers } from "./ipc/ipc_host";
 import { gitAddSafeDirectory } from "./ipc/utils/git_utils";
@@ -518,7 +517,6 @@ app.on("open-url", (event, url) => {
 });
 
 async function handleDeepLinkReturn(url: string) {
-  // example url: "anyon://supabase-oauth-return?token=a&refreshToken=b"
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -537,22 +535,30 @@ async function handleDeepLinkReturn(url: string) {
   if (parsed.protocol !== "anyon:") {
     dialog.showErrorBox(
       "Invalid Protocol",
-      `Expected anyon://, got ${parsed.protocol}. Full URL: ${url}`,
+      `Expected anyon://, got ${parsed.protocol}.`,
     );
     return;
   }
   if (parsed.hostname === "supabase-oauth-return") {
+    const code = parsed.searchParams.get("code");
     const token = parsed.searchParams.get("token");
     const refreshToken = parsed.searchParams.get("refreshToken");
     const expiresIn = Number(parsed.searchParams.get("expiresIn"));
-    if (!token || !refreshToken || !expiresIn) {
+    if (code) {
+      await handleSupabaseOAuthReturn({ code });
+    } else if (token && refreshToken && expiresIn) {
+      await handleSupabaseOAuthReturn({
+        accessToken: token,
+        refreshToken,
+        expiresIn,
+      });
+    } else {
       dialog.showErrorBox(
         "Invalid URL",
-        "Expected token, refreshToken, and expiresIn",
+        "Expected a Supabase OAuth code or legacy token payload",
       );
       return;
     }
-    await handleSupabaseOAuthReturn({ token, refreshToken, expiresIn });
     // Send message to renderer to trigger re-render
     mainWindow?.webContents.send("deep-link-received", {
       type: parsed.hostname,

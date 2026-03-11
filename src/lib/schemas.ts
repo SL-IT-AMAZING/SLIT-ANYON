@@ -384,13 +384,43 @@ export function isEntitlementProActive(settings: UserSettings): boolean {
 }
 
 export function isSupabaseConnected(settings: UserSettings | null): boolean {
+  return (
+    hasSupabaseOrganizations(settings) || hasLegacySupabaseCredentials(settings)
+  );
+}
+
+export function hasLegacySupabaseCredentials(
+  settings: UserSettings | null,
+): boolean {
   if (!settings) {
     return false;
   }
   return Boolean(
-    settings.supabase?.accessToken ||
-    (settings.supabase?.organizations &&
-      Object.keys(settings.supabase.organizations).length > 0),
+    settings.supabase?.accessToken?.value &&
+    settings.supabase?.refreshToken?.value,
+  );
+}
+
+export function hasSupabaseOrganizations(
+  settings: UserSettings | null,
+): boolean {
+  if (!settings) {
+    return false;
+  }
+
+  return Object.keys(settings.supabase?.organizations ?? {}).length > 0;
+}
+
+export function hasSupabaseOrganizationCredential(
+  settings: UserSettings | null,
+  organizationSlug: string | null | undefined,
+): boolean {
+  if (!settings || !organizationSlug) {
+    return false;
+  }
+
+  return Boolean(
+    settings.supabase?.organizations?.[organizationSlug]?.accessToken?.value,
   );
 }
 

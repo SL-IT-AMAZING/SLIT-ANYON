@@ -40,7 +40,7 @@ import { getMaxTokens, getTemperature } from "../utils/token_utils";
 import { streamTestResponse } from "./testing_chat_handlers";
 import { getTestResponse } from "./testing_chat_handlers";
 
-import { isSupabaseConnected } from "@/lib/schemas";
+import { hasSupabaseOrganizationCredential } from "@/lib/schemas";
 import { AI_STREAMING_ERROR_MESSAGE_PREFIX } from "@/shared/texts";
 import { sanitizeVisibleOutput } from "../../../shared/sanitizeVisibleOutput";
 import { getAnyonWritePlanTags } from "../utils/anyon_tag_parser";
@@ -488,7 +488,10 @@ You may update the plan at \`${planPath}\` to mark your progress.`;
               directoryName,
               `${artifactSlug}.md`,
             );
-            const rawArtifact = await fs.promises.readFile(artifactFilePath, "utf-8");
+            const rawArtifact = await fs.promises.readFile(
+              artifactFilePath,
+              "utf-8",
+            );
             const { meta: artifactMeta, content: artifactContent } =
               parsePlanFile(rawArtifact);
 
@@ -691,7 +694,13 @@ ${componentSnippet}
 
             // Append Supabase context so OpenCode's AI knows about
             // the connected project, tables, and client code.
-            if (chat.app?.supabaseProjectId && isSupabaseConnected(settings)) {
+            if (
+              chat.app?.supabaseProjectId &&
+              hasSupabaseOrganizationCredential(
+                settings,
+                chat.app.supabaseOrganizationSlug,
+              )
+            ) {
               const [supabaseClientCode, supabaseContext] = await Promise.all([
                 getSupabaseClientCode({
                   projectId: chat.app.supabaseProjectId,
@@ -884,9 +893,9 @@ ${componentSnippet}
                   .set({ content: fullResponse })
                   .where(eq(messages.id, placeholderAssistantMessage.id));
 
-                const writePlanTags = getAnyonWritePlanTags(fullResponse).filter(
-                  (tag) => tag.complete !== "false",
-                );
+                const writePlanTags = getAnyonWritePlanTags(
+                  fullResponse,
+                ).filter((tag) => tag.complete !== "false");
 
                 for (const tag of writePlanTags) {
                   const artifactType = tag.artifactType ?? "founder_brief";

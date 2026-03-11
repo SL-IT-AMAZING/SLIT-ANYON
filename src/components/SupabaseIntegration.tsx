@@ -10,9 +10,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSupabase } from "@/hooks/useSupabase";
 import { isSupabaseConnected } from "@/lib/schemas";
 import { showError, showSuccess } from "@/lib/toast";
-// We might need a Supabase icon here, but for now, let's use a generic one or text.
-// import { Supabase } from "lucide-react"; // Placeholder
-import { DatabaseZap, Trash2 } from "lucide-react"; // Using DatabaseZap as a placeholder
+import { DatabaseZap, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -24,16 +22,18 @@ export function SupabaseIntegration() {
   // Check if there are any connected organizations
   const isConnected = isSupabaseConnected(settings);
 
-  const { organizations, refetchOrganizations, deleteOrganization } =
-    useSupabase();
+  const {
+    organizations,
+    refetchOrganizations,
+    deleteOrganization,
+    disconnectAllOrganizations,
+  } = useSupabase();
 
   const handleDisconnectAllFromSupabase = async () => {
     setIsDisconnecting(true);
     try {
-      // Clear the entire supabase object in settings (including all organizations)
+      await disconnectAllOrganizations();
       const result = await updateSettings({
-        supabase: undefined,
-        // Also disable the migration setting on disconnect
         enableSupabaseWriteSqlMigration: false,
       });
       if (result) {
@@ -182,7 +182,7 @@ export function SupabaseIntegration() {
           <Switch
             id="skip-prune-edge-functions"
             aria-label={t("connect.supabase.keepEdgeFunctions")}
-            checked={!!settings?.skipPruneEdgeFunctions}
+            checked={settings?.skipPruneEdgeFunctions ?? true}
             onCheckedChange={handleSkipPruneSettingChange}
           />
           <div className="space-y-1">

@@ -61,10 +61,19 @@ export function useSupabase(options: UseSupabaseOptions = {}) {
       await ipc.supabase.deleteOrganization(params);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.supabase.organizations,
-      });
-      queryClient.invalidateQueries({ queryKey: queryKeys.supabase.projects });
+      queryClient.invalidateQueries({ queryKey: queryKeys.supabase.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.all });
+    },
+    meta: { showErrorToast: true },
+  });
+
+  const disconnectAllOrganizationsMutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      await ipc.supabase.disconnectAllOrganizations();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.supabase.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.all });
     },
     meta: { showErrorToast: true },
   });
@@ -78,6 +87,9 @@ export function useSupabase(options: UseSupabaseOptions = {}) {
     mutationFn: async (params) => {
       await ipc.supabase.setAppProject(params);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.all });
+    },
     meta: { showErrorToast: true },
   });
 
@@ -85,6 +97,9 @@ export function useSupabase(options: UseSupabaseOptions = {}) {
   const unsetAppProjectMutation = useMutation<void, Error, number>({
     mutationFn: async (appId) => {
       await ipc.supabase.unsetAppProject({ app: appId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.all });
     },
     meta: { showErrorToast: true },
   });
@@ -177,6 +192,8 @@ export function useSupabase(options: UseSupabaseOptions = {}) {
 
     // Mutation states
     isDeletingOrganization: deleteOrganizationMutation.isPending,
+    isDisconnectingAllOrganizations:
+      disconnectAllOrganizationsMutation.isPending,
     isSettingAppProject: setAppProjectMutation.isPending,
     isUnsettingAppProject: unsetAppProjectMutation.isPending,
     isLoadingEdgeLogs: loadEdgeLogsMutation.isPending,
@@ -186,6 +203,7 @@ export function useSupabase(options: UseSupabaseOptions = {}) {
     refetchProjects: projectsQuery.refetch,
     refetchBranches: branchesQuery.refetch,
     deleteOrganization: deleteOrganizationMutation.mutateAsync,
+    disconnectAllOrganizations: disconnectAllOrganizationsMutation.mutateAsync,
     loadEdgeLogs: loadEdgeLogsMutation.mutateAsync,
     setAppProject: setAppProjectMutation.mutateAsync,
     unsetAppProject: unsetAppProjectMutation.mutateAsync,

@@ -93,6 +93,12 @@ export const supabaseContracts = {
     output: z.void(),
   }),
 
+  disconnectAllOrganizations: defineContract({
+    channel: "supabase:disconnect-all-organizations",
+    input: z.void(),
+    output: z.void(),
+  }),
+
   listAllProjects: defineContract({
     channel: "supabase:list-all-projects",
     input: z.void(),

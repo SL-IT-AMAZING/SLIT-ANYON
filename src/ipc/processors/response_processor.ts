@@ -547,7 +547,7 @@ export async function processFullResponseActions(
           supabaseProjectId: chatWithApp.app.supabaseProjectId,
           supabaseOrganizationSlug:
             chatWithApp.app.supabaseOrganizationSlug ?? null,
-          skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? false,
+          skipPruneEdgeFunctions: settings.skipPruneEdgeFunctions ?? true,
         });
         if (deployErrors.length > 0) {
           for (const err of deployErrors) {
